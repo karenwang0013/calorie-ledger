@@ -1120,7 +1120,10 @@ function init() {
     renderMealPick();
   });
 
-  $('#quickWatch').onclick = openWatch;
+  const qw = $('#quickWatch');
+  if (qw) qw.onclick = openWatch;
+  const gm = $('#goMe');
+  if (gm) gm.onclick = () => switchView('me');
   const refreshBtn = $('#cloudRefresh');
   if (refreshBtn) refreshBtn.onclick = async () => {
     refreshBtn.classList.add('spin');
