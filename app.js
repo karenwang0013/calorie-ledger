@@ -692,7 +692,7 @@ function renderMe() {
       </div>
       <div class="field">
         <label>目标速度（kg / 周）</label>
-        <input id="fGoal" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0.5" value="${Math.abs(p.goal_rate ?? -0.25)}">
+        <input id="fGoalRate" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0.5" value="${Math.abs(p.goal_rate ?? -0.25)}">
         <div class="hint">填 <b>0.5</b> = 每周减 0.5 公斤；<b>0</b> = 维持；负数 = 增肌。<br>按你 ${p.weight_kg || 60}kg 算，<b style="color:var(--lime)">建议 ${Math.abs(sugGoal)}</b>（≈ 每天 ${sugKcal} 千卡缺口）。</div>
       </div>
       <div class="field">
@@ -774,7 +774,7 @@ function renderMe() {
         weight_kg: Number($('#fWeight').value),
         activity: $('#fAct').value,
         goal_rate: (() => {
-          const raw = $('#fGoal').value.trim();
+          const raw = ($('#fGoalRate') || {}).value ? $('#fGoalRate').value.trim() : '';
           if (raw === '') return -0.25;
           const v = Number(raw);
           return isFinite(v) ? -v : -0.25;
