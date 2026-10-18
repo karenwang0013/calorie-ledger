@@ -161,6 +161,8 @@ function daySummary(date) {
     targets: targetsOf(p, exp),
     profile: p,
     has_key: !!(d.settings.dashscope_key || '').trim(),
+    theme: d.settings.theme || 'lime',
+    sync_toast: d.settings.sync_toast !== false,
     needs_setup: !d.settings.profile_set,
     activity_labels: ACTIVITY_LABEL,
   };
@@ -576,6 +578,12 @@ async function api(path, body, method) {
     }
     if (body.ai_model !== undefined) {
       setSetting('ai_model', String(body.ai_model || '').trim());
+    }
+    if (body.theme !== undefined) {
+      setSetting('theme', String(body.theme || 'lime'));
+    }
+    if (body.sync_toast !== undefined) {
+      setSetting('sync_toast', !!body.sync_toast);
     }
     return { ok: true, has_key: !!setting('dashscope_key', '') };
   }

@@ -645,14 +645,35 @@ select {
 .srow em { margin-left: auto; font-style: normal; color: var(--muted2); font-size: 12px; }
 .srow i { color: var(--muted2); font-style: normal; font-size: 15px; margin-left: 4px; }
 .seclabel { padding: 0 26px 8px; font-size: 11px; color: var(--muted2); letter-spacing: .6px; }
-.mebar { padding: 0 18px 8px; }
-.backlink {
-  display: inline-flex; align-items: center; gap: 6px;
-  min-height: 42px; padding: 0 16px 0 12px;
-  background: var(--card); border: 1px solid var(--line);
-  border-radius: 21px; color: var(--text);
-  font-size: 14px; font-weight: 500;
+.mehead { display: flex; align-items: center; gap: 4px; padding: 0 10px 10px; }
+.mehead-back {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  background: none; border: 0; color: var(--text);
 }
-.backlink:active { background: var(--card2); }
-.backlink svg { width: 16px; height: 16px; stroke: var(--lime); }
+.mehead-back:active { opacity: .6; }
+.mehead-back svg { width: 23px; height: 23px; }
+.mehead h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: .2px; }
+
+.themepick { display: flex; flex-direction: column; gap: 8px; }
+.swatch {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 13px 14px; background: var(--card2);
+  border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text); font-size: 14px; text-align: left;
+}
+.swatch .dot { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; }
+.swatch b { margin-left: auto; color: var(--lime); font-size: 15px; }
+
+.switchrow { display: flex; align-items: center; gap: 14px; }
+.switchrow > div:first-child { flex: 1; }
+.stitle { font-size: 14.5px; }
+.sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; }
+.sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+.sw i { position: absolute; inset: 0; background: #2c3236; border-radius: 15px; transition: .18s; }
+.sw i:after {
+  content: ''; position: absolute; left: 3px; top: 3px;
+  width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: .18s;
+}
+.sw input:checked + i { background: var(--lime); }
+.sw input:checked + i:after { transform: translateX(20px); }
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }

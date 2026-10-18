@@ -693,15 +693,24 @@ function lineChart(points, start, end) {
   </svg>`;
 }
 
+/* ---------------- 主题 ---------------- */
+const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
+const THEME_NAMES = { lime: '荧光绿', blue: '海水蓝', orange: '活力橙' };
+function applyTheme(name) {
+  const c = THEMES[name] || THEMES.lime;
+  document.documentElement.style.setProperty('--lime', c);
+}
+
 /* ---------------- 我的 / 设置 ---------------- */
 let mePage = null;
 
 function meBackBar(title) {
-  return `<div class="mebar"><button class="backlink" id="meBack">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 8 12l6.5 7"/></svg>
-      设置
-    </button></div>
-  <div class="meh1">${title}</div>`;
+  return `<div class="mehead">
+    <button class="mehead-back" id="meBack" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+    </button>
+    <h2>${title}</h2>
+  </div>`;
 }
 
 function renderMe() {
@@ -734,6 +743,14 @@ function renderMe() {
         <button class="srow" data-page="ai">
           <span class="ico">✨</span><span>AI 识别</span>
           <em>${d.has_key ? '已配置' : '未配置'}</em><i>›</i>
+        </button>
+        <button class="srow" data-page="theme">
+          <span class="ico">🎨</span><span>个性化</span>
+          <em>${THEME_NAMES[d.theme] || '荧光绿'}</em><i>›</i>
+        </button>
+        <button class="srow" data-page="notify">
+          <span class="ico">🔔</span><span>通知</span>
+          <em>${d.sync_toast ? '开' : '关'}</em><i>›</i>
         </button>
       </div>
       <div class="seclabel">其他</div>
@@ -834,6 +851,39 @@ function renderMe() {
         <div class="hint" style="margin:0 0 12px">iPhone 上网页会被缓存。如果看到的是旧界面，点下面按钮强制刷新（不会动数据）。</div>
         <button class="btn sm" id="hardReload">强制更新</button>
       </div>`;
+  } else if (mePage === 'theme') {
+    const cur = d.theme || 'lime';
+    h = meBackBar('个性化') + `
+      <div class="card">
+        <h3>主题色</h3>
+        <div class="hint" style="margin:0 0 14px">只影响高亮色（圆环、按钮、数字强调），不影响数据。</div>
+        <div class="themepick">
+          ${Object.entries(THEMES).map(([k, v]) => `
+            <button class="swatch" data-theme="${k}" style="--c:${v}">
+              <span class="dot" style="background:${v}"></span>
+              <span>${THEME_NAMES[k]}</span>
+              ${cur === k ? '<b>✓</b>' : ''}
+            </button>`).join('')}
+        </div>
+      </div>`;
+  } else if (mePage === 'notify') {
+    h = meBackBar('通知') + `
+      <div class="card">
+        <div class="switchrow">
+          <div>
+            <div class="stitle">同步完成后弹提示</div>
+            <div class="hint" style="margin:4px 0 0">拉到新的手表数据时，顶部弹一条提示；关掉就安静同步。</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="swToast" ${d.sync_toast ? 'checked' : ''}><i></i></label>
+        </div>
+      </div>
+      <div class="card">
+        <h3>关于推送</h3>
+        <div class="hint" style="margin:0">
+          网页 App 不能像原生 App 那样在后台推送通知，这是 iOS 的限制。<br>
+          需要「到点提醒」的话，可以在快捷指令的自动化里加一个「显示通知」动作。
+        </div>
+      </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
@@ -870,6 +920,20 @@ function wireMe() {
   const back = $('#meBack');
   if (back) back.onclick = () => { mePage = null; renderMe(); };
   $$('.srow').forEach(b => b.onclick = () => { mePage = b.dataset.page; renderMe(); });
+
+  $$('.swatch').forEach(b => b.onclick = async () => {
+    const t = b.dataset.theme;
+    applyTheme(t);
+    await api('/api/settings', { theme: t });
+    toast('已切换主题');
+    renderMe();
+  });
+
+  const sw = $('#swToast');
+  if (sw) sw.onchange = async () => {
+    await api('/api/settings', { sync_toast: sw.checked });
+    toast(sw.checked ? '同步提示已打开' : '同步提示已关闭');
+  };
 
   const sp = $('#saveProfile');
   if (sp) sp.onclick = async () => {
@@ -1260,6 +1324,7 @@ function init() {
     document.querySelector('.app').prepend(b);
   }
 
+  applyTheme(Store.load().settings.theme || 'lime');
   loadDay();
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);
@@ -1269,7 +1334,9 @@ function init() {
   pullCloudData().then(date => {
     if (!date) return;
     loadDay();
-    toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+    if (Store.load().settings.sync_toast !== false) {
+      toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+    }
   });
 
   // 从后台切回来时再拉一次
