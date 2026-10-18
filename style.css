@@ -60,7 +60,7 @@ select {
   max-width: 520px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding-bottom: calc(84px + var(--safe-b));
+  padding-bottom: calc(122px + var(--safe-b));
   background:
     radial-gradient(120% 60% at 50% -10%, rgba(214, 255, 75, 0.06), transparent 60%),
     var(--bg);
@@ -75,8 +75,8 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: calc(10px + var(--safe-t)) 18px 10px;
-  background: linear-gradient(to bottom, var(--bg) 55%, rgba(10, 11, 12, 0.85));
-  backdrop-filter: blur(12px);
+  background: var(--bg);
+  border-bottom: 1px solid rgba(255,255,255,.045);
 }
 .brand { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
 .brand span { color: var(--lime); }
@@ -289,16 +289,19 @@ select {
 .tab.on { color: var(--text); }
 .tab.on svg { stroke: var(--lime); }
 .fab {
-  flex: 0 0 auto;
-  width: 46px; height: 46px; border-radius: 15px;
+  position: fixed;
+  left: 50%;
+  bottom: calc(70px + var(--safe-b));
+  transform: translateX(-50%);
+  z-index: 35;
+  width: 54px; height: 54px; border-radius: 50%;
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;
-  font-size: 24px; font-weight: 300;
-  margin-left: 6px;
-  box-shadow: 0 6px 20px rgba(214, 255, 75, 0.22);
+  font-size: 26px; font-weight: 300;
+  box-shadow: 0 8px 24px rgba(214, 255, 75, 0.30);
 }
-.fab:active { transform: scale(0.94); }
+.fab:active { transform: translateX(-50%) scale(0.94); }
 
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
