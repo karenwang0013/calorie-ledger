@@ -1359,8 +1359,8 @@ function init() {
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     if (date) toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
-    else if (dd.active) toast('已是最新：活动消耗 ' + dd.active + ' 千卡', 2400);
-    else toast('还没读到手表数据（可能今天还没活动）', 2600);
+    else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
+    else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
   if (refreshBtn) refreshBtn.onclick = () => pullNow();  $('#watchClose').onclick = closeWatch;
   $('#watchMask').onclick = closeWatch;
