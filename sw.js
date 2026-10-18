@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v26';
+const CACHE = 'ledger-v27';
 const ASSETS = [
   './',
   './index.html',
@@ -56,7 +56,7 @@ self.addEventListener('fetch', e => {
 
   // 其他静态资源：先走网络，失败再用缓存（保证 HTML 和 JS 版本一致）
   e.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-store' })
       .then(res => {
         if (res && res.status === 200) {
           const copy = res.clone();
