@@ -75,7 +75,10 @@ select {
   padding: calc(30px + var(--safe-t)) 18px 12px;
   background: var(--bg);
 }
-.brand { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
+.brand {
+  font-size: 20px; font-weight: 650; letter-spacing: 0.2px;
+  display: flex; align-items: center; height: 31px;
+}
 .brand span { color: var(--lime); }
 .topbtn {
   display: inline-flex; align-items: center; gap: 5px;
