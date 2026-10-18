@@ -903,6 +903,8 @@ function switchView(v) {
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  document.body.classList.toggle('view-me', v === 'me');
+  document.body.classList.toggle('view-trends', v === 'trends');
   window.scrollTo({ top: 0 });
   if (v === 'trends') { renderTrends(); loadTrends(); }
   if (v === 'me') renderMe();
