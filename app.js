@@ -997,7 +997,7 @@ function showShortcutHelp() {
 
     <div class="sechead">快捷指令已经建好了，你只差一步</div>
     <div class="step"><b>1</b><div>「快捷指令」App → 底部 <b>自动化</b> → 点「23:00 每天」那条</div></div>
-    <div class="step"><b>2</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量同步D2</b>」→ 完成</div></div>
+    <div class="step"><b>2</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量采集</b>」→ 完成</div></div>
 
     <div class="sechead">怎么确认它在工作</div>
     <div class="step"><b>3</b><div>每晚 23:00 之后打开 App，「消耗」会变成 <b>基础代谢 + 活动消耗</b></div></div>
@@ -1006,7 +1006,7 @@ function showShortcutHelp() {
     <div class="sechead">如果一直没数据，按这个顺序查</div>
     <div class="step"><b>A</b><div>权限：设置 → 隐私与安全性 → 健康 → 快捷指令 → <b>活动能量「完全访问」</b></div></div>
     <div class="step"><b>B</b><div>健康 App 里当天确实有「活动能量」数据（戴表就有）</div></div>
-    <div class="step"><b>C</b><div>手动点一次「热量同步D2」运行，看会不会报「未找到样本」</div></div>
+    <div class="step"><b>C</b><div>手动点一次「热量采集」运行，看会不会报「未找到样本」</div></div>
 
     <div class="hint" style="margin-top:14px">
       不想等自动同步时，也可以手动填：<b>我的 → 手表/消耗数据 → ⌨️ 手动填写</b>，10 秒搞定。
