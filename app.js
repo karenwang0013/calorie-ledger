@@ -790,12 +790,17 @@ function renderMe() {
 
     <div class="card">
       <h3>这套算法在算什么</h3>
-      <div class="hint" style="margin:0;line-height:1.85">
-        <b style="color:var(--text)">消耗</b>：优先用 Apple Watch 的「总卡路里」；没有就用基础代谢 + 活动消耗；都没有才用公式估。<br>
-        <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式。<br>
-        <b style="color:var(--text)">缺口</b>：消耗 − 摄入。正数是缺口，负数是盈余。<br>
-        <b style="color:var(--text)">实测消耗</b>：体重回归斜率 × 7700，再和平均摄入对上。<br>
-        <span style="color:var(--muted2);font-size:11px">单日数字有 ±20% 误差，别为一天的偏差焦虑；看 7 天平均。</span>
+      <div class="hint" style="margin:0;line-height:1.9">
+        <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
+        <b style="color:var(--text)">全天消耗</b>：<br>
+        　①② 手表给了活动能量 → <b>基础代谢 + 活动能量</b>（现在的常用算法）<br>
+        　③ 手表给的是总消耗 → 直接用总消耗<br>
+        　④ 没有手表数据 → 基础代谢 × 活动系数（公式估算）<br>
+        <b style="color:var(--text)">目标缺口</b>：目标速度 × 7700 ÷ 7。7700 千卡≈1kg 脂肪；同时封顶在当天消耗的 22%，防止吃太少。<br>
+        <b style="color:var(--text)">还能吃</b>：全天消耗 − 目标缺口 − 已吃。<br>
+        <b style="color:var(--text)">实际缺口</b>：全天消耗 − 已吃。正数是缺口，负数是盈余。<br>
+        <b style="color:var(--text)">实测消耗</b>（趋势页）：用体重变化做线性回归，斜率 × 7700，反映你这段时间真实的消耗。<br>
+        <span style="color:var(--muted2);font-size:11px">单日数字有 ±20% 误差；判断减脂效果看 7 天平均，别看某一天。</span>
       </div>
     </div>
     <div style="height:30px"></div>`;
