@@ -131,7 +131,7 @@ function renderToday() {
     $('#heroNum').textContent = bal;
     const gap = t.deficit - bal;
     if (intake === 0) {
-      sub = `还没记录 · 目标 ${t.deficit} · 消耗 ${exp}`;
+      sub = t.deficit > 0 ? `还没记录 · 目标 ${t.deficit}` : '还没记录';
     } else if (bal > t.deficit * 2 && bal > 600) {
       sub = `缺口偏大 · 目标 ${t.deficit}`;
     } else {
