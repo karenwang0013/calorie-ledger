@@ -954,10 +954,11 @@ function wireMe() {
   $$('.swatch').forEach(b => b.onclick = async () => {
     const t = b.dataset.theme;
     applyTheme(t);
+    if (S.day) S.day.theme = t;   // 先让勾选立刻跟上
+    renderMe();
     await api('/api/settings', { theme: t });
     await loadDay();
     toast('已切换主题');
-    renderMe();
   });
 
   const nd = $('#nDef'), nk = $('#nKcal');
