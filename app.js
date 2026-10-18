@@ -697,7 +697,10 @@ function lineChart(points, start, end) {
 let mePage = null;
 
 function meBackBar(title) {
-  return `<div class="mebar"><button class="backlink" id="meBack">‹ 设置</button></div>
+  return `<div class="mebar"><button class="backlink" id="meBack">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 8 12l6.5 7"/></svg>
+      设置
+    </button></div>
   <div class="meh1">${title}</div>`;
 }
 

@@ -645,6 +645,14 @@ select {
 .srow em { margin-left: auto; font-style: normal; color: var(--muted2); font-size: 12px; }
 .srow i { color: var(--muted2); font-style: normal; font-size: 15px; margin-left: 4px; }
 .seclabel { padding: 0 26px 8px; font-size: 11px; color: var(--muted2); letter-spacing: .6px; }
-.mebar { padding: 0 18px 4px; }
-.backlink { background: none; border: 0; color: var(--lime); font-size: 13px; padding: 6px 0; }
+.mebar { padding: 0 18px 8px; }
+.backlink {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 42px; padding: 0 16px 0 12px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 21px; color: var(--text);
+  font-size: 14px; font-weight: 500;
+}
+.backlink:active { background: var(--card2); }
+.backlink svg { width: 16px; height: 16px; stroke: var(--lime); }
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }
