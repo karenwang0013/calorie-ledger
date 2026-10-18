@@ -133,7 +133,7 @@ function renderToday() {
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
 
-  let sub = `目标缺口 ${t.deficit} · 已吃 ${intake}`;
+  let sub = `目标缺口 ${t.deficit}`;
   if (left < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
