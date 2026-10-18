@@ -72,7 +72,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(10px + var(--safe-t)) 18px 10px;
+  padding: calc(30px + var(--safe-t)) 18px 12px;
   background: var(--bg);
 }
 .brand { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
