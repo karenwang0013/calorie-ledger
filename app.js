@@ -1157,6 +1157,16 @@ function init() {
     loadTrends();
   });
 
+  // Safari 里打开的是独立副本，提醒一下，避免和主屏幕 App 的数字混淆
+  const standalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) {
+    const b = document.createElement('div');
+    b.className = 'safariwarn';
+    b.textContent = '你正在 Safari 里打开，这份数据是独立的副本，和主屏幕「热量账本」App 不互通。日常请在主屏幕打开。';
+    document.querySelector('.app').prepend(b);
+  }
+
   loadDay();
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);

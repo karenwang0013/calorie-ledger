@@ -616,3 +616,14 @@ select {
   padding: 2px 18px 10px;
 }
 .mebar span { font-size: 13px; color: var(--muted); letter-spacing: .5px; }
+
+.safariwarn {
+  margin: 8px 14px 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #ffcf8a;
+  background: rgba(255, 159, 10, .10);
+  border: 1px solid rgba(255, 159, 10, .22);
+}
