@@ -121,9 +121,10 @@ function renderToday() {
   const C = 527.8;
   ring.style.strokeDashoffset = String(C * (1 - Math.min(pct, 1)));
 
+  // 颜色语言：绿=还有余量、橙=接近上限、红=已经吃超（盈余）
   let color = '#d6ff4b';
-  if (pct > 1.08) color = '#ff5d5d';
-  else if (pct > 0.95) color = '#ffb04b';
+  if (pct > 1.0) color = '#ff5d5d';
+  else if (pct > 0.9) color = '#ffb04b';
   ring.style.stroke = color;
 
   const hero = $('#hero');
