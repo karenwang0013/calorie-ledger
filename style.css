@@ -654,7 +654,7 @@ select {
 }
 .mehead-back:active { opacity: .6; }
 .mehead-back svg { width: 23px; height: 23px; }
-.mehead h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: .2px; }
+.mehead h2 { margin: 0; font-size: 23px; font-weight: 700; letter-spacing: .3px; }
 
 .themepick { display: flex; flex-direction: column; gap: 8px; }
 .swatch {
@@ -681,4 +681,4 @@ select {
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }
 
 .brandblock { display: flex; flex-direction: column; gap: 1px; }
-.brandsub { font-size: 11px; color: var(--muted2); letter-spacing: .5px; line-height: 1; }
+.brandsub { font-size: 12.5px; color: var(--muted); letter-spacing: .8px; line-height: 1.1; }
