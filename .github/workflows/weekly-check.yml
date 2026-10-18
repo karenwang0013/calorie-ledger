@@ -34,7 +34,7 @@ jobs:
 
           y, mo, d = map(int, m.groups())
           data_date = datetime.date(y, mo, d)
-          today = datetime.datetime.utcnow().date() + datetime.timedelta(hours=8)
+          today = (datetime.datetime.utcnow() + datetime.timedelta(hours=8)).date()
           lag = (today - data_date).days
 
           print(f"数据日期 {data_date}，今天 {today}，相差 {lag} 天")
