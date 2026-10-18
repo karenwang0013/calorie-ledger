@@ -986,71 +986,33 @@ function watchUrlTemplate() {
 }
 
 function showShortcutHelp() {
-  const url = watchUrlTemplate();
   $('#helpBody').innerHTML = `
     <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0 0 14px">
-      网页读不到 Apple 健康数据（苹果只开放给原生 App）。但「快捷指令」能读，
-      再通过一个链接交给这个网页。<b style="color:var(--text)">配一次，之后全自动。</b>
+      网页读不到 Apple 健康数据（苹果只开放给原生 App）。现在的方式是：
+      快捷指令每天读一次，<b style="color:var(--text)">直接写进你的 GitHub</b>，App 打开时再去取。
     </p>
-    <div class="hint" style="margin:0 0 18px;padding:10px 12px;background:rgba(255,138,76,.08);border-radius:10px;color:var(--orange)">
-      先建「快捷指令」并手动跑通，<b>最后</b>才挂到「自动化」上。别一上来就建自动化。
+    <div class="hint" style="margin:0 0 18px;padding:10px 12px;background:rgba(214,255,75,.07);border-radius:10px;color:var(--lime)">
+      全程在后台完成，<b>不会打开 Safari，也不会弹浏览器</b>。
     </div>
 
-    <div class="sechead">第一步 · 新建快捷指令</div>
-    <div class="step"><b>1</b><div>打开「快捷指令」App → 底部 <b>「快捷指令」</b> → 右上角 <span class="kbd">+</span></div></div>
-    <div class="step"><b>2</b><div>点最上面的名字，改成「热量账本同步」</div></div>
+    <div class="sechead">快捷指令已经建好了，你只差一步</div>
+    <div class="step"><b>1</b><div>「快捷指令」App → 底部 <b>自动化</b> → 点「23:00 每天」那条</div></div>
+    <div class="step"><b>2</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量同步D2</b>」→ 完成</div></div>
 
-    <div class="sechead">第二步 · 加 4 个动作（最简版）</div>
-    <div class="step"><b>3</b><div>搜索添加 <b>「查找健康样本」</b><br>
-      <span class="muted">样本类型 → 活动能量；时间范围 → 今天</span></div></div>
-    <div class="step"><b>4</b><div>搜索添加 <b>「统计」</b><br>
-      <span class="muted">计算 → 总和；输入 → 点开选「健康样本」</span></div></div>
-    <div class="step"><b>5</b><div>搜索添加 <b>「文本」</b>，粘贴下面这条<br>
-      <code class="urlbox" id="urlBox">${esc(url)}</code>
-      <span class="muted" style="display:block;margin-top:7px">
-        把 <b style="color:var(--text)">[活动能量]</b> 这四个字连同方括号整个删掉，光标停在 <b style="color:var(--text)">a=</b> 后面，
-        点键盘上方的「变量」按钮（像个魔术棒），选「统计结果」。
-      </span></div></div>
-    <div class="step"><b>6</b><div>搜索添加 <b>「打开 URL」</b><br>
-      <span class="muted">点 URL 那一格 → 选上一步的「文本」</span></div></div>
+    <div class="sechead">怎么确认它在工作</div>
+    <div class="step"><b>3</b><div>每晚 23:00 之后打开 App，「消耗」会变成 <b>基础代谢 + 活动消耗</b></div></div>
+    <div class="step"><b>4</b><div>数字没变，点右上角 <b>⟳</b> 刷新一次</div></div>
 
-    <div class="sechead">第三步 · 先手动跑一次</div>
-    <div class="step"><b>7</b><div>点右下角 <span class="kbd">▶</span> 运行<br>
-      <span class="muted">第一次会弹健康权限，全部允许。Safari 会打开一下，然后回 App 看数字变没变。</span></div></div>
-
-    <div class="sechead">第四步 · 挂到自动化</div>
-    <div class="step"><b>8</b><div>「快捷指令」App → 底部 <b>「自动化」</b> → 右上角 <span class="kbd">+</span></div></div>
-    <div class="step"><b>9</b><div>选 <b>「时间」</b> → 23:00 → 每天 → <b>「立即运行」</b></div></div>
-    <div class="step"><b>10</b><div>下一步 → 选刚建好的「热量账本同步」→ 完成</div></div>
-
-    <div class="sechead">想更准？再加 3 个动作</div>
-    <div class="hint" style="margin:0 0 10px">
-      上面只读了「活动能量」，App 会用公式补基础代谢，消耗会<b>低估约 150 千卡</b>。
-      加下面 3 个动作就准了：
-    </div>
-    <div class="step"><b>A</b><div>把第 4 步的「统计」后面接一个 <b>「设定变量」</b>，名字填 <b>活动能量</b></div></div>
-    <div class="step"><b>B</b><div>再加一组 <b>「查找健康样本」→「统计」→「设定变量」</b>，样本类型选「静息能量」，变量名填 <b>静息能量</b></div></div>
-    <div class="step"><b>C</b><div>回到「文本」，把 <b>[静息能量]</b> 也换成对应的变量</div></div>
+    <div class="sechead">如果一直没数据，按这个顺序查</div>
+    <div class="step"><b>A</b><div>权限：设置 → 隐私与安全性 → 健康 → 快捷指令 → <b>活动能量「完全访问」</b></div></div>
+    <div class="step"><b>B</b><div>健康 App 里当天确实有「活动能量」数据（戴表就有）</div></div>
+    <div class="step"><b>C</b><div>手动点一次「热量同步D2」运行，看会不会报「未找到样本」</div></div>
 
     <div class="hint" style="margin-top:14px">
-      跑的时候会短暂打开一次 Safari —— 这是 iOS 的限制，后台的快捷指令写不进网页。
-      失败的晚上，手动点「同步手表」截个图也一样。<br>
-      步数不影响计算，可以不读。
+      不想等自动同步时，也可以手动填：<b>我的 → 手表/消耗数据 → ⌨️ 手动填写</b>，10 秒搞定。
     </div>`;
 
-  $('#helpCopy').onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast('链接已复制，切换回快捷指令粘贴');
-    } catch (e) {
-      const r = document.createRange();
-      r.selectNodeContents($('#urlBox'));
-      const s = getSelection();
-      s.removeAllRanges();
-      s.addRange(r);
-      toast('已选中，长按复制');
-    }
-  };
+  $('#helpCopy').onclick = closeHelp;
   $('#helpMask').classList.add('on');
   $('#helpSheet').classList.add('on');
 }
