@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v12';
+const CACHE = 'ledger-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -54,19 +54,16 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 其他静态资源：先用缓存，同时后台更新
+  // 其他静态资源：先走网络，失败再用缓存（保证 HTML 和 JS 版本一致）
   e.respondWith(
-    caches.match(req).then(cached => {
-      const fresh = fetch(req)
-        .then(res => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE).then(c => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || fresh;
-    })
+    fetch(req)
+      .then(res => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
