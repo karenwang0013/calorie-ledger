@@ -1046,7 +1046,10 @@ async function pullCloudData() {
     const i = txt.lastIndexOf(sep);
     if (i < 0) return null;
     const head = txt.slice(0, i).trim();
-    const active = Math.round(Number(String(txt.slice(i + 1)).replace(/[^\d.]/g, '')));
+    // 值可能是单个数字，也可能是多行/多列的数值列表，全部加起来
+    const tail = String(txt.slice(i + 1)).replace(/(\d),(\d)/g, '$1$2');
+    const nums = tail.match(/\d+(?:\.\d+)?/g) || [];
+    const active = Math.round(nums.reduce((s, n) => s + Number(n), 0));
     if (!active || active <= 0) return null;
     const date = parseLooseDate(head) || todayISO();
     const d = Store.load();
