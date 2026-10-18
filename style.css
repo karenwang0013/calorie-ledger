@@ -290,7 +290,7 @@ select {
   color: var(--muted2); font-size: 10px; letter-spacing: 0.3px;
   padding: 2px 0;
 }
-.tab svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { width: 23px; height: 23px; stroke: currentColor; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--text); }
 .tab.on svg { stroke: var(--lime); }
 .fab {
