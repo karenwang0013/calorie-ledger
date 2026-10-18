@@ -312,11 +312,16 @@ async function runPhoto() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 识别中…';
   try {
+    const grams = Number(($('#photoGrams') || {}).value) || 0;
+    let hint = $('#photoHint').value.trim();
+    if (grams > 0) hint = (hint ? hint + '；' : '') + `我实际吃了 ${grams} 克`;
     const r = await api('/api/ai/food', {
       image: S.photoData,
-      hint: $('#photoHint').value.trim(),
+      hint,
     });
     S.items = r.items.map(x => ({ ...x, _src: 'photo' }));
+    // 填了克数就以它为准（包装营养表通常只有一条）
+    if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
     $('#photoDrop').hidden = true;
     $('#photoPreview').hidden = true;
     $('#photoActions').hidden = true;
