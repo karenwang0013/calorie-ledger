@@ -556,6 +556,15 @@ select {
 }
 
 /* ---------- 帮助步骤 ---------- */
+.sechead {
+  font-size: 12.5px; font-weight: 650;
+  color: var(--text);
+  margin: 22px 0 13px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  letter-spacing: 0.3px;
+}
+.sechead:first-of-type { border-top: 0; padding-top: 0; margin-top: 2px; }
 .step {
   display: flex; gap: 12px;
   font-size: 12.8px; line-height: 1.65;
