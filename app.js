@@ -706,6 +706,7 @@ function renderMe() {
       </div>
       <div class="btnrow">
         <button class="btn sm" id="openWatch">📷 截图读取</button>
+        <button class="btn sm" id="openWatch3">⌨️ 手动填写</button>
         <button class="btn sm" id="openWeight2">⚖️ 记体重</button>
       </div>
     </div>
@@ -775,6 +776,8 @@ function renderMe() {
     } catch (e) { toast(e.message); }
   };
   $('#openWatch').onclick = openWatch;
+  const ow3 = $('#openWatch3');
+  if (ow3) ow3.onclick = openWatch;
   $('#openWeight2').onclick = openWeight;
   $('#exportCsv').onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   $('#exportJson').onclick = () => { exportJson(); toast('已备份'); };
