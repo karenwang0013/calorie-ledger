@@ -74,7 +74,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(16px + var(--safe-t)) 18px 12px;
+  padding: calc(22px + var(--safe-t)) 18px 14px;
   background: var(--bg);
   border-bottom: 1px solid rgba(255,255,255,.045);
 }
@@ -84,8 +84,8 @@ select {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12.5px;
   color: var(--text);
-  opacity: .82;
-  padding: 7px 11px;
+  opacity: 1;
+  padding: 7px 10px;
   border-radius: 10px;
   background: var(--card2);
   border: 1px solid var(--line);
@@ -297,10 +297,10 @@ select {
   display: grid; place-items: center;
   font-size: 26px; font-weight: 300;
   margin: 0 10px;
-  transform: translateY(-12px);
+  transform: translateY(-6px);
   box-shadow: 0 8px 22px rgba(214, 255, 75, 0.30);
 }
-.fab:active { transform: translateY(-12px) scale(0.94); }
+.fab:active { transform: translateY(-6px) scale(0.94); }
 
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
