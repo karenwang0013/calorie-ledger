@@ -1018,6 +1018,48 @@ function consumeHealthLink() {
   }
 }
 
+/* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
+
+/**
+ * 快捷指令每天把「日期|活动能量」写进仓库根目录的 health.json。
+ * 这里在打开 App 时拉一次，写进当天记录。
+ * 日期可能是「2026-10-18」「2026/10/18」「2026年10月18日 22:09」等，
+ * 统一宽松解析；实在解析不出来就当作今天。
+ */
+function parseLooseDate(s) {
+  const m = String(s || '').match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+  if (m) {
+    return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+  }
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return isoOf(d);
+  return null;
+}
+
+async function pullCloudData() {
+  try {
+    const res = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return null;
+    const txt = (await res.text()).trim();
+    if (!txt) return null;
+    const sep = txt.includes('|') ? '|' : ',';
+    const i = txt.lastIndexOf(sep);
+    if (i < 0) return null;
+    const head = txt.slice(0, i).trim();
+    const active = Math.round(Number(String(txt.slice(i + 1)).replace(/[^\d.]/g, '')));
+    if (!active || active <= 0) return null;
+    const date = parseLooseDate(head) || todayISO();
+    const d = Store.load();
+    const cur = d.daily[date] || {};
+    if (cur.active === active && cur.source === 'cloud') return null;
+    d.daily[date] = Object.assign({}, cur, { active, source: 'cloud' });
+    Store.save();
+    return date;
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ---------------- 初始化 ---------------- */
 function init() {
   const synced = consumeHealthLink();
@@ -1090,6 +1132,22 @@ function init() {
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);
   }
+
+  // 打开时拉一次云端数据（不阻塞界面）
+  pullCloudData().then(date => {
+    if (!date) return;
+    loadDay();
+    toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+  });
+
+  // 从后台切回来时再拉一次
+  let lastPull = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (Date.now() - lastPull < 60000) return;
+    lastPull = Date.now();
+    pullCloudData().then(date => { if (date) loadDay(); });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

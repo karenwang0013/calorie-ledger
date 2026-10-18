@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v4';
+const CACHE = 'ledger-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -36,6 +36,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   // 只缓存自己的文件，通义千问的请求一律放行
   if (url.origin !== self.location.origin) return;
+
+  // 同步数据文件永远走网络，不能吃缓存
+  if (url.pathname.endsWith('health.json')) return;
 
   // 打开页面：先走网络拿最新版，断网了再用缓存
   if (req.mode === 'navigate') {
