@@ -246,6 +246,7 @@ function setAddMode(m) {
   ['photo', 'search', 'text'].forEach(k => {
     $('#pane-' + k).hidden = k !== m;
   });
+  if (m === 'search') runSearch($('#searchInput').value || '');
 }
 
 function renderMealPick() {
@@ -355,28 +356,64 @@ async function runText() {
 }
 
 /* ---- 搜索 ---- */
+
+/* 从历史记录里整理出「以前记过」的食物（按最近一次记录换算每100g） */
+function historyFoods() {
+  const logs = Store.load().logs || [];
+  const map = new Map();
+  logs.forEach(l => {
+    const g = Number(l.grams) || 0;
+    if (!g || !l.name) return;
+    map.set(l.name, {
+      name: l.name,
+      kcal: Math.round((Number(l.kcal) || 0) * 100 / g),
+      p: +(((Number(l.p) || 0) * 100) / g).toFixed(1),
+      c: +(((Number(l.c) || 0) * 100) / g).toFixed(1),
+      f: +(((Number(l.f) || 0) * 100) / g).toFixed(1),
+      grams: g,
+      cat: '以前记过',
+    });
+  });
+  return [...map.values()];
+}
+
 function runSearch(q) {
   const box = $('#searchList');
   const key = q.trim().toLowerCase();
-  if (!key) { box.innerHTML = ''; return; }
-  const hits = S.foods.filter(f => {
-    if (f.name.toLowerCase().includes(key)) return true;
-    return (f.alias || []).some(a => a.toLowerCase().includes(key));
-  }).slice(0, 20);
-  if (!hits.length) {
-    box.innerHTML = `<div class="empty-state">库里没有「${esc(q)}」<br>试试换个说法，或用「描述」让 AI 估</div>`;
+  const hist = historyFoods();
+
+  let list;
+  if (!key) {
+    list = hist.slice().reverse().slice(0, 12).map(f => ({ f, h: true }));
+  } else {
+    const h = hist.filter(f => f.name.toLowerCase().includes(key)).map(f => ({ f, h: true }));
+    const db = S.foods
+      .filter(f => f.name.toLowerCase().includes(key) ||
+        (f.alias || []).some(a => a.toLowerCase().includes(key)))
+      .filter(f => !h.some(x => x.f.name === f.name))
+      .slice(0, 20)
+      .map(f => ({ f, h: false }));
+    list = h.concat(db);
+  }
+
+  if (!list.length) {
+    box.innerHTML = key
+      ? `<div class="empty-state">库里没有「${esc(q)}」<br>试试换个说法，或用「描述」让 AI 估</div>`
+      : '';
     return;
   }
-  box.innerHTML = hits.map((f, i) => `
+
+  box.innerHTML = list.map((x, i) => `
     <div class="sitem" data-i="${i}">
       <div>
-        <div>${esc(f.name)}</div>
-        <div class="cat">${esc(f.cat)} · 蛋白 ${f.p}g / 碳水 ${f.c}g / 脂肪 ${f.f}g</div>
+        <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}</div>
+        <div class="cat">${esc(x.f.cat || '')} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
       </div>
-      <div class="kc">${f.kcal}<br><span style="font-size:9px">/100g</span></div>
+      <div class="kc">${x.f.kcal}<br><span style="font-size:9px">/100g</span></div>
     </div>`).join('');
+
   $$('.sitem', box).forEach(el => el.onclick = () => {
-    pushFood(hits[Number(el.dataset.i)]);
+    pushFood(list[Number(el.dataset.i)].f);
     $('#searchInput').value = '';
     box.innerHTML = '';
     $('#searchInput').blur();
@@ -384,7 +421,7 @@ function runSearch(q) {
 }
 
 function pushFood(f) {
-  const def = f.units && f.units[0] ? f.units[0].g : 100;
+  const def = Number(f.grams) || (f.units && f.units[0] ? f.units[0].g : 100);
   S.items.push({
     name: f.name,
     grams: def,
