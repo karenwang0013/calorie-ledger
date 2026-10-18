@@ -613,11 +613,6 @@ select {
   user-select: all;
 }
 
-.mebar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 2px 18px 10px;
-}
-.mebar span { font-size: 13px; color: var(--muted); letter-spacing: .5px; }
 
 .safariwarn {
   margin: 8px 14px 0;
@@ -629,3 +624,27 @@ select {
   background: rgba(255, 159, 10, .10);
   border: 1px solid rgba(255, 159, 10, .22);
 }
+
+/* ---------- 设置列表 ---------- */
+.setgroup {
+  margin: 0 18px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.srow {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; padding: 15px;
+  background: none; border: 0; border-top: 1px solid var(--line);
+  color: var(--text); font-size: 14.5px; text-align: left;
+}
+.srow:first-child { border-top: 0; }
+.srow:active { background: var(--card2); }
+.srow .ico { width: 20px; text-align: center; font-size: 15px; flex: 0 0 auto; opacity: .95; }
+.srow em { margin-left: auto; font-style: normal; color: var(--muted2); font-size: 12px; }
+.srow i { color: var(--muted2); font-style: normal; font-size: 15px; margin-left: 4px; }
+.seclabel { padding: 0 26px 8px; font-size: 11px; color: var(--muted2); letter-spacing: .6px; }
+.mebar { padding: 0 18px 4px; }
+.backlink { background: none; border: 0; color: var(--lime); font-size: 13px; padding: 6px 0; }
+.meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }

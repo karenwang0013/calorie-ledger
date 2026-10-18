@@ -693,7 +693,14 @@ function lineChart(points, start, end) {
   </svg>`;
 }
 
-/* ---------------- 我的 ---------------- */
+/* ---------------- 我的 / 设置 ---------------- */
+let mePage = null;
+
+function meBackBar(title) {
+  return `<div class="mebar"><button class="backlink" id="meBack">‹ 设置</button></div>
+  <div class="meh1">${title}</div>`;
+}
+
 function renderMe() {
   const d = S.day;
   if (!d) return;
@@ -703,122 +710,166 @@ function renderMe() {
   const sugKcal = Math.round(Math.abs(sugGoal) * 7700 / 7);
   const opt = Object.entries(acts).map(([k, v]) =>
     `<option value="${k}" ${p.activity === k ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  const g = Math.abs(p.goal_rate ?? -0.25);
 
-  $('#meBody').innerHTML = `
-    <div class="card">
-      <h3>身体数据</h3>
-      <div class="split">
-        <div class="field">
-          <label>性别</label>
-          <select id="fSex">
-            <option value="female" ${p.sex === 'female' ? 'selected' : ''}>女</option>
-            <option value="male" ${p.sex === 'male' ? 'selected' : ''}>男</option>
-          </select>
+  let h = '';
+
+  if (!mePage) {
+    h = `
+      <div class="setgroup">
+        <button class="srow" data-page="body">
+          <span class="ico">👤</span><span>身体与目标</span>
+          <em>${p.height_cm || 165}cm · ${p.weight_kg || 60}kg</em><i>›</i>
+        </button>
+        <button class="srow" data-page="watch">
+          <span class="ico">⌚</span><span>手表 / 消耗数据</span>
+          <em>${esc(d.expenditure_source)}</em><i>›</i>
+        </button>
+      </div>
+      <div class="seclabel">功能</div>
+      <div class="setgroup">
+        <button class="srow" data-page="ai">
+          <span class="ico">✨</span><span>AI 识别</span>
+          <em>${d.has_key ? '已配置' : '未配置'}</em><i>›</i>
+        </button>
+      </div>
+      <div class="seclabel">其他</div>
+      <div class="setgroup">
+        <button class="srow" data-page="data">
+          <span class="ico">💾</span><span>数据备份</span><em></em><i>›</i>
+        </button>
+        <button class="srow" data-page="about">
+          <span class="ico">📄</span><span>关于与更新</span><em>v0.66</em><i>›</i>
+        </button>
+      </div>
+      <div style="height:26px"></div>`;
+  } else if (mePage === 'body') {
+    h = meBackBar('身体与目标') + `
+      <div class="card">
+        <div class="split">
+          <div class="field">
+            <label>性别</label>
+            <select id="fSex">
+              <option value="female" ${p.sex === 'female' ? 'selected' : ''}>女</option>
+              <option value="male" ${p.sex === 'male' ? 'selected' : ''}>男</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>出生年份</label>
+            <input id="fYear" type="number" inputmode="numeric" value="${p.birth_year || 1995}">
+          </div>
+          <div class="field">
+            <label>身高（cm）</label>
+            <input id="fHeight" type="number" inputmode="decimal" value="${p.height_cm || 165}">
+          </div>
+          <div class="field">
+            <label>体重（kg）</label>
+            <input id="fWeight" type="number" inputmode="decimal" step="0.1" value="${p.weight_kg || 60}">
+          </div>
         </div>
         <div class="field">
-          <label>出生年份</label>
-          <input id="fYear" type="number" inputmode="numeric" value="${p.birth_year || 1995}">
+          <label>日常活动量</label>
+          <select id="fAct">${opt}</select>
+          <div class="hint">没有手表数据时用来估算日常消耗。有手表的话会被覆盖。</div>
         </div>
         <div class="field">
-          <label>身高（cm）</label>
-          <input id="fHeight" type="number" inputmode="decimal" value="${p.height_cm || 165}">
+          <label>目标速度（kg / 周）</label>
+          <input id="fGoalRate" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0.5" value="${g}">
+          <div class="hint">填 <b>0.5</b> = 每周减 0.5 公斤；<b>0</b> = 维持；负数 = 增肌。<br>按你 ${p.weight_kg || 60}kg 算，<b style="color:var(--lime)">建议 ${Math.abs(sugGoal)}</b>（≈ 每天 ${sugKcal} 千卡缺口）。</div>
         </div>
         <div class="field">
-          <label>体重（kg）</label>
-          <input id="fWeight" type="number" inputmode="decimal" step="0.1" value="${p.weight_kg || 60}">
+          <label>蛋白质目标（g / kg 体重）</label>
+          <input id="fProt" type="number" inputmode="decimal" step="0.1" value="${p.protein_per_kg || 1.6}">
+          <div class="hint">减脂期建议 1.6–2.2。肌肉量越大、练得越狠，取越高。</div>
+        </div>
+        <button class="btn primary" id="saveProfile">保存</button>
+      </div>`;
+  } else if (mePage === 'watch') {
+    h = meBackBar('手表 / 消耗数据') + `
+      <div class="card">
+        <div class="hint" style="margin:0 0 14px">
+          当前消耗来源：<b style="color:var(--lime)">${esc(d.expenditure_source)}</b><br>
+          <span style="color:var(--muted2);font-size:11px">每天 23:00 自动同步一次。</span>
+        </div>
+        <div class="btnrow">
+          <button class="btn sm" id="openWatch">📷 截图读取</button>
+          <button class="btn sm" id="openWatch3">⌨️ 手动填写</button>
+          <button class="btn sm" id="openWeight2">⚖️ 记体重</button>
+        </div>
+      </div>`;
+  } else if (mePage === 'ai') {
+    h = meBackBar('AI 识别') + `
+      <div class="card">
+        <div class="hint" style="margin:0 0 14px">用于拍照识别食物、读营养成分表。Key 只存在这台设备，不上传。</div>
+        <div class="field">
+          <label>DashScope API Key</label>
+          <input id="fKey" type="password" placeholder="${d.has_key ? '已保存，如需更换请重新填写' : 'sk-...'}" autocomplete="off">
+          <div class="hint">获取地址：bailian.console.aliyun.com</div>
+        </div>
+        <div class="btnrow">
+          <button class="btn sm" id="saveKey">保存</button>
+          <button class="btn sm" id="testKey">测试连接</button>
+        </div>
+        ${d.ai_model ? `<div style="font-size:11px;color:var(--muted2);margin-top:10px">当前模型：${esc(d.ai_model)}</div>` : ''}
+      </div>`;
+  } else if (mePage === 'data') {
+    h = meBackBar('数据备份') + `
+      <div class="card">
+        <div class="btnrow">
+          <button class="btn sm" id="exportCsv">导出 CSV</button>
+          <button class="btn sm" id="exportJson">备份</button>
+          <button class="btn sm" id="importJson">恢复</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <div class="hint" style="margin-top:12px;color:var(--muted2)">
+          所有数据都在这台设备的浏览器里，不上传任何服务器。<br>
+          换手机或清理浏览器前，先点「备份」存一份 JSON。
         </div>
       </div>
-      <div class="field">
-        <label>日常活动量</label>
-        <select id="fAct">${opt}</select>
-        <div class="hint">没有手表数据时用来估算日常消耗。有手表的话会被覆盖。</div>
-      </div>
-      <div class="field">
-        <label>目标速度（kg / 周）</label>
-        <input id="fGoalRate" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0.5" value="${Math.abs(p.goal_rate ?? -0.25)}">
-        <div class="hint">填 <b>0.5</b> = 每周减 0.5 公斤；<b>0</b> = 维持；负数 = 增肌。<br>按你 ${p.weight_kg || 60}kg 算，<b style="color:var(--lime)">建议 ${Math.abs(sugGoal)}</b>（≈ 每天 ${sugKcal} 千卡缺口）。</div>
-      </div>
-      <div class="field">
-        <label>蛋白质目标（g / kg 体重）</label>
-        <input id="fProt" type="number" inputmode="decimal" step="0.1" value="${p.protein_per_kg || 1.6}">
-        <div class="hint">减脂期建议 1.6–2.2。肌肉量越大、练得越狠，取越高。</div>
-      </div>
-      <button class="btn primary" id="saveProfile">保存</button>
-    </div>
-
-    <div class="card">
-      <h3>手表 / 消耗数据</h3>
-      <div class="hint" style="margin:0 0 14px">
-        当前消耗来源：<b style="color:var(--lime)">${esc(d.expenditure_source)}</b><br>
-        <span style="color:var(--muted2);font-size:11px">每天同步一次，缺口才算得准。</span>
-      </div>
-      <div class="btnrow">
-        <button class="btn sm" id="openWatch">📷 截图读取</button>
-        <button class="btn sm" id="openWatch3">⌨️ 手动填写</button>
-        <button class="btn sm" id="openWeight2">⚖️ 记体重</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>AI 识别 <span class="tag" style="color:${d.has_key ? 'var(--lime)' : 'var(--orange)'};background:rgba(255,255,255,.06)">${d.has_key ? '已配置' : '未配置'}</span></h3>
-      <div class="field">
-        <label>DashScope API Key</label>
-        <input id="fKey" type="password" placeholder="${d.has_key ? '已保存，如需更换请重新填写' : 'sk-...'}" autocomplete="off">
-        <div class="hint">只存在这台设备的浏览器里，不会上传到任何第三方。获取地址：bailian.console.aliyun.com</div>
-      </div>
-      <div class="btnrow">
-        <button class="btn sm" id="saveKey">保存</button>
-        <button class="btn sm" id="testKey">测试连接</button>
-      </div>
-      ${d.ai_model ? `<div style="font-size:11px;color:var(--muted2);margin-top:10px">当前模型：${esc(d.ai_model)}</div>` : ''}
-    </div>
-
-    <div class="card">
-      <h3>数据</h3>
-      <div class="btnrow">
-        <button class="btn sm" id="exportCsv">导出 CSV</button>
-        <button class="btn sm" id="exportJson">备份</button>
-        <button class="btn sm" id="importJson">恢复</button>
+      <div class="card">
+        <h3>版本更新</h3>
+        <div class="hint" style="margin:0 0 12px">iPhone 上网页会被缓存。如果看到的是旧界面，点下面按钮强制刷新（不会动数据）。</div>
         <button class="btn sm" id="hardReload">强制更新</button>
+      </div>`;
+  } else if (mePage === 'about') {
+    h = meBackBar('关于与更新') + `
+      <div class="card">
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.66</span></h3>
+        <div class="hint" style="margin:0;line-height:1.95">
+          <b style="color:var(--lime)">10-19</b><br>
+          同步改为「快捷指令 → GitHub → App」，不再打开 Safari<br>
+          拍照支持营养成分表，按克数精确换算<br>
+          搜索页可复用「以前记过」的食物<br>
+          设置改为分组菜单，界面重排<br>
+          <b style="color:var(--lime)">10-18</b><br>
+          从本地服务改为纯前端 PWA；118 条食物库；趋势页；备份恢复
+        </div>
       </div>
-      <input type="file" id="importFile" accept="application/json,.json" hidden>
-      <div class="hint" style="margin-top:12px;color:var(--muted2)">
-        所有数据都在这台设备的浏览器里，不上传任何服务器。<br>
-        换手机或清理浏览器前，先点「备份」存一份 JSON。
-      </div>
-    </div>
+      <div class="card">
+        <h3>这套算法在算什么</h3>
+        <div class="hint" style="margin:0;line-height:1.9">
+          <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
+          <b style="color:var(--text)">全天消耗</b>：手表给了活动能量 → 基础代谢 + 活动能量；给的是总消耗 → 直接用；都没 → 基础代谢 × 活动系数。<br>
+          <b style="color:var(--text)">目标缺口</b>：目标速度 × 7700 ÷ 7，封顶在当天消耗的 22%。<br>
+          <b style="color:var(--text)">还能吃</b>：全天消耗 − 目标缺口 − 已吃。<br>
+          <b style="color:var(--text)">实际缺口</b>：全天消耗 − 已吃。正数缺口，负数盈余。<br>
+          <b style="color:var(--text)">实测消耗</b>（趋势页）：体重回归斜率 × 7700。<br>
+          <span style="color:var(--muted2);font-size:11px">单日有 ±20% 误差，看 7 天平均。</span>
+        </div>
+      </div>`;
+  }
 
-    <div class="card">
-      <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.66</span></h3>
-      <div class="hint" style="margin:0;line-height:1.95">
-        <b style="color:var(--lime)">10-19</b><br>
-        同步改为「快捷指令 → GitHub → App」，不再打开 Safari<br>
-        拍照支持营养成分表，按克数精确换算<br>
-        搜索页可复用「以前记过」的食物<br>
-        界面重排：我的移到右上角，加号居中，图标重做<br>
-        <b style="color:var(--lime)">10-18</b><br>
-        从本地服务改为纯前端 PWA；118 条食物库；趋势页；备份恢复
-      </div>
-    </div>
+  $('#meBody').innerHTML = h;
+  wireMe();
+}
 
-    <div class="card">
-      <h3>这套算法在算什么</h3>
-      <div class="hint" style="margin:0;line-height:1.9">
-        <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
-        <b style="color:var(--text)">全天消耗</b>：<br>
-        　①② 手表给了活动能量 → <b>基础代谢 + 活动能量</b>（现在的常用算法）<br>
-        　③ 手表给的是总消耗 → 直接用总消耗<br>
-        　④ 没有手表数据 → 基础代谢 × 活动系数（公式估算）<br>
-        <b style="color:var(--text)">目标缺口</b>：目标速度 × 7700 ÷ 7。7700 千卡≈1kg 脂肪；同时封顶在当天消耗的 22%，防止吃太少。<br>
-        <b style="color:var(--text)">还能吃</b>：全天消耗 − 目标缺口 − 已吃。<br>
-        <b style="color:var(--text)">实际缺口</b>：全天消耗 − 已吃。正数是缺口，负数是盈余。<br>
-        <b style="color:var(--text)">实测消耗</b>（趋势页）：用体重变化做线性回归，斜率 × 7700，反映你这段时间真实的消耗。<br>
-        <span style="color:var(--muted2);font-size:11px">单日数字有 ±20% 误差；判断减脂效果看 7 天平均，别看某一天。</span>
-      </div>
-    </div>
-    <div style="height:30px"></div>`;
+function wireMe() {
+  const back = $('#meBack');
+  if (back) back.onclick = () => { mePage = null; renderMe(); };
+  $$('.srow').forEach(b => b.onclick = () => { mePage = b.dataset.page; renderMe(); });
 
-  $('#saveProfile').onclick = async () => {
+  const sp = $('#saveProfile');
+  if (sp) sp.onclick = async () => {
     try {
       await api('/api/profile', {
         sex: $('#fSex').value,
@@ -827,7 +878,7 @@ function renderMe() {
         weight_kg: Number($('#fWeight').value),
         activity: $('#fAct').value,
         goal_rate: (() => {
-          const raw = ($('#fGoalRate') || {}).value ? $('#fGoalRate').value.trim() : '';
+          const raw = $('#fGoalRate').value.trim();
           if (raw === '') return -0.25;
           const v = Number(raw);
           return isFinite(v) ? -v : -0.25;
@@ -839,10 +890,11 @@ function renderMe() {
       renderMe();
     } catch (e) { toast(e.message); }
   };
-  $('#openWatch').onclick = openWatch;
-  const ow3 = $('#openWatch3');
-  if (ow3) ow3.onclick = openWatch;
-  $('#openWeight2').onclick = openWeight;
+
+  const ow = $('#openWatch'); if (ow) ow.onclick = openWatch;
+  const ow3 = $('#openWatch3'); if (ow3) ow3.onclick = openWatch;
+  const w2 = $('#openWeight2'); if (w2) w2.onclick = openWeight;
+
   const hr = $('#hardReload');
   if (hr) hr.onclick = async () => {
     try {
@@ -854,10 +906,12 @@ function renderMe() {
     toast('正在更新…', 1200);
     setTimeout(() => location.reload(), 400);
   };
-  $('#exportCsv').onclick = () => { downloadCsv(); toast('已导出 CSV'); };
-  $('#exportJson').onclick = () => { exportJson(); toast('已备份'); };
-  $('#importJson').onclick = () => $('#importFile').click();
-  $('#importFile').onchange = async e => {
+
+  const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
+  const ej = $('#exportJson'); if (ej) ej.onclick = () => { exportJson(); toast('已备份'); };
+  const ij = $('#importJson'); if (ij) ij.onclick = () => $('#importFile').click();
+  const iff = $('#importFile');
+  if (iff) iff.onchange = async e => {
     const f = e.target.files[0];
     if (!f) return;
     try {
@@ -871,7 +925,8 @@ function renderMe() {
     e.target.value = '';
   };
 
-  $('#saveKey').onclick = async () => {
+  const sk = $('#saveKey');
+  if (sk) sk.onclick = async () => {
     const v = $('#fKey').value.trim();
     if (!v) return toast('先填入 Key');
     try {
@@ -881,7 +936,8 @@ function renderMe() {
       renderMe();
     } catch (e) { toast(e.message); }
   };
-  $('#testKey').onclick = async () => {
+  const tk = $('#testKey');
+  if (tk) tk.onclick = async () => {
     const v = $('#fKey').value.trim();
     if (v) await api('/api/settings', { dashscope_key: v });
     try {
@@ -984,7 +1040,7 @@ function switchView(v) {
   document.body.classList.toggle('view-trends', v === 'trends');
   window.scrollTo({ top: 0 });
   if (v === 'trends') { renderTrends(); loadTrends(); }
-  if (v === 'me') renderMe();
+  if (v === 'me') { mePage = null; renderMe(); }
 }
 
 /* ---------------- 自动同步帮助 ---------------- */
