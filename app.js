@@ -1366,7 +1366,7 @@ function init() {
     // 先唤起快捷指令读手表，回到 App 时自动拉取
     pendingSync = true;
     refreshBtn.classList.add('spin');
-    toast('正在读取手表数据…', 2000);
+    toast('一键采集并刷新…', 2000);
     location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(SYNC_SHORTCUT);
     // 唤起失败（没装快捷指令 / 名字不对）时兜底：直接拉一次云端
     setTimeout(() => {
