@@ -92,6 +92,12 @@ select {
 .topbtn svg { width: 13px; height: 13px; }
 .topbtn:active { background: var(--card2); }
 
+.topactions { display: flex; align-items: center; gap: 8px; }
+.topbtn.topicon { padding: 7px; }
+.topbtn.topicon svg { width: 16px; height: 16px; }
+.topbtn.spin svg { animation: rot 0.9s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
 /* ---------- 日期 ---------- */.daterow {
   display: flex;
   align-items: center;

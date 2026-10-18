@@ -1112,7 +1112,18 @@ function init() {
   });
 
   $('#quickWatch').onclick = openWatch;
-  $('#watchClose').onclick = closeWatch;
+  const refreshBtn = $('#cloudRefresh');
+  if (refreshBtn) refreshBtn.onclick = async () => {
+    refreshBtn.classList.add('spin');
+    let date = null;
+    try { date = await pullCloudData(); } catch (e) {}
+    refreshBtn.classList.remove('spin');
+    loadDay();
+    const dd = Store.load().daily[S.today] || {};
+    if (date) toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+    else if (dd.active) toast('已是最新：活动消耗 ' + dd.active + ' 千卡', 2400);
+    else toast('暂时没有新数据（每天 23:00 更新）', 2600);
+  };  $('#watchClose').onclick = closeWatch;
   $('#watchMask').onclick = closeWatch;
   $('#watchSave').onclick = saveWatch;
   $('#watchPick').onclick = () => $('#watchInput').click();
