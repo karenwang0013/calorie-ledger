@@ -72,12 +72,10 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(22px + var(--safe-t)) 18px 12px;
+  padding: calc(30px + var(--safe-t)) 18px 12px;
   background: var(--bg);
 }
-.brandblock { display: flex; flex-direction: column; gap: 3px; }
-.brand { font-size: 19px; font-weight: 650; letter-spacing: 0.2px; line-height: 1.1; }
-.brandsub { font-size: 11px; color: var(--muted2); letter-spacing: .3px; }
+.brand { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
 .brand span { color: var(--lime); }
 .topbtn {
   display: inline-flex; align-items: center; gap: 5px;
