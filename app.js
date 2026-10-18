@@ -743,6 +743,7 @@ function renderMe() {
         <button class="btn sm" id="exportCsv">导出 CSV</button>
         <button class="btn sm" id="exportJson">备份</button>
         <button class="btn sm" id="importJson">恢复</button>
+        <button class="btn sm" id="hardReload">强制更新</button>
       </div>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
       <div class="hint" style="margin-top:12px;color:var(--muted2)">
@@ -783,6 +784,17 @@ function renderMe() {
   const ow3 = $('#openWatch3');
   if (ow3) ow3.onclick = openWatch;
   $('#openWeight2').onclick = openWeight;
+  const hr = $('#hardReload');
+  if (hr) hr.onclick = async () => {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    } catch (e) {}
+    toast('正在更新…', 1200);
+    setTimeout(() => location.reload(), 400);
+  };
   $('#exportCsv').onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   $('#exportJson').onclick = () => { exportJson(); toast('已备份'); };
   $('#showShortcut').onclick = showShortcutHelp;
