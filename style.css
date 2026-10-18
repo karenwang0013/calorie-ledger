@@ -274,7 +274,7 @@ select {
 .tabbar .inner {
   width: 100%; max-width: 520px;
   display: flex; align-items: center; gap: 2px;
-  padding: 6px 16px calc(6px + var(--safe-b));
+  padding: 4px 16px calc(2px + var(--safe-b));
   pointer-events: auto;
   background: rgba(11, 12, 14, 0.92);
   backdrop-filter: blur(18px);
