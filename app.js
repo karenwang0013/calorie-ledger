@@ -91,6 +91,12 @@ function renderToday() {
   $('#nextDay').style.opacity = isToday ? 0.28 : 1;
 
   const t = d.targets;
+  const bs = $('#brandSub');
+  if (bs) {
+    bs.textContent = d.date === S.today
+      ? (t.deficit > 0 ? `今天 · 目标缺口 ${t.deficit}` : '今天 · 维持体重')
+      : `${dt.getMonth() + 1}月${dt.getDate()}日`;
+  }
   const intake = d.intake;
   const expFull = d.expenditure;          // 全天预估/实际
   const balFull = d.balance;
