@@ -118,14 +118,15 @@ select {
   letter-spacing: 1px;
 }
 .arrow {
-  width: 42px; height: 42px;
-  border-radius: 50%;
+  width: 40px; height: 40px;
+  border-radius: 12px;
   background: var(--card2);
   border: 1px solid var(--line2);
   color: var(--text);
-  display: grid; place-items: center;
-  font-size: 22px; font-weight: 400; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
 }
+.arrow svg { width: 20px; height: 20px; display: block; }
 .arrow:active { background: var(--card); transform: scale(.94); }
 .arrow:disabled { opacity: 0.30; }
 
