@@ -718,6 +718,7 @@ function renderMe() {
 
   if (!mePage) {
     h = `
+      <h1 class="pagetitle">设置</h1>
       <div class="setgroup">
         <button class="srow" data-page="body">
           <span>身体与目标</span>
@@ -1166,8 +1167,6 @@ function switchView(v) {
   document.body.classList.toggle('view-trends', v === 'trends');
   window.scrollTo({ top: 0 });
   if (v === 'trends') { renderTrends(); loadTrends(); }
-  const bs = $('#brandSub');
-  if (bs) bs.hidden = v !== 'me';
   if (v === 'me') { mePage = null; renderMe(); }
 }
 
