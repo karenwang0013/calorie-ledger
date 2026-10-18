@@ -130,17 +130,23 @@ function renderToday() {
   hero.classList.remove('surplus', 'over');
 
   let sub;
-  if (left < 0) {
+  if (bal < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
-    $('#heroNum').textContent = Math.abs(left);
-    sub = intake === 0 ? '还没记录' : `已吃 ${intake} · 目标 ${t.kcal_budget}`;
+    $('#heroNum').textContent = Math.abs(bal);
+    sub = t.deficit > 0 ? `目标缺口 ${t.deficit} · 已超出 ${Math.abs(bal)}` : '今天吃超了';
   } else {
-    $('#heroLbl').textContent = '还能吃';
-    $('#heroNum').textContent = left;
-    sub = intake === 0
-      ? (t.deficit > 0 ? `还没记录 · 目标缺口 ${t.deficit}` : '还没记录 · 未设目标')
-      : `已吃 ${intake} · 目标缺口 ${t.deficit}`;
+    $('#heroLbl').textContent = '热量缺口';
+    $('#heroNum').textContent = bal;
+    if (t.deficit <= 0) {
+      sub = intake === 0 ? '还没记录 · 未设目标' : `已吃 ${intake}`;
+    } else if (intake === 0) {
+      sub = `目标缺口 ${t.deficit} · 还没记录`;
+    } else if (bal >= t.deficit) {
+      sub = `目标 ${t.deficit} · 已达标`;
+    } else {
+      sub = `目标 ${t.deficit} · 还差 ${t.deficit - bal}`;
+    }
   }
   $('#heroSub').textContent = sub;
 
