@@ -764,7 +764,7 @@ function renderMe() {
       <div class="field">
         <label>DashScope API Key</label>
         <input id="fKey" type="password" placeholder="${d.has_key ? '已保存，如需更换请重新填写' : 'sk-...'}" autocomplete="off">
-        <div class="hint">存在这台电脑的本地数据库里，不会上传到任何第三方。获取地址：bailian.console.aliyun.com</div>
+        <div class="hint">只存在这台设备的浏览器里，不会上传到任何第三方。获取地址：bailian.console.aliyun.com</div>
       </div>
       <div class="btnrow">
         <button class="btn sm" id="saveKey">保存</button>
