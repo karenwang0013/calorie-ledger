@@ -774,14 +774,6 @@ function renderMe() {
     </div>
 
     <div class="card">
-      <h3>自动同步手表 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">免截图</span></h3>
-      <div class="hint" style="margin:0 0 12px">
-        用 iOS「快捷指令」每天定时读健康数据，自动写进来。配一次，之后不用管。
-      </div>
-      <button class="btn sm" id="showShortcut">查看配置步骤</button>
-    </div>
-
-    <div class="card">
       <h3>数据</h3>
       <div class="btnrow">
         <button class="btn sm" id="exportCsv">导出 CSV</button>
@@ -846,7 +838,6 @@ function renderMe() {
   };
   $('#exportCsv').onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   $('#exportJson').onclick = () => { exportJson(); toast('已备份'); };
-  $('#showShortcut').onclick = showShortcutHelp;
   $('#importJson').onclick = () => $('#importFile').click();
   $('#importFile').onchange = async e => {
     const f = e.target.files[0];
