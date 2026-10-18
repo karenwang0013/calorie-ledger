@@ -119,17 +119,40 @@ function targetsOf(p, exp) {
   let want = -goalRate * KCAL_PER_KG / 7;            // 正数=每天想要的缺口
   want = Math.max(-600, Math.min(700, want));
   if (want > 0) want = Math.min(want, exp * 0.22);   // 缺口不超过消耗 22%
-  const proteinG = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
-  const budget = Math.max(1000, exp - want);
-  const fatG = Math.round(Math.max(40, budget * 0.28 / 9));
-  const carbG = Math.round(Math.max(50, (budget - proteinG * 4 - fatG * 9) / 4));
+
+  // —— 自动建议值 ——
+  const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
+  const budgetAuto = Math.max(1000, exp - want);
+  const fatAuto = Math.round(Math.max(40, budgetAuto * 0.28 / 9));
+  const carbAuto = Math.round(Math.max(50, (budgetAuto - proteinAuto * 4 - fatAuto * 9) / 4));
+
+  // —— 用户手动覆盖（营养目标页） ——
+  const ov = setting('target_override', {}) || {};
+  const num = (v, d) => {
+    if (v === undefined || v === null || v === '') return d;
+    const n = Number(v);
+    return isFinite(n) && n > 0 ? Math.round(n) : d;
+  };
+  const kcal_budget = num(ov.kcal, Math.round(budgetAuto));
+  const protein_g = num(ov.protein, proteinAuto);
+  const fat_g = num(ov.fat, fatAuto);
+  const carb_g = num(ov.carb, carbAuto);
+  const deficit = Math.round(exp - kcal_budget);
+
   return {
-    deficit: Math.round(want),
-    kcal_budget: Math.round(budget),
-    protein_g: proteinG,
-    fat_g: fatG,
-    carb_g: carbG,
+    deficit,
+    kcal_budget,
+    protein_g,
+    fat_g,
+    carb_g,
     goal_rate: goalRate,
+    auto: {
+      kcal_budget: Math.round(budgetAuto),
+      protein_g: proteinAuto,
+      fat_g: fatAuto,
+      carb_g: carbAuto,
+      deficit: Math.round(want),
+    },
   };
 }
 
@@ -584,6 +607,9 @@ async function api(path, body, method) {
     }
     if (body.sync_toast !== undefined) {
       setSetting('sync_toast', !!body.sync_toast);
+    }
+    if (body.target_override !== undefined) {
+      setSetting('target_override', body.target_override || {});
     }
     return { ok: true, has_key: !!setting('dashscope_key', '') };
   }

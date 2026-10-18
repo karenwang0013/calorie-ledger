@@ -130,24 +130,14 @@ function renderToday() {
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
 
-  let sub;
+  let sub = `目标缺口 ${t.deficit}`;
   if (bal < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
     $('#heroNum').textContent = Math.abs(bal);
-    sub = t.deficit > 0 ? `目标缺口 ${t.deficit} · 已超出 ${Math.abs(bal)}` : '今天吃超了';
   } else {
     $('#heroLbl').textContent = '热量缺口';
     $('#heroNum').textContent = bal;
-    if (t.deficit <= 0) {
-      sub = intake === 0 ? '还没记录 · 未设目标' : `已吃 ${intake}`;
-    } else if (intake === 0) {
-      sub = `目标缺口 ${t.deficit} · 还没记录`;
-    } else if (bal >= t.deficit) {
-      sub = `目标 ${t.deficit} · 已达标`;
-    } else {
-      sub = `目标 ${t.deficit} · 还差 ${t.deficit - bal}`;
-    }
   }
   $('#heroSub').textContent = sub;
 
@@ -730,36 +720,40 @@ function renderMe() {
     h = `
       <div class="setgroup">
         <button class="srow" data-page="body">
-          <span class="ico">👤</span><span>身体与目标</span>
+          <span>身体与目标</span>
           <em>${p.height_cm || 165}cm · ${p.weight_kg || 60}kg</em><i>›</i>
         </button>
+        <button class="srow" data-page="nutri">
+          <span>营养目标</span>
+          <em>${d.targets.kcal_budget} 千卡 / 天</em><i>›</i>
+        </button>
         <button class="srow" data-page="watch">
-          <span class="ico">⌚</span><span>手表 / 消耗数据</span>
+          <span>手表 / 消耗数据</span>
           <em>${esc(d.expenditure_source)}</em><i>›</i>
         </button>
       </div>
       <div class="seclabel">功能</div>
       <div class="setgroup">
         <button class="srow" data-page="ai">
-          <span class="ico">✨</span><span>AI 识别</span>
+          <span>AI 识别</span>
           <em>${d.has_key ? '已配置' : '未配置'}</em><i>›</i>
         </button>
         <button class="srow" data-page="theme">
-          <span class="ico">🎨</span><span>个性化</span>
+          <span>个性化</span>
           <em>${THEME_NAMES[d.theme] || '荧光绿'}</em><i>›</i>
         </button>
         <button class="srow" data-page="notify">
-          <span class="ico">🔔</span><span>通知</span>
+          <span>通知</span>
           <em>${d.sync_toast ? '开' : '关'}</em><i>›</i>
         </button>
       </div>
       <div class="seclabel">其他</div>
       <div class="setgroup">
         <button class="srow" data-page="data">
-          <span class="ico">💾</span><span>数据备份</span><em></em><i>›</i>
+          <span>数据备份</span><em></em><i>›</i>
         </button>
         <button class="srow" data-page="about">
-          <span class="ico">📄</span><span>关于与更新</span><em>v0.66</em><i>›</i>
+          <span>关于与更新</span><em>v0.66</em><i>›</i>
         </button>
       </div>
       <div style="height:26px"></div>`;
@@ -851,6 +845,41 @@ function renderMe() {
         <div class="hint" style="margin:0 0 12px">iPhone 上网页会被缓存。如果看到的是旧界面，点下面按钮强制刷新（不会动数据）。</div>
         <button class="btn sm" id="hardReload">强制更新</button>
       </div>`;
+  } else if (mePage === 'nutri') {
+    const a = (d.targets.auto) || {};
+    h = meBackBar('营养目标') + `
+      <div class="card">
+        <div class="hint" style="margin:0 0 16px">全留空 = 用建议值（会随体重和消耗自动变）。填了就以你填的为准。</div>
+        <div class="field">
+          <label>目标缺口（千卡 / 天）</label>
+          <input id="nDef" type="number" inputmode="numeric" value="${d.targets.deficit}">
+          <div class="hint">建议 ${a.deficit ?? d.targets.deficit}</div>
+        </div>
+        <div class="field">
+          <label>每日可吃（千卡）</label>
+          <input id="nKcal" type="number" inputmode="numeric" value="${d.targets.kcal_budget}">
+          <div class="hint">= 今日消耗 ${d.expenditure} − 目标缺口</div>
+        </div>
+        <div class="field">
+          <label>蛋白质（g）</label>
+          <input id="nProt" type="number" inputmode="numeric" value="${d.targets.protein_g}">
+          <div class="hint">建议 ${a.protein_g ?? d.targets.protein_g}（体重 × 系数）</div>
+        </div>
+        <div class="field">
+          <label>碳水（g）</label>
+          <input id="nCarb" type="number" inputmode="numeric" value="${d.targets.carb_g}">
+          <div class="hint">建议 ${a.carb_g ?? d.targets.carb_g}</div>
+        </div>
+        <div class="field">
+          <label>脂肪（g）</label>
+          <input id="nFat" type="number" inputmode="numeric" value="${d.targets.fat_g}">
+          <div class="hint">建议 ${a.fat_g ?? d.targets.fat_g}</div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="saveNutri" style="flex:2">保存</button>
+          <button class="btn sm" id="resetNutri">恢复建议</button>
+        </div>
+      </div>`;
   } else if (mePage === 'theme') {
     const cur = d.theme || 'lime';
     h = meBackBar('个性化') + `
@@ -928,6 +957,36 @@ function wireMe() {
     toast('已切换主题');
     renderMe();
   });
+
+  const nd = $('#nDef'), nk = $('#nKcal');
+  if (nd && nk) {
+    const exp = (S.day && S.day.expenditure) || 0;
+    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp - (Number(nd.value) || 0))); };
+    nk.oninput = () => { nd.value = Math.round(exp - (Number(nk.value) || 0)); };
+  }
+  const sn = $('#saveNutri');
+  if (sn) sn.onclick = async () => {
+    try {
+      await api('/api/settings', {
+        target_override: {
+          kcal: Number($('#nKcal').value) || 0,
+          protein: Number($('#nProt').value) || 0,
+          carb: Number($('#nCarb').value) || 0,
+          fat: Number($('#nFat').value) || 0,
+        },
+      });
+      toast('已保存营养目标');
+      await loadDay();
+      renderMe();
+    } catch (e) { toast(e.message); }
+  };
+  const rn = $('#resetNutri');
+  if (rn) rn.onclick = async () => {
+    await api('/api/settings', { target_override: {} });
+    toast('已恢复建议值');
+    await loadDay();
+    renderMe();
+  };
 
   const sw = $('#swToast');
   if (sw) sw.onchange = async () => {

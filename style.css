@@ -118,15 +118,16 @@ select {
   letter-spacing: 1px;
 }
 .arrow {
-  width: 34px; height: 34px;
-  border-radius: 10px;
-  background: var(--card);
-  color: var(--muted);
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--card2);
+  border: 1px solid var(--line2);
+  color: var(--text);
   display: grid; place-items: center;
-  font-size: 15px;
+  font-size: 22px; font-weight: 400; line-height: 1;
 }
-.arrow:active { background: var(--card2); }
-.arrow:disabled { opacity: 0.28; }
+.arrow:active { background: var(--card); transform: scale(.94); }
+.arrow:disabled { opacity: 0.30; }
 
 .setup-tip {
   display: flex; align-items: center; gap: 10px; width: auto;
