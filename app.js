@@ -44,6 +44,9 @@ function toast(msg, ms = 2200) {
 }
 
 /* ---------------- 状态 ---------------- */
+const SYNC_SHORTCUT = '热量采集';
+let pendingSync = false;
+
 const S = {
   date: todayISO(),
   today: todayISO(),
@@ -1347,7 +1350,8 @@ function init() {
   const gm = $('#goMe');
   if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
   const refreshBtn = $('#cloudRefresh');
-  if (refreshBtn) refreshBtn.onclick = async () => {
+  async function pullNow() {
+    if (!refreshBtn) return;
     refreshBtn.classList.add('spin');
     let date = null;
     try { date = await pullCloudData(); } catch (e) {}
@@ -1356,7 +1360,21 @@ function init() {
     const dd = Store.load().daily[S.today] || {};
     if (date) toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
     else if (dd.active) toast('已是最新：活动消耗 ' + dd.active + ' 千卡', 2400);
-    else toast('暂时没有新数据（每天 23:00 更新）', 2600);
+    else toast('还没读到手表数据（可能今天还没活动）', 2600);
+  }
+  if (refreshBtn) refreshBtn.onclick = () => {
+    // 先唤起快捷指令读手表，回到 App 时自动拉取
+    pendingSync = true;
+    refreshBtn.classList.add('spin');
+    toast('正在读取手表数据…', 2000);
+    location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(SYNC_SHORTCUT);
+    // 唤起失败（没装快捷指令 / 名字不对）时兜底：直接拉一次云端
+    setTimeout(() => {
+      if (pendingSync && document.visibilityState === 'visible') {
+        pendingSync = false;
+        pullNow();
+      }
+    }, 2000);
   };  $('#watchClose').onclick = closeWatch;
   $('#watchMask').onclick = closeWatch;
   $('#watchSave').onclick = saveWatch;
@@ -1405,6 +1423,12 @@ function init() {
   let lastPull = Date.now();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    if (pendingSync) {
+      pendingSync = false;
+      lastPull = Date.now();
+      pullCloudData().then(() => { loadDay(); toast('⌚ 已读取手表数据', 2200); });
+      return;
+    }
     if (Date.now() - lastPull < 60000) return;
     lastPull = Date.now();
     pullCloudData().then(date => { if (date) loadDay(); });
