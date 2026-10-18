@@ -74,9 +74,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(20px + var(--safe-t)) 18px 12px;
+  padding: calc(10px + var(--safe-t)) 18px 10px;
   background: var(--bg);
-  border-bottom: 1px solid rgba(255,255,255,.045);
 }
 .brand { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
 .brand span { color: var(--lime); }
