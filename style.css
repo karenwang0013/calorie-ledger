@@ -61,9 +61,7 @@ select {
   margin: 0 auto;
   min-height: 100dvh;
   padding-bottom: calc(92px + var(--safe-b));
-  background:
-    radial-gradient(120% 60% at 50% -10%, rgba(214, 255, 75, 0.06), transparent 60%),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* ---------- 顶栏 ---------- */
