@@ -995,7 +995,7 @@ function showShortcutHelp() {
     <div class="sechead">要确认的一步：自动化指向它</div>
     <div class="step"><b>4</b><div>「快捷指令」App → 底部 <b>自动化</b> → 点「23:00」那条</div></div>
     <div class="step"><b>5</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量采集</b>」→ 完成</div></div>
-    <div class="step"><b>6</b><div>确认那条自动化的总开关是**打开**状态</div></div>
+    <div class="step"><b>6</b><div>确认那条自动化的总开关是<b>打开</b>状态</div></div>
 
     <div class="sechead">怎么知道它在工作</div>
     <div class="step"><b>7</b><div>23:00 之后打开 App，「消耗」会显示 <b>基础代谢 + 活动消耗</b></div></div>
