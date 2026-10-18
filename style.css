@@ -287,11 +287,13 @@ select {
   padding: 2px 0;
 }
 .tab svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.7; }
-.tab.on { color: var(--text); }
+.tab.on { color: var(--text); background: rgba(214,255,75,.07); border-radius: 12px; }
 .tab.on svg { stroke: var(--lime); }
 .fab {
   flex: 0 0 auto;
-  width: 48px; height: 48px; border-radius: 14px;
+  width: 46px; height: 46px; border-radius: 14px;
+  align-self: center;
+  margin-top: 6px;
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;

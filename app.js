@@ -657,10 +657,6 @@ function renderMe() {
     `<option value="${k}" ${p.activity === k ? 'selected' : ''}>${esc(v)}</option>`).join('');
 
   $('#meBody').innerHTML = `
-    <div class="mebar">
-      <span>设置</span>
-      <button class="btn sm" id="meClose">完成</button>
-    </div>
     <div class="card">
       <h3>身体数据</h3>
       <div class="split">
@@ -691,7 +687,7 @@ function renderMe() {
       </div>
       <div class="field">
         <label>目标速度（kg / 周）</label>
-        <input id="fGoal" type="number" inputmode="decimal" step="0.05" value="${p.goal_rate || -0.25}">
+        <input id="fGoal" type="number" inputmode="decimal" step="0.05" value="${p.goal_rate ?? -0.25}">
         <div class="hint">负数=减脂，正数=增肌，0=维持。建议减脂不超过 -0.5～-0.75kg/周。</div>
       </div>
       <div class="field">
@@ -771,7 +767,7 @@ function renderMe() {
         height_cm: Number($('#fHeight').value),
         weight_kg: Number($('#fWeight').value),
         activity: $('#fAct').value,
-        goal_rate: Number($('#fGoal').value),
+        goal_rate: ($('#fGoal').value === '' ? -0.25 : Number($('#fGoal').value)),
         protein_per_kg: Number($('#fProt').value),
       });
       toast('已保存');
@@ -779,8 +775,6 @@ function renderMe() {
       renderMe();
     } catch (e) { toast(e.message); }
   };
-  const mc = $('#meClose');
-  if (mc) mc.onclick = () => switchView('today');
   $('#openWatch').onclick = openWatch;
   const ow3 = $('#openWatch3');
   if (ow3) ow3.onclick = openWatch;
@@ -1132,7 +1126,7 @@ function init() {
   const qw = $('#quickWatch');
   if (qw) qw.onclick = openWatch;
   const gm = $('#goMe');
-  if (gm) gm.onclick = () => switchView('me');
+  if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
   const refreshBtn = $('#cloudRefresh');
   if (refreshBtn) refreshBtn.onclick = async () => {
     refreshBtn.classList.add('spin');
