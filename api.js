@@ -1,0 +1,647 @@
+/* 本地数据层 + 计算
+ *
+ * 原来这些都跑在 Python 服务里。现在全部在浏览器里完成，
+ * 数据存在 localStorage，所以不需要任何服务器，断网也能用。
+ */
+
+const KCAL_PER_KG = 7700;
+
+const ACTIVITY_FACTORS = {
+  sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9,
+};
+const ACTIVITY_LABEL = {
+  sedentary: '久坐（几乎不运动）',
+  light: '轻度（每周 1-3 次运动）',
+  moderate: '中度（每周 3-5 次）',
+  active: '高强度（每周 6-7 次）',
+  very_active: '极高（体力工作 / 一天两练）',
+};
+
+/* ---------------- 存储 ---------------- */
+
+const Store = {
+  KEY: 'calorie-ledger-v1',
+  data: null,
+
+  defaults() {
+    return {
+      v: 1,
+      profile: {
+        sex: 'female', birth_year: 1995, height_cm: 165, weight_kg: 60,
+        activity: 'light', goal_rate: -0.25, protein_per_kg: 1.6,
+      },
+      logs: [],
+      weights: {},
+      daily: {},
+      settings: {},
+    };
+  },
+
+  load() {
+    if (this.data) return this.data;
+    let raw = null;
+    try { raw = localStorage.getItem(this.KEY); } catch (e) { /* 隐私模式 */ }
+    let parsed = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
+    const d = this.defaults();
+    parsed = parsed || {};
+    this.data = {
+      v: 1,
+      profile: Object.assign({}, d.profile, parsed.profile || {}),
+      logs: Array.isArray(parsed.logs) ? parsed.logs : [],
+      weights: parsed.weights || {},
+      daily: parsed.daily || {},
+      settings: parsed.settings || {},
+    };
+    return this.data;
+  },
+
+  save() {
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify(this.data));
+    } catch (e) {
+      throw new Error('浏览器存储写不进去了（可能空间满了）。先导出备份。');
+    }
+  },
+};
+
+function setting(k, def) {
+  const v = Store.load().settings[k];
+  return v === undefined || v === null ? def : v;
+}
+function setSetting(k, v) {
+  Store.load().settings[k] = v;
+  Store.save();
+}
+
+/* ---------------- 基础计算 ---------------- */
+
+function ageOf(p) {
+  return Math.max(12, new Date().getFullYear() - Number(p.birth_year || 1995));
+}
+
+function bmrOf(p) {
+  const w = Number(p.weight_kg || 60);
+  const h = Number(p.height_cm || 165);
+  const base = 10 * w + 6.25 * h - 5 * ageOf(p);
+  return base + (p.sex === 'male' ? 5 : -161);
+}
+
+function latestWeight() {
+  const keys = Object.keys(Store.load().weights).sort();
+  return keys.length ? Store.load().weights[keys[keys.length - 1]] : null;
+}
+
+/** 返回 [消耗, 来源说明, 明细] */
+function tdeeOf(p, day, weight) {
+  const pp = Object.assign({}, p);
+  if (weight) pp.weight_kg = weight;
+  const active = day ? day.active : null;
+  const total = day ? day.total : null;
+  const resting = day ? day.resting : null;
+
+  if (total && total > 500) {
+    return [Math.round(total), '手表总消耗', { active, resting, total }];
+  }
+  const b = bmrOf(pp);
+  if (active && active > 0) {
+    const base = (resting && resting > 500) ? resting : b;
+    return [Math.round(base + active), '基础代谢 + 活动消耗',
+      { active, resting: base, total: base + active }];
+  }
+  const factor = ACTIVITY_FACTORS[pp.activity] || 1.375;
+  return [Math.round(b * factor), '公式估算',
+    { bmr: Math.round(b), factor, activity: pp.activity }];
+}
+
+function targetsOf(p, exp) {
+  const goalRate = Number(p.goal_rate || 0);         // kg/周，负数=减脂
+  let want = -goalRate * KCAL_PER_KG / 7;            // 正数=每天想要的缺口
+  want = Math.max(-600, Math.min(700, want));
+  if (want > 0) want = Math.min(want, exp * 0.22);   // 缺口不超过消耗 22%
+  const proteinG = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
+  const budget = Math.max(1000, exp - want);
+  const fatG = Math.round(Math.max(40, budget * 0.28 / 9));
+  const carbG = Math.round(Math.max(50, (budget - proteinG * 4 - fatG * 9) / 4));
+  return {
+    deficit: Math.round(want),
+    kcal_budget: Math.round(budget),
+    protein_g: proteinG,
+    fat_g: fatG,
+    carb_g: carbG,
+    goal_rate: goalRate,
+  };
+}
+
+function daySummary(date) {
+  const d = Store.load();
+  const p = d.profile;
+  const logs = d.logs
+    .filter(l => l.date === date)
+    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)) || a.id - b.id);
+  const watch = d.daily[date] || {};
+  const intake = logs.reduce((a, b) => a + (Number(b.kcal) || 0), 0);
+  const protein = logs.reduce((a, b) => a + (Number(b.p) || 0), 0);
+  const carb = logs.reduce((a, b) => a + (Number(b.c) || 0), 0);
+  const fat = logs.reduce((a, b) => a + (Number(b.f) || 0), 0);
+  const [exp, src, detail] = tdeeOf(p, watch, latestWeight());
+
+  return {
+    date,
+    logs,
+    intake: Math.round(intake),
+    protein: Math.round(protein * 10) / 10,
+    carb: Math.round(carb * 10) / 10,
+    fat: Math.round(fat * 10) / 10,
+    expenditure: exp,
+    expenditure_source: src,
+    expenditure_detail: detail,
+    balance: Math.round(exp - intake),
+    watch,
+    targets: targetsOf(p, exp),
+    profile: p,
+    has_key: !!(d.settings.dashscope_key || '').trim(),
+    needs_setup: !d.settings.profile_set,
+    activity_labels: ACTIVITY_LABEL,
+  };
+}
+
+function linreg(points) {
+  const n = points.length;
+  if (n < 2) return [0, 0, 0];
+  let sx = 0, sy = 0, sxx = 0, sxy = 0;
+  points.forEach(([x, y]) => { sx += x; sy += y; sxx += x * x; sxy += x * y; });
+  const den = n * sxx - sx * sx;
+  if (Math.abs(den) < 1e-9) return [0, sy / n, 0];
+  const slope = (n * sxy - sx * sy) / den;
+  const inter = (sy - slope * sx) / n;
+  const mean = sy / n;
+  let ssTot = 0, ssRes = 0;
+  points.forEach(([x, y]) => {
+    ssTot += (y - mean) ** 2;
+    ssRes += (y - (slope * x + inter)) ** 2;
+  });
+  return [slope, inter, ssTot > 1e-9 ? 1 - ssRes / ssTot : 0];
+}
+
+function computeTrends(days) {
+  const d = Store.load();
+  const p = d.profile;
+  const today = todayISO();
+  const start = addDays(today, -(days - 1));
+  const lw = latestWeight();
+
+  const weights = Object.keys(d.weights)
+    .filter(k => k >= start)
+    .sort()
+    .map(k => ({ date: k, kg: d.weights[k] }));
+
+  const series = [];
+  for (let i = 0; i < days; i++) {
+    const ds = addDays(start, i);
+    const logs = d.logs.filter(l => l.date === ds);
+    const intake = logs.length ? logs.reduce((a, b) => a + (Number(b.kcal) || 0), 0) : null;
+    const [exp] = tdeeOf(p, d.daily[ds] || {}, lw);
+    series.push({
+      date: ds,
+      intake: intake === null ? null : Math.round(intake),
+      expenditure: exp,
+      balance: intake === null ? null : Math.round(exp - intake),
+      weight: d.weights[ds] ?? null,
+      watch: d.daily[ds] || {},
+    });
+  }
+
+  const logged = series.filter(s => s.intake);
+  const avgIntake = logged.length
+    ? Math.round(logged.reduce((a, b) => a + b.intake, 0) / logged.length) : 0;
+  const avgExp = series.length
+    ? Math.round(series.reduce((a, b) => a + b.expenditure, 0) / series.length) : 0;
+
+  // 实测 TDEE：体重回归斜率 × 7700
+  let real = null;
+  if (weights.length >= 8) {
+    const x0 = parseISO(weights[0].date).getTime();
+    const pts = weights.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
+    const [slope, , r2] = linreg(pts);
+    const span = (parseISO(weights[weights.length - 1].date).getTime() - x0) / 86400000 + 1;
+    const aligned = logged.filter(s =>
+      s.date >= weights[0].date && s.date <= weights[weights.length - 1].date);
+    const coverage = aligned.length / Math.max(1, span);
+    if (aligned.length && coverage >= 0.5) {
+      const meanIntake = aligned.reduce((a, b) => a + b.intake, 0) / aligned.length;
+      real = {
+        tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
+        slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
+        r2: Math.round(r2 * 100) / 100,
+        span_days: span,
+        logged_days: aligned.length,
+        coverage: Math.round(coverage * 100),
+        avg_intake: Math.round(meanIntake),
+        confidence: (span >= 21 && coverage >= 0.7 && r2 > 0.3) ? '较高'
+          : (span >= 14 && coverage >= 0.5) ? '中等' : '偏低',
+      };
+    }
+  }
+
+  return {
+    days, start, end: today, series,
+    avg_intake: avgIntake,
+    avg_expenditure: avgExp,
+    avg_balance: avgIntake ? Math.round(avgExp - avgIntake) : null,
+    logged_days: logged.length,
+    real_tdee: real,
+    weights,
+  };
+}
+
+/* ---------------- 写操作 ---------------- */
+
+function nextId() {
+  const logs = Store.load().logs;
+  return logs.reduce((m, l) => Math.max(m, l.id || 0), 0) + 1;
+}
+
+function nowTs() {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+}
+
+function addLog(date, meal, it, source) {
+  const d = Store.load();
+  const g = Number(it.grams) || 0;
+  const k100 = Number(it.kcal_per_100g) || 0;
+  const entry = {
+    id: nextId(),
+    date,
+    ts: nowTs(),
+    meal: meal || 'other',
+    name: it.name,
+    grams: Math.round(g),
+    kcal: Math.round(k100 * g / 100 * 10) / 10,
+    p: Math.round((Number(it.protein_per_100g) || 0) * g / 100 * 10) / 10,
+    c: Math.round((Number(it.carb_per_100g) || 0) * g / 100 * 10) / 10,
+    f: Math.round((Number(it.fat_per_100g) || 0) * g / 100 * 10) / 10,
+    source: source || 'manual',
+    confidence: Number(it.confidence ?? 1),
+  };
+  d.logs.push(entry);
+  Store.save();
+  return entry.id;
+}
+
+/* ---------------- AI ---------------- */
+
+const DASHSCOPE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+
+const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片的热量。
+
+请仔细辨认图中所有可食用内容，然后：
+
+1. 拆分成独立条目。不要把一整盘菜算成一条——米饭、主菜、配菜、酱汁、饮料分别列。
+2. 估算「实际吃掉的重量」（克）。用碗/盘/勺的常见尺寸和食物堆叠高度作为参照。
+3. 给出每 100 克的热量和蛋白质/碳水/脂肪。优先使用中国食物成分表的数值。
+4. 如果图里有包装食品的营养成分表，直接读取标签数字。
+5. 拿不准时，宁可估高不要估低，并在 note 里说明不确定的地方。
+
+只输出一个 JSON 对象，不要 markdown 代码块，不要任何解释文字：
+
+{"items":[{"name":"食物中文名","grams":180,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}`;
+
+const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃了什么，请估算热量。
+
+对每一项分别估算实际重量（克），给出每 100 克的热量、蛋白质、碳水、脂肪。
+「一碗」「一个」这类模糊量按中国人常见份量换算（一碗米饭约 150g，一个鸡蛋约 50g）。
+
+只输出 JSON，不要 markdown 代码块：
+{"items":[{"name":"食物中文名","grams":150,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8}],"dish":"一句话描述","note":"不确定之处，没有就填空字符串"}`;
+
+const WATCH_PROMPT = `这张截图来自 Apple Watch 或 iPhone 的「健身」「健康」App。请读出其中与能量消耗相关的数字。
+
+需要找的信息：
+- 活动能量 / 活动卡路里（active energy，千卡）
+- 静息能量 / 基础代谢（resting energy，千卡）
+- 总卡路里 / 总消耗（total calories，千卡）
+- 步数
+
+注意区分「千卡」和「千焦」。如果是千焦请换算成千卡（除以 4.184）。
+如果某项在图中不存在，填 null，不要编造。
+
+只输出 JSON，不要 markdown 代码块：
+{"active_kcal":420,"resting_kcal":1580,"total_kcal":2000,"steps":8500,"date":"2026-10-18","note":"不确定之处，没有就填空字符串"}`;
+
+async function callModel(content) {
+  const key = (setting('dashscope_key', '') || '').trim();
+  if (!key) throw new Error('还没有设置 DashScope API Key，去「我的」页面填一下。');
+
+  const pinned = setting('ai_model', '');
+  const models = [];
+  [pinned, 'qwen3-vl-plus', 'qwen-vl-max-latest', 'qwen-vl-plus', 'qwen-vl-ocr']
+    .filter(Boolean).forEach(m => { if (!models.includes(m)) models.push(m); });
+
+  let last = null;
+  for (const model of models) {
+    let resp;
+    try {
+      resp = await fetch(DASHSCOPE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content }],
+          temperature: 0.1,
+          max_tokens: 1600,
+        }),
+      });
+    } catch (e) {
+      throw new Error('连不上通义千问，检查一下网络');
+    }
+    let data = {};
+    try { data = await resp.json(); } catch (e) { data = {}; }
+
+    if (data.error) {
+      const msg = data.error.message || '接口出错';
+      last = msg;
+      if (/Arrearage|overdue-payment|good standing/i.test(msg)) {
+        throw new Error('百炼账户欠费了：去阿里云控制台结清费用，识别就能用');
+      }
+      if (/invalid_api_key|Incorrect API key/i.test(msg)) {
+        throw new Error('API Key 不对，去「我的」重新填一下');
+      }
+      const modelIssue = /model/i.test(msg) || /不存在/.test(msg);
+      if ((resp.status === 400 || resp.status === 404) && modelIssue) continue;
+      if (resp.status === 401) throw new Error('API Key 不对，去「我的」重新填一下');
+      if (resp.status === 429) throw new Error('调用太频繁或额度用完了，等会儿再试');
+      throw new Error(msg);
+    }
+    if (!data.choices || !data.choices.length) {
+      last = '模型没有返回内容'; continue;
+    }
+    if (setting('ai_model', '') !== model) setSetting('ai_model', model);
+    return data.choices[0].message.content;
+  }
+  throw new Error(last || '没有可用的视觉模型');
+}
+
+function extractJson(text) {
+  let t = String(text || '').trim();
+  t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  try { return JSON.parse(t); } catch (e) { /* 继续 */ }
+  const m = t.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (e) { /* 继续 */ } }
+  throw new Error('模型返回的不是有效 JSON，再试一次');
+}
+
+function num(v, def = 0) {
+  if (v === null || v === undefined) return def;
+  const n = parseFloat(String(v).replace(/,/g, '').trim());
+  return isNaN(n) ? def : n;
+}
+
+function cleanItems(obj) {
+  const items = [];
+  (obj.items || []).slice(0, 15).forEach(it => {
+    const name = String(it.name || '').trim();
+    const grams = num(it.grams, 0);
+    if (!name || grams <= 0) return;
+    let k100 = num(it.kcal_per_100g, 0);
+    if (k100 <= 0) {
+      const total = num(it.kcal, 0);
+      if (total > 0) k100 = total / grams * 100; else return;
+    }
+    items.push({
+      name,
+      grams: Math.round(grams),
+      kcal_per_100g: Math.round(k100 * 10) / 10,
+      protein_per_100g: Math.round(num(it.protein_per_100g) * 10) / 10,
+      carb_per_100g: Math.round(num(it.carb_per_100g) * 10) / 10,
+      fat_per_100g: Math.round(num(it.fat_per_100g) * 10) / 10,
+      confidence: Math.min(1, Math.max(0, num(it.confidence, 0.6))),
+    });
+  });
+  if (!items.length) throw new Error('没认出图里的食物，换个角度或拍近一点再试。');
+  return { items, dish: obj.dish || '', note: obj.note || '' };
+}
+
+async function analyzeFood(image, hint) {
+  const content = [
+    { type: 'image_url', image_url: { url: image } },
+    { type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') },
+  ];
+  return cleanItems(extractJson(await callModel(content)));
+}
+
+async function analyzeText(text) {
+  const content = [{ type: 'text', text: TEXT_PROMPT + '\n\n用户说：' + text }];
+  return cleanItems(extractJson(await callModel(content)));
+}
+
+async function analyzeWatch(image) {
+  const content = [
+    { type: 'image_url', image_url: { url: image } },
+    { type: 'text', text: WATCH_PROMPT },
+  ];
+  const obj = extractJson(await callModel(content));
+  const pick = (...keys) => {
+    for (const k of keys) {
+      const v = obj[k];
+      if (v !== null && v !== undefined && String(v).toLowerCase() !== 'null') {
+        const n = num(v, null);
+        if (n !== null) return n;
+      }
+    }
+    return null;
+  };
+  const res = {
+    active_kcal: pick('active_kcal', 'active', '活动能量'),
+    resting_kcal: pick('resting_kcal', 'resting', '静息能量'),
+    total_kcal: pick('total_kcal', 'total', '总卡路里'),
+    steps: pick('steps', '步数'),
+    date: obj.date || '',
+    note: obj.note || '',
+  };
+  if (!res.active_kcal && !res.resting_kcal && !res.total_kcal) {
+    throw new Error('这张截图里没读出能量数据。截「健身」App 活动圆环那页试试。');
+  }
+  if (res.total_kcal && !res.resting_kcal && res.active_kcal) {
+    res.resting_kcal = Math.max(0, res.total_kcal - res.active_kcal);
+  }
+  return res;
+}
+
+/* ---------------- 路由：保持和原来一样的接口形状 ---------------- */
+
+async function api(path, body, method) {
+  const m = method || (body ? 'POST' : 'GET');
+  const [pathname, qs] = path.split('?');
+  const q = new URLSearchParams(qs || '');
+  const today = todayISO();
+
+  // GET
+  if (pathname === '/api/bootstrap') {
+    return Object.assign({ ok: true, today }, daySummary(q.get('date') || today), {
+      foods: FOODS,
+      ai_model: setting('ai_model', ''),
+    });
+  }
+
+  if (pathname === '/api/trends') {
+    const days = Math.max(7, Math.min(365, Number(q.get('days') || 30)));
+    return Object.assign({ ok: true }, computeTrends(days));
+  }
+
+  if (pathname === '/api/foods') {
+    const kw = q.get('q') || '';
+    return { ok: true, items: kw ? findFood(kw).slice(0, 25) : FOODS.slice(0, 60) };
+  }
+
+  // DELETE /api/logs/:id
+  if (m === 'DELETE') {
+    const mm = pathname.match(/^\/api\/logs\/(\d+)$/);
+    if (mm) {
+      const d = Store.load();
+      d.logs = d.logs.filter(l => l.id !== Number(mm[1]));
+      Store.save();
+      return { ok: true };
+    }
+  }
+
+  // PATCH /api/logs/:id
+  if (m === 'PATCH') {
+    const mm = pathname.match(/^\/api\/logs\/(\d+)$/);
+    if (mm && body && body.meal) {
+      const d = Store.load();
+      const l = d.logs.find(x => x.id === Number(mm[1]));
+      if (l) { l.meal = body.meal; Store.save(); }
+      return { ok: true };
+    }
+  }
+
+  if (pathname === '/api/logs' && m === 'POST') {
+    const date = body.date || today;
+    const meal = body.meal || 'other';
+    if (body.items && body.items.length) {
+      const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual'));
+      return { ok: true, ids, day: daySummary(date) };
+    }
+    const id = addLog(date, meal, body, body.source || 'manual');
+    return { ok: true, id, day: daySummary(date) };
+  }
+
+  if (pathname === '/api/weight' && m === 'POST') {
+    const d = Store.load();
+    const date = body.date || today;
+    d.weights[date] = Number(body.kg);
+    d.profile.weight_kg = Number(body.kg);
+    Store.save();
+    return { ok: true, day: daySummary(date) };
+  }
+
+  if (pathname === '/api/daily' && m === 'POST') {
+    const d = Store.load();
+    const date = body.date || today;
+    const cur = d.daily[date] || {};
+    const n = v => (v === null || v === undefined || v === '' ? null : Number(v));
+    d.daily[date] = {
+      active: n(body.active), resting: n(body.resting),
+      total: n(body.total), steps: n(body.steps),
+      source: body.source || 'manual',
+    };
+    if (n(body.active) === null && n(body.total) === null && n(body.resting) === null) {
+      d.daily[date] = cur;
+      throw new Error('至少填一项消耗数据');
+    }
+    Store.save();
+    return { ok: true, day: daySummary(date) };
+  }
+
+  if (pathname === '/api/profile' && m === 'POST') {
+    const d = Store.load();
+    ['sex', 'birth_year', 'height_cm', 'weight_kg', 'activity', 'goal_rate', 'protein_per_kg']
+      .forEach(k => {
+        if (body[k] !== undefined && body[k] !== null) d.profile[k] = body[k];
+      });
+    d.settings.profile_set = true;
+    Store.save();
+    return { ok: true, profile: d.profile };
+  }
+
+  if (pathname === '/api/settings' && m === 'POST') {
+    if (body.dashscope_key !== undefined) {
+      setSetting('dashscope_key', String(body.dashscope_key || '').trim());
+    }
+    if (body.ai_model !== undefined) {
+      setSetting('ai_model', String(body.ai_model || '').trim());
+    }
+    return { ok: true, has_key: !!setting('dashscope_key', '') };
+  }
+
+  if (pathname === '/api/settings/test' && m === 'POST') {
+    const text = await callModel([{ type: 'text', text: '只回复两个字：可用' }]);
+    return { ok: true, message: String(text).trim().slice(0, 40) };
+  }
+
+  if (pathname === '/api/ai/food' && m === 'POST') {
+    return Object.assign({ ok: true }, await analyzeFood(body.image, body.hint || ''));
+  }
+  if (pathname === '/api/ai/text' && m === 'POST') {
+    return Object.assign({ ok: true }, await analyzeText(body.text || ''));
+  }
+  if (pathname === '/api/ai/watch' && m === 'POST') {
+    return Object.assign({ ok: true }, await analyzeWatch(body.image));
+  }
+
+  throw new Error('未知操作：' + pathname);
+}
+
+/* ---------------- 导入导出 ---------------- */
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function buildCsv() {
+  const d = Store.load();
+  const rows = [['日期', '餐次', '食物', '克重', '热量', '蛋白', '碳水', '脂肪', '来源']];
+  d.logs.slice().sort((a, b) => (a.date + a.ts).localeCompare(b.date + b.ts))
+    .forEach(l => rows.push([l.date, l.meal, l.name, l.grams, l.kcal, l.p, l.c, l.f, l.source]));
+  rows.push([]);
+  rows.push(['日期', '体重']);
+  Object.keys(d.weights).sort().forEach(k => rows.push([k, d.weights[k]]));
+  return '\ufeff' + rows.map(r => r.map(csvEscape).join(',')).join('\n');
+}
+
+function downloadCsv() {
+  const blob = new Blob([buildCsv()], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `热量账本-${todayISO()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function exportJson() {
+  const blob = new Blob([JSON.stringify(Store.load(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `热量账本备份-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function importJson(text) {
+  const obj = JSON.parse(text);
+  if (!obj || !obj.profile) throw new Error('这不是有效的备份文件');
+  Store.data = {
+    v: 1,
+    profile: obj.profile,
+    logs: obj.logs || [],
+    weights: obj.weights || {},
+    daily: obj.daily || {},
+    settings: obj.settings || {},
+  };
+  Store.save();
+}

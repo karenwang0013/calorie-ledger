@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0b0c">
+<title>热量账本</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">热量<span>账本</span></div>
+    <button class="topbtn" id="quickWatch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9.5 6V3.5h5V6M9.5 18v2.5h5V18"/>
+      </svg>
+      同步手表
+    </button>
+  </div>
+
+  <!-- ============ 今日 ============ -->
+  <section class="view on" id="view-today">
+    <div id="setupBanner"></div>
+    <div class="daterow">
+      <button class="arrow" id="prevDay">‹</button>
+      <div class="d">
+        <b id="dateLabel">—</b>
+        <i id="dateSub"></i>
+      </div>
+      <button class="arrow" id="nextDay">›</button>
+    </div>
+
+    <div class="hero" id="hero">
+      <svg viewBox="0 0 200 200">
+        <circle class="track" cx="100" cy="100" r="84" fill="none" stroke-width="13"/>
+        <circle class="prog" id="ring" cx="100" cy="100" r="84" fill="none"
+                stroke-width="13" stroke-linecap="round"
+                stroke-dasharray="527.8" stroke-dashoffset="527.8"/>
+      </svg>
+      <div class="center">
+        <div class="lbl" id="heroLbl">热量缺口</div>
+        <div class="num" id="heroNum">—</div>
+        <div class="unit">千卡</div>
+        <div class="sub" id="heroSub"></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div>
+        <div class="k">摄入</div>
+        <div class="v" id="stIntake">—</div>
+      </div>
+      <div>
+        <div class="k">消耗</div>
+        <div class="v" id="stExp">—</div>
+      </div>
+      <div>
+        <div class="k">还可以吃</div>
+        <div class="v" id="stLeft">—</div>
+      </div>
+    </div>
+
+    <div class="macros">
+      <div class="macro">
+        <div class="row1"><span class="n">蛋白质</span>
+          <span class="g"><b id="pNow">0</b> / <span id="pGoal">0</span> g</span></div>
+        <div class="bar p"><i id="pBar" style="width:0"></i></div>
+      </div>
+      <div class="macro">
+        <div class="row1"><span class="n">碳水</span>
+          <span class="g"><b id="cNow">0</b> / <span id="cGoal">0</span> g</span></div>
+        <div class="bar c"><i id="cBar" style="width:0"></i></div>
+      </div>
+      <div class="macro">
+        <div class="row1"><span class="n">脂肪</span>
+          <span class="g"><b id="fNow">0</b> / <span id="fGoal">0</span> g</span></div>
+        <div class="bar f"><i id="fBar" style="width:0"></i></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>今天吃了什么</h2>
+      <button class="act" id="addTop">＋ 记录</button>
+    </div>
+    <div class="meals" id="meals"></div>
+
+    <div style="height:20px"></div>
+  </section>
+
+  <!-- ============ 趋势 ============ -->
+  <section class="view" id="view-trends">
+    <div class="seg" id="trendSeg">
+      <button data-d="7">7 天</button>
+      <button data-d="30" class="on">30 天</button>
+      <button data-d="90">90 天</button>
+    </div>
+    <div id="trendBody"></div>
+    <div style="height:20px"></div>
+  </section>
+
+  <!-- ============ 我的 ============ -->
+  <section class="view" id="view-me">
+    <div id="meBody"></div>
+    <div style="height:20px"></div>
+  </section>
+
+  <nav class="tabbar">
+    <div class="inner">
+      <button class="tab on" data-view="today">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg>
+        <span>今日</span>
+      </button>
+      <button class="tab" data-view="trends">
+        <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 3-4 6 5"/><path d="M3 21h18"/></svg>
+        <span>趋势</span>
+      </button>
+      <button class="tab" data-view="me">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
+        <span>我的</span>
+      </button>
+      <button class="fab" id="fab" aria-label="记录">＋</button>
+    </div>
+  </nav>
+</div>
+
+
+<!-- ============ 记录弹层 ============ -->
+<div class="sheet-mask" id="addMask"></div>
+<div class="sheet" id="addSheet">
+  <div class="grab"></div>
+  <div class="sh-hd">
+    <h2>记录食物</h2>
+    <button class="x" id="addClose">×</button>
+  </div>
+  <div class="sh-body">
+    <div class="tabs3" id="addTabs">
+      <button data-m="photo" class="on">📷 拍照</button>
+      <button data-m="search">🔍 搜索</button>
+      <button data-m="text">✍️ 描述</button>
+    </div>
+
+    <!-- 拍照 -->
+    <div class="pane" id="pane-photo">
+      <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
+      <div class="drop" id="photoDrop">
+        <div class="big">📷</div>
+        拍一张，或从相册选<br>
+        <span style="font-size:11px;color:var(--muted2)">整盘菜、外卖盒、包装营养成分表都行</span>
+      </div>
+      <img class="preview" id="photoPreview" hidden>
+      <div style="margin-top:12px" id="photoActions" hidden>
+        <input id="photoHint" placeholder="补充说明（可选）：比如「只吃了一半」" style="margin-bottom:10px">
+        <div class="btnrow">
+          <button class="btn ghost sm" id="photoRetake">重选</button>
+          <button class="btn primary sm" id="photoGo" style="flex:2">识别热量</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜索 -->
+    <div class="pane" id="pane-search" hidden>
+      <input id="searchInput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
+      <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
+      <div class="slist" id="searchList"></div>
+    </div>
+
+    <!-- 描述 -->
+    <div class="pane" id="pane-text" hidden>
+      <textarea id="textInput" rows="4" placeholder="比如：一碗牛肉面，加了两个卤蛋，一杯冰美式"></textarea>
+      <button class="btn primary sm" id="textGo" style="margin-top:10px">估算热量</button>
+      <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.6">
+        用「碗 / 个 / 份」这类量词就行，会自动换算成克数。
+      </div>
+    </div>
+
+    <!-- 结果 -->
+    <div id="resultArea" hidden>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px">
+        <div style="font-size:12.5px;color:var(--muted)" id="resultTitle">识别结果</div>
+        <button id="resultReset" style="font-size:11.5px;color:var(--muted2)">重来</button>
+      </div>
+      <div id="resultItems"></div>
+      <div id="resultNote" style="font-size:11px;color:var(--muted2);line-height:1.6;margin-top:8px"></div>
+      <div class="totalrow">
+        <span>合计</span><b><span id="resultTotal">0</span> 千卡</b>
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-size:11.5px;color:var(--muted2);margin-bottom:7px">记到哪一餐</div>
+        <div class="chips-wrap" id="mealPick">
+          <button class="chip" data-meal="breakfast">早餐</button>
+          <button class="chip" data-meal="lunch">午餐</button>
+          <button class="chip" data-meal="dinner">晚餐</button>
+          <button class="chip" data-meal="snack">加餐</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sh-foot" id="addFoot" hidden>
+    <button class="btn primary" id="saveItems">记入</button>
+  </div>
+</div>
+
+<!-- ============ 手表弹层 ============ -->
+<div class="sheet-mask" id="watchMask"></div>
+<div class="sheet" id="watchSheet">
+  <div class="grab"></div>
+  <div class="sh-hd">
+    <h2>手表数据</h2>
+    <button class="x" id="watchClose">×</button>
+  </div>
+  <div class="sh-body">
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0 0 14px">
+      截一张 Apple Watch「健身」App 活动圆环那页的图，我读出消耗。<br>
+      <span style="color:var(--muted2);font-size:11.5px">也可以直接在下面手动填。</span>
+    </p>
+    <input type="file" accept="image/*" id="watchInput" hidden>
+    <button class="btn" id="watchPick">📷 选截图，自动读取</button>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+      <div class="field" style="margin:0">
+        <label>活动消耗</label>
+        <input id="wActive" type="number" inputmode="decimal" placeholder="420">
+      </div>
+      <div class="field" style="margin:0">
+        <label>静息 / 基础代谢</label>
+        <input id="wResting" type="number" inputmode="decimal" placeholder="1580">
+      </div>
+      <div class="field" style="margin:0">
+        <label>总消耗（有就填）</label>
+        <input id="wTotal" type="number" inputmode="decimal" placeholder="2000">
+      </div>
+      <div class="field" style="margin:0">
+        <label>步数</label>
+        <input id="wSteps" type="number" inputmode="numeric" placeholder="8500">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.6" id="watchNote"></div>
+  </div>
+  <div class="sh-foot">
+    <button class="btn primary" id="watchSave">保存到 <span id="watchDate"></span></button>
+  </div>
+</div>
+
+<!-- ============ 体重弹层 ============ -->
+<div class="sheet-mask" id="weightMask"></div>
+<div class="sheet" id="weightSheet">
+  <div class="grab"></div>
+  <div class="sh-hd">
+    <h2>记录体重</h2>
+    <button class="x" id="weightClose">×</button>
+  </div>
+  <div class="sh-body">
+    <div class="field">
+      <label>体重（kg）</label>
+      <input id="weightInput" type="number" inputmode="decimal" step="0.1" placeholder="58.5">
+      <div class="hint">建议每天固定在早上空腹、上完厕所后称。体重的日间波动有 1-2kg，看趋势别看单日。</div>
+    </div>
+  </div>
+  <div class="sh-foot">
+    <button class="btn primary" id="weightSave">保存</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="sheet-mask" id="helpMask"></div>
+<div class="sheet" id="helpSheet">
+  <div class="grab"></div>
+  <div class="sh-hd">
+    <h2>自动同步手表</h2>
+    <button class="x" id="helpClose">×</button>
+  </div>
+  <div class="sh-body">
+    <div id="helpBody"></div>
+  </div>
+  <div class="sh-foot">
+    <button class="btn primary" id="helpCopy">复制链接模板</button>
+  </div>
+</div>
+
+<script src="foods.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
