@@ -274,7 +274,7 @@ select {
 .tabbar .inner {
   width: 100%; max-width: 520px;
   display: flex; align-items: center; gap: 2px;
-  padding: 8px 16px calc(8px + var(--safe-b));
+  padding: 6px 16px calc(6px + var(--safe-b));
   pointer-events: auto;
   background: rgba(11, 12, 14, 0.92);
   backdrop-filter: blur(18px);
@@ -282,25 +282,24 @@ select {
   border-top: 1px solid var(--line);
 }
 .tab {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
   color: var(--muted2); font-size: 10px; letter-spacing: 0.3px;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 .tab svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.7; }
 .tab.on { color: var(--text); }
 .tab.on svg { stroke: var(--lime); }
 .fab {
   flex: 0 0 auto;
-  width: 52px; height: 52px; border-radius: 15px;
+  width: 48px; height: 48px; border-radius: 14px;
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;
   font-size: 26px; font-weight: 300;
   margin: 0 10px;
-  transform: translateY(-6px);
-  box-shadow: 0 8px 22px rgba(214, 255, 75, 0.30);
+  box-shadow: 0 6px 16px rgba(214, 255, 75, 0.26);
 }
-.fab:active { transform: translateY(-6px) scale(0.94); }
+.fab:active { transform: scale(0.94); }
 
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
