@@ -955,6 +955,7 @@ function wireMe() {
     const t = b.dataset.theme;
     applyTheme(t);
     await api('/api/settings', { theme: t });
+    await loadDay();
     toast('已切换主题');
     renderMe();
   });
