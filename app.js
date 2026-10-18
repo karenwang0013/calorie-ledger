@@ -987,25 +987,23 @@ function watchUrlTemplate() {
 
 function showShortcutHelp() {
   $('#helpBody').innerHTML = `
-    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0 0 14px">
-      网页读不到 Apple 健康数据（苹果只开放给原生 App）。现在的方式是：
-      快捷指令每天读一次，<b style="color:var(--text)">直接写进你的 GitHub</b>，App 打开时再去取。
-    </p>
-    <div class="hint" style="margin:0 0 18px;padding:10px 12px;background:rgba(214,255,75,.07);border-radius:10px;color:var(--lime)">
-      全程在后台完成，<b>不会打开 Safari，也不会弹浏览器</b>。
-    </div>
+    <div class="sechead">现在的同步流程</div>
+    <div class="step"><b>1</b><div>每天 23:00，快捷指令「<b>热量采集</b>」读一次当天的「活动能量」</div></div>
+    <div class="step"><b>2</b><div>它把结果写进你 GitHub 仓库里的 <code>health.json</code></div></div>
+    <div class="step"><b>3</b><div>打开这个 App 时自动去取，<b>不经过 Safari，也不弹浏览器</b></div></div>
 
-    <div class="sechead">快捷指令已经建好了，你只差一步</div>
-    <div class="step"><b>1</b><div>「快捷指令」App → 底部 <b>自动化</b> → 点「23:00 每天」那条</div></div>
-    <div class="step"><b>2</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量采集</b>」→ 完成</div></div>
+    <div class="sechead">要确认的一步：自动化指向它</div>
+    <div class="step"><b>4</b><div>「快捷指令」App → 底部 <b>自动化</b> → 点「23:00」那条</div></div>
+    <div class="step"><b>5</b><div>点动作里的蓝色「<b>快捷指令</b>」字样 → 选「<b>热量采集</b>」→ 完成</div></div>
+    <div class="step"><b>6</b><div>确认那条自动化的总开关是**打开**状态</div></div>
 
-    <div class="sechead">怎么确认它在工作</div>
-    <div class="step"><b>3</b><div>每晚 23:00 之后打开 App，「消耗」会变成 <b>基础代谢 + 活动消耗</b></div></div>
-    <div class="step"><b>4</b><div>数字没变，点右上角 <b>⟳</b> 刷新一次</div></div>
+    <div class="sechead">怎么知道它在工作</div>
+    <div class="step"><b>7</b><div>23:00 之后打开 App，「消耗」会显示 <b>基础代谢 + 活动消耗</b></div></div>
+    <div class="step"><b>8</b><div>数字没变，点右上角 <b>⟳</b> 刷新一次</div></div>
 
-    <div class="sechead">如果一直没数据，按这个顺序查</div>
+    <div class="sechead">一直没数据时，按顺序查</div>
     <div class="step"><b>A</b><div>权限：设置 → 隐私与安全性 → 健康 → 快捷指令 → <b>活动能量「完全访问」</b></div></div>
-    <div class="step"><b>B</b><div>健康 App 里当天确实有「活动能量」数据（戴表就有）</div></div>
+    <div class="step"><b>B</b><div>健康 App 里当天确实有「活动能量」数据</div></div>
     <div class="step"><b>C</b><div>手动点一次「热量采集」运行，看会不会报「未找到样本」</div></div>
 
     <div class="hint" style="margin-top:14px">
