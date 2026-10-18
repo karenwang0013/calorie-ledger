@@ -1069,6 +1069,13 @@ function init() {
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+    // 新版本接管后自动刷新一次，避免要关掉重开两遍才更新
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
   }
   $('#prevDay').onclick = () => { S.date = addDays(S.date, -1); loadDay(); };
   $('#nextDay').onclick = () => {
