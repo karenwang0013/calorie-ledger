@@ -680,7 +680,7 @@ function renderMe() {
       </div>
       <div class="field">
         <label>目标速度（kg / 周）</label>
-        <input id="fGoal" type="number" inputmode="decimal" step="0.05" value="${p.goal_rate ?? -0.25}">
+        <input id="fGoal" type="text" inputmode="decimal" placeholder="-0.5" value="${p.goal_rate ?? -0.25}">
         <div class="hint">负数=减脂，正数=增肌，0=维持。建议减脂不超过 -0.5～-0.75kg/周。</div>
       </div>
       <div class="field">
