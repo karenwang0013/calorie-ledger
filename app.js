@@ -1166,6 +1166,8 @@ function switchView(v) {
   document.body.classList.toggle('view-trends', v === 'trends');
   window.scrollTo({ top: 0 });
   if (v === 'trends') { renderTrends(); loadTrends(); }
+  const bs = $('#brandSub');
+  if (bs) bs.hidden = v !== 'me';
   if (v === 'me') { mePage = null; renderMe(); }
 }
 

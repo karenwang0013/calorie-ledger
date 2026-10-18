@@ -678,3 +678,6 @@ select {
 .sw input:checked + i { background: var(--lime); }
 .sw input:checked + i:after { transform: translateX(20px); }
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }
+
+.brandblock { display: flex; flex-direction: column; gap: 1px; }
+.brandsub { font-size: 11px; color: var(--muted2); letter-spacing: .5px; line-height: 1; }
