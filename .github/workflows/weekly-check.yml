@@ -1,0 +1,45 @@
+name: 每周体检
+
+on:
+  schedule:
+    # 每周一 01:00 UTC = 北京时间 09:00
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查 health.json 是否还在更新
+        run: |
+          python3 - <<'PY'
+          import re, sys, datetime, urllib.request
+
+          url = "https://raw.githubusercontent.com/${{ github.repository }}/main/health.json"
+          try:
+              txt = urllib.request.urlopen(url, timeout=25).read().decode("utf-8", "ignore")
+          except Exception as e:
+              print("读取 health.json 失败:", e)
+              sys.exit(1)
+
+          print("内容:", txt[:120])
+
+          m = re.search(r'(\d{4})\D(\d{1,2})\D(\d{1,2})', txt)
+          if not m:
+              print("解析不出日期，可能格式变了")
+              sys.exit(1)
+
+          y, mo, d = map(int, m.groups())
+          data_date = datetime.date(y, mo, d)
+          today = datetime.datetime.utcnow().date() + datetime.timedelta(hours=8)
+          lag = (today - data_date).days
+
+          print(f"数据日期 {data_date}，今天 {today}，相差 {lag} 天")
+
+          if lag > 2:
+              print("::error::手表数据已经超过 2 天没更新，检查快捷指令「热量采集」的自动化")
+              sys.exit(1)
+          PY

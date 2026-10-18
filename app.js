@@ -789,6 +789,19 @@ function renderMe() {
     </div>
 
     <div class="card">
+      <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.66</span></h3>
+      <div class="hint" style="margin:0;line-height:1.95">
+        <b style="color:var(--lime)">10-19</b><br>
+        同步改为「快捷指令 → GitHub → App」，不再打开 Safari<br>
+        拍照支持营养成分表，按克数精确换算<br>
+        搜索页可复用「以前记过」的食物<br>
+        界面重排：我的移到右上角，加号居中，图标重做<br>
+        <b style="color:var(--lime)">10-18</b><br>
+        从本地服务改为纯前端 PWA；118 条食物库；趋势页；备份恢复
+      </div>
+    </div>
+
+    <div class="card">
       <h3>这套算法在算什么</h3>
       <div class="hint" style="margin:0;line-height:1.9">
         <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
