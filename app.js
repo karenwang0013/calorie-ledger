@@ -657,6 +657,10 @@ function renderMe() {
     `<option value="${k}" ${p.activity === k ? 'selected' : ''}>${esc(v)}</option>`).join('');
 
   $('#meBody').innerHTML = `
+    <div class="mebar">
+      <span>设置</span>
+      <button class="btn sm" id="meClose">完成</button>
+    </div>
     <div class="card">
       <h3>身体数据</h3>
       <div class="split">
@@ -775,6 +779,8 @@ function renderMe() {
       renderMe();
     } catch (e) { toast(e.message); }
   };
+  const mc = $('#meClose');
+  if (mc) mc.onclick = () => switchView('today');
   $('#openWatch').onclick = openWatch;
   const ow3 = $('#openWatch3');
   if (ow3) ow3.onclick = openWatch;
