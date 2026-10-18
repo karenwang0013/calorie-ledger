@@ -134,13 +134,13 @@ function renderToday() {
   hero.classList.remove('surplus', 'over');
 
   let sub = `目标缺口 ${t.deficit} · 已吃 ${intake}`;
-  if (bal < 0) {
+  if (left < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
-    $('#heroNum').textContent = Math.abs(bal);
+    $('#heroNum').textContent = Math.abs(left);
   } else {
-    $('#heroLbl').textContent = '热量缺口';
-    $('#heroNum').textContent = bal;
+    $('#heroLbl').textContent = '还能吃';
+    $('#heroNum').textContent = left;
   }
   $('#heroSub').textContent = sub;
 
