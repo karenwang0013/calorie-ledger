@@ -92,8 +92,17 @@ function renderToday() {
 
   const t = d.targets;
   const intake = d.intake;
-  const exp = d.expenditure;
-  const bal = d.balance;
+  const expFull = d.expenditure;          // 全天预估/实际
+  const balFull = d.balance;
+
+  // 今天只算“到现在为止”的消耗，历史日期用全天值
+  let dayFrac = 1;
+  if (d.date === S.today) {
+    const start = new Date(d.date + 'T00:00:00').getTime();
+    dayFrac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
+  }
+  const exp = d.date === S.today ? Math.round(expFull * dayFrac) : expFull;
+  const bal = d.date === S.today ? exp - intake : balFull;
   const left = t.kcal_budget - intake;
 
   // 首次使用提示
@@ -646,6 +655,8 @@ function renderMe() {
   if (!d) return;
   const p = d.profile || {};
   const acts = d.activity_labels || {};
+  const sugGoal = Math.round(-(Number(p.weight_kg || 60) * 0.005) * 20) / 20 || -0.3;
+  const sugKcal = Math.round(Math.abs(sugGoal) * 7700 / 7);
   const opt = Object.entries(acts).map(([k, v]) =>
     `<option value="${k}" ${p.activity === k ? 'selected' : ''}>${esc(v)}</option>`).join('');
 
