@@ -121,28 +121,21 @@ function renderToday() {
   hero.classList.remove('surplus', 'over');
 
   let sub;
-  if (intake === 0) {
-    // 还没记录：显示今天还能吃多少，比显示一个假的缺口有用
-    $('#heroLbl').textContent = '今日可吃';
-    $('#heroNum').textContent = t.kcal_budget;
-    sub = `目标缺口 ${t.deficit} · 消耗 ${exp}`;
-    ring.style.strokeDashoffset = String(C);
-    ring.style.stroke = '#d6ff4b';
+  if (bal < 0) {
+    hero.classList.add('surplus');
+    $('#heroLbl').textContent = '热量盈余';
+    $('#heroNum').textContent = Math.abs(bal);
+    sub = `目标缺口 ${t.deficit} · 超出 ${Math.abs(bal)}`;
   } else {
-    if (bal < 0) {
-      hero.classList.add('surplus');
-      $('#heroLbl').textContent = '热量盈余';
-      $('#heroNum').textContent = Math.abs(bal);
-      sub = `目标 ${t.deficit} · 超出 ${Math.abs(bal)}`;
+    $('#heroLbl').textContent = '热量缺口';
+    $('#heroNum').textContent = bal;
+    const gap = t.deficit - bal;
+    if (intake === 0) {
+      sub = `还没记录 · 目标 ${t.deficit} · 消耗 ${exp}`;
+    } else if (bal > t.deficit * 2 && bal > 600) {
+      sub = `缺口偏大 · 目标 ${t.deficit}`;
     } else {
-      $('#heroLbl').textContent = '热量缺口';
-      $('#heroNum').textContent = bal;
-      const gap = t.deficit - bal;
-      if (bal > t.deficit * 2 && bal > 600) {
-        sub = `缺口偏大 · 目标 ${t.deficit}`;
-      } else {
-        sub = gap > 30 ? `目标 ${t.deficit} · 还差 ${gap}` : `目标 ${t.deficit} · 已达标`;
-      }
+      sub = gap > 30 ? `目标 ${t.deficit} · 还差 ${gap}` : `目标 ${t.deficit} · 已达标`;
     }
   }
   $('#heroSub').textContent = sub;
