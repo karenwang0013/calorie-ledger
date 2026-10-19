@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.03';
+const APP_VERSION = 'v1.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -948,10 +948,6 @@ function renderMe() {
           <span>营养目标</span>
           <em>${d.targets.kcal_budget} 千卡 / 天</em><i>›</i>
         </button>
-        <button class="srow" data-page="watch">
-          <span>手表 / 消耗数据</span>
-          <em>${esc(d.expenditure_source)}</em><i>›</i>
-        </button>
       </div>
       <div class="seclabel">功能</div>
       <div class="setgroup">
@@ -1018,19 +1014,7 @@ function renderMe() {
           <div class="hint">减脂期建议 1.6–2.2。肌肉量越大、练得越狠，取越高。</div>
         </div>
         <button class="btn primary" id="saveProfile">保存</button>
-      </div>`;
-  } else if (mePage === 'watch') {
-    h = meBackBar('手表 / 消耗数据') + `
-      <div class="card">
-        <div class="hint" style="margin:0 0 14px">
-          当前消耗来源：<b style="color:var(--lime)">${esc(d.expenditure_source)}</b><br>
-          <span style="color:var(--muted2);font-size:11px">每天 23:00 自动同步一次。</span>
-        </div>
-        <div class="btnrow">
-          <button class="btn sm" id="openWatch">📷 截图读取</button>
-          <button class="btn sm" id="openWatch3">⌨️ 手动填写</button>
-          <button class="btn sm" id="openWeight2">⚖️ 记体重</button>
-        </div>
+        <button class="btn ghost sm" id="openWeight2" style="margin-top:10px">记录今天的体重</button>
       </div>`;
   } else if (mePage === 'ai') {
     h = meBackBar('AI 识别') + `
@@ -1251,8 +1235,6 @@ function wireMe() {
     } catch (e) { toast(e.message); }
   };
 
-  const ow = $('#openWatch'); if (ow) ow.onclick = openWatch;
-  const ow3 = $('#openWatch3'); if (ow3) ow3.onclick = openWatch;
   const w2 = $('#openWeight2'); if (w2) w2.onclick = openWeight;
 
   const hr = $('#hardReload');
