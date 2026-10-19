@@ -77,7 +77,9 @@ button, input, select, textarea {
   font-size: 16px;
   color: inherit;
 }
-button { border: 0; background: none; cursor: pointer; padding: 0; }
+button { border: 0; background: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+button:focus { outline: none; }
+button:focus-visible { outline: 2px solid rgba(214,255,75,.5); outline-offset: 2px; }
 input, textarea, select {
   background: var(--card2);
   border: 1px solid var(--line);
@@ -146,7 +148,10 @@ select {
   background: #0d0f0e;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
-.topbar { border-bottom: 1px solid rgba(255,255,255,.08); }
+.topbar {
+  border-bottom: 0;
+  box-shadow: 0 14px 22px -14px rgba(0,0,0,.9);
+}
 .brand {
   font-size: 20px; font-weight: 650; letter-spacing: 0.2px;
   display: flex; align-items: center; height: 31px;
@@ -687,7 +692,7 @@ select {
 .tabs3 button.on { background: rgba(214,255,75,.12); color: var(--lime); }
 
 .drop {
-  border: 1.5px dashed var(--line2);
+  border: 1px dashed var(--line2);
   border-radius: 28px;
   padding: 26px 16px;
   text-align: center;
@@ -704,7 +709,7 @@ select {
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }
-.drop:active { border-color: var(--lime-dim); }
+
 /* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
 .drop.has-photo { padding: 8px 8px 4px; position: relative; }
 /* 照片右上角的删除按钮，压在图片里 */
