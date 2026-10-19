@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.23';
+const APP_VERSION = 'v1.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -362,8 +362,9 @@ async function handlePhoto(file) {
     if (S.photoURL) URL.revokeObjectURL(S.photoURL);
     S.photoURL = URL.createObjectURL(file);
     $('#photoPreview').src = S.photoURL;
-    $('#pv1box').hidden = false;
-    $('#pick1').hidden = true;
+    $('#photoPreview').hidden = false;
+    $('#photoDel').hidden = false;
+    $('#emptyA').hidden = true;
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
@@ -372,14 +373,23 @@ async function handlePhoto(file) {
   }
 }
 
+/* 一组按钮：先填 ① 食物照片，再填 ② 营养成分表 */
+async function handlePick(file) {
+  if (!file) return;
+  if (!S.photoData) return handlePhoto(file);
+  if (!S.photo2Data) return handlePhoto2(file);
+  toast('两张都拍好了。点照片上的 × 可以换一张', 3000);
+}
+
 async function handlePhoto2(file) {
   if (!file) return;
   try {
     if (S.photo2URL) URL.revokeObjectURL(S.photo2URL);
     S.photo2URL = URL.createObjectURL(file);
     $('#pv2').src = S.photo2URL;
-    $('#pv2box').hidden = false;
-    $('#pick2').hidden = true;
+    $('#pv2').hidden = false;
+    $('#del2').hidden = false;
+    $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
   } catch (e) {
     toast('图片读取失败');
@@ -391,18 +401,20 @@ function resetPhotoUI() {
   if (S.photoURL) { URL.revokeObjectURL(S.photoURL); S.photoURL = null; }
   const pv = $('#photoPreview');
   pv.removeAttribute('src');
+  pv.hidden = true;
+  $('#photoDel').hidden = true;
+  $('#emptyA').hidden = false;
   S.photoData = null;
   S.photoAt = null;
   $('#photoDrop').hidden = false;
   $('#pane-photo').classList.remove('done');
-  $('#pv1box').hidden = true;
-  $('#pick1').hidden = false;
   $('#photoActions').hidden = true;
   if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
   S.photo2Data = null;
   $('#pv2').removeAttribute('src');
-  $('#pv2box').hidden = true;
-  $('#pick2').hidden = false;
+  $('#pv2').hidden = true;
+  $('#del2').hidden = true;
+  $('#emptyB').hidden = false;
 }
 
 async function runPhoto() {
@@ -1593,17 +1605,16 @@ function init() {
   $('#addMask').onclick = closeAdd;
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));
-  $('#pick2Cam').onclick = ev => { ev.stopPropagation(); $('#photo2Cam').click(); };
-  $('#pick2Alb').onclick = ev => { ev.stopPropagation(); $('#photo2Alb').click(); };
-  $('#photo2Cam').onchange = e => handlePhoto2(e.target.files[0]);
-  $('#photo2Alb').onchange = e => handlePhoto2(e.target.files[0]);
+  $('#photo2Cam').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
+  $('#photo2Alb').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#del2').onclick = ev => {
     ev.stopPropagation();
     if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
     S.photo2Data = null;
     $('#pv2').removeAttribute('src');
-    $('#pv2box').hidden = true;
-    $('#pick2').hidden = false;
+    $('#pv2').hidden = true;
+    $('#del2').hidden = true;
+    $('#emptyB').hidden = false;
   };
 
   const pickCam = () => $('#photoInput').click();
@@ -1611,8 +1622,8 @@ function init() {
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); };
-  $('#photoAlbum').onchange = e => handlePhoto(e.target.files[0]);
-  $('#photoInput').onchange = e => handlePhoto(e.target.files[0]);
+  $('#photoAlbum').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
+  $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;
   $('#saveItems').onclick = saveItems;

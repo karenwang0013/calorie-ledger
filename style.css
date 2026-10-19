@@ -539,23 +539,31 @@ select {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
-/* 一个框两行：① 食物照片 ② 营养成分表 */
-.photobox { display: block; padding: 16px 14px; }
+/* 一个框：两个照片位 + 一组按钮 */
+.drop.photobox { display: block; padding: 14px 12px; }
 .prow-hd {
   display: flex; align-items: center; justify-content: center; gap: 7px;
-  font-size: 13.5px; font-weight: 550; margin-bottom: 10px;
+  font-size: 13px; font-weight: 550; margin-bottom: 8px;
 }
 .prow-hd b {
-  width: 23px; height: 23px; border-radius: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
   background: var(--lime); color: #0a0b0c;
-  font-size: 13px; font-weight: 700;
+  font-size: 12.5px; font-weight: 700;
   display: inline-grid; place-items: center; flex: 0 0 auto;
 }
 .prow-hd i { font-style: normal; font-size: 11px; color: var(--muted2); font-weight: 400; }
-.prow-pick { display: flex; flex-direction: column; gap: 8px; width: min(100%, 260px); margin: 0 auto; }
-.prow-pv { position: relative; }
-.prow-pv .preview { max-height: 150px; }
-.prow-div { height: 1px; background: var(--line2); margin: 14px -2px; }
+.pslot + .pslot { margin-top: 12px; }
+.pslot-body { position: relative; }
+.pslot-empty {
+  display: block; text-align: center;
+  font-size: 11.5px; color: var(--muted2);
+  border: 1px dashed var(--line2); border-radius: 12px;
+  padding: 14px 0;
+}
+.pslot-body .preview { max-height: 130px; }
+.prow-pick { display: flex; gap: 8px; margin-top: 14px; }
+.prow-pick .pickbtn { flex: 1; padding: 12px 10px; font-size: 14px; }
+.prow-pick .pickbtn.on { padding: 13px 10px; font-size: 15px; }
 .drop.small { padding: 20px 14px; position: relative; }
 .drop.small .preview { max-height: 150px; }
 .drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }

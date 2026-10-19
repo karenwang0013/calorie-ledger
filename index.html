@@ -166,30 +166,27 @@
     <div class="pane" id="pane-photo">
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <input type="file" accept="image/*" id="photoAlbum" hidden>
-      <!-- 一个框，两行：① 食物照片 ② 营养成分表 -->
+      <!-- 一个框：两个位置 + 一组按钮 -->
       <div class="drop photobox" id="photoDrop">
-        <div class="prow" id="row1">
+        <div class="pslot">
           <div class="prow-hd"><b>①</b>食物照片<i>整盘菜、外卖盒都行</i></div>
-          <div class="prow-pick" id="pick1">
-            <button class="pickbtn on" id="pickCamera">拍照</button>
-            <button class="pickbtn ghost" id="pickAlbum">从相册选</button>
-          </div>
-          <div class="prow-pv" id="pv1box" hidden>
-            <img class="preview" id="photoPreview" alt="">
-            <button class="shotdel" id="photoDel">×</button>
+          <div class="pslot-body">
+            <span class="pslot-empty" id="emptyA">还没拍</span>
+            <img class="preview" id="photoPreview" hidden alt="">
+            <button class="shotdel" id="photoDel" hidden>×</button>
           </div>
         </div>
-        <div class="prow-div"></div>
-        <div class="prow" id="row2">
+        <div class="pslot">
           <div class="prow-hd"><b>②</b>营养成分表<i>可选，有的话热量更准</i></div>
-          <div class="prow-pick" id="pick2">
-            <button class="pickbtn on" id="pick2Cam">拍照</button>
-            <button class="pickbtn ghost" id="pick2Alb">从相册选</button>
+          <div class="pslot-body">
+            <span class="pslot-empty" id="emptyB">还没拍</span>
+            <img class="preview" id="pv2" hidden alt="">
+            <button class="shotdel" id="del2" hidden>×</button>
           </div>
-          <div class="prow-pv" id="pv2box" hidden>
-            <img class="preview" id="pv2" alt="">
-            <button class="shotdel" id="del2">×</button>
-          </div>
+        </div>
+        <div class="prow-pick">
+          <button class="pickbtn on" id="pickCamera">拍照</button>
+          <button class="pickbtn ghost" id="pickAlbum">从相册选</button>
         </div>
         <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
         <input type="file" accept="image/*" id="photoAlbum" hidden>
