@@ -46,7 +46,8 @@ const Store = {
     try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
     const d = this.defaults();
     parsed = parsed || {};
-    this.data = {
+    // 以存下来的对象为底，再补默认值 —— 以后新增字段不会被白名单吃掉
+    this.data = Object.assign({}, parsed, {
       v: 1,
       profile: Object.assign({}, d.profile, parsed.profile || {}),
       logs: Array.isArray(parsed.logs) ? parsed.logs : [],
@@ -54,7 +55,7 @@ const Store = {
       daily: parsed.daily || {},
       shots: parsed.shots || {},
       settings: parsed.settings || {},
-    };
+    });
     return this.data;
   },
 
@@ -716,13 +717,14 @@ function exportJson() {
 function importJson(text) {
   const obj = JSON.parse(text);
   if (!obj || !obj.profile) throw new Error('这不是有效的备份文件');
-  Store.data = {
+  Store.data = Object.assign({}, obj, {
     v: 1,
     profile: obj.profile,
     logs: obj.logs || [],
     weights: obj.weights || {},
     daily: obj.daily || {},
+    shots: obj.shots || {},
     settings: obj.settings || {},
-  };
+  });
   Store.save();
 }
