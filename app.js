@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.13';
+const APP_VERSION = 'v1.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -312,7 +312,11 @@ function setPhotoMode(m) {
   if (g) g.placeholder = S.photoMode === 'label'
     ? '吃了多少克 / 毫升（如：整罐 330）'
     : '吃了多少克（可选）';
-  $('#slot2').hidden = S.photoMode !== 'label';
+  $('#slot2').hidden = false;
+  const hd = $('#slot2Hd');
+  if (hd) hd.textContent = S.photoMode === 'label'
+    ? '再加一张食物照片（可选，用来估实际吃多少）'
+    : '再加一张营养成分表（可选，热量会更精确）';
 }
 
 function setAddMode(m) {
@@ -430,11 +434,16 @@ async function runPhoto() {
   try {
     const grams = Number(($('#photoGrams') || {}).value) || 0;
     let hint = $('#photoHint').value.trim();
-    const modeHint = S.photoMode === 'label'
-      ? '这张图是包装上的营养成分表：请只按标签读数，每 100 克的能量/蛋白质/碳水/脂肪原样填，不要按外观估份量；name 用产品名。'
-      : '这张图是食物本体：请按外观和常见餐具尺寸估算实际吃掉的重量。';
+    const mainIsLabel = S.photoMode === 'label';
+    let modeHint = mainIsLabel
+      ? '第一张图是包装上的营养成分表：每 100 克的能量/蛋白质/碳水/脂肪请只按标签读数，不要按外观估份量；name 用产品名。'
+      : '第一张图是食物本体：请按外观和常见餐具尺寸估算实际吃掉的重量。';
+    if (S.photo2Data) {
+      modeHint += mainIsLabel
+        ? '第二张图是实际吃的食物本体，请按它估算吃掉了多少克。'
+        : '第二张图是包装上的营养成分表：每 100 克的能量/蛋白质/碳水/脂肪请按标签读数，比外观估算准。';
+    }
     hint = hint ? modeHint + '；' + hint : modeHint;
-    if (S.photo2Data) hint += '；第二张图是实际吃的食物本体，请按它估算实际吃掉的重量（用户填了克数就以克数为准）';
     if (grams > 0) hint = hint + `；我实际吃了 ${grams} 克`;
     const r = await api('/api/ai/food', {
       image: S.photoData,
