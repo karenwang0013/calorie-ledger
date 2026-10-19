@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.69';
+const APP_VERSION = 'v1.70';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1712,12 +1712,26 @@ function init() {
     $('#emptyB').hidden = false;
   };
 
+  // 点两个照片框本身也能调起系统相册
+  let pickTarget = 0;
+  const pickFor = slot => { pickTarget = slot; $('#photoAlbum').click(); };
+  $$('.pslot').forEach(el => el.onclick = ev => {
+    if (ev.target.closest('[data-del]') || ev.target.closest('.shotdel')) return;
+    pickFor(Number(el.dataset.slot) || 0);
+  });
+  $('#photoAlbum').onchange = e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (pickTarget === 2) handlePhoto2(f); else handlePhoto(f);
+    pickTarget = 0;
+  };
+
   const pickCam = () => $('#photoInput').click();
   const pickAlb = () => $('#photoAlbum').click();
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); };
-  $('#photoAlbum').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;

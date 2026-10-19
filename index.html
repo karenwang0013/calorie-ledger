@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=207">
+<link rel="stylesheet" href="style.css?v=208">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -184,7 +184,7 @@
       <input type="file" accept="image/*" id="photoAlbum" hidden>
       <!-- 一个框：左右两个照片位 + 一组按钮 -->
       <div class="drop photobox" id="photoDrop">
-        <div class="pslot">
+        <div class="pslot" data-slot="1">
           <div class="prow-hd">1 食物照片</div>
           <div class="prow-sub">整盘菜、外卖盒</div>
           <div class="pslot-body">
@@ -193,7 +193,7 @@
             <button class="shotdel" id="photoDel" hidden>×</button>
           </div>
         </div>
-        <div class="pslot">
+        <div class="pslot" data-slot="2">
           <div class="prow-hd">2 营养成分表</div>
           <div class="prow-sub">可选，更准</div>
           <div class="pslot-body">
@@ -368,8 +368,8 @@
   </div>
 </div>
 
-<script src="foods.js?v=207"></script>
-<script src="api.js?v=207"></script>
-<script src="app.js?v=207"></script>
+<script src="foods.js?v=208"></script>
+<script src="api.js?v=208"></script>
+<script src="app.js?v=208"></script>
 </body>
 </html>
