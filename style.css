@@ -15,8 +15,8 @@
   --blue: #6ea8ff;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
-  /* 卡片圆角：跟手机屏幕的圆角弧度对齐（屏角约 56 − 边距 12） */
-  --card-r: 44px;
+  /* 卡片圆角：跟手机屏幕的圆角同心（屏角 56 − 离底 8） */
+  --card-r: 48px;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -430,10 +430,10 @@ select {
 
 /* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
-  position: fixed; left: 10px; right: 10px; z-index: 61;
-  bottom: calc(12px + var(--safe-b));
+  position: fixed; left: 8px; right: 8px; z-index: 61;
+  bottom: 8px;
   max-width: 500px; margin: 0 auto;
-  min-height: 48dvh; max-height: 64dvh;
+  min-height: 56dvh; max-height: 72dvh;
   background: var(--bg2);
   border-radius: var(--card-r);
   border: 1px solid var(--line2);
@@ -465,13 +465,13 @@ select {
   display: flex; flex-direction: column;
 }
 .sheet .sh-foot {
-  padding: 12px 18px 14px;
+  padding: 12px 18px calc(14px + var(--safe-b));
   border-top: 1px solid var(--line);
   background: var(--bg2);
   flex: 0 0 auto;
 }
 /* 帮助卡片步骤多，给它高一点 */
-#helpSheet { max-height: 78dvh; }
+#helpSheet { max-height: 80dvh; }
 
 .tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; flex: 0 0 auto; }
 .tabs3 button {
