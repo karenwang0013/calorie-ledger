@@ -338,6 +338,18 @@ select {
 .modal .gitem .del { color: var(--muted2); font-size: 15px; padding: 2px 0 2px 8px; }
 .meal .empty { padding: 0 14px 14px; font-size: 12px; color: var(--muted2); }
 
+/* 关于页：整页不滚，只有上面那张卡内部滚动 */
+.about-fill {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.about-fill > .card { margin: 0 18px 10px; flex: 0 0 auto; }
+.about-fill > .card:first-child {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.about-fill > .card:last-child { margin-bottom: 4px; }
+
 /* 关于页的更新日志 */
 .rel-date {
   font-size: 12px; font-weight: 600; color: var(--lime);

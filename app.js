@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.29';
+const APP_VERSION = 'v1.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1204,6 +1204,7 @@ function renderMe() {
       </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
+      <div class="about-fill">
       <div class="card">
         <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
         ${RELEASES.map(r => `
@@ -1225,11 +1226,29 @@ function renderMe() {
           <b style="color:var(--text)">实测消耗</b>（趋势页）：体重回归斜率 × 7700。<br>
           <span style="color:var(--muted2);font-size:11px">单日有 ±20% 误差，看 7 天平均。</span>
         </div>
+      </div>
       </div>`;
   }
 
   $('#meBody').innerHTML = h;
+  fitAboutFill();
   wireMe();
+}
+
+/* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
+function fitAboutFill() {
+  const fill = document.querySelector('.about-fill');
+  if (!fill) return;
+  const app = document.querySelector('.app');
+  const padB = parseFloat(getComputedStyle(app).paddingBottom) || 92;
+  const top = fill.getBoundingClientRect().top;
+  const h = Math.max(240, Math.round(window.innerHeight - top - padB - 10));
+  fill.style.height = h + 'px';
+  // 兜底：如果整页还能滚，把多出来的高度减掉，保证页面本身不动
+  requestAnimationFrame(() => {
+    const over = document.documentElement.scrollHeight - window.innerHeight;
+    if (over > 0) fill.style.height = Math.max(240, Math.round(h - over - 8)) + 'px';
+  });
 }
 
 function wireMe() {
