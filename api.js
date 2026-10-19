@@ -740,6 +740,11 @@ function cloudUrl() {
 /* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
 function cloudPayload() {
   const data = JSON.parse(JSON.stringify(Store.load()));
+  // 密钥绝不进仓库：GitHub 的 secret scanning 会直接拒绝，而且本来就不该上传
+  if (data.settings) {
+    delete data.settings.gh_token;
+    delete data.settings.dashscope_key;
+  }
   const limit = 400 * 1024;
   let json = JSON.stringify({ v: 1, updatedAt: data.settings.updatedAt || new Date().toISOString(), data });
   if (json.length > limit && data.shots) {
@@ -781,7 +786,9 @@ async function cloudPush() {
     if (!res.ok) {
       let detail = '';
       try { detail = (await res.text()).slice(0, 120); } catch (e) {}
-      throw new Error('上传失败 ' + res.status + (detail ? '：' + detail : ''));
+      if (/Secret detected/i.test(detail)) throw new Error('云端拒绝：数据里检测到密钥（已自动剔除，再点一次试试）');
+      if (res.status === 409) throw new Error('云端拒绝：内容触发仓库规则');
+      throw new Error('上传失败 ' + res.status + (detail ? '：' + detail.slice(0, 60) : ''));
     }
     const out = await res.json();
     cloudSha = out.content && out.content.sha;
