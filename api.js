@@ -333,6 +333,11 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
    - 如果用户说「整包 / 一包 / 全吃完」，就找包装上的「净含量 / 规格 / 内容量」，把 grams 设成那个数；找不到净含量再按 100
    - name 用包装上的产品名，不要自己编
 5. 拿不准时，宁可估高不要估低，并在 note 里说明不确定的地方。
+6. 饮料、零食、包装食品也必须认，不要因为没有成分表就说认不出：
+   - 按包装上的品牌和品名命名（例：可口可乐 无糖、东方树叶 乌龙茶、农夫山泉 天然水）
+   - 按常见规格估重量（一罐可乐 330ml ≈ 330g），用户说了「整罐/一整瓶」就按整罐算
+   - 0 糖 0 卡的饮料也要返回一条，kcal_per_100g 填 0，不要省略
+7. 只要图里有能吃能喝的东西，items 就不能是空数组。
 
 只输出一个 JSON 对象，不要 markdown 代码块，不要任何解释文字：
 
@@ -434,11 +439,13 @@ function cleanItems(obj) {
     const name = String(it.name || '').trim();
     const grams = num(it.grams, 0);
     if (!name || grams <= 0) return;
-    let k100 = num(it.kcal_per_100g, 0);
-    if (k100 <= 0) {
-      const total = num(it.kcal, 0);
-      if (total > 0) k100 = total / grams * 100; else return;
+    // 0 千卡是合法值（无糖饮料、白水），只有「根本没给数字」才去拿总热量倒推
+    let k100 = num(it.kcal_per_100g, NaN);
+    if (isNaN(k100)) {
+      const total = num(it.kcal, NaN);
+      k100 = isNaN(total) ? 0 : total / grams * 100;
     }
+    if (k100 < 0) k100 = 0;
     items.push({
       name,
       grams: Math.round(grams),
