@@ -594,7 +594,9 @@ select {
 #pane-photo:not([hidden]) .drop:not(.has-photo) { flex: 1 1 auto; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
-.drop .big { margin-bottom: 10px; opacity: .45; }
+.drop .big { margin: 0 0 6px; opacity: .45; line-height: 0; }
+.drop .ptitle { font-size: 13px; line-height: 1.4; }
+.drop .psub { font-size: 11px; color: var(--muted2); line-height: 1.5; margin-top: 4px; }
 .drop .big svg { width: 34px; height: 34px; display: block; }
 .drop:active { border-color: var(--lime-dim); }
 /* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
