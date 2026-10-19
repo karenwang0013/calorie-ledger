@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.06';
+const APP_VERSION = 'v1.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -973,6 +973,11 @@ function renderMe() {
           <span>关于与更新</span><em>${APP_VERSION}</em><i>›</i>
         </button>
       </div>
+      <div class="card" style="margin-top:14px">
+        <h3>版本更新</h3>
+        <div class="hint" style="margin:0 0 12px">iPhone 上网页会被缓存。如果看到的是旧界面，点下面按钮强制刷新（不会动数据）。</div>
+        <button class="btn sm" id="hardReload">强制更新</button>
+      </div>
       <div style="height:26px"></div>`;
   } else if (mePage === 'body') {
     h = meBackBar('身体与目标') + `
@@ -1116,11 +1121,6 @@ function renderMe() {
       </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
-      <div class="card">
-        <h3>版本更新</h3>
-        <div class="hint" style="margin:0 0 12px">iPhone 上网页会被缓存。如果看到的是旧界面，点下面按钮强制刷新（不会动数据）。</div>
-        <button class="btn sm" id="hardReload">强制更新</button>
-      </div>
       <div class="card">
         <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
