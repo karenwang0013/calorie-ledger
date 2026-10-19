@@ -161,6 +161,8 @@ function renderToday() {
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
+  const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
+  $('#stExpAt').textContent = at ? '⌚ ' + at : '';
   leftEl.innerHTML = (left >= 0 ? left : left) + ' <small>kcal</small>';
   leftEl.style.color = left < 0 ? 'var(--orange)' : '';
 
@@ -1121,7 +1123,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.84</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.85</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1593,7 +1595,7 @@ function init() {
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
     if (date) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800);
-    else if (c && c.at) toast(`✅ 云端正常（${c.at.slice(5)} 写入）· 活动 ${c.active} 千卡，快捷指令下次运行就会变`, 3200);
+    else if (c && c.at) toast(`✅ 云端：${c.at.slice(5)} 那份 · 活动 ${c.active} 千卡${c.changed ? '' : '（刚跑过快捷指令的话，等 1 分钟再点一次）'}`, 3400);
     else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
