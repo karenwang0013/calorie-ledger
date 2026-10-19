@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.46';
+const APP_VERSION = 'v1.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1223,6 +1223,9 @@ function renderMe() {
           `).join('')}
         `).join('')}
       </div>
+      <div class="card tight" style="margin-bottom:0">
+        <div class="hint" style="margin:0;font-size:10.5px;color:var(--muted2)" id="dbgLine">—</div>
+      </div>
       <div class="card tight">
         <h3>这套算法在算什么</h3>
         <div class="hint" style="margin:0;line-height:1.6;font-size:11px">
@@ -1257,6 +1260,13 @@ function fitAboutFill() {
 }
 
 function wireMe() {
+  const dbg = $('#dbgLine');
+  if (dbg) {
+    const tb = document.querySelector('.topbar');
+    const tbH = tb ? Math.round(tb.getBoundingClientRect().height) : 0;
+    const tbPad = tb ? getComputedStyle(tb).paddingTop : '';
+    dbg.textContent = `视口 ${Math.round(window.innerWidth)}×${Math.round(window.innerHeight)} · 顶栏 ${tbH}px（上边距 ${tbPad}）· ${APP_VERSION}`;
+  }
   const back = $('#meBack');
   if (back) back.onclick = () => { mePage = null; renderMe(); };
   $$('.srow').forEach(b => b.onclick = () => { mePage = b.dataset.page; renderMe(); });
