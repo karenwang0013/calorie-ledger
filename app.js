@@ -12,6 +12,8 @@ const MEALS = [
   { k: 'snack', n: '加餐' },
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
+// 版本号只在这里写一次，设置页和关于页都读它
+const APP_VERSION = 'v0.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -960,7 +962,7 @@ function renderMe() {
           <span>数据备份</span><em></em><i>›</i>
         </button>
         <button class="srow" data-page="about">
-          <span>关于与更新</span><em>v0.66</em><i>›</i>
+          <span>关于与更新</span><em>${APP_VERSION}</em><i>›</i>
         </button>
       </div>
       <div style="height:26px"></div>`;
@@ -1123,7 +1125,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.89</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
