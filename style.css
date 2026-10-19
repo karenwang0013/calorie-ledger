@@ -559,7 +559,16 @@ select {
 .drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
 .drop:active { border-color: var(--lime-dim); }
 /* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
-.drop.has-photo { padding: 8px 8px 4px; }
+.drop.has-photo { padding: 8px 8px 4px; position: relative; }
+/* 照片右上角的删除按钮，压在图片里 */
+.shotdel {
+  position: absolute; top: 16px; right: 16px; z-index: 2;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,0,0,.62); color: #fff;
+  font-size: 17px; line-height: 1;
+  display: grid; place-items: center;
+  backdrop-filter: blur(6px);
+}
 .preview {
   width: 100%; display: block;
   max-height: 200px; object-fit: cover;
