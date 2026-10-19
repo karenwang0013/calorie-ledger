@@ -1123,7 +1123,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.88</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.89</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1565,10 +1565,6 @@ function init() {
   $('#searchInput').oninput = e => {
     clearTimeout(searchTimer);
     const v = e.target.value;
-    const has = !!v.trim();
-    $('#addTabs').hidden = has;
-    if (has && S.addMode !== 'search') setAddMode('search');
-    if (!has && S.addMode === 'search') setAddMode('photo');
     searchTimer = setTimeout(() => runSearch(v), 120);
   };
 

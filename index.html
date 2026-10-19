@@ -154,9 +154,9 @@
     <button class="x" id="addClose">×</button>
   </div>
   <div class="sh-body">
-    <input id="searchInput" class="qinput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
     <div class="tabs3" id="addTabs">
       <button data-m="photo" class="on">📷 拍照</button>
+      <button data-m="search">🔍 搜索</button>
       <button data-m="text">✍️ 描述</button>
     </div>
 
@@ -193,7 +193,8 @@
 
     <!-- 搜索（搜索框在卡片顶部） -->
     <div class="pane" id="pane-search" hidden>
-      <div class="chips-wrap" id="recentChips"></div>
+      <input id="searchInput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
+      <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
       <div class="slist" id="searchList"></div>
     </div>
 
