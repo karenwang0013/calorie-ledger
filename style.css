@@ -481,7 +481,28 @@ select {
 }
 .drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
 .drop:active { border-color: var(--lime-dim); }
-.preview { width: 100%; border-radius: 14px; display: block; }
+.preview {
+  width: 100%; display: block;
+  max-height: 148px; object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+/* 结果里的拍照缩略图 */
+.shotrow {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 12px;
+  padding: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.shotrow img {
+  width: 56px; height: 56px; border-radius: 10px;
+  object-fit: cover; flex: 0 0 auto;
+}
+.shotrow .sinfo { display: flex; flex-direction: column; gap: 3px; }
+.shotrow .sinfo b { font-size: 13px; font-weight: 600; }
+.shotrow .sinfo span { font-size: 11px; color: var(--muted2); }
 
 /* 识别结果行 */
 .ritem {

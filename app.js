@@ -303,6 +303,7 @@ async function handlePhoto(file) {
     $('#photoPreview').hidden = false;
     $('#photoPreview').src = URL.createObjectURL(file);
     S.photoData = await compress(file);
+    S.photoAt = Date.now();
     $('#photoActions').hidden = false;
   } catch (e) {
     toast('图片读取失败');
@@ -454,7 +455,20 @@ function showResult(title, note) {
 
 function renderResult() {
   const box = $('#resultItems');
-  box.innerHTML = S.items.map((it, i) => {
+  let shot = '';
+  if (S.photoData) {
+    const t = new Date(S.photoAt || Date.now());
+    const hh = String(t.getHours()).padStart(2, '0');
+    const mm = String(t.getMinutes()).padStart(2, '0');
+    shot = `<div class="shotrow">
+      <img src="${S.photoData}" alt="">
+      <div class="sinfo">
+        <b>${hh}:${mm} 拍摄</b>
+        <span>识别出 ${S.items.length} 项 · 克数可改</span>
+      </div>
+    </div>`;
+  }
+  box.innerHTML = shot + S.items.map((it, i) => {
     const kcal = it.kcal_per_100g * it.grams / 100;
     const units = (it._units || []).filter(u => u.g !== 100).slice(0, 3);
     const chips = units.map(u =>
