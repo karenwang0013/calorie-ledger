@@ -45,15 +45,6 @@ body {
   overflow: hidden; overscroll-behavior: none;
 }
 
-/* 顶到屏幕最上沿的实色带：要求高度 ≥6px、宽 ≥80%、距顶 ≤4px */
-.statusbg {
-  position: fixed; top: 0; left: 0; right: 0;
-  /* iOS 只有在屏幕最上沿 4px 内存在实色元素时，才会取这个颜色当状态栏底色 */
-  height: min(max(8px, var(--safe-t)), 88px);
-  background: #000;
-  z-index: 30;
-  pointer-events: none;
-}
 
 body { -webkit-overflow-scrolling: touch; }
 
@@ -104,7 +95,9 @@ select {
   height: 100%;
   display: flex; flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(180deg, #000 0%, #000 16%, #090c0a 42%, #070807 100%);
+  background: radial-gradient(120% 42% at 50% 106%, rgba(214, 255, 75, 0.075), transparent 62%),
+    radial-gradient(130% 45% at 50% -8%, rgba(214, 255, 75, 0.045), transparent 60%),
+    linear-gradient(180deg, #000 0%, #000 16%, #090c0a 42%, #070807 100%);
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
