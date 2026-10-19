@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.09';
+const APP_VERSION = 'v1.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1059,12 +1059,12 @@ function renderMe() {
         <div class="field">
           <label>目标缺口（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${d.targets.deficit}">
-          <div class="hint">建议 ${a.deficit ?? d.targets.deficit}</div>
+          <div class="hint">= 目标速度 ${Math.abs(Number(p.goal_rate ?? 0))} kg/周 × 7700 ÷ 7${d.targets.deficit !== (a.deficit ?? d.targets.deficit) ? '（已封顶）' : ''}</div>
         </div>
         <div class="field">
           <label>每日可吃（千卡）</label>
           <input id="nKcal" type="number" inputmode="numeric" value="${d.targets.kcal_budget}">
-          <div class="hint">= 今日消耗 ${d.expenditure} − 目标缺口</div>
+          <div class="hint">= 全天消耗 ${d.expenditure} − 目标缺口 ${d.targets.deficit}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
         </div>
         <div class="field">
           <label>蛋白质（g）</label>
