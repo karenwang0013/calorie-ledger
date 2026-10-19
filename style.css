@@ -120,8 +120,8 @@ select {
     /* 底部绿光扩散 */
     radial-gradient(115% 38% at 50% 104%, rgba(214,255,75,0.14), rgba(214,255,75,0.035) 45%, transparent 66%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(214,255,75,0.10) 1px, transparent 1.3px) 0 0 / 12px 12px,
-    radial-gradient(circle, rgba(214,255,75,0.10) 1px, transparent 1.3px) 6px 6px / 12px 12px,
+    radial-gradient(circle, rgba(214,255,75,0.055) 1px, transparent 1.3px) 0 0 / 14px 14px,
+    radial-gradient(circle, rgba(214,255,75,0.055) 1px, transparent 1.3px) 7px 7px / 14px 14px,
     /* 底色：墨绿渐层 */
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
