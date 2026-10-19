@@ -469,7 +469,7 @@ select {
 .tabbar .inner {
   width: 100%; max-width: 520px;
   display: flex; align-items: center; gap: 2px;
-  padding: 3px 16px calc(1px + var(--safe-b));
+  padding: 9px 16px calc(1px + var(--safe-b));
   pointer-events: auto;
   background: #0b0c0e;
   border-top: 1px solid var(--line);
