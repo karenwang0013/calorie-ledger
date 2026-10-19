@@ -539,7 +539,9 @@ select {
   flex: 1; padding: 9px 4px; border-radius: 11px;
   font-size: 12.5px; color: var(--muted);
   background: var(--card);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
 }
+.tabs3 button svg { width: 15px; height: 15px; opacity: .9; }
 .tabs3 button.on { background: rgba(214,255,75,.12); color: var(--lime); }
 
 .drop {
@@ -560,7 +562,8 @@ select {
 #pane-photo:not([hidden]) .drop:not(.has-photo) { flex: 1 1 auto; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
-.drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
+.drop .big { margin-bottom: 10px; opacity: .45; }
+.drop .big svg { width: 34px; height: 34px; display: block; }
 .drop:active { border-color: var(--lime-dim); }
 /* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
 .drop.has-photo { padding: 8px 8px 4px; position: relative; }

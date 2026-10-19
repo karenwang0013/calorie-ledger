@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v0.90';
+const APP_VERSION = 'v0.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -899,6 +899,18 @@ function applyTheme(name) {
   document.documentElement.style.setProperty('--lime', c);
 }
 
+
+/* 左边缘往右滑 = 返回（关卡片 / 关弹层 / 退出我的子页） */
+function goBack() {
+  const on = id => { const el = $(id); return el && el.classList.contains('on'); };
+  if (on('#grpSheet')) return closeGroup();
+  if (on('#addSheet')) return closeAdd();
+  if (on('#helpSheet')) return closeHelp();
+  if (on('#watchSheet')) return closeWatch();
+  if (on('#weightSheet')) return closeWeight();
+  if (mePage) { mePage = null; renderMe(); }
+}
+
 /* ---------------- 我的 / 设置 ---------------- */
 let mePage = null;
 
@@ -1659,6 +1671,20 @@ function init() {
     attributes: true, subtree: true, attributeFilter: ['class'],
   });
   syncLock();
+
+  let sx = 0, sy = 0, edge = false;
+  document.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    edge = t.clientX < 28;
+    sx = t.clientX; sy = t.clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!edge) return;
+    edge = false;
+    const t = e.changedTouches[0];
+    if (t.clientX - sx < 70 || Math.abs(t.clientY - sy) > 60) return;
+    goBack();
+  }, { passive: true });
 
   applyTheme(Store.load().settings.theme || 'lime');
   loadDay();
