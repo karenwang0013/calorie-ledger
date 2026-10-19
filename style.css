@@ -42,7 +42,7 @@ body { min-height: 100dvh; }
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
   height: var(--safe-t);
-  background: #101614;
+  background: #0b100e;
   z-index: 30;
   pointer-events: none;
 }
@@ -107,8 +107,7 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: calc(10px + var(--safe-t)) 18px 9px;
-  background: #101614;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+  background: #0b100e;
 }
 .brand {
   font-size: 20px; font-weight: 650; letter-spacing: 0.2px;
