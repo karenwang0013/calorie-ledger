@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.51';
+const APP_VERSION = 'v1.52';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1362,7 +1362,11 @@ function wireMe() {
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch (e) {}
     toast('正在更新…', 1200);
-    setTimeout(() => location.reload(), 400);
+    // 带一个随机参数重开，绕开 GitHub Pages 的 10 分钟 CDN 缓存
+    setTimeout(() => {
+      const u = location.pathname + '?r=' + Date.now();
+      location.replace(u);
+    }, 400);
   };
 
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
