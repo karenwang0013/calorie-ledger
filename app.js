@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.34';
+const APP_VERSION = 'v1.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -990,7 +990,15 @@ function goBack() {
   if (on('#helpSheet')) return closeHelp();
   if (on('#watchSheet')) return closeWatch();
   if (on('#weightSheet')) return closeWeight();
-  if (mePage) { mePage = null; renderMe(); }
+  if (mePage) {
+    const v = $('#view-me');
+    if (v) v.classList.add('slideout');
+    setTimeout(() => {
+      mePage = null;
+      if (v) v.classList.remove('slideout');
+      renderMe();
+    }, 170);
+  }
 }
 
 /* ---------------- 我的 / 设置 ---------------- */
@@ -1783,18 +1791,59 @@ function init() {
   });
   syncLock();
 
-  let sx = 0, sy = 0, edge = false;
+  // 左边缘拖动返回：卡片跟手滑动，松手看距离决定回退还是弹回
+  let sw = null;
   document.addEventListener('touchstart', e => {
     const t = e.touches[0];
-    edge = t.clientX < 28;
-    sx = t.clientX; sy = t.clientY;
+    if (t.clientX > 30) { sw = null; return; }
+    const el = document.querySelector('.sheet.on') || document.querySelector('.modal.on');
+    sw = el
+      ? { el, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
+      : { el: null, x0: t.clientX, y0: t.clientY, dx: 0, active: false };
   }, { passive: true });
-  document.addEventListener('touchend', e => {
-    if (!edge) return;
-    edge = false;
-    const t = e.changedTouches[0];
-    if (t.clientX - sx < 70 || Math.abs(t.clientY - sy) > 60) return;
-    goBack();
+
+  document.addEventListener('touchmove', e => {
+    if (!sw) return;
+    const t = e.touches[0];
+    const dx = t.clientX - sw.x0;
+    const dy = Math.abs(t.clientY - sw.y0);
+    if (!sw.active) {
+      if (dx < 8) return;
+      if (dy > Math.abs(dx)) { sw = null; return; }   // 竖着滑，交给页面滚动
+      sw.active = true;
+      if (sw.el) sw.el.classList.add('dragging');
+    }
+    sw.dx = Math.max(0, dx);
+    if (sw.el) {
+      sw.el.style.transform = 'translateX(' + sw.dx + 'px)';
+      sw.el.style.opacity = String(Math.max(0.55, 1 - sw.dx / 700));
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!sw) return;
+    const { el, dx, active } = sw;
+    sw = null;
+    if (!active) return;
+    if (el) el.classList.remove('dragging');
+    if (dx > 100) {
+      if (el) {
+        el.style.transition = 'transform .2s ease-in, opacity .2s';
+        el.style.transform = 'translateX(100%)';
+        el.style.opacity = '0';
+      }
+      setTimeout(() => {
+        if (el) { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }
+        goBack();
+      }, 190);
+    } else if (el) {
+      el.style.transition = 'transform .22s cubic-bezier(.22,1,.36,1), opacity .2s';
+      el.style.transform = '';
+      el.style.opacity = '';
+      setTimeout(() => { el.style.transition = ''; }, 240);
+    } else {
+      goBack();
+    }
   }, { passive: true });
 
   applyTheme(Store.load().settings.theme || 'lime');

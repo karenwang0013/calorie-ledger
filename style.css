@@ -46,6 +46,14 @@ body { min-height: 100dvh; }
   pointer-events: none;
 }
 
+body { -webkit-overflow-scrolling: touch; }
+
+/* 左边缘拖拽返回时，跟着手指走 */
+.sheet.dragging, .modal.dragging { transition: none !important; }
+/* 「我的」子页返回时滑出 */
+#view-me.slideout { animation: slideout .18s ease-in forwards; }
+@keyframes slideout { to { transform: translateX(46px); opacity: 0; } }
+
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
 html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
