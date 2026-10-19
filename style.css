@@ -539,19 +539,23 @@ select {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
-/* 两张照片：①② 标号 */
-.shotlabel {
+/* 一个框两行：① 食物照片 ② 营养成分表 */
+.photobox { display: block; padding: 16px 14px; }
+.prow-hd {
   display: flex; align-items: center; justify-content: center; gap: 7px;
-  font-size: 13.5px; font-weight: 550; color: var(--text); margin: 0 0 6px;
+  font-size: 13.5px; font-weight: 550; margin-bottom: 10px;
 }
-.shotlabel b {
+.prow-hd b {
   width: 23px; height: 23px; border-radius: 50%;
   background: var(--lime); color: #0a0b0c;
   font-size: 13px; font-weight: 700;
   display: inline-grid; place-items: center; flex: 0 0 auto;
 }
-.shotlabel i { font-style: normal; font-size: 11px; color: var(--muted2); font-weight: 400; }
-.drop .psub { text-align: center; margin: 0 0 4px; }
+.prow-hd i { font-style: normal; font-size: 11px; color: var(--muted2); font-weight: 400; }
+.prow-pick { display: flex; flex-direction: column; gap: 8px; width: min(100%, 260px); margin: 0 auto; }
+.prow-pv { position: relative; }
+.prow-pv .preview { max-height: 150px; }
+.prow-div { height: 1px; background: var(--line2); margin: 14px -2px; }
 .drop.small { padding: 20px 14px; position: relative; }
 .drop.small .preview { max-height: 150px; }
 .drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }

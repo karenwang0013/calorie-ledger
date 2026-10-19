@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.22';
+const APP_VERSION = 'v1.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -362,11 +362,8 @@ async function handlePhoto(file) {
     if (S.photoURL) URL.revokeObjectURL(S.photoURL);
     S.photoURL = URL.createObjectURL(file);
     $('#photoPreview').src = S.photoURL;
-    $('#photoPreview').hidden = false;
-    $('#photoDel').hidden = false;
-    $('#dropPlaceholder').hidden = true;
-    $('#dropRetake').hidden = false;
-    $('#photoDrop').classList.add('has-photo');
+    $('#pv1box').hidden = false;
+    $('#pick1').hidden = true;
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
@@ -381,10 +378,8 @@ async function handlePhoto2(file) {
     if (S.photo2URL) URL.revokeObjectURL(S.photo2URL);
     S.photo2URL = URL.createObjectURL(file);
     $('#pv2').src = S.photo2URL;
-    $('#pv2').hidden = false;
-    $('#del2').hidden = false;
-    $('#placeholder2').hidden = true;
-    $('#photoDrop2').classList.add('has-photo');
+    $('#pv2box').hidden = false;
+    $('#pick2').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
   } catch (e) {
     toast('图片读取失败');
@@ -395,24 +390,19 @@ async function handlePhoto2(file) {
 function resetPhotoUI() {
   if (S.photoURL) { URL.revokeObjectURL(S.photoURL); S.photoURL = null; }
   const pv = $('#photoPreview');
-  pv.hidden = true;
   pv.removeAttribute('src');
-  $('#photoDel').hidden = true;
   S.photoData = null;
   S.photoAt = null;
   $('#photoDrop').hidden = false;
   $('#pane-photo').classList.remove('done');
-  $('#photoDrop').classList.remove('has-photo');
-  $('#dropPlaceholder').hidden = false;
-  $('#dropRetake').hidden = true;
+  $('#pv1box').hidden = true;
+  $('#pick1').hidden = false;
   $('#photoActions').hidden = true;
   if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
   S.photo2Data = null;
   $('#pv2').removeAttribute('src');
-  $('#pv2').hidden = true;
-  $('#del2').hidden = true;
-  $('#photoDrop2').classList.remove('has-photo');
-  $('#placeholder2').hidden = false;
+  $('#pv2box').hidden = true;
+  $('#pick2').hidden = false;
 }
 
 async function runPhoto() {
@@ -1612,18 +1602,14 @@ function init() {
     if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
     S.photo2Data = null;
     $('#pv2').removeAttribute('src');
-    $('#pv2').hidden = true;
-    $('#del2').hidden = true;
-    $('#photoDrop2').classList.remove('has-photo');
-    $('#placeholder2').hidden = false;
+    $('#pv2box').hidden = true;
+    $('#pick2').hidden = false;
   };
 
   const pickCam = () => $('#photoInput').click();
   const pickAlb = () => $('#photoAlbum').click();
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
-  $('#retakeCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
-  $('#retakeAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); };
   $('#photoAlbum').onchange = e => handlePhoto(e.target.files[0]);
   $('#photoInput').onchange = e => handlePhoto(e.target.files[0]);

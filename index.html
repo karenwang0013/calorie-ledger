@@ -166,39 +166,37 @@
     <div class="pane" id="pane-photo">
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <input type="file" accept="image/*" id="photoAlbum" hidden>
-      <!-- 第一张：食物本体 -->
-      <div class="drop" id="photoDrop">
-        <div id="dropPlaceholder">
-          <div class="shotlabel"><b>①</b>食物照片</div>
-          <div class="psub">拍你要吃的东西，整盘菜、外卖盒都行</div>
-          <div class="dpick">
+      <!-- 一个框，两行：① 食物照片 ② 营养成分表 -->
+      <div class="drop photobox" id="photoDrop">
+        <div class="prow" id="row1">
+          <div class="prow-hd"><b>①</b>食物照片<i>整盘菜、外卖盒都行</i></div>
+          <div class="prow-pick" id="pick1">
             <button class="pickbtn on" id="pickCamera">拍照</button>
             <button class="pickbtn ghost" id="pickAlbum">从相册选</button>
           </div>
+          <div class="prow-pv" id="pv1box" hidden>
+            <img class="preview" id="photoPreview" alt="">
+            <button class="shotdel" id="photoDel">×</button>
+          </div>
         </div>
-        <img class="preview" id="photoPreview" hidden alt="">
-        <button class="shotdel" id="photoDel" hidden>×</button>
-        <div class="dropretake" id="dropRetake" hidden>
-          <button class="minibtn on" id="retakeCamera">重新拍一张</button>
-          <button class="minibtn" id="retakeAlbum">换一张相册里的</button>
-        </div>
-      </div>
-
-      <!-- 第二张：营养成分表（可选） -->
-      <div class="drop small" id="photoDrop2">
-        <div id="placeholder2">
-          <div class="shotlabel"><b>②</b>营养成分表<i>可选，有的话热量更准</i></div>
-          <div class="psub">包装背面「每 100 克」那张表</div>
-          <div class="dpick">
+        <div class="prow-div"></div>
+        <div class="prow" id="row2">
+          <div class="prow-hd"><b>②</b>营养成分表<i>可选，有的话热量更准</i></div>
+          <div class="prow-pick" id="pick2">
             <button class="pickbtn on" id="pick2Cam">拍照</button>
             <button class="pickbtn ghost" id="pick2Alb">从相册选</button>
           </div>
+          <div class="prow-pv" id="pv2box" hidden>
+            <img class="preview" id="pv2" alt="">
+            <button class="shotdel" id="del2">×</button>
+          </div>
         </div>
-        <img class="preview" id="pv2" hidden alt="">
-        <button class="shotdel" id="del2" hidden>×</button>
+        <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
+        <input type="file" accept="image/*" id="photoAlbum" hidden>
         <input type="file" accept="image/*" capture="environment" id="photo2Cam" hidden>
         <input type="file" accept="image/*" id="photo2Alb" hidden>
       </div>
+
       <div style="margin-top:12px" id="photoActions" hidden>
         <input id="photoGrams" type="number" inputmode="decimal" min="1" step="1"
                placeholder="吃了多少克（可选）" style="margin-bottom:10px">
