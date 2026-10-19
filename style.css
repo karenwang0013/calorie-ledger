@@ -82,7 +82,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(30px + var(--safe-t)) 18px 12px;
+  padding: calc(6px + var(--safe-t)) 18px 10px;
   background: #0b100e;
 }
 .brand {
@@ -344,9 +344,7 @@ select {
   display: flex; align-items: center; gap: 2px;
   padding: 3px 16px calc(1px + var(--safe-b));
   pointer-events: auto;
-  background: rgba(11, 12, 14, 0.92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: #0b0c0e;
   border-top: 1px solid var(--line);
 }
 .tab {
