@@ -24,6 +24,8 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
+html { background: #0a0b0c; }
+
 html, body {
   margin: 0;
   padding: 0;
