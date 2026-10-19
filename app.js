@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.77';
+const APP_VERSION = 'v1.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1426,20 +1426,52 @@ function wireMe() {
     ghState.textContent = t ? ('上次同步：' + t) : (cloudToken() ? '还没同步过' : '未开启');
     if (e) ghState.textContent += ' · ' + e;
   }
+  const setCloudState = txt => { if (ghState) ghState.textContent = txt; };
+  const busyBtn = async (btn, label, fn) => {
+    if (btn) { btn.disabled = true; btn.dataset.k = btn.textContent; btn.textContent = label; }
+    try { return await fn(); } finally {
+      if (btn) { btn.disabled = false; btn.textContent = btn.dataset.k || btn.textContent; }
+    }
+  };
+
   if (ghSave) ghSave.onclick = async () => {
-    const v = ($('#fGhToken').value || '').trim();
+    const v = (($('#fGhToken') || {}).value || '').trim();
     if (!v) return toast('先填 token');
     setSetting('gh_token', v);
     cloudSha = null;
-    const ok = await cloudPush();
-    toast(ok ? '同步已开启，数据已上传' : '上传失败，检查 token 权限', 3200);
-    renderMe();
+    setCloudState('正在上传…');
+    const ok = await busyBtn(ghSave, '上传中…', () => cloudPush());
+    if (ok) {
+      toast('✅ 同步已开启，数据已上传', 3000);
+      setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
+    } else {
+      const err = setting('cloud_error', '') || '上传失败';
+      toast('❌ ' + err, 4000);
+      setCloudState('失败：' + err);
+    }
   };
+
   if (ghNow) ghNow.onclick = async () => {
-    if (!cloudToken()) return toast('先填 token');
-    const r = await cloudPull();
-    if (r === 'pulled') { toast('已从云端拉取最新数据'); await loadDay(); renderMe(); }
-    else { const ok = await cloudPush(); toast(ok ? '已上传到云端' : '上传失败', 2600); renderMe(); }
+    if (!cloudToken()) return toast('先在下面填 token 并保存');
+    setCloudState('正在同步…');
+    const r = await busyBtn(ghNow, '同步中…', async () => {
+      const pull = await cloudPull();
+      if (pull === 'pulled') return 'pulled';
+      const ok = await cloudPush();
+      return ok ? 'pushed' : false;
+    });
+    if (r === 'pulled') {
+      toast('✅ 已从云端拉取最新数据', 3000);
+      await loadDay(); renderMe();
+      setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
+    } else if (r === 'pushed') {
+      toast('✅ 已上传到云端', 2600);
+      setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
+    } else {
+      const err = setting('cloud_error', '') || '同步失败';
+      toast('❌ ' + err, 4000);
+      setCloudState('失败：' + err);
+    }
   };
 
   const ba = $('#backupAt');

@@ -718,6 +718,12 @@ function b64encode(str) {
 function b64decode(b64) {
   return decodeURIComponent(escape(atob(String(b64 || '').replace(/\s/g, ''))));
 }
+function fetchT(url, opt, ms = 15000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, Object.assign({}, opt, { signal: ctrl.signal }))
+    .finally(() => clearTimeout(t));
+}
 function cloudHeaders() {
   return {
     'Authorization': 'Bearer ' + cloudToken(),
@@ -761,13 +767,13 @@ async function cloudPush() {
     if (String(h) === cloudLast && cloudSha) return true;
     const body = { message: 'data sync', content: b64encode(payload), branch: 'main' };
     if (cloudSha) body.sha = cloudSha;
-    let res = await fetch(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+    let res = await fetchT(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
     if (res.status === 409 || res.status === 422) {
       // sha 过期：重新取一次再传
-      const cur = await fetch(cloudUrl(), { headers: cloudHeaders() });
+      const cur = await fetchT(cloudUrl(), { headers: cloudHeaders() });
       if (cur.ok) { const j = await cur.json(); cloudSha = j.sha; body.sha = j.sha; }
       else delete body.sha;
-      res = await fetch(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+      res = await fetchT(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
     }
     if (!res.ok) throw new Error('上传失败 ' + res.status);
     const out = await res.json();
@@ -776,7 +782,8 @@ async function cloudPush() {
     setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
     return true;
   } catch (e) {
-    setSetting('cloud_error', e.message || '上传失败');
+    const msg = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
+    setSetting('cloud_error', msg);
     return false;
   } finally {
     cloudBusy = false;
@@ -788,7 +795,7 @@ async function cloudPull() {
   if (!cloudToken()) return false;
   cloudPulling = true;
   try {
-    const res = await fetch(cloudUrl(), { headers: cloudHeaders() });
+    const res = await fetchT(cloudUrl(), { headers: cloudHeaders() });
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
     if (!res.ok) throw new Error('读取失败 ' + res.status);
     const j = await res.json();
@@ -809,7 +816,8 @@ async function cloudPull() {
     return false;
   } catch (e) {
     cloudPulling = false;
-    setSetting('cloud_error', e.message || '读取失败');
+    const msg = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
+    setSetting('cloud_error', msg);
     return false;
   }
 }
