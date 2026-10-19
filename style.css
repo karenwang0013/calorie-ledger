@@ -416,7 +416,7 @@ select {
   border-radius: 2px;
 }
 
-/* ---------- 底部弹层 ---------- */
+/* ---------- 弹出卡片 ---------- */
 .sheet-mask {
   position: fixed; inset: 0; z-index: 60;
   background: rgba(0,0,0,.6);
@@ -426,19 +426,23 @@ select {
 }
 .sheet-mask.on { opacity: 1; pointer-events: auto; }
 
+/* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
-  max-width: 520px; margin: 0 auto;
-  max-height: 92dvh;
+  position: fixed; left: 10px; right: 10px; z-index: 61;
+  bottom: calc(12px + var(--safe-b));
+  max-width: 500px; margin: 0 auto;
+  min-height: 48dvh; max-height: 64dvh;
   background: var(--bg2);
-  border-radius: 24px 24px 0 0;
-  border-top: 1px solid var(--line2);
-  transform: translateY(101%);
-  transition: transform .32s cubic-bezier(.22,1,.36,1);
+  border-radius: 22px;
+  border: 1px solid var(--line2);
+  box-shadow: 0 22px 60px rgba(0,0,0,.6);
+  transform: translateY(calc(100% + 24px)) scale(.98);
+  opacity: 0;
+  transition: transform .32s cubic-bezier(.22,1,.36,1), opacity .2s;
   display: flex; flex-direction: column;
-  padding-bottom: var(--safe-b);
+  overflow: hidden;
 }
-.sheet.on { transform: none; }
+.sheet.on { transform: none; opacity: 1; }
 .sheet .grab {
   width: 38px; height: 4px; border-radius: 2px;
   background: rgba(255,255,255,.16);
@@ -456,15 +460,18 @@ select {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 4px 18px 18px;
   flex: 1 1 auto;
+  display: flex; flex-direction: column;
 }
 .sheet .sh-foot {
-  padding: 12px 18px calc(14px + var(--safe-b));
+  padding: 12px 18px 14px;
   border-top: 1px solid var(--line);
   background: var(--bg2);
   flex: 0 0 auto;
 }
+/* 帮助卡片步骤多，给它高一点 */
+#helpSheet { max-height: 78dvh; }
 
-.tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; }
+.tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; flex: 0 0 auto; }
 .tabs3 button {
   flex: 1; padding: 9px 4px; border-radius: 11px;
   font-size: 12.5px; color: var(--muted);
@@ -481,7 +488,14 @@ select {
   font-size: 13px;
   line-height: 1.7;
   background: rgba(255,255,255,.015);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
 }
+/* 拍照 / 描述这一格：撑满卡片剩下的高度，别在下面留一截空 */
+#pane-photo, #pane-text { display: flex; flex-direction: column; }
+#pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; }
+#pane-photo:not([hidden]) .drop:not(.has-photo) { flex: 1 1 auto; }
+#pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
 .drop:active { border-color: var(--lime-dim); }
 /* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
