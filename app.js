@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.41';
+const APP_VERSION = 'v1.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1384,7 +1384,16 @@ function wireMe() {
     try {
       importJson(await f.text());
       toast('已恢复备份');
-      applyTheme(Store.load().settings.theme || 'lime');
+      // 顶栏改成 fixed：量出实际高度，给内容让出空间
+  const syncTopH = () => {
+    const tb = document.querySelector('.topbar');
+    if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
+  };
+  syncTopH();
+  window.addEventListener('resize', syncTopH);
+  window.addEventListener('orientationchange', syncTopH);
+
+  applyTheme(Store.load().settings.theme || 'lime');
       await loadDay();
       renderMe();
     } catch (err) {
@@ -1845,6 +1854,15 @@ function init() {
       goBack();
     }
   }, { passive: true });
+
+  // 顶栏改成 fixed：量出实际高度，给内容让出空间
+  const syncTopH = () => {
+    const tb = document.querySelector('.topbar');
+    if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
+  };
+  syncTopH();
+  window.addEventListener('resize', syncTopH);
+  window.addEventListener('orientationchange', syncTopH);
 
   applyTheme(Store.load().settings.theme || 'lime');
   loadDay();
