@@ -32,7 +32,6 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
     "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior-y: none;
 }
 
 body { min-height: 100dvh; }
@@ -49,10 +48,10 @@ body { min-height: 100dvh; }
 body { -webkit-overflow-scrolling: touch; }
 
 /* 左边缘拖拽返回时，跟着手指走 */
-.sheet.dragging, .modal.dragging { transition: none !important; }
+.sheet.dragging, .modal.dragging { transition: none !important; will-change: transform, opacity; }
 /* 「我的」子页返回时滑出 */
-#view-me.slideout { animation: slideout .18s ease-in forwards; }
-@keyframes slideout { to { transform: translateX(46px); opacity: 0; } }
+#view-me.slideout { animation: slideout .26s cubic-bezier(.32,.72,0,1) forwards; }
+@keyframes slideout { to { transform: translateX(58px); opacity: 0; } }
 
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
@@ -313,7 +312,7 @@ select {
   max-height: 76dvh;
   transform: translate(-50%, -46%) scale(.96);
   opacity: 0; pointer-events: none;
-  transition: transform .26s cubic-bezier(.22,1,.36,1), opacity .18s;
+  transition: transform .38s cubic-bezier(.32,.72,0,1), opacity .22s ease-out;
   background: var(--bg2);
   border: 1px solid var(--line2);
   border-radius: 28px;
@@ -555,7 +554,7 @@ select {
   box-shadow: 0 22px 60px rgba(0,0,0,.6);
   transform: translateY(calc(100% + 24px)) scale(.98);
   opacity: 0;
-  transition: transform .32s cubic-bezier(.22,1,.36,1), opacity .2s;
+  transition: transform .42s cubic-bezier(.32,.72,0,1), opacity .25s ease-out;
   display: flex; flex-direction: column;
   overflow: hidden;
 }

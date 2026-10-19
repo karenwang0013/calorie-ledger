@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.35';
+const APP_VERSION = 'v1.36';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1828,19 +1828,19 @@ function init() {
     if (el) el.classList.remove('dragging');
     if (dx > 100) {
       if (el) {
-        el.style.transition = 'transform .2s ease-in, opacity .2s';
-        el.style.transform = 'translateX(100%)';
+        el.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out';
+        el.style.transform = 'translateX(102%)';
         el.style.opacity = '0';
       }
       setTimeout(() => {
         if (el) { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }
         goBack();
-      }, 190);
+      }, 270);
     } else if (el) {
-      el.style.transition = 'transform .22s cubic-bezier(.22,1,.36,1), opacity .2s';
+      el.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out';
       el.style.transform = '';
       el.style.opacity = '';
-      setTimeout(() => { el.style.transition = ''; }, 240);
+      setTimeout(() => { el.style.transition = ''; }, 400);
     } else {
       goBack();
     }
