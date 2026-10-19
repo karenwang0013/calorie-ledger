@@ -1371,7 +1371,18 @@ function init() {
     else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
-  if (refreshBtn) refreshBtn.onclick = () => pullNow();  $('#watchClose').onclick = closeWatch;
+  if (refreshBtn) refreshBtn.onclick = () => {
+    pendingSync = true;
+    toast('正在运行「热量采集」…', 2200);
+    location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(SYNC_SHORTCUT);
+    // 如果唤起失败（仍停在 App 里），2.5 秒后直接拉一次云端兜底
+    setTimeout(() => {
+      if (pendingSync && document.visibilityState === 'visible') {
+        pendingSync = false;
+        pullNow();
+      }
+    }, 2500);
+  };  $('#watchClose').onclick = closeWatch;
   $('#watchMask').onclick = closeWatch;
   $('#watchSave').onclick = saveWatch;
   $('#watchPick').onclick = () => $('#watchInput').click();
