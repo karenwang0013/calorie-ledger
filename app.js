@@ -59,6 +59,8 @@ const S = {
   photoData: null,
   photoAt: null,
   photoURL: null,
+  batchName: null,
+  openGroups: new Set(),
   items: [],
   meal: 'lunch',
 };
@@ -180,10 +182,7 @@ function renderToday() {
 function renderMeals() {
   const d = S.day;
   const box = $('#meals');
-  box.innerHTML = MEALS.map(m => {
-    const items = d.logs.filter(l => (l.meal || 'other') === m.k);
-    const kcal = items.reduce((a, b) => a + (b.kcal || 0), 0);
-    const rows = items.map(l => `
+  const itemRow = l => `
       <div class="mitem" data-id="${l.id}">
         <div class="n">${esc(l.name)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
@@ -191,7 +190,44 @@ function renderMeals() {
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
         <button class="del" data-del="${l.id}">×</button>
-      </div>`).join('');
+      </div>`;
+
+  // 同一次识别出来的多条，收成一行（例如「沙县小吃」→ 展开是青菜/鸡腿/米饭）
+  const groupRows = items => {
+    const groups = [];
+    const seen = new Map();
+    items.forEach(l => {
+      if (!l.batch) { groups.push({ logs: [l] }); return; }
+      if (!seen.has(l.batch)) {
+        const g = { batch: l.batch, name: l.batchName || '一餐', logs: [] };
+        seen.set(l.batch, g);
+        groups.push(g);
+      }
+      seen.get(l.batch).logs.push(l);
+    });
+    return groups.map(g => {
+      if (g.logs.length < 2) return itemRow(g.logs[0]);
+      const open = S.openGroups.has(g.batch);
+      const kcal = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
+      const p = g.logs.reduce((a, b) => a + (b.p || 0), 0);
+      const c = g.logs.reduce((a, b) => a + (b.c || 0), 0);
+      const f = g.logs.reduce((a, b) => a + (b.f || 0), 0);
+      return `
+      <div class="mitem ghead${open ? ' open' : ''}" data-group="${esc(g.batch)}">
+        <div class="n">${esc(g.name)}
+          <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
+        </div>
+        <div class="k">${kcal}</div>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="gkids"${open ? '' : ' hidden'}>${g.logs.map(itemRow).join('')}</div>`;
+    }).join('');
+  };
+
+  box.innerHTML = MEALS.map(m => {
+    const items = d.logs.filter(l => (l.meal || 'other') === m.k);
+    const kcal = items.reduce((a, b) => a + (b.kcal || 0), 0);
+    const rows = groupRows(items);
     return `
       <div class="meal ${items.length ? 'has' : ''}">
         <div class="hd">
@@ -204,6 +240,12 @@ function renderMeals() {
                        : `<div class="empty">还没记录</div>`}
       </div>`;
   }).join('');
+
+  $$('[data-group]', box).forEach(b => b.onclick = () => {
+    const k = b.dataset.group;
+    if (S.openGroups.has(k)) S.openGroups.delete(k); else S.openGroups.add(k);
+    renderMeals();
+  });
 
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
@@ -223,6 +265,7 @@ function renderMeals() {
 function openAdd(meal) {
   S.items = [];
   S.meal = meal || defaultMeal();
+  S.batchName = null;
   resetPhotoUI();
   $('#photoHint').value = '';
   $('#resultArea').hidden = true;
@@ -350,6 +393,7 @@ async function runPhoto() {
     $('#photoDrop').hidden = true;
     $('#photoActions').hidden = true;
     $('#pane-photo').classList.add('done');
+    S.batchName = r.dish || '';
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -370,6 +414,7 @@ async function runText() {
   try {
     const r = await api('/api/ai/text', { text });
     S.items = r.items.map(x => ({ ...x, _src: 'ai' }));
+    S.batchName = r.dish || '';
     showResult(r.dish ? '估算：' + r.dish : '估算结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -547,8 +592,12 @@ async function saveItems() {
       meal: S.meal,
       items,
       source: items[0]._src || 'manual',
+      // 一次识别出来的多项合成一组，列表里只占一行
+      batch: items.length > 1 ? 'b' + Date.now() : null,
+      batchName: items.length > 1 ? (S.batchName || '一餐') : '',
     });
     closeAdd();
+    S.batchName = null;
     toast(`已记入${MEAL_NAME[S.meal]} · ${Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0))} 千卡`);
     await loadDay();
     if (S.view === 'trends') loadTrends();
@@ -963,7 +1012,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.70</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.71</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>

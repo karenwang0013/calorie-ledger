@@ -292,7 +292,7 @@ function nowTs() {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
 }
 
-function addLog(date, meal, it, source) {
+function addLog(date, meal, it, source, batch, batchName) {
   const d = Store.load();
   const g = Number(it.grams) || 0;
   const k100 = Number(it.kcal_per_100g) || 0;
@@ -310,6 +310,7 @@ function addLog(date, meal, it, source) {
     source: source || 'manual',
     confidence: Number(it.confidence ?? 1),
   };
+  if (batch) { entry.batch = batch; entry.batchName = batchName || ''; }
   d.logs.push(entry);
   Store.save();
   return entry.id;
@@ -550,7 +551,7 @@ async function api(path, body, method) {
     const date = body.date || today;
     const meal = body.meal || 'other';
     if (body.items && body.items.length) {
-      const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual'));
+      const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual', body.batch, body.batchName));
       return { ok: true, ids, day: daySummary(date) };
     }
     const id = addLog(date, meal, body, body.source || 'manual');
