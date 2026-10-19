@@ -29,6 +29,8 @@ html { background: #000; }
 html, body {
   margin: 0;
   padding: 0;
+  /* 关键：iOS 的橡皮筋会把 fixed 顶栏一起拖着走，禁掉顶部回弹才能让顶栏真的不动 */
+  overscroll-behavior-y: none;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
