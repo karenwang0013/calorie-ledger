@@ -41,7 +41,7 @@ body { min-height: 100dvh; }
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
   height: max(6px, var(--safe-t));
-  background: #0b100e;
+  background: #101614;
   z-index: 30;
   pointer-events: none;
 }
