@@ -150,19 +150,12 @@ select {
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar {
   border-bottom: 0;
-  box-shadow: 0 12px 20px -16px rgba(0,0,0,.95);
+  /* 半像素发丝线 + 极淡的下投影：像纸张压边，不像画了条线 */
+  box-shadow:
+    0 0.5px 0 rgba(255,255,255,.10),
+    0 10px 16px -14px rgba(0,0,0,.9);
 }
-/* 一条中段亮、两端消散的细线：看得见分界，但不是一条生硬的横线 */
-.topbar::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,.10) 16%,
-    rgba(214,255,75,.34) 50%,
-    rgba(255,255,255,.10) 84%,
-    rgba(255,255,255,0) 100%);
-}
+
 .brand {
   font-size: 20px; font-weight: 650; letter-spacing: 0.2px;
   display: flex; align-items: center; height: 31px;
