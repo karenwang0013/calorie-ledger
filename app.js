@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.10';
+const APP_VERSION = 'v1.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -986,6 +986,7 @@ function renderMe() {
           <div class="field">
             <label>性别</label>
             <select id="fSex">
+              <option value="" ${!p.sex ? 'selected' : ''} disabled>请选择</option>
               <option value="female" ${p.sex === 'female' ? 'selected' : ''}>女</option>
               <option value="male" ${p.sex === 'male' ? 'selected' : ''}>男</option>
             </select>
@@ -1215,6 +1216,8 @@ function wireMe() {
 
   const sp = $('#saveProfile');
   if (sp) sp.onclick = async () => {
+    const sex = $('#fSex').value;
+    if (sex !== 'male' && sex !== 'female') { toast('先选一下性别（基础代谢差 166 千卡）', 3000); return; }
     try {
       await api('/api/profile', {
         sex: $('#fSex').value,
@@ -1230,7 +1233,8 @@ function wireMe() {
         })(),
         protein_per_kg: Number($('#fProt').value),
       });
-      toast('已保存');
+      const sv = Store.load().profile;
+      toast(`已保存：${sv.sex === 'male' ? '男' : '女'} · ${sv.height_cm}cm · ${sv.weight_kg}kg`, 2800);
       await loadDay();
       renderMe();
     } catch (e) { toast(e.message); }
@@ -1294,7 +1298,8 @@ function wireMe() {
     if (!v) return toast('先填入 Key');
     try {
       await api('/api/settings', { dashscope_key: v });
-      toast('已保存');
+      const sv = Store.load().profile;
+      toast(`已保存：${sv.sex === 'male' ? '男' : '女'} · ${sv.height_cm}cm · ${sv.weight_kg}kg`, 2800);
       await loadDay();
       renderMe();
     } catch (e) { toast(e.message); }
