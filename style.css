@@ -348,7 +348,10 @@ select {
 .about-fill > .card:first-child {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.about-fill > .card:first-child::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .about-fill > .card:last-child { margin-bottom: 4px; }
 
 /* 关于页的更新日志 */
