@@ -48,6 +48,7 @@ body { min-height: 100dvh; }
 
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
+html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
 
 button, input, select, textarea {
   font-family: inherit;

@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.31';
+const APP_VERSION = 'v1.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1237,18 +1237,15 @@ function renderMe() {
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
 function fitAboutFill() {
+  const doc = document.documentElement;
   const fill = document.querySelector('.about-fill');
-  if (!fill) return;
-  const app = document.querySelector('.app');
-  const padB = parseFloat(getComputedStyle(app).paddingBottom) || 92;
+  if (!fill) { doc.classList.remove('noscroll'); return; }
+  const tab = document.querySelector('.tabbar');
+  const tabTop = tab ? tab.getBoundingClientRect().top : window.innerHeight - 60;
   const top = fill.getBoundingClientRect().top;
-  const h = Math.max(240, Math.round(window.innerHeight - top - padB - 10));
-  fill.style.height = h + 'px';
-  // 兜底：如果整页还能滚，把多出来的高度减掉，保证页面本身不动
-  requestAnimationFrame(() => {
-    const over = document.documentElement.scrollHeight - window.innerHeight;
-    if (over > 0) fill.style.height = Math.max(240, Math.round(h - over - 8)) + 'px';
-  });
+  fill.style.height = Math.max(240, Math.round(tabTop - top - 12)) + 'px';
+  // 这一页整页不滚，滚动只发生在上面那张卡里
+  doc.classList.add('noscroll');
 }
 
 function wireMe() {
@@ -1501,6 +1498,7 @@ async function saveWeight() {
 
 /* ---------------- 导航 ---------------- */
 function switchView(v) {
+  if (v !== 'me') document.documentElement.classList.remove('noscroll');
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
