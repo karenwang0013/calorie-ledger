@@ -365,7 +365,7 @@ select {
 .tab.on svg { stroke: var(--lime); }
 .fab {
   flex: 0 0 auto;
-  width: 46px; height: 46px; border-radius: 14px;
+  width: 66px; height: 44px; border-radius: 15px;
   align-self: center;
   margin-top: 3px;
   background: var(--lime);
