@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.79';
+const APP_VERSION = 'v1.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1176,6 +1176,7 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
+          <button class="btn ghost sm" id="stopGh" style="margin-top:10px">关闭云端同步</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
@@ -1338,7 +1339,7 @@ function wireMe() {
     nk.oninput = () => { nd.value = Math.round(exp - (Number(nk.value) || 0)); };
   }
   const sn = $('#saveNutri');
-  if (ghNow) ghNow.onclick = async () => {
+  if (sn) sn.onclick = async () => {
     try {
       const a = (S.day && S.day.targets && S.day.targets.auto) || {};
       // 只有和“建议值”不同的才存成手动值；全都一样就等于恢复自动
@@ -1449,6 +1450,15 @@ function wireMe() {
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
+  };
+
+  const ghStop = $('#stopGh');
+  if (ghStop) ghStop.onclick = () => {
+    setSetting('gh_token', '');
+    setSetting('cloud_seen', '');
+    cloudSha = null;
+    toast('已关闭云端同步，数据仍在本机', 2600);
+    renderMe();
   };
 
   if (ghNow) ghNow.onclick = async () => {
