@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.49';
+const APP_VERSION = 'v1.50';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1399,6 +1399,8 @@ function wireMe() {
     const tb = document.querySelector('.topbar');
     if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
   };
+  const bt = $('#brandTag');
+  if (bt) bt.textContent = APP_VERSION;
   syncTopH();
   window.addEventListener('resize', syncTopH);
   window.addEventListener('orientationchange', syncTopH);
@@ -1812,6 +1814,19 @@ function init() {
   });
   syncLock();
 
+  // 保底：如果系统仍把整个 webview 拖走，用 visualViewport 的反向补偿把顶栏钉回去
+  const tbEl = document.querySelector('.topbar');
+  const vv = window.visualViewport;
+  if (tbEl && vv) {
+    const pinTop = () => {
+      const off = Math.round((vv.offsetTop || 0) + (window.scrollY || 0));
+      tbEl.style.transform = off ? 'translateY(' + off + 'px)' : '';
+    };
+    vv.addEventListener('scroll', pinTop, { passive: true });
+    vv.addEventListener('resize', pinTop, { passive: true });
+    window.addEventListener('scroll', pinTop, { passive: true });
+  }
+
   // 顶部下拉时吃掉手势，避免 iOS 把整个 webview（连固定顶栏）一起弹走
   let pStartY = 0, pStartX = 0;
   document.addEventListener('touchstart', e => {
@@ -1886,6 +1901,8 @@ function init() {
     const tb = document.querySelector('.topbar');
     if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
   };
+  const bt = $('#brandTag');
+  if (bt) bt.textContent = APP_VERSION;
   syncTopH();
   window.addEventListener('resize', syncTopH);
   window.addEventListener('orientationchange', syncTopH);

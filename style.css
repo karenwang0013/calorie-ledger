@@ -142,6 +142,10 @@ select {
   display: flex; align-items: center; height: 31px;
 }
 .brand span { color: var(--lime); }
+.brand .btag {
+  font-style: normal; font-size: 10px; font-weight: 500;
+  color: var(--muted2); margin-left: 6px; letter-spacing: 0;
+}
 .topbtn {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12.5px;
