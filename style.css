@@ -221,7 +221,7 @@ select {
 /* ---------- 主环 ---------- */
 .hero { position: relative; display: grid; place-items: center; padding: 4px 0 6px; }
 .hero svg { width: 232px; height: 232px; transform: rotate(-90deg); }
-.hero .track { stroke: url(#ringTrack); }
+.hero .track { stroke: #2b3a33; }
 .hero .prog { filter: drop-shadow(0 0 7px rgba(214,255,75,.35)); transition: stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
 .hero .center {
   position: absolute;
