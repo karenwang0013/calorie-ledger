@@ -12,8 +12,48 @@ const MEALS = [
   { k: 'snack', n: '加餐' },
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
+
+const RELEASES = [
+  { d: '10-19', groups: [
+    ['同步', [
+      '改为「快捷指令 → GitHub health.json → App」，不再打开 Safari',
+      'App 打开时自动拉取；顶栏「数据同步」可手动刷新，没新数据会提示是哪一份',
+      '服务脚本改为网络优先 + 绕过 HTTP 缓存，避免新旧版本混用导致白屏',
+      '消耗下方显示「同步时间」，一眼看出用的是几点的手表数据',
+    ]],
+    ['记录', [
+      '拍照分「1 食物照片 / 2 营养成分表」两个位，两张一起送 AI：标签读每 100 克，食物图估克数',
+      '按克数精确换算；无糖饮料这类 0 千卡条目不再被丢弃',
+      '搜索页可复用「以前记过」的食物',
+      '一次识别多项自动归成一条（沙县小吃 · 3 项），点开看明细',
+      '识别结果里可直接填「这一餐叫什么」，不用事后改',
+      '记入时存 320px 缩略图，列表左侧显示 40px 小图；存储层保留所有字段，更新不再丢照片',
+    ]],
+    ['界面', [
+      '记录食物改成悬浮圆角卡片，圆角与屏幕同心，离底 16px',
+      '识别成功后自动收起大图，结果区（左小图 + 右数值）直接露出',
+      '点开一餐 → 居中卡片：菜名、改名、照片、配料、合计',
+      '顶部标题贴近状态栏；弹层打开时锁住背后滚动；左边缘右滑返回',
+      '拍照图标线条化；底部加号改成长方形；两个照片位并排且为正方形',
+      '营养目标页把算法写出来：基础代谢 + 手表活动 = 全天消耗',
+    ]],
+    ['修复', [
+      '性别默认成「女」，导致基础代谢差 166 千卡',
+      '目标速度输入框与「脂肪目标」共用 id，目标缺口一直是 0',
+      '没选图时拍照框下面多出一条细线',
+      '卸载重装会清空本地数据：改为「备份到 iCloud / 从 iCloud 恢复」',
+    ]],
+  ]},
+  { d: '10-18', groups: [
+    ['', [
+      '从本地 Python 服务改为纯前端 PWA（GitHub Pages），数据存 localStorage',
+      '118 条食物库、拍照/文字识别、手动手表录入、趋势页、CSV/JSON 备份',
+    ]],
+  ]},
+];
+
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.28';
+const APP_VERSION = 'v1.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1166,22 +1206,17 @@ function renderMe() {
     h = meBackBar('关于与更新') + `
       <div class="card">
         <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
-        <div class="hint" style="margin:0;line-height:1.95">
-          <b style="color:var(--lime)">10-19</b><br>
-          记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
-          识别后自动收起大图，结果区直接露出<br>
-          刷新提示显示云端数据时间<br>
-          同步改为「快捷指令 → GitHub → App」，不再打开 Safari<br>
-          拍照支持营养成分表，按克数精确换算<br>
-          搜索页可复用「以前记过」的食物<br>
-          设置改为分组菜单，界面重排<br>
-          <b style="color:var(--lime)">10-18</b><br>
-          从本地服务改为纯前端 PWA；118 条食物库；趋势页；备份恢复
-        </div>
+        ${RELEASES.map(r => `
+          <div class="rel-date">${r.d}</div>
+          ${r.groups.map(([g, items]) => `
+            ${g ? `<div class="rel-group">${g}</div>` : ''}
+            <ul class="rel-list">${items.map(t => `<li>${t}</li>`).join('')}</ul>
+          `).join('')}
+        `).join('')}
       </div>
-      <div class="card">
+      <div class="card tight">
         <h3>这套算法在算什么</h3>
-        <div class="hint" style="margin:0;line-height:1.9">
+        <div class="hint" style="margin:0;line-height:1.6;font-size:11px">
           <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
           <b style="color:var(--text)">全天消耗</b>：手表给了活动能量 → 基础代谢 + 活动能量；给的是总消耗 → 直接用；都没 → 基础代谢 × 活动系数。<br>
           <b style="color:var(--text)">目标缺口</b>：目标速度 × 7700 ÷ 7，封顶在当天消耗的 22%。<br>
