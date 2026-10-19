@@ -321,6 +321,8 @@ function resetPhotoUI() {
   pv.removeAttribute('src');
   S.photoData = null;
   S.photoAt = null;
+  $('#photoDrop').hidden = false;
+  $('#pane-photo').classList.remove('done');
   $('#photoDrop').classList.remove('has-photo');
   $('#dropPlaceholder').hidden = false;
   $('#dropRetake').hidden = true;
@@ -344,6 +346,10 @@ async function runPhoto() {
     S.items = r.items.map(x => ({ ...x, _src: 'photo' }));
     // 填了克数就以它为准（包装营养表通常只有一条）
     if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
+    // 识别完就把大图收起，结果区（左小图 + 右数值）直接露出来
+    $('#photoDrop').hidden = true;
+    $('#photoActions').hidden = true;
+    $('#pane-photo').classList.add('done');
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -1132,7 +1138,11 @@ function openWatch() {
   $('#wTotal').value = w.total ?? '';
   $('#wSteps').value = w.steps ?? '';
   $('#watchDate').textContent = S.date === S.today ? '今天' : S.date.slice(5);
-  $('#watchNote').textContent = w.source === 'photo' ? '上次是从截图读的。' : '';
+  let note = w.source === 'photo' ? '上次是从截图读的。' : '';
+  if (w.source === 'cloud' && w.cloudAt) {
+    note = `云端最近一次：${String(w.cloudAt).slice(5)} · 活动 ${w.active} 千卡。快捷指令只在它运行时写新数据，数字不变就是还没写新的。`;
+  }
+  $('#watchNote').textContent = note;
   $('#watchMask').classList.add('on');
   $('#watchSheet').classList.add('on');
 }
@@ -1308,6 +1318,9 @@ function parseLooseDate(s) {
   return null;
 }
 
+/* 最近一次从 health.json 读到的内容，给刷新提示用 */
+let lastCloud = null;
+
 async function pullCloudData() {
   try {
     const res = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
@@ -1324,12 +1337,16 @@ async function pullCloudData() {
     const active = Math.round(nums.reduce((s, n) => s + Number(n), 0));
     if (!active || active <= 0) return null;
     const date = parseLooseDate(head) || todayISO();
+    // 快捷指令写进去的时刻，用来告诉用户「这份数据是什么时候的」
+    const tm = head.match(/(\d{1,2}):(\d{2})/);
+    const at = tm ? `${date} ${String(tm[1]).padStart(2, '0')}:${tm[2]}` : date;
     const d = Store.load();
     const cur = d.daily[date] || {};
-    if (cur.active === active && cur.source === 'cloud') return null;
-    d.daily[date] = Object.assign({}, cur, { active, source: 'cloud' });
-    Store.save();
-    return date;
+    const unchanged = cur.active === active && cur.source === 'cloud';
+    d.daily[date] = Object.assign({}, cur, { active, source: 'cloud', cloudAt: at });
+    if (!unchanged || cur.cloudAt !== at) Store.save();
+    lastCloud = { date, active, at, changed: !unchanged };
+    return unchanged ? null : date;
   } catch (e) {
     return null;
   }
@@ -1400,7 +1417,9 @@ function init() {
     refreshBtn.classList.remove('spin');
     loadDay();
     const dd = Store.load().daily[S.today] || {};
-    if (date) toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+    const c = lastCloud;
+    if (date) toast(`⌚ 已同步 ${date.slice(5)} 的手表数据 · 活动 ${c.active} 千卡`, 2800);
+    else if (c && c.at) toast(`云端还是 ${c.at.slice(5)} 那份数据（活动 ${c.active} 千卡），快捷指令还没写新的`, 3400);
     else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }

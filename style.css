@@ -15,6 +15,8 @@
   --blue: #6ea8ff;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  /* 卡片圆角：跟手机屏幕的圆角弧度对齐（屏角约 56 − 边距 12） */
+  --card-r: 44px;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -433,7 +435,7 @@ select {
   max-width: 500px; margin: 0 auto;
   min-height: 48dvh; max-height: 64dvh;
   background: var(--bg2);
-  border-radius: 22px;
+  border-radius: var(--card-r);
   border: 1px solid var(--line2);
   box-shadow: 0 22px 60px rgba(0,0,0,.6);
   transform: translateY(calc(100% + 24px)) scale(.98);
@@ -495,6 +497,7 @@ select {
 #pane-photo, #pane-text { display: flex; flex-direction: column; }
 #pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; }
 #pane-photo:not([hidden]) .drop:not(.has-photo) { flex: 1 1 auto; }
+#pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
 .drop:active { border-color: var(--lime-dim); }
