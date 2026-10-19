@@ -46,7 +46,7 @@ body { min-height: 100dvh; }
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
   /* iOS 只有在屏幕最上沿 4px 内存在实色元素时，才会取这个颜色当状态栏底色 */
-  height: max(8px, var(--safe-t));
+  height: min(max(8px, var(--safe-t)), 88px);
   background: #000;
   z-index: 30;
   pointer-events: none;
@@ -98,7 +98,7 @@ select {
 .app {
   max-width: 520px;
   margin: 0 auto;
-  height: 100dvh;
+  height: 100%;
   display: flex; flex-direction: column;
   overflow: hidden;
   background: linear-gradient(180deg, #000 0%, #000 16%, #090c0a 42%, #070807 100%);
@@ -122,7 +122,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(10px + var(--safe-t)) 18px 9px;
+  /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
+  padding: min(calc(10px + var(--safe-t)), 88px) 18px 9px;
   background: #000;
 }
 /* 顶栏下沿做一点渐隐，内容滑到下面时不会出现硬边 */
