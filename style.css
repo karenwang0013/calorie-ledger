@@ -37,6 +37,15 @@ html, body {
 
 body { min-height: 100dvh; }
 
+/* 顶到屏幕最上沿的实色带：要求高度 ≥6px、宽 ≥80%、距顶 ≤4px */
+.statusbg {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: max(6px, var(--safe-t));
+  background: #0b100e;
+  z-index: 30;
+  pointer-events: none;
+}
+
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
 
