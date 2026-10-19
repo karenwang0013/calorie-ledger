@@ -61,10 +61,12 @@ const Store = {
 
   save() {
     try {
+      if (this.data && this.data.settings) this.data.settings.updatedAt = new Date().toISOString();
       localStorage.setItem(this.KEY, JSON.stringify(this.data));
     } catch (e) {
       throw new Error('浏览器存储写不进去了（可能空间满了）。先导出备份。');
     }
+    if (typeof scheduleCloudSync === 'function') scheduleCloudSync();
   },
 };
 
@@ -703,6 +705,109 @@ function downloadCsv() {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
+/* ---------------- 云端同步（GitHub 仓库里的 data.json） ---------------- */
+const CLOUD = { owner: 'karenwang0013', repo: 'calorie-ledger', path: 'data.json' };
+let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null;
+
+function cloudToken() {
+  return (setting('gh_token', '') || '').trim();
+}
+function b64encode(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function b64decode(b64) {
+  return decodeURIComponent(escape(atob(String(b64 || '').replace(/\s/g, ''))));
+}
+function cloudHeaders() {
+  return {
+    'Authorization': 'Bearer ' + cloudToken(),
+    'Accept': 'application/vnd.github+json',
+    'Content-Type': 'application/json',
+  };
+}
+function cloudUrl() {
+  return `https://api.github.com/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}`;
+}
+
+/* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
+function cloudPayload() {
+  const data = JSON.parse(JSON.stringify(Store.load()));
+  const limit = 900 * 1024;
+  let json = JSON.stringify({ v: 1, updatedAt: data.settings.updatedAt || new Date().toISOString(), data });
+  if (json.length > limit && data.shots) {
+    const keys = Object.keys(data.shots);
+    while (json.length > limit && keys.length) {
+      delete data.shots[keys.shift()];
+      json = JSON.stringify({ v: 1, updatedAt: data.settings.updatedAt || new Date().toISOString(), data });
+    }
+  }
+  return json;
+}
+
+function scheduleCloudSync() {
+  if (!cloudToken() || cloudPulling || cloudBusy) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => { cloudPush(); }, 2500);
+}
+
+async function cloudPush() {
+  if (!cloudToken() || cloudBusy) return null;
+  cloudBusy = true;
+  try {
+    const body = { message: 'data sync', content: b64encode(cloudPayload()), branch: 'main' };
+    if (cloudSha) body.sha = cloudSha;
+    let res = await fetch(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+    if (res.status === 409 || res.status === 422) {
+      // sha 过期：重新取一次再传
+      const cur = await fetch(cloudUrl(), { headers: cloudHeaders() });
+      if (cur.ok) { const j = await cur.json(); cloudSha = j.sha; body.sha = j.sha; }
+      else delete body.sha;
+      res = await fetch(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+    }
+    if (!res.ok) throw new Error('上传失败 ' + res.status);
+    const out = await res.json();
+    cloudSha = out.content && out.content.sha;
+    setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
+    return true;
+  } catch (e) {
+    setSetting('cloud_error', e.message || '上传失败');
+    return false;
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+/* 启动时拉一次：云端更新就覆盖本地 */
+async function cloudPull() {
+  if (!cloudToken()) return false;
+  cloudPulling = true;
+  try {
+    const res = await fetch(cloudUrl(), { headers: cloudHeaders() });
+    if (res.status === 404) { cloudPulling = false; return cloudPush(); }
+    if (!res.ok) throw new Error('读取失败 ' + res.status);
+    const j = await res.json();
+    cloudSha = j.sha;
+    const remote = JSON.parse(b64decode(j.content));
+    const local = Store.load();
+    const rAt = String(remote.updatedAt || '');
+    const lAt = String((local.settings && local.settings.updatedAt) || '');
+    if (rAt && rAt > lAt) {
+      Object.assign(local, remote.data, { settings: Object.assign({}, local.settings, remote.data.settings) });
+      local.settings.updatedAt = rAt;
+      localStorage.setItem(Store.KEY, JSON.stringify(local));
+      setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
+      cloudPulling = false;
+      return 'pulled';
+    }
+    cloudPulling = false;
+    return false;
+  } catch (e) {
+    cloudPulling = false;
+    setSetting('cloud_error', e.message || '读取失败');
+    return false;
+  }
+}
+
 async function exportJson() {
   const text = JSON.stringify(Store.load(), null, 2);
   const name = `热量账本备份-${todayISO()}.json`;
@@ -710,7 +815,7 @@ async function exportJson() {
   try {
     const file = new File([text], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: '热量账本备份' });
+      await navigator.share({ files: [file], title: name.replace(/\.json$/, '') });
       return 'shared';
     }
   } catch (e) {

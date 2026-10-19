@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.75';
+const APP_VERSION = 'v1.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1164,6 +1164,22 @@ function renderMe() {
   } else if (mePage === 'data') {
     h = meBackBar('数据备份') + `
       <div class="card">
+        <h3>云端同步</h3>
+        <div class="hint" style="margin:0 0 12px">
+          填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>；换手机、重装 App 打开就自动恢复。
+        </div>
+        <div class="field">
+          <label>GitHub Token</label>
+          <input id="fGhToken" type="password" placeholder="${setting('gh_token') ? '已填写，需要更换再输入' : 'github_pat_...'}" autocomplete="off">
+          <div class="hint">只勾这一个仓库的 Contents: Read and write</div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary sm" id="saveGhToken">开启同步</button>
+          <button class="btn sm" id="syncNow">立即同步</button>
+        </div>
+        <div class="hint" id="cloudState" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
         <div class="hint" style="margin:0 0 14px">
           卸载 / 重新添加主屏幕 App 会清空数据。<b>卸载前先点下面的备份</b>，装回来再「从 iCloud 恢复」。
         </div>
@@ -1322,7 +1338,7 @@ function wireMe() {
     nk.oninput = () => { nd.value = Math.round(exp - (Number(nk.value) || 0)); };
   }
   const sn = $('#saveNutri');
-  if (sn) sn.onclick = async () => {
+  if (ghNow) ghNow.onclick = async () => {
     try {
       const a = (S.day && S.day.targets && S.day.targets.auto) || {};
       // 只有和“建议值”不同的才存成手动值；全都一样就等于恢复自动
@@ -1404,6 +1420,28 @@ function wireMe() {
   };
 
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
+  const ghInp = $('#fGhToken'), ghSave = $('#saveGhToken'), ghNow = $('#syncNow'), ghState = $('#cloudState');
+  if (ghState) {
+    const t = setting('cloud_synced_at', ''), e = setting('cloud_error', '');
+    ghState.textContent = t ? ('上次同步：' + t) : (cloudToken() ? '还没同步过' : '未开启');
+    if (e) ghState.textContent += ' · ' + e;
+  }
+  if (ghSave) ghSave.onclick = async () => {
+    const v = ($('#fGhToken').value || '').trim();
+    if (!v) return toast('先填 token');
+    setSetting('gh_token', v);
+    cloudSha = null;
+    const ok = await cloudPush();
+    toast(ok ? '同步已开启，数据已上传' : '上传失败，检查 token 权限', 3200);
+    renderMe();
+  };
+  if (ghNow) ghNow.onclick = async () => {
+    if (!cloudToken()) return toast('先填 token');
+    const r = await cloudPull();
+    if (r === 'pulled') { toast('已从云端拉取最新数据'); await loadDay(); renderMe(); }
+    else { const ok = await cloudPush(); toast(ok ? '已上传到云端' : '上传失败', 2600); renderMe(); }
+  };
+
   const ba = $('#backupAt');
   if (ba) {
     const t = Store.load().settings.lastBackupAt;
@@ -2030,6 +2068,19 @@ function init() {
   });
 
   applyTheme(Store.load().settings.theme || 'lime');
+
+  // 有 token 的话，先拉云端：比本地新就覆盖，然后刷新界面
+  if (typeof cloudToken === 'function' && cloudToken()) {
+    cloudPull().then(r => {
+      if (r === 'pulled') {
+        applyTheme(Store.load().settings.theme || 'lime');
+        loadDay();
+        if (S.view === 'me') renderMe();
+        toast('☁️ 已从云端恢复最新数据', 3000);
+      }
+    });
+  }
+
   loadDay();
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);
