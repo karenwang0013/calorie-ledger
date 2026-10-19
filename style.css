@@ -117,11 +117,23 @@ select {
 }
 .scroller {
   background:
-    /* 分界线下的柔光：大半径、低峰值，不再是一道硬光 */
-    radial-gradient(120% 26% at 50% -2%, rgba(214,255,75,0.075), rgba(214,255,75,0.02) 55%, transparent 78%),
-    /* 底部：青绿打底 + 荧光绿叠加，两层才有纵深 */
-    radial-gradient(135% 46% at 50% 108%, rgba(70,255,196,0.045), transparent 72%),
-    radial-gradient(110% 34% at 50% 103%, rgba(214,255,75,0.11), rgba(214,255,75,0.025) 48%, transparent 68%),
+    /* 分界线下的柔光：更高更宽，四段渐隐，没有边界感 */
+    radial-gradient(150% 38% at 50% -8%,
+      rgba(214,255,75,0.055) 0%,
+      rgba(214,255,75,0.038) 26%,
+      rgba(214,255,75,0.014) 56%,
+      rgba(214,255,75,0) 84%),
+    /* 底部：青绿打底 + 荧光绿叠加，各用四段渐隐才够顺 */
+    radial-gradient(145% 54% at 50% 114%,
+      rgba(70,255,196,0.05) 0%,
+      rgba(70,255,196,0.026) 34%,
+      rgba(70,255,196,0.008) 62%,
+      rgba(70,255,196,0) 82%),
+    radial-gradient(125% 46% at 50% 108%,
+      rgba(214,255,75,0.10) 0%,
+      rgba(214,255,75,0.06) 24%,
+      rgba(214,255,75,0.022) 50%,
+      rgba(214,255,75,0) 78%),
     /* 点阵：淡淡的绿色小点 */
     radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
     radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
