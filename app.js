@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.50';
+const APP_VERSION = 'v1.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1394,18 +1394,7 @@ function wireMe() {
     try {
       importJson(await f.text());
       toast('已恢复备份');
-      // 顶栏改成 fixed：量出实际高度，给内容让出空间
-  const syncTopH = () => {
-    const tb = document.querySelector('.topbar');
-    if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
-  };
-  const bt = $('#brandTag');
-  if (bt) bt.textContent = APP_VERSION;
-  syncTopH();
-  window.addEventListener('resize', syncTopH);
-  window.addEventListener('orientationchange', syncTopH);
-
-  applyTheme(Store.load().settings.theme || 'lime');
+      applyTheme(Store.load().settings.theme || 'lime');
       await loadDay();
       renderMe();
     } catch (err) {
@@ -1528,8 +1517,7 @@ async function saveWeight() {
 /* ---------------- 导航 ---------------- */
 function switchView(v) {
   if (v !== 'me') document.documentElement.classList.remove('noscroll');
-  const sc0 = document.getElementById('scroller');
-  if (sc0) sc0.scrollTop = 0;
+  if (window.scTop) window.scTop();
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
@@ -1827,19 +1815,83 @@ function init() {
     window.addEventListener('scroll', pinTop, { passive: true });
   }
 
-  // 顶部下拉时吃掉手势，避免 iOS 把整个 webview（连固定顶栏）一起弹走
-  let pStartY = 0, pStartX = 0;
-  document.addEventListener('touchstart', e => {
-    pStartY = e.touches[0].clientY;
-    pStartX = e.touches[0].clientX;
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    const sc = document.getElementById('scroller');
-    if (!sc) return;
-    const dy = e.touches[0].clientY - pStartY;
-    const dx = Math.abs(e.touches[0].clientX - pStartX);
-    if (sc.scrollTop <= 0 && dy > 0 && dy > dx) e.preventDefault();
-  }, { passive: false });
+  // 手写滚动：不交给系统，顶栏绝对不会跟着动
+  const SC = { el: null, body: null, y: 0, max: 0, drag: false, sy: 0, st: 0, ly: 0, lt: 0, vy: 0, raf: 0 };
+  const scSet = y => { SC.y = y; SC.body.style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0)'; };
+  const scStop = () => { if (SC.raf) { cancelAnimationFrame(SC.raf); SC.raf = 0; } };
+  const scClamp = y => Math.min(0, Math.max(-SC.max, y));
+  const scMeasure = () => {
+    if (!SC.el || !SC.body) return;
+    SC.max = Math.max(0, SC.body.offsetHeight - SC.el.clientHeight);
+    scSet(scClamp(SC.y));
+  };
+  const scSpark = () => {
+    scStop();
+    const step = () => {
+      SC.vy *= 0.94;
+      let next = SC.y + SC.vy * 16;
+      if (next > 0 || next < -SC.max) {
+        const target = next > 0 ? 0 : -SC.max;
+        next += (target - next) * 0.18;
+        SC.vy *= 0.6;
+        scSet(next);
+        if (Math.abs(target - next) < 0.6) { scSet(target); SC.vy = 0; SC.raf = 0; return; }
+      } else {
+        if (Math.abs(SC.vy) < 0.015) { SC.raf = 0; return; }
+        scSet(next);
+      }
+      SC.raf = requestAnimationFrame(step);
+    };
+    SC.raf = requestAnimationFrame(step);
+  };
+  window.scTop = () => { scStop(); scSet(0); };
+
+  const initScroll = () => {
+    SC.el = document.getElementById('scroller');
+    SC.body = document.getElementById('scBody');
+    if (!SC.el || !SC.body) return;
+
+    SC.el.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      scStop();
+      SC.drag = true;
+      SC.sy = e.touches[0].clientY; SC.st = SC.y;
+      SC.ly = SC.sy; SC.lt = performance.now(); SC.vy = 0;
+    }, { passive: true });
+
+    SC.el.addEventListener('touchmove', e => {
+      if (!SC.drag) return;
+      const y = e.touches[0].clientY;
+      let next = SC.st + (y - SC.sy);
+      if (next > 0) next *= 0.35;
+      else if (next < -SC.max) next = -SC.max + (next + SC.max) * 0.35;
+      const now = performance.now();
+      const dt = Math.max(8, now - SC.lt);
+      SC.vy = (y - SC.ly) / dt;
+      SC.ly = y; SC.lt = now;
+      scSet(next);
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    SC.el.addEventListener('touchend', () => {
+      if (!SC.drag) return;
+      SC.drag = false;
+      if (Math.abs(SC.vy) > 0.05 || SC.y > 0 || SC.y < -SC.max) scSpark();
+    });
+    SC.el.addEventListener('touchcancel', () => { SC.drag = false; });
+
+    SC.el.addEventListener('wheel', e => {
+      scStop();
+      scSet(scClamp(SC.y - e.deltaY));
+      e.preventDefault();
+    }, { passive: false });
+
+    scMeasure();
+    window.addEventListener('resize', scMeasure);
+    window.addEventListener('orientationchange', () => setTimeout(scMeasure, 300));
+    if (window.ResizeObserver) new ResizeObserver(scMeasure).observe(SC.body);
+  };
+  window.scMeasure = scMeasure;
 
   // 左边缘拖动返回：卡片跟手滑动，松手决定回退还是弹回
   let sw = null;
@@ -1904,6 +1956,7 @@ function init() {
   const bt = $('#brandTag');
   if (bt) bt.textContent = APP_VERSION;
   syncTopH();
+  initScroll();
   window.addEventListener('resize', syncTopH);
   window.addEventListener('orientationchange', syncTopH);
 

@@ -112,9 +112,12 @@ select {
   flex: 1 1 auto;
   min-height: 0;
   padding-top: var(--topbar-h, 64px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overflow: hidden;          /* 不用原生滚动，改由 JS 手写，彻底断掉系统回弹 */
+  touch-action: pan-x;
+}
+.sc-body {
+  will-change: transform;
+  backface-visibility: hidden;
   padding-bottom: calc(92px + var(--safe-b));
 }
 
