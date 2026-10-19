@@ -183,8 +183,11 @@ function renderToday() {
 function renderMeals() {
   const d = S.day;
   const box = $('#meals');
+  const shots = d.shots || {};
+  const thumbOf = l => (l.batch && shots[l.batch]) ? `<img class="mthumb" src="${shots[l.batch]}" alt="">` : '';
   const itemRow = l => `
       <div class="mitem" data-item="${l.id}">
+        ${thumbOf(l)}
         <div class="n">${esc(l.name)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
             l.p ? ' · 蛋' + Math.round(l.p) + '/碳' + Math.round(l.c) + '/脂' + Math.round(l.f) : ''}</span>
@@ -219,6 +222,7 @@ function renderMeals() {
       const f = g.logs.reduce((a, b) => a + (b.f || 0), 0);
       return `
       <div class="mitem ghead" data-group="${esc(g.key)}">
+        ${thumbOf(g.logs[0])}
         <div class="n">${esc(g.name || '未命名')}
           <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
         </div>
@@ -1109,7 +1113,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.76</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.77</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
