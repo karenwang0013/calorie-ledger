@@ -567,10 +567,10 @@ select {
   width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
   border-radius: 14px; display: block;
 }
-.prow-pick { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 12px; }
+.prow-pick { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .prow-pick .pickbtn { flex: 1; padding: 12px 10px; font-size: 14px; }
 .prow-pick .pickbtn.on { padding: 13px 10px; font-size: 15px; }
-#addSheet { min-height: 0; }
+#addSheet { min-height: 0; max-height: 80dvh; }
 .drop.small { padding: 20px 14px; position: relative; }
 .drop.small .preview { max-height: 150px; }
 .drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }
