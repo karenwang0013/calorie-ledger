@@ -568,7 +568,7 @@ async function api(path, body, method) {
     let date = today;
     d.logs.forEach(l => {
       if (!ids.includes(l.id)) return;
-      l.batchName = name;
+      if (body.item) l.name = name; else l.batchName = name;
       if (!l.batch) l.batch = batch;
       date = l.date || date;
     });

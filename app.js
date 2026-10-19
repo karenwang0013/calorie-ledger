@@ -184,12 +184,13 @@ function renderMeals() {
   const d = S.day;
   const box = $('#meals');
   const itemRow = l => `
-      <div class="mitem" data-id="${l.id}">
+      <div class="mitem" data-item="${l.id}">
         <div class="n">${esc(l.name)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
             l.p ? ' · 蛋' + Math.round(l.p) + '/碳' + Math.round(l.c) + '/脂' + Math.round(l.f) : ''}</span>
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
+        <span class="chev">›</span>
         <button class="del" data-del="${l.id}">×</button>
       </div>`;
 
@@ -246,6 +247,10 @@ function renderMeals() {
 
   groupMap = groupsById;
   $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
+  $$('[data-item]', box).forEach(b => b.onclick = ev => {
+    if (ev.target.closest('[data-del]')) return;
+    openDetail([d.logs.find(l => String(l.id) === b.dataset.item)].filter(Boolean), false);
+  });
 
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
@@ -614,7 +619,7 @@ async function saveItems() {
   btn.disabled = true;
   btn.textContent = '保存中…';
   try {
-    const batch = items.length > 1 ? 'b' + Date.now() : null;
+    const batch = 'b' + Date.now();
     let shot = '';
     if (batch && S.photoData) {
       try { shot = await makeThumb(S.photoData); } catch (e) { /* 图存不下就算了 */ }
@@ -647,21 +652,32 @@ async function saveItems() {
 function openGroup(key) {
   const g = groupMap.get(key);
   if (!g) return;
-  const sum = k => Math.round(g.logs.reduce((a, b) => a + (b[k] || 0), 0));
-  const kcal = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
-  const batchKey = g.logs[0].batch || '';
+  openDetail(g.logs, true, g.name || '未命名');
+}
+
+/* logs：这一组（或这一条）记录；isGroup：多条才显示「N 项」和小计 */
+function openDetail(logs, isGroup, title) {
+  if (!logs || !logs.length) return;
+  const sum = k => Math.round(logs.reduce((a, b) => a + (b[k] || 0), 0));
+  const kcal = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
+  const batchKey = logs[0].batch || '';
   const shot = (S.day && S.day.shots && S.day.shots[batchKey]) || '';
-  $('#grpName').textContent = g.name || '未命名';
-  $('#grpMeta').textContent = `${g.logs.length} 项 · 蛋${sum('p')} / 碳${sum('c')} / 脂${sum('f')}`;
+  $('#grpName').textContent = title || logs[0].name;
+  $('#grpMeta').textContent = isGroup
+    ? `${logs.length} 项 · 蛋${sum('p')} / 碳${sum('c')} / 脂${sum('f')}`
+    : `${Math.round(logs[0].grams)}g`;
   const img = $('#grpShot');
   if (shot) { img.src = shot; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; }
-  $('#grpItems').innerHTML = g.logs.map(l => `
+  $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
       <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
   $('#grpTotal').textContent = kcal;
+  S.detailIds = logs.map(l => l.id);
+  S.detailIsGroup = !!isGroup;
+  S.detailName = title || logs[0].name;
   $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {
@@ -670,7 +686,6 @@ function openGroup(key) {
       await loadDay();
     } catch (e) { toast(e.message); }
   });
-  S.groupKey = key;
   $('#grpMask').classList.add('on');
   $('#grpSheet').classList.add('on');
 }
@@ -679,14 +694,13 @@ function closeGroup() {
   $('#grpSheet').classList.remove('on');
 }
 async function renameGroup() {
-  const g = groupMap.get(S.groupKey);
-  if (!g) return;
-  const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
+  if (!S.detailIds) return;
+  const name = prompt(S.detailIsGroup ? '这份叫什么？（比如：沙县小吃）' : '这个食物叫什么？', S.detailName || '');
   if (name === null) return;
   const v = name.trim().slice(0, 20);
   if (!v) return;
   try {
-    await api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: v });
+    await api('/api/logs/rename', { ids: S.detailIds, name: v, item: !S.detailIsGroup });
     closeGroup();
     await loadDay();
   } catch (e) { toast(e.message); }
@@ -1095,7 +1109,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.75</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.76</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
