@@ -193,28 +193,31 @@ function renderMeals() {
       </div>`;
 
   // 同一次识别出来的多条，收成一行（例如「沙县小吃」→ 展开是青菜/鸡腿/米饭）
+  // 老数据没有 batch 标记，就按「同一餐 + 同一秒」归堆
+  const groupsById = new Map();
   const groupRows = items => {
     const groups = [];
     const seen = new Map();
     items.forEach(l => {
-      if (!l.batch) { groups.push({ logs: [l] }); return; }
-      if (!seen.has(l.batch)) {
-        const g = { batch: l.batch, name: l.batchName || '一餐', logs: [] };
-        seen.set(l.batch, g);
+      const key = l.batch || ('L' + (l.meal || '') + '|' + (l.ts || ''));
+      if (!seen.has(key)) {
+        const g = { key, name: l.batchName || '', logs: [] };
+        seen.set(key, g);
         groups.push(g);
+        groupsById.set(key, g);
       }
-      seen.get(l.batch).logs.push(l);
+      seen.get(key).logs.push(l);
     });
     return groups.map(g => {
       if (g.logs.length < 2) return itemRow(g.logs[0]);
-      const open = S.openGroups.has(g.batch);
+      const open = S.openGroups.has(g.key);
       const kcal = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
       const p = g.logs.reduce((a, b) => a + (b.p || 0), 0);
       const c = g.logs.reduce((a, b) => a + (b.c || 0), 0);
       const f = g.logs.reduce((a, b) => a + (b.f || 0), 0);
       return `
-      <div class="mitem ghead${open ? ' open' : ''}" data-group="${esc(g.batch)}">
-        <div class="n">${esc(g.name)}
+      <div class="mitem ghead${open ? ' open' : ''}" data-group="${esc(g.key)}">
+        <div class="n">${esc(g.name || '未命名')}<span class="ren" data-ren="${esc(g.key)}">✎</span>
           <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
         </div>
         <div class="k">${kcal}</div>
@@ -245,6 +248,17 @@ function renderMeals() {
     const k = b.dataset.group;
     if (S.openGroups.has(k)) S.openGroups.delete(k); else S.openGroups.add(k);
     renderMeals();
+  });
+
+  $$('[data-ren]', box).forEach(el => el.onclick = ev => {
+    ev.stopPropagation();
+    const g = groupsById.get(el.dataset.ren);
+    if (!g) return;
+    const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
+    if (name === null) return;
+    api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: name.trim() })
+      .then(() => loadDay())
+      .catch(e => toast(e.message));
   });
 
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
@@ -1012,7 +1026,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.71</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.72</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>

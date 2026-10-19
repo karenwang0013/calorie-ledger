@@ -547,6 +547,22 @@ async function api(path, body, method) {
     }
   }
 
+  if (pathname === '/api/logs/rename' && m === 'POST') {
+    const d = Store.load();
+    const ids = (body.ids || []).map(Number);
+    const name = String(body.name || '').trim().slice(0, 20);
+    const batch = 'b' + ids[0];
+    let date = today;
+    d.logs.forEach(l => {
+      if (!ids.includes(l.id)) return;
+      l.batchName = name;
+      if (!l.batch) l.batch = batch;
+      date = l.date || date;
+    });
+    Store.save();
+    return { ok: true, day: daySummary(date) };
+  }
+
   if (pathname === '/api/logs' && m === 'POST') {
     const date = body.date || today;
     const meal = body.meal || 'other';

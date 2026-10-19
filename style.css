@@ -272,6 +272,10 @@ select {
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }
 .mitem.ghead .sub { color: var(--muted2); }
+.mitem.ghead .ren {
+  color: var(--muted2); font-size: 12px; margin-left: 6px;
+  padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,.05);
+}
 .mitem.ghead .chev {
   color: var(--muted2); font-size: 14px; margin-left: 8px;
   transition: transform .18s; transform: rotate(0deg);
