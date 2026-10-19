@@ -167,9 +167,10 @@
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <input type="file" accept="image/*" id="photoAlbum" hidden>
       <!-- 第一张：食物本体 -->
-      <div class="shotlabel"><b>①</b> 食物照片</div>
       <div class="drop" id="photoDrop">
         <div id="dropPlaceholder">
+          <div class="shotlabel"><b>①</b>食物照片</div>
+          <div class="psub">拍你要吃的东西，整盘菜、外卖盒都行</div>
           <div class="dpick">
             <button class="pickbtn on" id="pickCamera">拍照</button>
             <button class="pickbtn ghost" id="pickAlbum">从相册选</button>
@@ -184,10 +185,10 @@
       </div>
 
       <!-- 第二张：营养成分表（可选） -->
-      <div class="shotlabel"><b>②</b> 营养成分表 <i>可选，有的话热量更准</i></div>
       <div class="drop small" id="photoDrop2">
         <div id="placeholder2">
-          <span style="font-size:11px;color:var(--muted2)">包装背面「每 100 克」那张表</span>
+          <div class="shotlabel"><b>②</b>营养成分表<i>可选，有的话热量更准</i></div>
+          <div class="psub">包装背面「每 100 克」那张表</div>
           <div class="dpick">
             <button class="pickbtn on" id="pick2Cam">拍照</button>
             <button class="pickbtn ghost" id="pick2Alb">从相册选</button>

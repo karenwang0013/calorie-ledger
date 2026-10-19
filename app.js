@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.21';
+const APP_VERSION = 'v1.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
