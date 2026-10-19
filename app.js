@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.83';
+const APP_VERSION = 'v1.84';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1159,6 +1159,7 @@ function renderMe() {
           <button class="btn sm" id="saveKey">保存</button>
           <button class="btn sm" id="testKey">测试连接</button>
         </div>
+        ${d.has_key ? '<button class="linkbtn" id="peekKey" style="margin-top:10px">查看已保存的 Key</button>' : ''}
         ${d.ai_model ? `<div style="font-size:11px;color:var(--muted2);margin-top:10px">当前模型：${esc(d.ai_model)}</div>` : ''}
       </div>`;
   } else if (mePage === 'data') {
@@ -1518,6 +1519,18 @@ function wireMe() {
       toast('恢复失败：' + err.message, 4000);
     }
     e.target.value = '';
+  };
+
+  const pk = $('#peekKey');
+  if (pk) pk.onclick = () => {
+    const inp = $('#fKey');
+    const key = String(Store.load().settings.dashscope_key || '');
+    if (inp.type === 'text') {
+      inp.type = 'password'; inp.value = ''; pk.textContent = '查看已保存的 Key';
+    } else {
+      inp.type = 'text'; inp.value = key; pk.textContent = '隐藏';
+      setTimeout(() => { try { inp.focus(); inp.select(); } catch (e) {} }, 50);
+    }
   };
 
   const sk = $('#saveKey');
