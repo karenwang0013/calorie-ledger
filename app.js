@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.15';
+const APP_VERSION = 'v1.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -63,7 +63,6 @@ const S = {
   photoAt: null,
   photoURL: null,
   batchName: null,
-  photoMode: 'food',
   photo2Data: null,
   photo2URL: null,
   openGroups: new Set(),
@@ -292,7 +291,6 @@ function openAdd(meal) {
   $('#searchList').innerHTML = '';
   $('#addTabs').hidden = false;
   $('#searchInput').value = '';
-  setPhotoMode('food');
   setAddMode('photo');
   renderMealPick();
   renderRecent();
@@ -303,28 +301,6 @@ function openAdd(meal) {
 function closeAdd() {
   $('#addMask').classList.remove('on');
   $('#addSheet').classList.remove('on');
-}
-
-function setPhotoMode(m) {
-  S.photoMode = m === 'label' ? 'label' : 'food';
-  $$('#photoMode button').forEach(b => b.classList.toggle('on', b.dataset.pm === S.photoMode));
-  const g = $('#photoGrams');
-  if (g) g.placeholder = S.photoMode === 'label'
-    ? '吃了多少克 / 毫升（如：整罐 330）'
-    : '吃了多少克（可选）';
-  $('#slot2').hidden = false;
-  const hd = $('#slot2Hd');
-  const hintT = $('#dropHintText');
-  const hintS = $('#dropHintSub');
-  if (S.photoMode === 'label') {
-    if (hd) hd.textContent = '第二张（可选）：食物实物，帮你估克数';
-    if (hintT) hintT.textContent = '先拍营养成分表';
-    if (hintS) hintS.textContent = '包装背面「每 100 克」那张表，拍清楚数字';
-  } else {
-    if (hd) hd.textContent = '第二张（可选）：营养成分表，热量更准';
-    if (hintT) hintT.textContent = '先拍食物本体';
-    if (hintS) hintS.textContent = '整盘菜、外卖盒都行；有包装的话建议再补拍成分表';
-  }
 }
 
 function setAddMode(m) {
@@ -405,7 +381,10 @@ async function handlePhoto2(file) {
     if (S.photo2URL) URL.revokeObjectURL(S.photo2URL);
     S.photo2URL = URL.createObjectURL(file);
     $('#pv2').src = S.photo2URL;
-    $('#slot2Pv').hidden = false;
+    $('#pv2').hidden = false;
+    $('#del2').hidden = false;
+    $('#placeholder2').hidden = true;
+    $('#photoDrop2').classList.add('has-photo');
     S.photo2Data = await compress(file, 1024, 0.8);
   } catch (e) {
     toast('图片读取失败');
@@ -430,11 +409,15 @@ function resetPhotoUI() {
   if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
   S.photo2Data = null;
   $('#pv2').removeAttribute('src');
-  $('#slot2Pv').hidden = true;
+  $('#pv2').hidden = true;
+  $('#del2').hidden = true;
+  $('#photoDrop2').classList.remove('has-photo');
+  $('#placeholder2').hidden = false;
 }
 
 async function runPhoto() {
-  if (!S.photoData) return;
+  const main = S.photoData || S.photo2Data;
+  if (!main) return toast('先拍一张照片');
   const btn = $('#photoGo');
   const old = btn.innerHTML;
   btn.disabled = true;
@@ -442,20 +425,23 @@ async function runPhoto() {
   try {
     const grams = Number(($('#photoGrams') || {}).value) || 0;
     let hint = $('#photoHint').value.trim();
-    const mainIsLabel = S.photoMode === 'label';
-    let modeHint = mainIsLabel
-      ? '第一张图是包装上的营养成分表：每 100 克的能量/蛋白质/碳水/脂肪请只按标签读数，不要按外观估份量；name 用产品名。'
-      : '第一张图是食物本体：请按外观和常见餐具尺寸估算实际吃掉的重量。';
-    if (S.photo2Data) {
-      modeHint += mainIsLabel
-        ? '第二张图是实际吃的食物本体，请按它估算吃掉了多少克。'
-        : '第二张图是包装上的营养成分表：每 100 克的能量/蛋白质/碳水/脂肪请按标签读数，比外观估算准。';
+    let modeHint;
+    if (S.photoData && S.photo2Data) {
+      modeHint = '第一张图是实际吃的食物本体，第二张图是包装上的营养成分表。'
+        + '请按第二张的标签读每 100 克的能量/蛋白质/碳水/脂肪（不要用外观估算这几项），'
+        + '再按第一张估算实际吃掉了多少克；两两相乘得到总量。';
+    } else if (S.photoData) {
+      modeHint = '这张图是食物本体：按外观和常见餐具尺寸估算实际吃掉的重量。';
+    } else {
+      modeHint = '这张图是包装上的营养成分表：每 100 克数值只按标签读数；name 用产品名。';
     }
     hint = hint ? modeHint + '；' + hint : modeHint;
     if (grams > 0) hint = hint + `；我实际吃了 ${grams} 克`;
+    // 有食物图就用它当主图；只拍了成分表就反过来
+    const hasFood = !!S.photoData;
     const r = await api('/api/ai/food', {
-      image: S.photoData,
-      image2: S.photo2Data || null,
+      image: hasFood ? S.photoData : S.photo2Data,
+      image2: hasFood ? (S.photo2Data || null) : null,
       hint,
     });
     S.items = r.items.map(x => ({ ...x, _src: 'photo' }));
@@ -1617,7 +1603,6 @@ function init() {
   $('#addMask').onclick = closeAdd;
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));
-  $$('#photoMode button').forEach(b => b.onclick = () => setPhotoMode(b.dataset.pm));
   $('#pick2Cam').onclick = ev => { ev.stopPropagation(); $('#photo2Cam').click(); };
   $('#pick2Alb').onclick = ev => { ev.stopPropagation(); $('#photo2Alb').click(); };
   $('#photo2Cam').onchange = e => handlePhoto2(e.target.files[0]);
@@ -1627,7 +1612,10 @@ function init() {
     if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
     S.photo2Data = null;
     $('#pv2').removeAttribute('src');
-    $('#slot2Pv').hidden = true;
+    $('#pv2').hidden = true;
+    $('#del2').hidden = true;
+    $('#photoDrop2').classList.remove('has-photo');
+    $('#placeholder2').hidden = false;
   };
 
   const pickCam = () => $('#photoInput').click();

@@ -166,15 +166,13 @@
     <div class="pane" id="pane-photo">
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <input type="file" accept="image/*" id="photoAlbum" hidden>
-      <div class="photomode" id="photoMode">
-        <button data-pm="food" class="on">拍食物</button>
-        <button data-pm="label">拍营养成分表</button>
-      </div>
+      <!-- 第一张：食物本体 -->
+      <div class="shotlabel"><b>①</b> 食物照片</div>
       <div class="drop" id="photoDrop">
         <div id="dropPlaceholder">
           <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 8.5h2.6L8.2 6h7.6l1.6 2.5H20v10H4z"/><circle cx="12" cy="13" r="3.1"/></svg></div>
-          <span id="dropHintText">拍一张，或从相册选</span><br>
-          <span style="font-size:11px;color:var(--muted2)" id="dropHintSub">整盘菜、外卖盒、包装营养成分表都行</span>
+          拍你要吃的东西<br>
+          <span style="font-size:11px;color:var(--muted2)">整盘菜、外卖盒、一把黑豆都行</span>
           <div class="dpick">
             <button class="pickbtn on" id="pickCamera">拍照</button>
             <button class="pickbtn ghost" id="pickAlbum">从相册选</button>
@@ -187,14 +185,19 @@
           <button class="minibtn" id="retakeAlbum">换一张相册里的</button>
         </div>
       </div>
-      <div class="slot2" id="slot2" hidden>
-        <div class="slot2-hd" id="slot2Hd">第二张（可选）</div>
-        <button class="minibtn" id="pick2Cam">📷 拍照</button>
-        <button class="minibtn" id="pick2Alb">相册</button>
-        <div class="slot2-pv" id="slot2Pv" hidden>
-          <img id="pv2" alt="">
-          <button class="shotdel sm" id="del2">×</button>
+
+      <!-- 第二张：营养成分表（可选） -->
+      <div class="shotlabel"><b>②</b> 营养成分表 <i>可选，有的话热量更准</i></div>
+      <div class="drop small" id="photoDrop2">
+        <div id="placeholder2">
+          <span style="font-size:11px;color:var(--muted2)">包装背面「每 100 克」那张表</span>
+          <div class="dpick">
+            <button class="minibtn" id="pick2Cam">📷 拍照</button>
+            <button class="minibtn" id="pick2Alb">相册</button>
+          </div>
         </div>
+        <img class="preview" id="pv2" hidden alt="">
+        <button class="shotdel" id="del2" hidden>×</button>
         <input type="file" accept="image/*" capture="environment" id="photo2Cam" hidden>
         <input type="file" accept="image/*" id="photo2Alb" hidden>
       </div>
