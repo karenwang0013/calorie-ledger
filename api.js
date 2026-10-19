@@ -33,6 +33,7 @@ const Store = {
       logs: [],
       weights: {},
       daily: {},
+      shots: {},
       settings: {},
     };
   },
@@ -51,6 +52,7 @@ const Store = {
       logs: Array.isArray(parsed.logs) ? parsed.logs : [],
       weights: parsed.weights || {},
       daily: parsed.daily || {},
+      shots: parsed.shots || {},
       settings: parsed.settings || {},
     };
     return this.data;
