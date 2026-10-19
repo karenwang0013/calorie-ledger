@@ -552,9 +552,11 @@ select {
   transform: translateY(1px);
 }
 .shotlabel i { font-style: normal; font-size: 11px; color: var(--muted2); }
-.drop.small { padding: 14px 12px; position: relative; }
-.drop.small .preview { max-height: 110px; }
-.drop.small .dpick { margin-top: 10px; flex-direction: row; justify-content: center; width: auto; }
+.drop.small { padding: 18px 14px; position: relative; }
+.drop.small .preview { max-height: 150px; }
+.drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }
+.drop.small .pickbtn { padding: 12px 16px; font-size: 14px; }
+.drop.small .pickbtn.on { padding: 13px 16px; font-size: 15px; }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
