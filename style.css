@@ -120,7 +120,8 @@ select {
     /* 底部绿光扩散 */
     radial-gradient(115% 38% at 50% 104%, rgba(214,255,75,0.14), rgba(214,255,75,0.035) 45%, transparent 66%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(214,255,75,0.085) 1px, transparent 1.3px) 0 0 / 18px 18px,
+    radial-gradient(circle, rgba(214,255,75,0.10) 1px, transparent 1.3px) 0 0 / 12px 12px,
+    radial-gradient(circle, rgba(214,255,75,0.10) 1px, transparent 1.3px) 6px 6px / 12px 12px,
     /* 底色：墨绿渐层 */
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
@@ -220,8 +221,8 @@ select {
 /* ---------- 主环 ---------- */
 .hero { position: relative; display: grid; place-items: center; padding: 4px 0 6px; }
 .hero svg { width: 232px; height: 232px; transform: rotate(-90deg); }
-.hero .track { stroke: rgba(255, 255, 255, 0.06); }
-.hero .prog { stroke: var(--lime); transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1), stroke .3s; }
+.hero .track { stroke: url(#ringTrack); }
+.hero .prog { filter: drop-shadow(0 0 7px rgba(214,255,75,.35)); transition: stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
 .hero .center {
   position: absolute;
   text-align: center;

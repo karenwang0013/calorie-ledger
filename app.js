@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.61';
+const APP_VERSION = 'v1.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -183,9 +183,9 @@ function renderToday() {
   ring.style.strokeDashoffset = String(C * (1 - Math.min(pct, 1)));
 
   // 颜色语言：绿=还有余量、橙=接近上限、红=已经吃超（盈余）
-  let color = '#d6ff4b';
-  if (pct > 1.0) color = '#ff5d5d';
-  else if (pct > 0.9) color = '#ffb04b';
+  let color = 'url(#ringGradLime)';
+  if (pct > 1.0) color = 'url(#ringGradRed)';
+  else if (pct > 0.9) color = 'url(#ringGradOrange)';
   ring.style.stroke = color;
 
   const hero = $('#hero');
