@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.14';
+const APP_VERSION = 'v1.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -314,9 +314,17 @@ function setPhotoMode(m) {
     : '吃了多少克（可选）';
   $('#slot2').hidden = false;
   const hd = $('#slot2Hd');
-  if (hd) hd.textContent = S.photoMode === 'label'
-    ? '再加一张食物照片（可选，用来估实际吃多少）'
-    : '再加一张营养成分表（可选，热量会更精确）';
+  const hintT = $('#dropHintText');
+  const hintS = $('#dropHintSub');
+  if (S.photoMode === 'label') {
+    if (hd) hd.textContent = '第二张（可选）：食物实物，帮你估克数';
+    if (hintT) hintT.textContent = '先拍营养成分表';
+    if (hintS) hintS.textContent = '包装背面「每 100 克」那张表，拍清楚数字';
+  } else {
+    if (hd) hd.textContent = '第二张（可选）：营养成分表，热量更准';
+    if (hintT) hintT.textContent = '先拍食物本体';
+    if (hintS) hintS.textContent = '整盘菜、外卖盒都行；有包装的话建议再补拍成分表';
+  }
 }
 
 function setAddMode(m) {
