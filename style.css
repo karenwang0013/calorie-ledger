@@ -24,7 +24,7 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
-html { background: #0a0b0c; }
+html { background: #000; }
 
 html, body {
   margin: 0;
@@ -43,7 +43,7 @@ body { min-height: 100dvh; }
   position: fixed; top: 0; left: 0; right: 0;
   /* iOS 只有在屏幕最上沿 4px 内存在实色元素时，才会取这个颜色当状态栏底色 */
   height: max(8px, var(--safe-t));
-  background: #0b100e;
+  background: #000;
   z-index: 30;
   pointer-events: none;
 }
@@ -96,7 +96,7 @@ select {
   margin: 0 auto;
   min-height: 100dvh;
   padding-bottom: calc(92px + var(--safe-b));
-  background: linear-gradient(180deg, #0b100e 0%, #090c0a 45%, #070807 100%);
+  background: linear-gradient(180deg, #000 0%, #000 16%, #090c0a 42%, #070807 100%);
 }
 
 /* ---------- 顶栏 ---------- */
@@ -108,7 +108,7 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: calc(10px + var(--safe-t)) 18px 9px;
-  background: #0b100e;
+  background: #000;
 }
 .brand {
   font-size: 20px; font-weight: 650; letter-spacing: 0.2px;
