@@ -40,7 +40,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-body { min-height: 100dvh; }
+body {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden; overscroll-behavior: none;
+}
 
 /* 顶到屏幕最上沿的实色带：要求高度 ≥6px、宽 ≥80%、距顶 ≤4px */
 .statusbg {

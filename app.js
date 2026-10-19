@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.48';
+const APP_VERSION = 'v1.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1812,7 +1812,21 @@ function init() {
   });
   syncLock();
 
-  // 左边缘拖动返回：卡片跟手滑动，松手看距离决定回退还是弹回
+  // 顶部下拉时吃掉手势，避免 iOS 把整个 webview（连固定顶栏）一起弹走
+  let pStartY = 0, pStartX = 0;
+  document.addEventListener('touchstart', e => {
+    pStartY = e.touches[0].clientY;
+    pStartX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    const sc = document.getElementById('scroller');
+    if (!sc) return;
+    const dy = e.touches[0].clientY - pStartY;
+    const dx = Math.abs(e.touches[0].clientX - pStartX);
+    if (sc.scrollTop <= 0 && dy > 0 && dy > dx) e.preventDefault();
+  }, { passive: false });
+
+  // 左边缘拖动返回：卡片跟手滑动，松手决定回退还是弹回
   let sw = null;
   document.addEventListener('touchstart', e => {
     const t = e.touches[0];
