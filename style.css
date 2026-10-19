@@ -41,7 +41,8 @@ body { min-height: 100dvh; }
 /* 顶到屏幕最上沿的实色带：要求高度 ≥6px、宽 ≥80%、距顶 ≤4px */
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
-  height: var(--safe-t);
+  /* iOS 只有在屏幕最上沿 4px 内存在实色元素时，才会取这个颜色当状态栏底色 */
+  height: max(8px, var(--safe-t));
   background: #0b100e;
   z-index: 30;
   pointer-events: none;
