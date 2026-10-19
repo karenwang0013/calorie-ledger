@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.11';
+const APP_VERSION = 'v1.12';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -63,6 +63,7 @@ const S = {
   photoAt: null,
   photoURL: null,
   batchName: null,
+  photoMode: 'food',
   openGroups: new Set(),
   items: [],
   meal: 'lunch',
@@ -289,6 +290,7 @@ function openAdd(meal) {
   $('#searchList').innerHTML = '';
   $('#addTabs').hidden = false;
   $('#searchInput').value = '';
+  setPhotoMode('food');
   setAddMode('photo');
   renderMealPick();
   renderRecent();
@@ -299,6 +301,15 @@ function openAdd(meal) {
 function closeAdd() {
   $('#addMask').classList.remove('on');
   $('#addSheet').classList.remove('on');
+}
+
+function setPhotoMode(m) {
+  S.photoMode = m === 'label' ? 'label' : 'food';
+  $$('#photoMode button').forEach(b => b.classList.toggle('on', b.dataset.pm === S.photoMode));
+  const g = $('#photoGrams');
+  if (g) g.placeholder = S.photoMode === 'label'
+    ? '吃了多少克 / 毫升（如：整罐 330）'
+    : '吃了多少克（可选）';
 }
 
 function setAddMode(m) {
@@ -399,7 +410,11 @@ async function runPhoto() {
   try {
     const grams = Number(($('#photoGrams') || {}).value) || 0;
     let hint = $('#photoHint').value.trim();
-    if (grams > 0) hint = (hint ? hint + '；' : '') + `我实际吃了 ${grams} 克`;
+    const modeHint = S.photoMode === 'label'
+      ? '这张图是包装上的营养成分表：请只按标签读数，每 100 克的能量/蛋白质/碳水/脂肪原样填，不要按外观估份量；name 用产品名。'
+      : '这张图是食物本体：请按外观和常见餐具尺寸估算实际吃掉的重量。';
+    hint = hint ? modeHint + '；' + hint : modeHint;
+    if (grams > 0) hint = hint + `；我实际吃了 ${grams} 克`;
     const r = await api('/api/ai/food', {
       image: S.photoData,
       hint,
@@ -1563,6 +1578,7 @@ function init() {
   $('#addMask').onclick = closeAdd;
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));
+  $$('#photoMode button').forEach(b => b.onclick = () => setPhotoMode(b.dataset.pm));
 
   const pickCam = () => $('#photoInput').click();
   const pickAlb = () => $('#photoAlbum').click();

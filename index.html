@@ -166,6 +166,10 @@
     <div class="pane" id="pane-photo">
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <input type="file" accept="image/*" id="photoAlbum" hidden>
+      <div class="photomode" id="photoMode">
+        <button data-pm="food" class="on">拍食物</button>
+        <button data-pm="label">拍营养成分表</button>
+      </div>
       <div class="drop" id="photoDrop">
         <div id="dropPlaceholder">
           <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 8.5h2.6L8.2 6h7.6l1.6 2.5H20v10H4z"/><circle cx="12" cy="13" r="3.1"/></svg></div>
@@ -185,7 +189,7 @@
       </div>
       <div style="margin-top:12px" id="photoActions" hidden>
         <input id="photoGrams" type="number" inputmode="decimal" min="1" step="1"
-               placeholder="克数（拍营养成分表时填，如 50）" style="margin-bottom:10px">
+               placeholder="吃了多少克（可选）" style="margin-bottom:10px">
         <input id="photoHint" placeholder="补充说明（可选）：比如「整包」「只吃了一半」" style="margin-bottom:10px">
         <div class="btnrow">
           <button class="btn primary sm" id="photoGo" style="flex:1">识别热量</button>

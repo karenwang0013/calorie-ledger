@@ -539,6 +539,14 @@ select {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
+.photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
+.photomode button {
+  flex: 1; padding: 8px 6px; border-radius: 11px;
+  font-size: 12px; color: var(--muted); background: var(--card);
+  border: 1px solid transparent;
+}
+.photomode button.on { color: var(--lime); border-color: rgba(214,255,75,.35); background: rgba(214,255,75,.08); }
+
 .tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; flex: 0 0 auto; }
 .tabs3 button {
   flex: 1; padding: 9px 4px; border-radius: 11px;
