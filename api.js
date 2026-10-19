@@ -583,12 +583,14 @@ async function api(path, body, method) {
       const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual', body.batch, body.batchName));
       // 顺手存一张小图，之后点开这一组还能看到当时拍的照片
       if (body.batch && body.shot) {
-        const d = Store.load();
-        d.shots = d.shots || {};
-        d.shots[body.batch] = String(body.shot);
-        const keys = Object.keys(d.shots);
-        if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete d.shots[k]);
-        Store.save();
+        try {
+          const d = Store.load();
+          d.shots = d.shots || {};
+          d.shots[body.batch] = String(body.shot);
+          const keys = Object.keys(d.shots);
+          if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete d.shots[k]);
+          Store.save();
+        } catch (e) { /* 图存不下也不能把记账搞失败 */ }
       }
       return { ok: true, ids, day: daySummary(date) };
     }

@@ -672,6 +672,10 @@ function openDetail(logs, isGroup, title) {
     : `${Math.round(logs[0].grams)}g`;
   const img = $('#grpShot');
   if (shot) { img.src = shot; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; }
+  // 拍照记的却没有图 → 说明是旧版本记的，说清楚免得以为丢了
+  const noShot = !shot && logs.some(l => l.source === 'photo');
+  const tip = $('#grpNoShot');
+  if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
       <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
@@ -1113,7 +1117,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.77</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.78</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
