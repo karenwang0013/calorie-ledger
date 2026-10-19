@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.52';
+const APP_VERSION = 'v1.53';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1963,6 +1963,23 @@ function init() {
   initScroll();
   window.addEventListener('resize', syncTopH);
   window.addEventListener('orientationchange', syncTopH);
+
+  // 版本自检：线上版本变了就带随机参数重开，绕开缓存
+  const checkVersion = async () => {
+    try {
+      const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const v = (await r.text()).trim();
+      if (v && v !== APP_VERSION && !sessionStorage.getItem('ver-jump')) {
+        sessionStorage.setItem('ver-jump', '1');
+        location.replace(location.pathname + '?r=' + Date.now());
+      }
+    } catch (e) { /* 没网就算了 */ }
+  };
+  checkVersion();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkVersion();
+  });
 
   applyTheme(Store.load().settings.theme || 'lime');
   loadDay();

@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v190';
+const CACHE = 'ledger-v191';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
+  './version.txt',
 ];
 
 self.addEventListener('install', e => {
