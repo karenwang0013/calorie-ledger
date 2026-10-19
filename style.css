@@ -40,7 +40,7 @@ body { min-height: 100dvh; }
 /* 顶到屏幕最上沿的实色带：要求高度 ≥6px、宽 ≥80%、距顶 ≤4px */
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
-  height: max(6px, var(--safe-t));
+  height: var(--safe-t);
   background: #101614;
   z-index: 30;
   pointer-events: none;
@@ -89,7 +89,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(30px + var(--safe-t)) 18px 9px;
+  padding: calc(10px + var(--safe-t)) 18px 9px;
   background: #101614;
   border-bottom: 1px solid rgba(255,255,255,.05);
 }
