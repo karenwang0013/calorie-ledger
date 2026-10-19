@@ -108,6 +108,7 @@ select {
 .scroller {
   flex: 1 1 auto;
   min-height: 0;
+  padding-top: var(--topbar-h, 64px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -116,9 +117,10 @@ select {
 
 /* ---------- 顶栏 ---------- */
 .topbar {
-  position: relative;
-  flex: 0 0 auto;
-  z-index: 20;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  max-width: 520px; margin: 0 auto;
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-between;
