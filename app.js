@@ -280,6 +280,7 @@ function openAdd(meal) {
   S.items = [];
   S.meal = meal || defaultMeal();
   S.batchName = null;
+  $('#batchName').value = '';
   resetPhotoUI();
   $('#photoHint').value = '';
   $('#resultArea').hidden = true;
@@ -408,6 +409,7 @@ async function runPhoto() {
     $('#photoActions').hidden = true;
     $('#pane-photo').classList.add('done');
     S.batchName = r.dish || '';
+    $('#batchName').value = S.batchName;
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -429,6 +431,7 @@ async function runText() {
     const r = await api('/api/ai/text', { text });
     S.items = r.items.map(x => ({ ...x, _src: 'ai' }));
     S.batchName = r.dish || '';
+    $('#batchName').value = S.batchName;
     showResult(r.dish ? '估算：' + r.dish : '估算结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -547,7 +550,10 @@ function renderResult() {
       </div>
     </div>`;
   }
-  box.innerHTML = shot + S.items.map((it, i) => {
+  $('#shotBox').innerHTML = shot;
+  // 多项才需要给这一餐起名（识别到的菜名会自动填进来）
+  $('#nameWrap').hidden = S.items.length < 2;
+  box.innerHTML = S.items.map((it, i) => {
     const kcal = it.kcal_per_100g * it.grams / 100;
     const units = (it._units || []).filter(u => u.g !== 100).slice(0, 3);
     const chips = units.map(u =>
@@ -597,6 +603,11 @@ function renderResult() {
 async function saveItems() {
   const items = S.items.filter(i => i.grams > 0);
   if (!items.length) return toast('没有可保存的条目');
+  const dishName = ($('#batchName').value || '').trim().slice(0, 20);
+  if (items.length > 1 && !dishName) {
+    $('#batchName').focus();
+    return toast('先给这一餐起个名字，比如「沙县小吃」', 3000);
+  }
   const btn = $('#saveItems');
   btn.disabled = true;
   btn.textContent = '保存中…';
@@ -608,7 +619,7 @@ async function saveItems() {
       source: items[0]._src || 'manual',
       // 一次识别出来的多项合成一组，列表里只占一行
       batch: items.length > 1 ? 'b' + Date.now() : null,
-      batchName: items.length > 1 ? (S.batchName || '一餐') : '',
+      batchName: items.length > 1 ? dishName : '',
     });
     closeAdd();
     S.batchName = null;
@@ -1026,7 +1037,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.72</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.73</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
