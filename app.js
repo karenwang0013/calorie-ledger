@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.68';
+const APP_VERSION = 'v1.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -183,10 +183,30 @@ function renderToday() {
   ring.style.strokeDashoffset = String(C * (1 - Math.min(pct, 1)));
 
   // 颜色语言：绿=还有余量、橙=接近上限、红=已经吃超（盈余）
-  let color = 'url(#ringGradLime)';
-  if (pct > 1.0) color = 'url(#ringGradRed)';
-  else if (pct > 0.9) color = 'url(#ringGradOrange)';
-  ring.style.stroke = color;
+  // 颜色随进度平滑过渡：绿 → 橙 → 红
+  const mix = (a, b, t) => {
+    const p = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+    const A = p(a), B = p(b);
+    return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  };
+  let c0, c1, c2;
+  if (pct <= 0.8) {
+    c0 = '#d6ff4b'; c1 = '#57ffc8'; c2 = '#d6ff4b';
+  } else if (pct <= 1) {
+    const t = (pct - 0.8) / 0.2;
+    c0 = mix('#d6ff4b', '#ffc44b', t);
+    c1 = mix('#57ffc8', '#ff9a3d', t);
+    c2 = mix('#d6ff4b', '#ff7a3d', t);
+  } else {
+    const t = Math.min(1, (pct - 1) / 0.15);
+    c0 = mix('#ffc44b', '#ff6b6b', t);
+    c1 = mix('#ff9a3d', '#ff2e88', t);
+    c2 = mix('#ff7a3d', '#ff5d5d', t);
+  }
+  $('#ringS0').setAttribute('stop-color', c0);
+  $('#ringS1').setAttribute('stop-color', c1);
+  $('#ringS2').setAttribute('stop-color', c2);
+
 
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
