@@ -24,7 +24,7 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
-html { background: #0b100e; }
+html { background: #000; }
 
 html, body {
   margin: 0;
@@ -97,7 +97,7 @@ select {
   overflow: hidden;
   background:
     radial-gradient(120% 40% at 50% 104%, rgba(214, 255, 75, 0.08), transparent 60%),
-    #0b100e;
+    #000;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
@@ -125,7 +125,7 @@ select {
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
   padding: min(calc(10px + var(--safe-t)), 88px) 18px 9px;
-  background: #0b100e;
+  background: #000;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar { border-bottom: 1px solid rgba(255,255,255,.08); }
