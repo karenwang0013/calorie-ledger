@@ -1123,7 +1123,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.85</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.86</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1585,6 +1585,26 @@ function init() {
     $('#addTitle').textContent = '搜索食物';
   };
   const refreshBtn = $('#cloudRefresh');
+  // 手动刷新时，如果还是旧数据，后台再自动补拉几次（GitHub Pages 发布要几十秒）
+  let retryLeft = 0, retryBusy = false;
+  async function retryPullCloud() {
+    if (retryBusy || retryLeft <= 0) return;
+    retryBusy = true;
+    retryLeft--;
+    setTimeout(async () => {
+      const d = await pullCloudData();
+      if (d) {
+        retryLeft = 0; retryBusy = false;
+        loadDay();
+        toast(`✅ 已拿到新数据：${lastCloud.at.slice(5)} · 活动 ${lastCloud.active} 千卡`, 3000);
+      } else if (retryLeft <= 0) {
+        retryBusy = false;
+      } else {
+        retryPullCloud();
+      }
+    }, 20000);
+  }
+
   async function pullNow() {
     if (!refreshBtn) return;
     refreshBtn.classList.add('spin');
@@ -1594,8 +1614,12 @@ function init() {
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
-    if (date) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800);
-    else if (c && c.at) toast(`✅ 云端：${c.at.slice(5)} 那份 · 活动 ${c.active} 千卡${c.changed ? '' : '（刚跑过快捷指令的话，等 1 分钟再点一次）'}`, 3400);
+    if (date) { retryLeft = 0; toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800); }
+    else if (c && c.at) {
+      retryLeft = 3;
+      retryPullCloud();
+      toast(`✅ 现在是 ${c.at.slice(5)} 那份（活动 ${c.active} 千卡），后台帮你再等新数据`, 3200);
+    }
     else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
@@ -1666,7 +1690,7 @@ function init() {
       pullCloudData().then(() => { loadDay(); toast('⌚ 已读取手表数据', 2200); });
       return;
     }
-    if (Date.now() - lastPull < 60000) return;
+    if (Date.now() - lastPull < 15000) return;
     lastPull = Date.now();
     pullCloudData().then(date => { if (date) loadDay(); });
   });
