@@ -15,8 +15,8 @@
   --blue: #6ea8ff;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
-  /* 卡片圆角：跟手机屏幕的圆角同心（屏角 56 − 离底 8） */
-  --card-r: 48px;
+  /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 8） */
+  --card-r: 54px;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -436,6 +436,8 @@ select {
   min-height: 56dvh; max-height: 72dvh;
   background: var(--bg2);
   border-radius: var(--card-r);
+  /* 手机屏幕的角是超椭圆（squircle），支持就跟着用，不支持自动忽略 */
+  corner-shape: squircle;
   border: 1px solid var(--line2);
   box-shadow: 0 22px 60px rgba(0,0,0,.6);
   transform: translateY(calc(100% + 24px)) scale(.98);
