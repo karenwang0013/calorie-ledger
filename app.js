@@ -12,6 +12,7 @@ const MEALS = [
   { k: 'snack', n: '加餐' },
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
+let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
 function isoOf(d) {
@@ -216,14 +217,13 @@ function renderMeals() {
       const c = g.logs.reduce((a, b) => a + (b.c || 0), 0);
       const f = g.logs.reduce((a, b) => a + (b.f || 0), 0);
       return `
-      <div class="mitem ghead${open ? ' open' : ''}" data-group="${esc(g.key)}">
-        <div class="n">${esc(g.name || '未命名')}<span class="ren" data-ren="${esc(g.key)}">✎</span>
+      <div class="mitem ghead" data-group="${esc(g.key)}">
+        <div class="n">${esc(g.name || '未命名')}
           <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
         </div>
         <div class="k">${kcal}</div>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="gkids"${open ? '' : ' hidden'}>${g.logs.map(itemRow).join('')}</div>`;
+        <span class="chev">›</span>
+      </div>`;
     }).join('');
   };
 
@@ -244,22 +244,8 @@ function renderMeals() {
       </div>`;
   }).join('');
 
-  $$('[data-group]', box).forEach(b => b.onclick = () => {
-    const k = b.dataset.group;
-    if (S.openGroups.has(k)) S.openGroups.delete(k); else S.openGroups.add(k);
-    renderMeals();
-  });
-
-  $$('[data-ren]', box).forEach(el => el.onclick = ev => {
-    ev.stopPropagation();
-    const g = groupsById.get(el.dataset.ren);
-    if (!g) return;
-    const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
-    if (name === null) return;
-    api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: name.trim() })
-      .then(() => loadDay())
-      .catch(e => toast(e.message));
-  });
+  groupMap = groupsById;
+  $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
 
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
@@ -417,6 +403,22 @@ async function runPhoto() {
     btn.disabled = false;
     btn.innerHTML = old;
   }
+}
+
+/* 存一张小图（约 10~20KB），之后点开这一组还能看到当时拍的 */
+async function makeThumb(dataUrl, max = 320, q = 0.55) {
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = dataUrl;
+  });
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * scale);
+  c.height = Math.round(img.height * scale);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', q);
 }
 
 /* ---- 文字 ---- */
@@ -612,14 +614,20 @@ async function saveItems() {
   btn.disabled = true;
   btn.textContent = '保存中…';
   try {
+    const batch = items.length > 1 ? 'b' + Date.now() : null;
+    let shot = '';
+    if (batch && S.photoData) {
+      try { shot = await makeThumb(S.photoData); } catch (e) { /* 图存不下就算了 */ }
+    }
     await api('/api/logs', {
       date: S.date,
       meal: S.meal,
       items,
       source: items[0]._src || 'manual',
       // 一次识别出来的多项合成一组，列表里只占一行
-      batch: items.length > 1 ? 'b' + Date.now() : null,
+      batch,
       batchName: items.length > 1 ? dishName : '',
+      shot,
     });
     closeAdd();
     S.batchName = null;
@@ -632,6 +640,56 @@ async function saveItems() {
     btn.disabled = false;
     btn.textContent = '记入';
   }
+}
+
+
+/* ---------------- 一组记录的详情卡片 ---------------- */
+function openGroup(key) {
+  const g = groupMap.get(key);
+  if (!g) return;
+  const sum = k => Math.round(g.logs.reduce((a, b) => a + (b[k] || 0), 0));
+  const kcal = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
+  const batchKey = g.logs[0].batch || '';
+  const shot = (S.day && S.day.shots && S.day.shots[batchKey]) || '';
+  $('#grpName').textContent = g.name || '未命名';
+  $('#grpMeta').textContent = `${g.logs.length} 项 · 蛋${sum('p')} / 碳${sum('c')} / 脂${sum('f')}`;
+  const img = $('#grpShot');
+  if (shot) { img.src = shot; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; }
+  $('#grpItems').innerHTML = g.logs.map(l => `
+    <div class="gitem">
+      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
+      <div class="k">${Math.round(l.kcal)}</div>
+      <button class="del" data-gdel="${l.id}">×</button>
+    </div>`).join('');
+  $('#grpTotal').textContent = kcal;
+  $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation();
+    try {
+      await api('/api/logs/' + b.dataset.gdel, null, 'DELETE');
+      closeGroup();
+      await loadDay();
+    } catch (e) { toast(e.message); }
+  });
+  S.groupKey = key;
+  $('#grpMask').classList.add('on');
+  $('#grpSheet').classList.add('on');
+}
+function closeGroup() {
+  $('#grpMask').classList.remove('on');
+  $('#grpSheet').classList.remove('on');
+}
+async function renameGroup() {
+  const g = groupMap.get(S.groupKey);
+  if (!g) return;
+  const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
+  if (name === null) return;
+  const v = name.trim().slice(0, 20);
+  if (!v) return;
+  try {
+    await api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: v });
+    closeGroup();
+    await loadDay();
+  } catch (e) { toast(e.message); }
 }
 
 /* ---------------- 趋势 ---------------- */
@@ -1037,7 +1095,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.74</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.75</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1512,6 +1570,9 @@ function init() {
 
   $('#helpClose').onclick = closeHelp;
   $('#helpMask').onclick = closeHelp;
+  $('#grpClose').onclick = closeGroup;
+  $('#grpMask').onclick = closeGroup;
+  $('#grpRename').onclick = renameGroup;
 
   $$('#trendSeg button').forEach(b => b.onclick = () => {
     $$('#trendSeg button').forEach(x => x.classList.toggle('on', x === b));

@@ -168,10 +168,16 @@ function daySummary(date) {
   const carb = logs.reduce((a, b) => a + (Number(b.c) || 0), 0);
   const fat = logs.reduce((a, b) => a + (Number(b.f) || 0), 0);
   const [exp, src, detail] = tdeeOf(p, watch, latestWeight());
+  // 只把当天这几条记录的小图带出来，不整库塞给前端
+  const shots = {};
+  logs.forEach(l => {
+    if (l.batch && d.shots && d.shots[l.batch]) shots[l.batch] = d.shots[l.batch];
+  });
 
   return {
     date,
     logs,
+    shots,
     intake: Math.round(intake),
     protein: Math.round(protein * 10) / 10,
     carb: Math.round(carb * 10) / 10,
@@ -575,6 +581,15 @@ async function api(path, body, method) {
     const meal = body.meal || 'other';
     if (body.items && body.items.length) {
       const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual', body.batch, body.batchName));
+      // 顺手存一张小图，之后点开这一组还能看到当时拍的照片
+      if (body.batch && body.shot) {
+        const d = Store.load();
+        d.shots = d.shots || {};
+        d.shots[body.batch] = String(body.shot);
+        const keys = Object.keys(d.shots);
+        if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete d.shots[k]);
+        Store.save();
+      }
       return { ok: true, ids, day: daySummary(date) };
     }
     const id = addLog(date, meal, body, body.source || 'manual');
