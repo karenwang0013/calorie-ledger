@@ -740,7 +740,7 @@ function cloudUrl() {
 /* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
 function cloudPayload() {
   const data = JSON.parse(JSON.stringify(Store.load()));
-  const limit = 900 * 1024;
+  const limit = 400 * 1024;
   let json = JSON.stringify({ v: 1, updatedAt: data.settings.updatedAt || new Date().toISOString(), data });
   if (json.length > limit && data.shots) {
     const keys = Object.keys(data.shots);
@@ -778,7 +778,11 @@ async function cloudPush() {
       else delete body.sha;
       res = await fetchT(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
     }
-    if (!res.ok) throw new Error('上传失败 ' + res.status);
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.text()).slice(0, 120); } catch (e) {}
+      throw new Error('上传失败 ' + res.status + (detail ? '：' + detail : ''));
+    }
     const out = await res.json();
     cloudSha = out.content && out.content.sha;
     cloudLast = String(h);

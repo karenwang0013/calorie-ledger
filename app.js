@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.80';
+const APP_VERSION = 'v1.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1164,7 +1164,7 @@ function renderMe() {
   } else if (mePage === 'data') {
     h = meBackBar('数据备份') + `
       <div class="card">
-        <h3>云端同步</h3>
+        <div class="cardhd"><h3>云端同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
           填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>；换手机、重装 App 打开就自动恢复。
         </div>
@@ -1176,7 +1176,6 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
-          <button class="btn ghost sm" id="stopGh" style="margin-top:10px">关闭云端同步</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
