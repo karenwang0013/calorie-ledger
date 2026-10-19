@@ -646,8 +646,7 @@ select {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 0 12px; padding: 12px; align-items: start;
 }
-.pslot { min-width: 0; cursor: pointer; }
-.pslot:active .pslot-empty { border-color: var(--lime-dim); }
+.pslot { min-width: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .prow-hd {
   display: inline-block;
   background: var(--lime); color: #0a0b0c;
