@@ -78,9 +78,7 @@ select {
   margin: 0 auto;
   min-height: 100dvh;
   padding-bottom: calc(92px + var(--safe-b));
-  background:
-    radial-gradient(130% 55% at 50% -6%, rgba(214, 255, 75, 0.055), transparent 58%),
-    linear-gradient(180deg, #0b100e 0%, #090c0a 45%, #070807 100%);
+  background: linear-gradient(180deg, #0b100e 0%, #090c0a 45%, #070807 100%);
 }
 
 /* ---------- 顶栏 ---------- */
@@ -487,8 +485,7 @@ select {
 /* ---------- 弹出卡片 ---------- */
 .sheet-mask {
   position: fixed; inset: 0; z-index: 60;
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,.66);
   opacity: 0; pointer-events: none;
   transition: opacity .25s;
 }
