@@ -95,9 +95,7 @@ select {
   height: 100%;
   display: flex; flex-direction: column;
   overflow: hidden;
-  background:
-    radial-gradient(120% 40% at 50% 104%, rgba(214, 255, 75, 0.08), transparent 60%),
-    #000;
+  background: #000;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
@@ -107,6 +105,11 @@ select {
   padding-top: var(--topbar-h, 64px);
   overflow: hidden;          /* 不用原生滚动，改由 JS 手写，彻底断掉系统回弹 */
   touch-action: pan-x;
+}
+.scroller {
+  background:
+    radial-gradient(120% 40% at 50% 104%, rgba(214, 255, 75, 0.09), transparent 62%),
+    linear-gradient(180deg, #0c1210 0%, #090c0a 55%, #070807 100%);
 }
 .sc-body {
   will-change: transform;
