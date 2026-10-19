@@ -115,8 +115,17 @@ select {
 }
 .scroller {
   background:
-    radial-gradient(120% 40% at 50% 104%, rgba(214, 255, 75, 0.09), transparent 62%),
-    linear-gradient(180deg, #0c1210 0%, #090c0a 55%, #070807 100%);
+    /* 顶部一道荧光绿细光（贴着分界线） */
+    linear-gradient(180deg, rgba(214,255,75,0.10) 0, rgba(214,255,75,0) 90px),
+    /* 底部绿光扩散 */
+    radial-gradient(115% 38% at 50% 104%, rgba(214,255,75,0.13), rgba(214,255,75,0.03) 45%, transparent 66%),
+    /* 斜纹 */
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 9px),
+    /* 细网格 */
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.013) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.013) 0 1px, transparent 1px 30px),
+    /* 底色：偏墨绿 */
+    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
 .sc-body {
   will-change: transform;
