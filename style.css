@@ -591,7 +591,6 @@ select {
 /* 拍照 / 描述这一格：撑满卡片剩下的高度，别在下面留一截空 */
 #pane-photo, #pane-text { display: flex; flex-direction: column; }
 #pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; }
-#pane-photo:not([hidden]) .drop:not(.has-photo) { flex: 1 1 auto; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big { margin: 0 0 6px; opacity: .45; line-height: 0; }
