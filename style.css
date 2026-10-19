@@ -216,7 +216,7 @@ select {
   font-variant-numeric: tabular-nums;
 }
 .stats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
-.stats .at { font-size: 9.5px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; }
+.stats .at { font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; white-space: nowrap; }
 
 /* ---------- 营养素 ---------- */
 .macros {

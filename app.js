@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.04';
+const APP_VERSION = 'v1.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -164,7 +164,7 @@ function renderToday() {
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
-  $('#stExpAt').textContent = at ? '⌚ ' + at : '';
+  $('#stExpAt').textContent = at ? '同步时间 ' + at : '';
   leftEl.innerHTML = (left >= 0 ? left : left) + ' <small>kcal</small>';
   leftEl.style.color = left < 0 ? 'var(--orange)' : '';
 
