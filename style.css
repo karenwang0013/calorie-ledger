@@ -50,6 +50,13 @@ body { min-height: 100dvh; }
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
 html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
 
+/* 全局隐藏滚动条（内容照样能滑） */
+html, body, .app, .view, .sh-body, .mbody,
+.about-fill > .card:first-child { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+.app::-webkit-scrollbar, .view::-webkit-scrollbar,
+.sh-body::-webkit-scrollbar, .mbody::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
 button, input, select, textarea {
   font-family: inherit;
   font-size: 16px;
