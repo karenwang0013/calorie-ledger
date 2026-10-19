@@ -547,7 +547,13 @@ async function api(path, body, method) {
     const mm = pathname.match(/^\/api\/logs\/(\d+)$/);
     if (mm) {
       const d = Store.load();
-      d.logs = d.logs.filter(l => l.id !== Number(mm[1]));
+      const id = Number(mm[1]);
+      const gone = d.logs.find(l => l.id === id);
+      d.logs = d.logs.filter(l => l.id !== id);
+      // 这一组的记录都删光了，顺带删掉它的照片，避免云端残留
+      if (gone && gone.batch && d.shots && !d.logs.some(l => l.batch === gone.batch)) {
+        delete d.shots[gone.batch];
+      }
       Store.save();
       return { ok: true };
     }
