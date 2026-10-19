@@ -982,15 +982,23 @@ function wireMe() {
   const sn = $('#saveNutri');
   if (sn) sn.onclick = async () => {
     try {
-      await api('/api/settings', {
-        target_override: {
-          kcal: Number($('#nKcal').value) || 0,
-          protein: Number($('#nProt').value) || 0,
-          carb: Number($('#nCarb').value) || 0,
-          fat: Number($('#nFat').value) || 0,
-        },
-      });
-      toast('已保存营养目标');
+      const a = (S.day && S.day.targets && S.day.targets.auto) || {};
+      // 只有和“建议值”不同的才存成手动值；全都一样就等于恢复自动
+      const pick = (sel, autoVal) => {
+        const v = Number(($(sel) || {}).value);
+        if (!isFinite(v) || v <= 0) return undefined;
+        if (autoVal && Math.abs(v - autoVal) < 1) return undefined;
+        return v;
+      };
+      const ov = {
+        kcal: pick('#nKcal', a.kcal_budget),
+        protein: pick('#nProt', a.protein_g),
+        carb: pick('#nCarb', a.carb_g),
+        fat: pick('#nFat', a.fat_g),
+      };
+      Object.keys(ov).forEach(k => ov[k] === undefined && delete ov[k]);
+      await api('/api/settings', { target_override: ov });
+      toast(Object.keys(ov).length ? '已保存营养目标' : '已恢复为建议值');
       await loadDay();
       renderMe();
     } catch (e) { toast(e.message); }
