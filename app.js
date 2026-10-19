@@ -1119,7 +1119,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.80</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.81</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1538,9 +1538,14 @@ function init() {
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));
 
-  $('#photoDrop').onclick = () => $('#photoInput').click();
+  const pickCam = () => $('#photoInput').click();
+  const pickAlb = () => $('#photoAlbum').click();
+  $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
+  $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
+  $('#retakeCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
+  $('#retakeAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); };
-  $('#photoRetake').onclick = () => $('#photoInput').click();
+  $('#photoAlbum').onchange = e => handlePhoto(e.target.files[0]);
   $('#photoInput').onchange = e => handlePhoto(e.target.files[0]);
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;

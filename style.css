@@ -575,9 +575,23 @@ select {
   border-radius: 20px;
   background: var(--card2);
 }
+/* 空态里两个直接入口，不弹系统菜单 */
+.dpick { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+.pickbtn {
+  padding: 9px 18px; border-radius: 12px;
+  font-size: 13px; color: var(--text);
+  background: var(--card2); border: 1px solid var(--line2);
+}
+.pickbtn.on { background: var(--lime); color: #0a0b0c; border-color: transparent; font-weight: 560; }
+.pickbtn:active { opacity: .8; }
 .dropretake {
-  font-size: 11px; color: var(--muted2);
-  padding: 7px 0 3px; line-height: 1.4;
+  display: flex; gap: 8px; justify-content: center;
+  padding: 9px 0 3px;
+}
+.minibtn {
+  font-size: 11.5px; color: var(--muted);
+  padding: 6px 12px; border-radius: 9px;
+  background: rgba(255,255,255,.06);
 }
 /* 结果里的拍照缩略图 */
 .shotrow {
