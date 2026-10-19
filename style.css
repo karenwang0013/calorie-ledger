@@ -29,6 +29,8 @@ html { background: #000; }
 html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
+  overflow: hidden;
   /* 关键：iOS 的橡皮筋会把 fixed 顶栏一起拖着走，禁掉顶部回弹才能让顶栏真的不动 */
   overscroll-behavior-y: none;
   background: var(--bg);
@@ -60,7 +62,7 @@ body { -webkit-overflow-scrolling: touch; }
 
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
-html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
+html.noscroll .scroller { overflow: hidden; overscroll-behavior: none; }
 
 /* 全局隐藏滚动条（内容照样能滑） */
 html, body, .app, .view, .sh-body, .mbody,
@@ -96,17 +98,26 @@ select {
 .app {
   max-width: 520px;
   margin: 0 auto;
-  min-height: 100dvh;
-  padding-top: var(--topbar-h, 64px);
-  padding-bottom: calc(92px + var(--safe-b));
+  height: 100dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
   background: linear-gradient(180deg, #000 0%, #000 16%, #090c0a 42%, #070807 100%);
+}
+
+/* 内容滚动容器：页面本身不滚，只有这一层滚 */
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(92px + var(--safe-b));
 }
 
 /* ---------- 顶栏 ---------- */
 .topbar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  max-width: 520px; margin: 0 auto;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 20;
   display: flex;
   align-items: center;

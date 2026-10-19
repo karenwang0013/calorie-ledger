@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.44';
+const APP_VERSION = 'v1.45';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1516,6 +1516,8 @@ async function saveWeight() {
 /* ---------------- 导航 ---------------- */
 function switchView(v) {
   if (v !== 'me') document.documentElement.classList.remove('noscroll');
+  const sc0 = document.getElementById('scroller');
+  if (sc0) sc0.scrollTop = 0;
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
