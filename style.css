@@ -534,6 +534,10 @@ select {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
+/* 卡片顶部的搜索框 */
+.qinput { margin: 2px 0 12px; font-size: 14px; padding: 11px 14px; flex: 0 0 auto; }
+.qinput:focus { border-color: var(--lime-dim); }
+
 .tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; flex: 0 0 auto; }
 .tabs3 button {
   flex: 1; padding: 9px 4px; border-radius: 11px;

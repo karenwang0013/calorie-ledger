@@ -18,16 +18,11 @@
   <div class="topbar">
     <div class="brand">热量<span>账本</span></div>
     <div class="topactions">
-      <button class="topbtn" id="quickSearch">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
-          <circle cx="11" cy="11" r="6.4"/><path d="M15.8 15.8 20 20"/>
-        </svg>
-        搜索
-      </button>
-      <button class="topbtn topicon" id="cloudRefresh" aria-label="刷新数据" title="刷新数据">
+      <button class="topbtn" id="cloudRefresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
           <path d="M20 11a8 8 0 1 0-2.4 6.3"/><path d="M20.5 4.5v6h-6"/>
         </svg>
+        数据同步
       </button>
       <button class="topbtn topicon" id="quickWatch" aria-label="手表数据" title="手表数据">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -159,6 +154,7 @@
     <button class="x" id="addClose">×</button>
   </div>
   <div class="sh-body">
+    <input id="searchInput" class="qinput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
     <div class="tabs3" id="addTabs">
       <button data-m="photo" class="on">📷 拍照</button>
       <button data-m="text">✍️ 描述</button>
@@ -195,10 +191,9 @@
       </div>
     </div>
 
-    <!-- 搜索 -->
+    <!-- 搜索（搜索框在卡片顶部） -->
     <div class="pane" id="pane-search" hidden>
-      <input id="searchInput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
-      <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
+      <div class="chips-wrap" id="recentChips"></div>
       <div class="slist" id="searchList"></div>
     </div>
 

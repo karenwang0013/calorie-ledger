@@ -286,7 +286,7 @@ function openAdd(meal) {
   $('#textInput').value = '';
   $('#searchList').innerHTML = '';
   $('#addTabs').hidden = false;
-  $('#addTitle').textContent = '记录食物';
+  $('#searchInput').value = '';
   setAddMode('photo');
   renderMealPick();
   renderRecent();
@@ -1123,7 +1123,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.87</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.88</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1565,6 +1565,10 @@ function init() {
   $('#searchInput').oninput = e => {
     clearTimeout(searchTimer);
     const v = e.target.value;
+    const has = !!v.trim();
+    $('#addTabs').hidden = has;
+    if (has && S.addMode !== 'search') setAddMode('search');
+    if (!has && S.addMode === 'search') setAddMode('photo');
     searchTimer = setTimeout(() => runSearch(v), 120);
   };
 
@@ -1577,13 +1581,6 @@ function init() {
   if (qw) qw.onclick = openWatch;
   const gm = $('#goMe');
   if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
-  // 顶栏的搜索：只给搜索，不出现拍照/描述
-  $('#quickSearch').onclick = () => {
-    openAdd();
-    setAddMode('search');
-    $('#addTabs').hidden = true;
-    $('#addTitle').textContent = '搜索食物';
-  };
   const refreshBtn = $('#cloudRefresh');
   // 手动刷新时，如果还是旧数据，后台再自动补拉几次（GitHub Pages 发布要几十秒）
   let retryLeft = 0, retryBusy = false;
