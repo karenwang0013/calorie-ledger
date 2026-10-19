@@ -115,13 +115,14 @@ select {
 }
 .scroller {
   background:
-    /* 贴着分界线的一道荧光绿细光 */
-    linear-gradient(180deg, rgba(214,255,75,0.10) 0, rgba(214,255,75,0) 90px),
-    /* 底部绿光扩散 */
-    radial-gradient(115% 38% at 50% 104%, rgba(214,255,75,0.14), rgba(214,255,75,0.035) 45%, transparent 66%),
+    /* 分界线下的柔光：大半径、低峰值，不再是一道硬光 */
+    radial-gradient(120% 26% at 50% -2%, rgba(214,255,75,0.075), rgba(214,255,75,0.02) 55%, transparent 78%),
+    /* 底部：青绿打底 + 荧光绿叠加，两层才有纵深 */
+    radial-gradient(135% 46% at 50% 108%, rgba(70,255,196,0.045), transparent 72%),
+    radial-gradient(110% 34% at 50% 103%, rgba(214,255,75,0.11), rgba(214,255,75,0.025) 48%, transparent 68%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(214,255,75,0.055) 1px, transparent 1.3px) 0 0 / 14px 14px,
-    radial-gradient(circle, rgba(214,255,75,0.055) 1px, transparent 1.3px) 7px 7px / 14px 14px,
+    radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
     /* 底色：墨绿渐层 */
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
@@ -201,7 +202,7 @@ select {
 }
 .arrow svg { width: 24px; height: 24px; display: block; }
 .arrow:active { background: var(--card); transform: scale(.94); }
-.arrow:disabled { opacity: 0.30; }
+.arrow:disabled { opacity: 0.45; }
 
 .setup-tip {
   display: flex; align-items: center; gap: 10px; width: auto;

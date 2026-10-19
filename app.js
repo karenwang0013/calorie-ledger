@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.64';
+const APP_VERSION = 'v1.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -140,7 +140,7 @@ function renderToday() {
   const isToday = d.date === S.today;
   $('#dateSub').textContent = isToday ? '今天 · 实时' : WEEK[dt.getDay()];
   $('#nextDay').disabled = isToday;
-  $('#nextDay').style.opacity = isToday ? 0.28 : 1;
+  $('#nextDay').style.opacity = isToday ? 0.45 : 1;
 
   const t = d.targets;
   const intake = d.intake;
