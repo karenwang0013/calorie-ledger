@@ -163,11 +163,14 @@
     <div class="pane" id="pane-photo">
       <input type="file" accept="image/*" capture="environment" id="photoInput" hidden>
       <div class="drop" id="photoDrop">
-        <div class="big">📷</div>
-        拍一张，或从相册选<br>
-        <span style="font-size:11px;color:var(--muted2)">整盘菜、外卖盒、包装营养成分表都行</span>
+        <div id="dropPlaceholder">
+          <div class="big">📷</div>
+          拍一张，或从相册选<br>
+          <span style="font-size:11px;color:var(--muted2)">整盘菜、外卖盒、包装营养成分表都行</span>
+        </div>
+        <img class="preview" id="photoPreview" hidden alt="">
+        <div class="dropretake" id="dropRetake" hidden>点击照片可重拍 / 换一张</div>
       </div>
-      <img class="preview" id="photoPreview" hidden>
       <div style="margin-top:12px" id="photoActions" hidden>
         <input id="photoGrams" type="number" inputmode="decimal" min="1" step="1"
                placeholder="克数（拍营养成分表时填，如 50）" style="margin-bottom:10px">

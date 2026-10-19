@@ -19,6 +19,9 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -481,11 +484,17 @@ select {
 }
 .drop .big { font-size: 30px; margin-bottom: 8px; opacity: .5; }
 .drop:active { border-color: var(--lime-dim); }
+/* 选好图之后，虚线框还是那个框，只是里面换成照片 —— 点它仍然能重拍 */
+.drop.has-photo { padding: 8px 8px 4px; }
 .preview {
   width: 100%; display: block;
-  max-height: 148px; object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid var(--line);
+  max-height: 200px; object-fit: cover;
+  border-radius: 12px;
+  background: var(--card2);
+}
+.dropretake {
+  font-size: 11px; color: var(--muted2);
+  padding: 7px 0 3px; line-height: 1.4;
 }
 /* 结果里的拍照缩略图 */
 .shotrow {

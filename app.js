@@ -57,6 +57,8 @@ const S = {
   trend: null,
   addMode: 'photo',
   photoData: null,
+  photoAt: null,
+  photoURL: null,
   items: [],
   meal: 'lunch',
 };
@@ -220,11 +222,8 @@ function renderMeals() {
 /* ---------------- 记录弹层 ---------------- */
 function openAdd(meal) {
   S.items = [];
-  S.photoData = null;
   S.meal = meal || defaultMeal();
-  $('#photoPreview').hidden = true;
-  $('#photoDrop').hidden = false;
-  $('#photoActions').hidden = true;
+  resetPhotoUI();
   $('#photoHint').value = '';
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
@@ -299,15 +298,33 @@ async function compress(file, max = 1280, q = 0.82) {
 async function handlePhoto(file) {
   if (!file) return;
   try {
-    $('#photoDrop').hidden = true;
+    if (S.photoURL) URL.revokeObjectURL(S.photoURL);
+    S.photoURL = URL.createObjectURL(file);
+    $('#photoPreview').src = S.photoURL;
     $('#photoPreview').hidden = false;
-    $('#photoPreview').src = URL.createObjectURL(file);
+    $('#dropPlaceholder').hidden = true;
+    $('#dropRetake').hidden = false;
+    $('#photoDrop').classList.add('has-photo');
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
   } catch (e) {
     toast('图片读取失败');
   }
+}
+
+/* 把拍照区恢复成「还没选图」的样子 */
+function resetPhotoUI() {
+  if (S.photoURL) { URL.revokeObjectURL(S.photoURL); S.photoURL = null; }
+  const pv = $('#photoPreview');
+  pv.hidden = true;
+  pv.removeAttribute('src');
+  S.photoData = null;
+  S.photoAt = null;
+  $('#photoDrop').classList.remove('has-photo');
+  $('#dropPlaceholder').hidden = false;
+  $('#dropRetake').hidden = true;
+  $('#photoActions').hidden = true;
 }
 
 async function runPhoto() {
@@ -327,9 +344,6 @@ async function runPhoto() {
     S.items = r.items.map(x => ({ ...x, _src: 'photo' }));
     // 填了克数就以它为准（包装营养表通常只有一条）
     if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
-    $('#photoDrop').hidden = true;
-    $('#photoPreview').hidden = true;
-    $('#photoActions').hidden = true;
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
   } catch (e) {
     toast(e.message, 5000);
@@ -1356,10 +1370,7 @@ function init() {
   $('#saveItems').onclick = saveItems;
   $('#resultReset').onclick = () => {
     S.items = [];
-    S.photoData = null;
-    $('#photoPreview').hidden = true;
-    $('#photoDrop').hidden = false;
-    $('#photoActions').hidden = true;
+    resetPhotoUI();
     $('#resultArea').hidden = true;
     $('#addFoot').hidden = true;
   };
