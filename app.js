@@ -1119,7 +1119,7 @@ function renderMe() {
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="card">
-        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.82</span></h3>
+        <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">v0.83</span></h3>
         <div class="hint" style="margin:0;line-height:1.95">
           <b style="color:var(--lime)">10-19</b><br>
           记录食物改为悬浮圆角卡片（离底 8px、圆角 48px，与屏幕圆角同心）<br>
@@ -1573,6 +1573,7 @@ function init() {
   if (qw) qw.onclick = openWatch;
   const gm = $('#goMe');
   if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
+  $('#quickSearch').onclick = () => { openAdd(); setAddMode('search'); };
   const refreshBtn = $('#cloudRefresh');
   async function pullNow() {
     if (!refreshBtn) return;
@@ -1619,6 +1620,16 @@ function init() {
     b.textContent = '你正在 Safari 里打开，这份数据是独立的副本，和主屏幕「热量账本」App 不互通。日常请在主屏幕打开。';
     document.querySelector('.app').prepend(b);
   }
+
+  // 有弹层/卡片打开时锁住背后的页面滚动
+  const syncLock = () => {
+    const on = !!document.querySelector('.sheet.on, .modal.on');
+    document.documentElement.classList.toggle('lock', on);
+  };
+  new MutationObserver(syncLock).observe(document.body, {
+    attributes: true, subtree: true, attributeFilter: ['class'],
+  });
+  syncLock();
 
   applyTheme(Store.load().settings.theme || 'lime');
   loadDay();
