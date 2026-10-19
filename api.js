@@ -469,11 +469,10 @@ function cleanItems(obj) {
   return { items, dish: obj.dish || '', note: obj.note || '' };
 }
 
-async function analyzeFood(image, hint) {
-  const content = [
-    { type: 'image_url', image_url: { url: image } },
-    { type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') },
-  ];
+async function analyzeFood(image, hint, image2) {
+  const content = [{ type: 'image_url', image_url: { url: image } }];
+  if (image2) content.push({ type: 'image_url', image_url: { url: image2 } });
+  content.push({ type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') });
   return cleanItems(extractJson(await callModel(content)));
 }
 
@@ -664,7 +663,7 @@ async function api(path, body, method) {
   }
 
   if (pathname === '/api/ai/food' && m === 'POST') {
-    return Object.assign({ ok: true }, await analyzeFood(body.image, body.hint || ''));
+    return Object.assign({ ok: true }, await analyzeFood(body.image, body.hint || '', body.image2 || null));
   }
   if (pathname === '/api/ai/text' && m === 'POST') {
     return Object.assign({ ok: true }, await analyzeText(body.text || ''));

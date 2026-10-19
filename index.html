@@ -187,6 +187,19 @@
           <button class="minibtn" id="retakeAlbum">换一张相册里的</button>
         </div>
       </div>
+      <div class="slot2" id="slot2" hidden>
+        <div class="slot2-hd">再加一张食物照片（可选，用来估实际重量）</div>
+        <div class="slot2-row">
+          <button class="minibtn" id="pick2Cam">拍照</button>
+          <button class="minibtn" id="pick2Alb">相册</button>
+        </div>
+        <div class="slot2-pv" id="slot2Pv" hidden>
+          <img id="pv2" alt="">
+          <button class="shotdel sm" id="del2">×</button>
+        </div>
+        <input type="file" accept="image/*" capture="environment" id="photo2Cam" hidden>
+        <input type="file" accept="image/*" id="photo2Alb" hidden>
+      </div>
       <div style="margin-top:12px" id="photoActions" hidden>
         <input id="photoGrams" type="number" inputmode="decimal" min="1" step="1"
                placeholder="吃了多少克（可选）" style="margin-bottom:10px">
