@@ -704,14 +704,27 @@ function downloadCsv() {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
-function exportJson() {
-  const blob = new Blob([JSON.stringify(Store.load(), null, 2)], { type: 'application/json' });
+async function exportJson() {
+  const text = JSON.stringify(Store.load(), null, 2);
+  const name = `热量账本备份-${todayISO()}.json`;
+  // 优先走系统分享面板：可以「存储到文件」直接放进 iCloud Drive
+  try {
+    const file = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: '热量账本备份' });
+      return 'shared';
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return 'cancel';
+  }
+  const blob = new Blob([text], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `热量账本备份-${todayISO()}.json`;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  return 'downloaded';
 }
 
 function importJson(text) {

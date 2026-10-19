@@ -13,7 +13,7 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.02';
+const APP_VERSION = 'v1.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1050,15 +1050,15 @@ function renderMe() {
   } else if (mePage === 'data') {
     h = meBackBar('数据备份') + `
       <div class="card">
-        <div class="btnrow">
-          <button class="btn sm" id="exportCsv">导出 CSV</button>
-          <button class="btn sm" id="exportJson">备份</button>
-          <button class="btn sm" id="importJson">恢复</button>
+        <div class="hint" style="margin:0 0 14px">
+          卸载 / 重新添加主屏幕 App 会清空数据。<b>卸载前先点下面的备份</b>，装回来再「从 iCloud 恢复」。
         </div>
+        <button class="btn primary" id="exportJson">备份到 iCloud</button>
+        <button class="btn sm" id="importJson" style="margin-top:10px">从 iCloud 恢复</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
-        <div class="hint" style="margin-top:12px;color:var(--muted2)">
-          所有数据都在这台设备的浏览器里，不上传任何服务器。<br>
-          换手机或清理浏览器前，先点「备份」存一份 JSON。
+        <div class="hint" style="margin-top:12px" id="backupAt"></div>
+        <div class="btnrow" style="margin-top:14px">
+          <button class="btn ghost sm" id="exportCsv">导出 CSV</button>
         </div>
       </div>
       <div class="card">
@@ -1268,8 +1268,27 @@ function wireMe() {
   };
 
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
-  const ej = $('#exportJson'); if (ej) ej.onclick = () => { exportJson(); toast('已备份'); };
-  const ij = $('#importJson'); if (ij) ij.onclick = () => $('#importFile').click();
+  const ba = $('#backupAt');
+  if (ba) {
+    const t = Store.load().settings.lastBackupAt;
+    ba.textContent = t ? '上次备份：' + t : '还没有备份过';
+  }
+  const ej = $('#exportJson');
+  if (ej) ej.onclick = async () => {
+    try {
+      const r = await exportJson();
+      if (r === 'cancel') return;
+      const t = new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      setSetting('lastBackupAt', t);
+      if (ba) ba.textContent = '上次备份：' + t;
+      toast(r === 'shared' ? '已存到「文件」/ iCloud Drive' : '已下载备份文件', 3000);
+    } catch (e) { toast('备份失败：' + e.message, 4000); }
+  };
+  const ij = $('#importJson');
+  if (ij) ij.onclick = () => {
+    if (!confirm('恢复会用备份覆盖手机上现在的全部数据，确定吗？')) return;
+    $('#importFile').click();
+  };
   const iff = $('#importFile');
   if (iff) iff.onchange = async e => {
     const f = e.target.files[0];
@@ -1277,6 +1296,7 @@ function wireMe() {
     try {
       importJson(await f.text());
       toast('已恢复备份');
+      applyTheme(Store.load().settings.theme || 'lime');
       await loadDay();
       renderMe();
     } catch (err) {
