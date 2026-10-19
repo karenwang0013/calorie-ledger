@@ -9,6 +9,8 @@
   --muted: #8b938c;
   --muted2: #626963;
   --lime: #d6ff4b;
+  --glow-rgb: 214, 255, 75;
+  --glow2-rgb: 70, 255, 196;
   --lime-dim: #a8cc2e;
   --orange: #ff8a4c;
   --red: #ff5d5d;
@@ -117,31 +119,31 @@ select {
 }
 .scroller {
   background:
-    /* 顶部光：与底部完全镜像（同样半径、同样四段渐隐） */
-    radial-gradient(145% 54% at 50% -14%,
-      rgba(70,255,196,0.05) 0%,
-      rgba(70,255,196,0.026) 34%,
-      rgba(70,255,196,0.008) 62%,
-      rgba(70,255,196,0) 82%),
-    radial-gradient(125% 46% at 50% -8%,
-      rgba(214,255,75,0.10) 0%,
-      rgba(214,255,75,0.06) 24%,
-      rgba(214,255,75,0.022) 50%,
-      rgba(214,255,75,0) 78%),
+    /* 顶部光：与底部完全镜像，半径更大更散 */
+    radial-gradient(175% 62% at 50% -16%,
+      rgba(var(--glow2-rgb), 0.045) 0%,
+      rgba(var(--glow2-rgb), 0.022) 32%,
+      rgba(var(--glow2-rgb), 0.006) 60%,
+      rgba(var(--glow2-rgb), 0) 84%),
+    radial-gradient(155% 54% at 50% -10%,
+      rgba(var(--glow-rgb), 0.085) 0%,
+      rgba(var(--glow-rgb), 0.05) 26%,
+      rgba(var(--glow-rgb), 0.018) 52%,
+      rgba(var(--glow-rgb), 0) 80%),
     /* 底部光：与顶部镜像 */
-    radial-gradient(145% 54% at 50% 114%,
-      rgba(70,255,196,0.05) 0%,
-      rgba(70,255,196,0.026) 34%,
-      rgba(70,255,196,0.008) 62%,
-      rgba(70,255,196,0) 82%),
-    radial-gradient(125% 46% at 50% 108%,
-      rgba(214,255,75,0.10) 0%,
-      rgba(214,255,75,0.06) 24%,
-      rgba(214,255,75,0.022) 50%,
-      rgba(214,255,75,0) 78%),
+    radial-gradient(175% 62% at 50% 116%,
+      rgba(var(--glow2-rgb), 0.045) 0%,
+      rgba(var(--glow2-rgb), 0.022) 32%,
+      rgba(var(--glow2-rgb), 0.006) 60%,
+      rgba(var(--glow2-rgb), 0) 84%),
+    radial-gradient(155% 54% at 50% 110%,
+      rgba(var(--glow-rgb), 0.085) 0%,
+      rgba(var(--glow-rgb), 0.05) 26%,
+      rgba(var(--glow-rgb), 0.018) 52%,
+      rgba(var(--glow-rgb), 0) 80%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(214,255,75,0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
     /* 底色：墨绿渐层 */
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }

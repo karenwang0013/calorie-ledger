@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.73';
+const APP_VERSION = 'v1.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -995,10 +995,24 @@ function lineChart(points, start, end) {
 
 /* ---------------- 主题 ---------------- */
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
+// 每个主题的[主光色, 副光色]，背景光晕和点阵跟着变
+const GLOWS = {
+  lime: ['#d6ff4b', '#46ffc4'],
+  blue: ['#6ea8ff', '#8be3ff'],
+  orange: ['#ff9f45', '#ffd08a'],
+};
+const rgbOf = hex => {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)].join(', ');
+};
 const THEME_NAMES = { lime: '荧光绿', blue: '海水蓝', orange: '活力橙' };
 function applyTheme(name) {
   const c = THEMES[name] || THEMES.lime;
-  document.documentElement.style.setProperty('--lime', c);
+  const g = GLOWS[name] || GLOWS.lime;
+  const root = document.documentElement.style;
+  root.setProperty('--lime', c);
+  root.setProperty('--glow-rgb', rgbOf(g[0]));
+  root.setProperty('--glow2-rgb', rgbOf(g[1]));
 }
 
 
