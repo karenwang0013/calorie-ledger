@@ -707,7 +707,7 @@ function downloadCsv() {
 
 /* ---------------- 云端同步（GitHub 仓库里的 data.json） ---------------- */
 const CLOUD = { owner: 'karenwang0013', repo: 'calorie-ledger', path: 'data.json' };
-let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null;
+let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null, cloudLast = '';
 
 function cloudToken() {
   return (setting('gh_token', '') || '').trim();
@@ -747,14 +747,19 @@ function cloudPayload() {
 function scheduleCloudSync() {
   if (!cloudToken() || cloudPulling || cloudBusy) return;
   clearTimeout(cloudTimer);
-  cloudTimer = setTimeout(() => { cloudPush(); }, 2500);
+  cloudTimer = setTimeout(() => { cloudPush(); }, 4000);
 }
 
 async function cloudPush() {
   if (!cloudToken() || cloudBusy) return null;
   cloudBusy = true;
   try {
-    const body = { message: 'data sync', content: b64encode(cloudPayload()), branch: 'main' };
+    const payload = cloudPayload();
+    // 内容没变就不用重复上传
+    let h = 0;
+    for (let i = 0; i < payload.length; i += 1) h = (h * 31 + payload.charCodeAt(i)) | 0;
+    if (String(h) === cloudLast && cloudSha) return true;
+    const body = { message: 'data sync', content: b64encode(payload), branch: 'main' };
     if (cloudSha) body.sha = cloudSha;
     let res = await fetch(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
     if (res.status === 409 || res.status === 422) {
@@ -767,6 +772,7 @@ async function cloudPush() {
     if (!res.ok) throw new Error('上传失败 ' + res.status);
     const out = await res.json();
     cloudSha = out.content && out.content.sha;
+    cloudLast = String(h);
     setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
     return true;
   } catch (e) {
