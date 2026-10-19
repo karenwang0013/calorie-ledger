@@ -104,7 +104,16 @@ function renderToday() {
     const start = new Date(d.date + 'T00:00:00').getTime();
     dayFrac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
   }
-  const exp = d.date === S.today ? Math.round(expFull * dayFrac) : expFull;
+  // 今天：基础代谢按时间折算，手表的活动能量是“到现在为止”的，全额计入
+  const det = d.expenditure_detail || {};
+  let exp;
+  if (d.date === S.today) {
+    if (det.active && det.resting) exp = Math.round(det.resting * dayFrac) + det.active;
+    else if (det.total) exp = Math.round(det.total * dayFrac);
+    else exp = Math.round(expFull * dayFrac);
+  } else {
+    exp = expFull;
+  }
   const bal = d.date === S.today ? exp - intake : balFull;
   const left = t.kcal_budget - intake;
 
