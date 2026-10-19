@@ -24,7 +24,14 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
-html { background: #000; }
+html { background: #0d0f0e; }
+/* 贴在最上沿的实色带：让状态栏取这个颜色 */
+.statusbg {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: min(max(10px, var(--safe-t)), 90px);
+  background: #0d0f0e;
+  z-index: 40; pointer-events: none;
+}
 
 html, body {
   margin: 0;
@@ -128,7 +135,7 @@ select {
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
   padding: min(calc(10px + var(--safe-t)), 88px) 18px 9px;
-  background: #000;
+  background: #0d0f0e;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar { border-bottom: 1px solid rgba(255,255,255,.08); }
