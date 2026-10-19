@@ -708,6 +708,8 @@ function downloadCsv() {
 /* ---------------- 云端同步（GitHub 仓库里的 data.json） ---------------- */
 const CLOUD = { owner: 'karenwang0013', repo: 'calorie-ledger', path: 'data.json' };
 let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null, cloudLast = '';
+let cloudErr = '', cloudFailUntil = 0;
+function cloudLastError() { return cloudErr; }
 
 function cloudToken() {
   return (setting('gh_token', '') || '').trim();
@@ -752,6 +754,7 @@ function cloudPayload() {
 
 function scheduleCloudSync() {
   if (!cloudToken() || cloudPulling || cloudBusy) return;
+  if (Date.now() < cloudFailUntil) return;      // 失败后 30 秒内不再重试，避免死循环
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(() => { cloudPush(); }, 4000);
 }
@@ -779,11 +782,12 @@ async function cloudPush() {
     const out = await res.json();
     cloudSha = out.content && out.content.sha;
     cloudLast = String(h);
+    cloudErr = '';
     setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
     return true;
   } catch (e) {
-    const msg = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
-    setSetting('cloud_error', msg);
+    cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
+    cloudFailUntil = Date.now() + 30000;
     return false;
   } finally {
     cloudBusy = false;
@@ -816,8 +820,8 @@ async function cloudPull() {
     return false;
   } catch (e) {
     cloudPulling = false;
-    const msg = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
-    setSetting('cloud_error', msg);
+    cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
+    cloudFailUntil = Date.now() + 30000;
     return false;
   }
 }

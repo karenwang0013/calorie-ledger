@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.78';
+const APP_VERSION = 'v1.79';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1422,7 +1422,7 @@ function wireMe() {
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   const ghInp = $('#fGhToken'), ghSave = $('#saveGhToken'), ghNow = $('#syncNow'), ghState = $('#cloudState');
   if (ghState) {
-    const t = setting('cloud_synced_at', ''), e = setting('cloud_error', '');
+    const t = setting('cloud_synced_at', ''), e = (typeof cloudLastError === 'function' ? cloudLastError() : '');
     ghState.textContent = t ? ('上次同步：' + t) : (cloudToken() ? '还没同步过' : '未开启');
     if (e) ghState.textContent += ' · ' + e;
   }
@@ -1445,7 +1445,7 @@ function wireMe() {
       toast('✅ 同步已开启，数据已上传', 3000);
       setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
     } else {
-      const err = setting('cloud_error', '') || '上传失败';
+      const err = (typeof cloudLastError === 'function' ? cloudLastError() : '') || '上传失败';
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
@@ -1468,7 +1468,7 @@ function wireMe() {
       toast('✅ 已上传到云端', 2600);
       setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
     } else {
-      const err = setting('cloud_error', '') || '同步失败';
+      const err = (typeof cloudLastError === 'function' ? cloudLastError() : '') || '同步失败';
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
