@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(45 12 12)"><rect x="9.3" y="1.4" width="5.4" height="4.2" rx="1.2"/><rect x="9.3" y="5.9" width="5.4" height="11.2"/><path d="M9.3 17.3h5.4L12 22.4z"/></g></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(45 12 12)"><rect x="9.2" y="1.6" width="5.6" height="3.4" rx="1"/><rect x="9.2" y="6.2" width="5.6" height="9.6"/><path d="M9.2 16.6h5.6L12 22.2z"/></g></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.55', d: '10-21', items: [
+    '改：铅笔再放大到 18px，并拉开「橡皮 / 笔杆 / 笔尖」三段的间隔——小尺寸下最容易辨认的就是这三段，再加上尖头',
+    '如果这版还认不出来，我换成「圆角方块里挖一支笔」的做法（像系统编辑按钮那种），那种最一眼就懂',
+  ]},
   { v: 'v3.54', d: '10-21', items: [
     '改：铅笔换成「粗笔身」的实心铅笔（笔杆 + 笔尖 + 上面一小截橡皮），尺寸 16px —— 之前那支虽然实心但笔身太细，看着像一条线',
   ]},
@@ -759,7 +763,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.54';
+const APP_VERSION = 'v3.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

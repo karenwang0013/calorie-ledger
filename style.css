@@ -423,11 +423,11 @@ html.kb .sc-body {
 .pen {
   flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 22px; padding: 0; border: 0;
+  width: 26px; height: 24px; padding: 0; border: 0;
   background: none;
   color: var(--lime);
 }
-.pen svg { width: 16px; height: 16px; stroke: none; fill: currentColor; }
+.pen svg { width: 18px; height: 18px; stroke: none; fill: currentColor; }
 .pen:active { opacity: .55; }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }
