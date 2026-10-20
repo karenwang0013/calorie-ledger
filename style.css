@@ -29,13 +29,8 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 html { background: #0d0f0e; overflow-x: hidden; }
 body { background: #0d0f0e; }
-/* 贴在最上沿的实色带：让状态栏取这个颜色 */
-.statusbg {
-  position: fixed; top: 0; left: 0; right: 0;
-  height: max(calc(var(--safe-t) + 1px), 12px);
-  background: #0d0f0e;
-  z-index: 60; pointer-events: none;
-}
+/* 顶部状态栏区域由顶栏自己的背景铺满（不再用额外的 fixed 色带，
+   那条色带会盖住按钮上沿，造成遮挡） */
 
 html, body {
   margin: 0;

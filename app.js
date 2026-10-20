@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.32', d: '10-20', items: [
+    '去掉顶部那条独立的实色带：它浮在最上层，把顶栏按钮的上沿切掉了一块（这就是"遮挡"和那层模糊感的来源）',
+    '状态栏区域改由顶栏自身背景铺满，从屏幕最顶一直到标题下沿是一整块实色',
+  ]},
   { v: 'v2.31', d: '10-20', items: [
     '修：键盘上方那条黑色空带（外壳不再缩高度，而是整屏铺满、让键盘盖住下沿）',
     '点输入框时立刻把该栏拉到上方，iOS 不需要再自己推移整页，标题栏就不会被顶走',
@@ -233,7 +237,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.31';
+const APP_VERSION = 'v2.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
