@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.29', d: '10-21', items: [
+    '改：中间那个绿色加号按钮的圆角也改成「跟 Dock 同心」—— Dock 圆角减去加号到 Dock 边的距离，一层套一层（屏幕圆角 → Dock 圆角 → 加号圆角），不再是一个随手写死的值',
+  ]},
   { v: 'v3.28', d: '10-21', items: [
     '改：「从相册选」改成只收具体图片类型（JPEG / PNG / HEIC / HEIF / WebP），不再用通配的 image/* —— iOS 对通配类型会进「多选确认」那一页，指定具体类型才有机会选完直接回来',
     '如果你的相册里那张图选不亮（灰掉），告诉我是哪种格式，我把它加进白名单',
@@ -656,7 +659,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.28';
+const APP_VERSION = 'v3.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

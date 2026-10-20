@@ -575,7 +575,8 @@ html.kb .sc-body {
 .fab {
   justify-self: center;
   width: 88px; height: 64px;
-  border-radius: 20px;
+  /* 和外框同心：Dock 圆角减去「加号到 Dock 边的距离」，一层套一层才顺 */
+  border-radius: max(8px, calc(var(--dock-r) - 12px));
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;
