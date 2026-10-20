@@ -26,11 +26,13 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
-/* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
+/* 横向溢出由 #scroller 自己裁掉（overflow-x: hidden），html 只负责不滚 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html {
-  min-height: 100%;
-  overflow-x: hidden;
+  /* 文档本身不再滚动：iOS 文档级滚动的橡皮筋（滑到底还能拉出一片空白再弹回）CSS 关不掉，
+     只有「容器滚动」才能用 overscroll-behavior 关掉，所以滚动统一交给 #scroller 那一层 */
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
   /* iPad 横竖屏切换时不要自动放大文字 */
   -webkit-text-size-adjust: 100%;
@@ -77,7 +79,8 @@ html, body {
 body {
   position: relative;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
 }
 
@@ -92,6 +95,8 @@ body {
 
 /* 弹层打开时，背后的页面不跟着滚 */
 html.lock, html.lock body, html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
+/* 滚动现在在 #scroller 这一层，锁页时也要把它锁住 */
+html.lock .scroller, html.noscroll .scroller { overflow: hidden; }
 
 /* 全局隐藏滚动条（内容照样能滑） */
 html, body, .app, .view, .sh-body, .mbody,
@@ -129,17 +134,24 @@ select {
   width: 100%;
   max-width: none;
   margin: 0;
-  min-height: 100vh;
-  display: block;
+  /* 正好一屏高，内容全部交给 #scroller 这一层滚 */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
   background: transparent;
 }
 
-/* 内容滚动容器：页面本身不滚，只有这一层滚 */
+/* 内容滚动容器：页面本身不滚，只有这一层滚。
+   overscroll-behavior 在容器上才有效 → 滑到底就是停住，不会被系统再拉出一片空白 */
 .scroller {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* 关掉越界回弹：滑到底就是停住，不会被再拽出一片空白 */
+  overscroll-behavior: none;
   padding-top: var(--topbar-h, 64px);
   /* 背景交给不滚动的那一层去画：滚动层自己画背景，iOS 会漏画，露出纯黑 */
   background: transparent;
@@ -152,9 +164,9 @@ select {
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
 /* 键盘弹起时页面会变长、光晕被摊薄，所以只在这个状态下把背景补亮：
    其他页面/状态仍然用原来的强度 */
-/* 键盘弹起时只允许"往下拨"（= 页面往上走，回看上面的内容）；
-   往上拨（= 继续往下滚到空白处）不允许，也就没有那下弹跳 */
-html.kb { touch-action: pan-down; overscroll-behavior: none; }
+/* 键盘弹起时不再限制手势方向：越界回弹已经在 #scroller 这一层关掉了（overscroll-behavior: none），
+   滑到底就是卡片贴键盘、停住，不需要再去吃手势或跟系统抢滚动 */
+html.kb .scroller { overscroll-behavior: none; }
 
 html.kb .sc-body {
   /* 由脚本算到"刚好够居中 + 一点点余量"，不再是一大块空白 */

@@ -14,6 +14,12 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.09', d: '10-20', items: [
+    '修：设置 → 饮食目标 / 身体与目标，点输入框把键盘调出来之后往下滑到底 —— 不会再先被拽出一大片空白、紧接着弹回去',
+    '现在的效果：滑到「卡片底边离键盘上沿一条小缝」就当场停住，再怎么拉也不动；连滑两次，空白大小和停住的位置完全一样',
+    '改法：把「整页滚动」换成「内容区自己滚」。整页滚动那下越界回弹 iOS 是关不掉的，内容区滚动才关得掉 —— 所以这次看着没改样子，但手感变了',
+    '其他没变：点哪一栏，那一栏照样落在顶栏和键盘中间；按键盘上的 ✓ 收键盘，卡片照样平滑落回去；滑动时背景也不闪不飘了',
+  ]},
   { v: 'v3.08', d: '10-20', items: [
     '修：键盘开着往下滑时，先出现一大片空白、紧接着又弹回来，第二次滑的时候空白大小又不一样 —— 根因是留白原先拿「视觉视口高度」反推，Safari 的地址栏/工具栏一收一展这个值就变，留白跟着变，于是空白忽大忽小、背景看着在飘',
     '改：留白只由「记住的键盘高」决定（键盘高 + 6px），不再随视口变化 → 内容末尾和键盘上沿之间的间隙是恒定的一条小缝，滑到底就停在那儿',
@@ -552,7 +558,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.08';
+const APP_VERSION = 'v3.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2325,7 +2331,7 @@ function switchView(v) {
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   document.body.classList.toggle('view-me', v === 'me');
   document.body.classList.toggle('view-trends', v === 'trends');
-  window.scrollTo({ top: 0 });
+  if (window.scTop) window.scTop();
   if (v === 'trends') { renderTrends(); loadTrends(); }
   if (v === 'me') { mePage = null; renderMe(); }
 }
@@ -2642,8 +2648,14 @@ function init() {
   // 手写滚动：不交给系统，顶栏绝对不会跟着动
   // 顶部导航固定 + 内容用「容器原生滚动」：
   // 之前手写 transform 滚动会让 iOS 不知道输入框的真实位置，聚焦时整页乱跳、顶栏跑到中间。
+  // 现在滚动全部在 #scroller 这一层（文档本身不滚）：只有容器滚动才能被 overscroll-behavior 关掉
+  // 「滑到底还继续拉、拽出一片空白再弹回」这个 iOS 文档级橡皮筋。
   const SC = { el: null, body: null };
-  window.scTop = () => window.scrollTo(0, 0);
+  const scEl = () => SC.el || document.getElementById('scroller');
+  const scY = () => { const el = scEl(); return el ? el.scrollTop : 0; };
+  const scMax = () => { const el = scEl(); return el ? Math.max(0, el.scrollHeight - el.clientHeight) : 0; };
+  const scTo = (y) => { const el = scEl(); if (el) el.scrollTop = Math.max(0, Math.round(y)); };
+  window.scTop = () => scTo(0);
   window.scMeasure = () => {};
   const initScroll = () => {
     SC.el = document.getElementById('scroller');
@@ -2678,9 +2690,12 @@ function init() {
     let closeRaf = 0;                 // 收键盘动画句柄
 
     const isKb = () => document.documentElement.classList.contains('kb');
+    // 滚动容器的顶边（正常是 0；Safari 里顶上有一条提示条时会往下挪），
+    // 位置换算都相对它，避免容器不在 0 时算偏
+    const scTopY = () => SC.el.getBoundingClientRect().top;
     const contentEndDoc = () => {
       const pad = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
-      return SC.body.getBoundingClientRect().bottom + window.scrollY - pad;
+      return SC.body.getBoundingClientRect().bottom - scTopY() + scY() - pad;
     };
     const visibleBottom = () => {
       const vv = window.visualViewport;
@@ -2697,7 +2712,7 @@ function init() {
     // 内容末尾（文档坐标）只在进键盘态 / 键盘停稳时量一次，滚动过程中不再触发排版计算
     let kbEndCache = 0;
     // 键盘态能滑到的最远处（用缓存，不碰 DOM）
-    const kbMaxY = () => (kbB && kbEndCache ? Math.max(0, kbEndCache - kbB + KB_GAP) : Infinity);
+    const kbMaxY = () => (kbB && kbEndCache ? Math.max(0, scTopY() + kbEndCache - kbB + KB_GAP) : Infinity);
     const kbWantY = () => {
       const tb = document.querySelector('.topbar');
       const tbB = tb ? tb.getBoundingClientRect().bottom : 51;
@@ -2712,10 +2727,10 @@ function init() {
     };
     const closeKb = () => {
       if (!isKb() || closeRaf) return;
-      const y0 = window.scrollY;
+      const y0 = scY();
       const padKb = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
       const extra = Math.max(0, padKb - basePad);
-      const maxAfter = Math.max(0, contentEndDoc() + basePad - window.innerHeight);
+      const maxAfter = Math.max(0, scTopY() + contentEndDoc() + basePad - window.innerHeight);
       // 优先落回"弹键盘之前的位置"（卡片原样落回去）；取不到就按留白差值退回去
       const target = kbHomeY >= 0 ? kbHomeY : Math.max(0, y0 - extra);
       const y1 = Math.max(0, Math.min(target, maxAfter));
@@ -2724,7 +2739,7 @@ function init() {
       const step = (now) => {
         const p = Math.min(1, (now - t0) / dur);
         const e = 1 - Math.pow(1 - p, 3);
-        window.scrollTo(0, Math.round(y0 + (y1 - y0) * e));
+        scTo(y0 + (y1 - y0) * e);
         if (p < 1) closeRaf = requestAnimationFrame(step);
         else { closeRaf = 0; endKb(); }
       };
@@ -2733,15 +2748,15 @@ function init() {
     const kbFill = (t) => {
       if (!t) return;
       cancelAnimationFrame(closeRaf); closeRaf = 0;
-      if (!isKb()) kbHomeY = window.scrollY;      // 记下弹键盘前的位置
+      if (!isKb()) kbHomeY = scY();      // 记下弹键盘前的位置
       const r = t.getBoundingClientRect();
-      const centerDoc = r.top + window.scrollY + r.height / 2;
+      const centerVp = r.top + r.height / 2;                                 // 输入框中心（视口坐标）
       kbB = kbBottomY();                                                     // 键盘弹起后的可见底边
       document.documentElement.classList.add('kb');
       kbEndCache = contentEndDoc();                                          // 只量这一次
       document.documentElement.style.setProperty('--kb-pad', kbPadVal() + 'px');
-      const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), kbMaxY()));
-      if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
+      const y = Math.max(0, Math.min(Math.round(scY() + centerVp - kbWantY()), kbMaxY()));
+      if (Math.abs(scY() - y) >= 2) scTo(y);
     };
 
     // 排查用：连点版本号 5 次的面板会读这些数字
@@ -2753,7 +2768,7 @@ function init() {
         kb: isKb() ? 1 : 0, seen: kbSeen ? 1 : 0,
         innerH: Math.round(window.innerHeight), vvH: Math.round(vv ? vv.height : 0), vvTop: Math.round(vv ? vv.offsetTop : 0),
         kbH: Math.round(kbH), kbB: Math.round(kbB), pad: Math.round(pad), base: Math.round(basePad),
-        y: Math.round(window.scrollY), max: Math.round(Math.max(0, document.documentElement.scrollHeight - window.innerHeight)),
+        y: Math.round(scY()), max: Math.round(scMax()),
         end: Math.round(endVp), gap: Math.round(kbB ? endVp - kbB : 0), home: kbHomeY,
       };
     };
@@ -2767,13 +2782,13 @@ function init() {
       clampRaf = requestAnimationFrame(() => {
         clampRaf = 0;
         if (touching) return;
-        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        const y = window.scrollY;
-        if (y < 0) window.scrollTo(0, 0);
-        else if (y > max + 2) window.scrollTo(0, max);
+        const max = scMax();
+        const y = scY();
+        if (y < 0) scTo(0);
+        else if (y > max + 2) scTo(max);
       });
     };
-    window.addEventListener('scroll', clamp, { passive: true });
+    SC.el.addEventListener('scroll', clamp, { passive: true });
     const endTouch = () => {
       touching = false;
       setTimeout(() => { if (!touching) clamp(); }, 260);   // 等系统回弹走完再收一次尾
@@ -2790,8 +2805,8 @@ function init() {
       const t = e.touches && e.touches[0];
       if (!t) return;
       edgeStartY = t.clientY;
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const y = window.scrollY;
+      const max = scMax();
+      const y = scY();
       edgeDir = y <= 1 ? 1 : (y >= max - 1 ? 2 : 0);   // 1=已经在最顶 2=已经在最底
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
@@ -2799,8 +2814,8 @@ function init() {
       const t = e.touches && e.touches[0];
       if (!t) return;
       const dy = edgeStartY - t.clientY;               // >0 = 手指往上划（想往下看）
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const y = window.scrollY;
+      const max = scMax();
+      const y = scY();
       if ((dy > 0 && y >= max - 1) || (dy < 0 && y <= 1)) e.preventDefault();
     }, { passive: false });
 
