@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.23', d: '10-21', items: [
+    '修：一整组（比如「一份全麦三明治…的早餐」）那一行的删除按钮不见了，现在补回来了 —— 点 × 一次把这一组删干净',
+    '新增：列表里每一条都能横向滑动删除 —— 向右或向左拉，会露出一层红底和「删除」两个字，松手超过一小段就删掉；轻点还是打开详情',
+    '滑动的起手位置避开屏幕最左边，不会和「右滑返回」打架',
+  ]},
   { v: 'v3.22', d: '10-21', items: [
     '修：一组记录详情里那行组名，之前被当成「2 项 · 蛋/碳/脂」那行小字一起处理了，所以又小又灰；现在它的字色和字号跟下面每一项的食物名完全一致',
     '改：标题边上的小铅笔不会再掉到第二行 —— 名字太长就把尾巴省略，铅笔永远跟在名字后面同一行',
@@ -632,7 +637,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.22';
+const APP_VERSION = 'v3.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -882,6 +887,7 @@ function renderMeals() {
         </div>
         <div class="k">${kcal}</div>
         <span class="chev">›</span>
+        <button class="del" data-gdel-g="${esc(g.key)}">×</button>
       </div>`;
     }).join('');
   };
@@ -904,9 +910,10 @@ function renderMeals() {
   }).join('');
 
   groupMap = groupsById;
-  $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
+  const swiped = () => window.__rowSwiped && Date.now() - window.__rowSwiped < 500;
+  $$('[data-group]', box).forEach(b => b.onclick = () => { if (swiped()) return; openGroup(b.dataset.group); });
   $$('[data-item]', box).forEach(b => b.onclick = ev => {
-    if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]')) return;
+    if (swiped() || ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]')) return;
     openDetail([d.logs.find(l => String(l.id) === b.dataset.item)].filter(Boolean), false);
   });
 
@@ -941,6 +948,19 @@ function renderMeals() {
     } catch (e) { toast(e.message); }
   });
 
+  // 整组那一行的 × ：删掉这一组的所有条目
+  $$('[data-gdel-g]', box).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation();
+    const g = groupsById.get(b.dataset.gdelG);
+    if (!g) return;
+    try {
+      for (const l of g.logs) await api('/api/logs/' + l.id, null, 'DELETE');
+      await loadDay();
+      if (S.view === 'trends') loadTrends();
+      toast('已删除这一组', 1600);
+    } catch (e) { toast(e.message); }
+  });
+
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {
@@ -953,6 +973,78 @@ function renderMeals() {
   $$('[data-add]', box).forEach(b => b.onclick = () => {
     openAdd(b.dataset.add);
   });
+}
+
+/* 列表里横向滑动删除：向右或向左拉出一条红底，松手就删 */
+function initRowSwipe() {
+  const box = $('#meals');
+  if (!box) return;
+  let row = null, x0 = 0, y0 = 0, dx = 0, horiz = false;
+
+  const clear = () => {
+    if (row) {
+      row.classList.remove('swiping', 'sr', 'sl', 'armed');
+      row.style.transition = 'transform .18s ease';
+      row.style.transform = '';
+      const el = row;
+      setTimeout(() => { if (el) el.style.transition = ''; }, 200);
+    }
+    row = null; dx = 0; horiz = false;
+  };
+
+  box.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    if (t.clientX < 36) return;                    // 左边缘留给「返回」手势
+    if (e.target.closest && e.target.closest('button')) return;  // 按在 × / 铅笔 / ＋ 上不算滑
+    const el = e.target.closest ? e.target.closest('.mitem') : null;
+    if (!el) return;
+    row = el; x0 = t.clientX; y0 = t.clientY; dx = 0; horiz = false;
+    el.style.transition = '';
+  }, { passive: true });
+
+  box.addEventListener('touchmove', e => {
+    if (!row) return;
+    const t = e.touches[0];
+    const ddx = t.clientX - x0, ddy = t.clientY - y0;
+    if (!horiz) {
+      if (Math.abs(ddx) < 14) return;
+      if (Math.abs(ddx) < Math.abs(ddy) * 1.4) { row = null; return; }   // 竖着滑 = 滚页面
+      horiz = true;
+      row.classList.add('swiping');
+    }
+    if (e.cancelable) e.preventDefault();
+    dx = ddx;
+    const cap = Math.sign(dx) * Math.min(110, Math.abs(dx));
+    row.style.transform = 'translateX(' + cap + 'px)';
+    row.classList.toggle('sr', dx > 0);
+    row.classList.toggle('sl', dx < 0);
+    row.classList.toggle('armed', Math.abs(dx) >= 64);
+  }, { passive: false });
+
+  const finish = () => {
+    if (!row) return;
+    const el = row, far = horiz && Math.abs(dx) >= 64;
+    clear();
+    if (far) { window.__rowSwiped = Date.now(); deleteRow(el); }
+  };
+  box.addEventListener('touchend', finish);
+  box.addEventListener('touchcancel', finish);
+}
+
+async function deleteRow(el) {
+  try {
+    if (el.dataset.item) {
+      await api('/api/logs/' + el.dataset.item, null, 'DELETE');
+    } else if (el.dataset.group) {
+      const g = groupMap.get(el.dataset.group);
+      if (!g) return;
+      for (const l of g.logs) await api('/api/logs/' + l.id, null, 'DELETE');
+    } else return;
+    await loadDay();
+    if (S.view === 'trends') loadTrends();
+    toast('已删除', 1500);
+  } catch (e) { toast(e.message); }
 }
 
 /* ---------------- 记录弹层 ---------------- */
@@ -3274,6 +3366,7 @@ function init() {
     });
   }
   syncTopH();
+  initRowSwipe();
   applyDockTune();
   syncDockR();
   initScroll();
