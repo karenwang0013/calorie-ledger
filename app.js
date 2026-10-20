@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16v4Z"/><path d="M13.8 6.2l4 4"/></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20h3.6L19 8.6a2.2 2.2 0 0 0-3.1-3.1L4.5 17z"/><path d="M14.2 7.2l2.6 2.6"/></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.27', d: '10-21', items: [
+    '改：改名用的小铅笔，换成和「描述」那个标签上同一款笔（圆头、细一点、斜着的那支），记录列表、识别结果、组详情标题三处统一',
+  ]},
   { v: 'v3.26', d: '10-21', items: [
     '改：框的「玻璃边」调柔了 —— 顶部的亮光压掉一半多，往下过渡更平缓，底部的反光也收了一点，不再是一道发亮的高光，更像雾面玻璃的边缘',
     '输入框选中时的绿色边也一起调柔了',
@@ -649,7 +652,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.26';
+const APP_VERSION = 'v3.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
