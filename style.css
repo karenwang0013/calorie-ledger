@@ -20,8 +20,8 @@
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
   --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
   --dock-bottom: 22px;     /* 下边离屏幕底（抬高一点，四周留白更明显） */
-  /* 两端做成平的（不要圆弧） */
-  --dock-r: 0px;
+  /* 左右两边是直的，四个角做圆角，跟着屏幕的圆角走（屏幕越宽圆角越大） */
+  --dock-r: clamp(26px, 7.7vmin, 34px);
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
@@ -401,15 +401,23 @@ html.kb .sc-body {
 .mitem .k .ai { color: var(--blue); font-size: 10px; }
 .mitem .del { color: var(--muted2); font-size: 15px; padding: 2px 0 2px 8px; }
 
-/* 名字边上的小铅笔：改名字 */
-.pen {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 26px; margin: -4px 0 -4px 2px;
-  vertical-align: middle; color: var(--muted2);
+/* 名字 + 小铅笔：名字一行，铅笔永远贴在名字右边同一行，放不下就把名字尾巴省略，
+   绝不把铅笔挤到下一行去 */
+.nameline { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.nameline .nmtxt {
+  min-width: 0; flex: 0 1 auto;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.pen svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.pen:active { color: var(--lime); }
-.ritem .nm .pen { margin-left: 4px; }
+.pen {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 22px; padding: 0; border: 0;
+  border-radius: 7px;
+  background: rgba(214, 255, 75, 0.12);
+  color: var(--lime);
+}
+.pen svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pen:active { background: rgba(214, 255, 75, 0.22); }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }
 .mitem.ghead .sub { color: var(--muted2); }
@@ -1107,7 +1115,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   :root {
     --dock-inset: 10px;
     --dock-bottom: 26px;
-    --dock-r: 0px;
+    --dock-r: 26px;
   }
   /* 顶栏两端与内容列对齐 */
   .topbar {

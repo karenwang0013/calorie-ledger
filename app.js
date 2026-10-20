@@ -16,7 +16,18 @@ const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
 const PEN_ICON = `<svg viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16v4Z"/><path d="M13.8 6.2l4 4"/></svg>`;
 
+// 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
+function nameLine(name, attr) {
+  return `<span class="nameline"><span class="nmtxt">${esc(name || '')}</span>`
+    + `<button class="pen" ${attr} aria-label="改名字">${PEN_ICON}</button></span>`;
+}
+
 const RELEASES = [
+  { v: 'v3.16', d: '10-21', items: [
+    '改：Dock 左右两边是直的，四个角做成圆角 —— 圆角跟着屏幕圆角走（手机按屏宽自动收放，iPad 自己一档），不是照抄同一个值',
+    '加：所有食物名字后面都加了小铅笔（绿字 + 浅绿圆角底），和名字同一行、齐平；名字太长就省略尾巴，铅笔绝不会被挤到名字下面去',
+    '加：一组记录详情里，每一项也能单独改名；改完弹层不会关，直接看到新名字',
+  ]},
   { v: 'v3.15', d: '10-21', items: [
     '改：底部 Dock 左右两端改成平的（不再画圆弧），整体也拉宽了 —— 手机几乎贴到屏幕两侧，iPad 用自己更宽的一档',
     '改：一组记录详情里的「改名」文字换成小铅笔，紧跟在标题后面；样式和原来一样（绿色图标 + 浅绿圆角底），点一下就改',
@@ -593,7 +604,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.15';
+const APP_VERSION = 'v3.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -803,7 +814,7 @@ function renderMeals() {
   const itemRow = l => `
       <div class="mitem" data-item="${l.id}">
         ${thumbOf(l)}
-        <div class="n">${esc(l.name)}<button class="pen" data-pen="${l.id}" aria-label="改名字">${PEN_ICON}</button>
+        <div class="n">${nameLine(l.name, `data-pen="${l.id}"`)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
             l.p ? ' · 蛋' + Math.round(l.p) + '/碳' + Math.round(l.c) + '/脂' + Math.round(l.f) : ''}</span>
         </div>
@@ -838,7 +849,7 @@ function renderMeals() {
       return `
       <div class="mitem ghead" data-group="${esc(g.key)}">
         ${thumbOf(g.logs[0])}
-        <div class="n">${esc(g.name || '未命名')}<button class="pen" data-pen-g="${esc(g.key)}" aria-label="改名字">${PEN_ICON}</button>
+        <div class="n">${nameLine(g.name || '未命名', `data-pen-g="${esc(g.key)}"`)}
           <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
         </div>
         <div class="k">${kcal}</div>
@@ -1310,7 +1321,7 @@ function renderResult() {
     return `
       <div class="ritem" data-low="${low ? 1 : 0}">
         <div class="top">
-          <span class="nm">${esc(it.name)}<button class="pen" data-ren="${i}" aria-label="改名字">${PEN_ICON}</button></span>
+          <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
           <span class="kc">${Math.round(kcal)}</span>
           <button class="del" data-rm="${i}" style="color:var(--muted2);font-size:16px;padding:0 0 0 6px">×</button>
         </div>
@@ -1427,7 +1438,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
+      <div class="n">${nameLine(l.name, `data-gedit="${l.id}"`)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
@@ -1435,6 +1446,29 @@ function openDetail(logs, isGroup, title) {
   S.detailIds = logs.map(l => l.id);
   S.detailIsGroup = !!isGroup;
   S.detailName = title || logs[0].name;
+  $$('[data-gedit]', $('#grpItems')).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation();
+    const id = Number(b.dataset.gedit);
+    const cur = logs.find(l => l.id === id);
+    if (!cur) return;
+    const name = prompt('这个食物叫什么？', cur.name || '');
+    if (name === null) return;
+    const v = name.trim().slice(0, 20);
+    if (!v || v === cur.name) return;
+    const keepIds = logs.map(l => l.id);
+    const wasGroup = isGroup;
+    const oldTitle = title || logs[0].name;
+    try {
+      await api('/api/logs/rename', { ids: [id], name: v, item: true });
+      await loadDay();
+      const fresh = ((S.day && S.day.logs) || []).filter(l => keepIds.includes(l.id));
+      if (fresh.length) {
+        const t = wasGroup ? oldTitle : fresh[0].name;
+        openDetail(fresh, wasGroup, t);
+      } else { closeGroup(); }
+      toast('已改名：' + v, 1800);
+    } catch (e) { toast(e.message); }
+  });
   $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {

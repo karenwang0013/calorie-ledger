@@ -29,9 +29,10 @@ const checks = [
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
   ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],
   ['Dock 三个按钮居中（加号永远在正中，两侧按钮各自居中）', /grid-template-columns: 1fr auto 1fr/.test(css)],
-  ['Dock 左右两端是平的（不画圆弧）', /--dock-r: 0px;/.test(css)],
+  ['Dock 四个角是圆角、并跟着屏幕圆角走（左右仍是直边）', /--dock-r: clamp\(/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: 10px;/.test(css)],
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
+  ['名字和铅笔在同一行（放不下时省略名字，不把铅笔挤到下一行）', /\.nameline \{[^}]*display: flex/.test(css) && /\.nameline \.nmtxt \{[^}]*text-overflow: ellipsis/.test(css)],
 ];
 
 let bad = 0;
