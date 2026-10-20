@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.60', d: '10-20', items: [
+    '键盘弹起时的多余留白从 70% 屏高降到 20%，不再能往下拉一大段空区域，滑动也更顺',
+    '点「脂肪」等靠下的输入框时，只把这一栏移到键盘上方一点点（不再顶到屏幕中间）',
+  ]},
   { v: 'v2.59', d: '10-20', items: [
     '键盘弹起时把页面底部自动加长（相当于往下多垫 70% 屏高），页面的"尽头"被甩到键盘下面，键盘上方看到的永远是内容',
   ]},
@@ -342,7 +346,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.59';
+const APP_VERSION = 'v2.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
