@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.91', d: '10-20', items: [
+    '修："上下晃一下"：系统先把输入框滚到键盘上方，我又把它滚到正中间，两次位移看起来就是晃一下',
+    '改成平滑滚动（一次顺滑移动），并减少定位次数；位移小于 8px 时完全不动',
+  ]},
   { v: 'v2.90', d: '10-20', items: [
     '修：点下去页面会上下弹一下 —— 键盘还没完全弹起时，我先按"整屏"算了一次位置，键盘弹起后又按"键盘上方"算了一次，所以会弹两下',
     '现在键盘没弹起之前一律不动，只在键盘真正占位后才定位',
@@ -469,7 +473,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.90';
+const APP_VERSION = 'v2.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2599,7 +2603,11 @@ function init() {
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const target = Math.round(inputCenterDoc - centerScreen);
 
-      window.scrollTo(0, Math.max(0, Math.min(target, max)));
+      const want = Math.max(0, Math.min(target, max));
+      // 位移超过 8px 才滚，而且用平滑滚动：看起来是一次顺滑的移动，而不是"弹一下"
+      if (Math.abs(window.scrollY - want) > 8) {
+        window.scrollTo({ top: want, behavior: 'smooth' });
+      }
       kbMax = Infinity;
       (window.__placeLog = window.__placeLog || []).push(
         [new Date().toLocaleTimeString('zh-CN', { hour12: false }),
@@ -2611,7 +2619,7 @@ function init() {
 
     // 键盘还在动的时候会被多次调用，但每次都算同一个绝对目标，所以不会跳
     const placeWhenSettled = (t) => {
-      [220, 420, 700, 1100].forEach(ms => setTimeout(() => placeCard(t), ms));
+      [260, 700].forEach(ms => setTimeout(() => placeCard(t), ms));
       const vv3 = window.visualViewport;
       if (vv3) {
         const onResize = () => placeCard(t);
