@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.68', d: '10-20', items: [
+    '修：v2.67 打开后加载不出来（改回弹逻辑时漏删了一行旧监听，导致脚本报错、页面空白）',
+    '这一版恢复正常，回弹的处理沿用 v2.67 的做法',
+  ]},
   { v: 'v2.67', d: '10-20', items: [
     '滑动到顶部或底部时不再"弹弹弹"：越界会被立刻拉回边界，直接停住，没有果冻回弹',
   ]},
@@ -377,7 +381,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.67';
+const APP_VERSION = 'v2.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2482,7 +2486,6 @@ function init() {
       }
     };
     window.addEventListener('scroll', clamp, { passive: true });
-    window.addEventListener('scroll', guard, { passive: true });
 
     // 把整张卡片放到底边贴着键盘的位置
     const placeCard = (t) => {
