@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.98', d: '10-20', items: [
+    '修：往下滑又出现抖动 —— 之前我一边允许你滑 24px、一边在越界时把你拉回来，两股劲打架就是抖',
+    '现在底部留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动（没有可滑的空间，也就没有拉扯和抖动），尽头被键盘挡住所以看不到黑影',
+  ]},
   { v: 'v2.97', d: '10-20', items: [
     '修：键盘上方又出现黑影 —— 那其实是"页面最底端"露出来了',
     '现在底部留白按键盘高度算（键盘高度 + 80），页面尽头永远在屏幕下方；同时把往下能滑的距离限制在 24px 内',
@@ -498,7 +502,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.97';
+const APP_VERSION = 'v2.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2584,10 +2588,8 @@ function init() {
         clampRaf = 0;
         const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         const y = window.scrollY;
-        const kb = document.documentElement.classList.contains('kb');
-        const limit = kb ? Math.min(max, kbScrollLimit) : max;
         if (y < 0) window.scrollTo(0, 0);
-        else if (y > limit) window.scrollTo(0, limit);
+        else if (y > max) window.scrollTo(0, max);
       });
     };
     window.addEventListener('scroll', clamp, { passive: true });
@@ -2612,17 +2614,20 @@ function init() {
     };
 
     // 定位到居中后，把底部留白收紧到"刚好够"（+24px 余量）：往下只能再拉一点点
-    let kbScrollLimit = Infinity;   // 键盘态下允许的最大滚动位置（只比落点多一点点）
     const placeAndTrim = (t) => {
       const root = document.documentElement;
       root.classList.add('kb');
       root.style.setProperty('--kb-pad', '120vh');
       void document.body.offsetHeight;
       window.scrollTo(0, centerFor(t, kbH));
-      // 底部留白 = 键盘高度 + 80：保证"页面尽头"永远在屏幕下方，不会露出黑影
-      root.style.setProperty('--kb-pad', Math.round(kbH + 80) + 'px');
-      // 但只允许再往下滑 24px
-      kbScrollLimit = window.scrollY + 24;
+      // 留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动（也就没有回弹抖动），
+      // 而尽头在屏幕底边 = 被键盘挡住，看不到黑影
+      const body = document.getElementById('scBody');
+      if (!body) return;
+      const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+      const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
+      const need = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
+      root.style.setProperty('--kb-pad', need + 'px');
     };
 
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
@@ -2659,7 +2664,6 @@ function init() {
       setTimeout(() => {
         if (activeInput()) return;
         document.documentElement.classList.remove('kb');
-        kbScrollLimit = Infinity;
       }, 700);
     });
   };
