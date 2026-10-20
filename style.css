@@ -425,9 +425,9 @@ html.kb .sc-body {
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 24px; padding: 0; border: 0;
   background: none;
-  color: var(--lime);
+  color: var(--muted2);   /* 和「还没记录」那种小字一个灰 */
 }
-.pen svg { width: 18px; height: 18px; }
+.pen svg { width: 20px; height: 20px; }
 .pen:active { opacity: .55; }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }

@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="currentColor"><path d="M15.6 4.4 19.8 8.6 9 19.4H4.8v-4.2L15.6 4.4Z"/><path d="M12.6 7.4 16.8 11.6" stroke="#0b0d0e" stroke-width="2" fill="none"/></g></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.2" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.8" cy="12" r="2"/></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.58', d: '10-21', items: [
+    '改：改名入口从铅笔换成「三个点」，颜色改成和「还没记录」那种小字一样浅灰（不再是绿色）',
+  ]},
   { v: 'v3.57', d: '10-21', items: [
     '改：铅笔按你选的 H 做（斜笔身 + 一道分色），并把所有拐角改成圆角（用圆角描边把尖角磨掉），不再那么尖',
   ]},
@@ -770,7 +773,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.57';
+const APP_VERSION = 'v3.58';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
