@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.38', d: '10-20', items: [
+    '排查用：连点标题旁边的版本号 5 次，会显示一行环境信息（版本、独立模式、可视高度、安全区、顶栏底色、滚动位置），再点一下关闭',
+  ]},
   { v: 'v2.37', d: '10-20', items: [
     '顶部那条"雾带"：状态栏是纯黑、顶栏是深灰绿，两种颜色贴在一起看成了一条模糊带；现在顶栏改成和状态栏一样的纯黑',
     '点最下面的「脂肪」：改为连续校正 7 次（0~1.2 秒），键盘动画结束后也会把这一栏推到顶栏下方可见位置',
@@ -259,7 +262,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.37';
+const APP_VERSION = 'v2.38';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2463,7 +2466,36 @@ function init() {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(clearScrim, 80); });
 
   const bt = $('#brandTag');
-  if (bt) bt.textContent = APP_VERSION;
+  if (bt) {
+    bt.textContent = APP_VERSION;
+    // 排查用：连点版本号 5 次，显示当前环境信息（再点一次关闭）
+    let taps = 0, tapT = 0;
+    bt.addEventListener('click', () => {
+      const now = Date.now();
+      taps = (now - tapT < 900) ? taps + 1 : 1;
+      tapT = now;
+      if (taps < 5) return;
+      taps = 0;
+      const vv = window.visualViewport;
+      const tb = document.querySelector('.topbar');
+      const cs = getComputedStyle(tb);
+      const el = document.getElementById('scroller');
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:100px;z-index:9999;background:#000;color:#7dff8a;font:12px/1.6 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:10px;white-space:pre-wrap;border:1px solid #2c5';
+      box.textContent = [
+        '版本 ' + APP_VERSION,
+        '独立模式 ' + (window.navigator.standalone === true),
+        'innerH ' + innerHeight + ' / vvH ' + Math.round(vv ? vv.height : 0) + ' / off ' + Math.round(vv ? vv.offsetTop : 0) + ' / scale ' + (vv ? vv.scale : 0),
+        'safe-t ' + getComputedStyle(document.documentElement).getPropertyValue('--safe-t'),
+        '顶栏底色 ' + cs.backgroundColor,
+        'body 底色 ' + getComputedStyle(document.body).backgroundColor,
+        '滚动位置 ' + (el ? Math.round(el.scrollTop) : '-'),
+        '顶栏高度 ' + Math.round(tb.getBoundingClientRect().height) + ' / top ' + Math.round(tb.getBoundingClientRect().top),
+      ].join('\n');
+      box.onclick = () => box.remove();
+      document.body.appendChild(box);
+    });
+  }
   syncTopH();
   initScroll();
   window.addEventListener('resize', syncTopH);
