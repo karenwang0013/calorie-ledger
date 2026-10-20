@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.59', d: '10-20', items: [
+    '键盘弹起时把页面底部自动加长（相当于往下多垫 70% 屏高），页面的"尽头"被甩到键盘下面，键盘上方看到的永远是内容',
+  ]},
   { v: 'v2.58', d: '10-20', items: [
     '试一次结构性改动：整页改回浏览器原生滚动（不再用内层滚动容器），键盘与页面的关系完全交给系统处理',
     '顶栏、底栏仍是固定不动；如果这一版效果不好，可以随时退回 v2.57（已做备份）',
@@ -339,7 +342,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.58';
+const APP_VERSION = 'v2.59';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

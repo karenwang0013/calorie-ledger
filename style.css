@@ -167,9 +167,13 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 .sc-body {
-  /* 不要给这一层加 backface-visibility / will-change：
-     iOS 会把它提升成独立合成层，滚动到最底部时层的末端之外会渲染成纯黑（就是那块黑） */
+  /* 不要给这一层加 backface-visibility / will-change：会让 iOS 单独合成，滚动到底会漏画成纯黑 */
   padding-bottom: calc(118px + var(--safe-b));
+}
+/* 键盘弹起时把内容底部拉长：让"页面末尾"远远甩到键盘下面去，
+   键盘上方永远都是实打实的页面内容，而不是页面的尽头 */
+html.kb .sc-body {
+  padding-bottom: 70vh;
 }
 
 /* ---------- 顶栏 ---------- */
