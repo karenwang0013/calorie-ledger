@@ -607,6 +607,14 @@ select {
   border-radius: 2px;
 }
 
+/* 识别热量：做成和「拍照」一样的大按钮 */
+#photoGo {
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 15px;
+}
+
 /* ---------- 弹出卡片 ---------- */
 .sheet-mask {
   position: fixed; inset: 0; z-index: 60;

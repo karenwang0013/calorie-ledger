@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.12', d: '10-20', items: [
+    '「识别热量」按钮加粗加高（高度 44 → 56px，字号 14 → 16），更好按',
+  ]},
   { v: 'v2.11', d: '10-20', items: [
     '快捷指令采集后不用再手动点「数据同步」：回到 App 会自动拉，且没新数据会静默重试',
     'health.json 改从 raw.githubusercontent 取（提交后几秒可见），不再等 GitHub Pages 那 30–60 秒的发布',
@@ -150,7 +153,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.11';
+const APP_VERSION = 'v2.12';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
