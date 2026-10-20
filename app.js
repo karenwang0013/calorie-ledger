@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.73', d: '10-20', items: [
+    '修：点「脂肪」后卡片底部和键盘上方那条工具条重叠（保存按钮被压住）',
+    '原因：计算位置时把工具条那块高度也算进了可用区域；现在可用区域的下边额外留出 88px，并且加了一道"卡片底边不许越过工具条"的兜底',
+  ]},
   { v: 'v2.72', d: '10-20', items: [
     '点哪一栏，就把哪一栏放到可视区域的正中间（顶栏下沿到键盘上沿之间），不会再压到键盘、也不会跑到屏幕外',
     '键盘弹起时不再锁死：手指往下拨可以回看上面的内容；只有"继续往下滚到空白处"被挡住',
@@ -397,7 +401,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.72';
+const APP_VERSION = 'v2.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2507,14 +2511,24 @@ function init() {
     const placeCard = (t) => {
       if (!t) return;
       const vv2 = window.visualViewport;
-      const vH = vv2 ? vv2.height : window.innerHeight;
-      // 目标：把正在编辑的这一栏放到"顶栏下沿 与 键盘上沿"这段可视区域的中间
+      // 可视区域的底边（键盘上沿）
+      const vBottom = vv2 ? (vv2.offsetTop + vv2.height) : window.innerHeight;
+      const usableTop = 100;                 // 顶栏下沿
+      const usableBottom = vBottom - 88;     // 再多留 88px，避开键盘上方那条工具条
+      const card = t.closest('.card') || t;
+
+      // ① 让"正在编辑的这一栏"落在可视区域正中间
       const r0 = t.getBoundingClientRect();
       const docCenter = r0.top + window.scrollY + r0.height / 2;
-      let target = Math.round(docCenter - (96 + vH) / 2);
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      target = Math.max(0, Math.min(target, max));
-      window.scrollTo(0, target);
+      let target = Math.round(docCenter - (usableTop + usableBottom) / 2);
+      window.scrollTo(0, Math.max(0, Math.min(target, max)));
+
+      // ② 兜底：整张卡片的底边绝不能越过工具条 —— 就不会再和键盘重叠
+      const cb = card.getBoundingClientRect().bottom;
+      if (cb > usableBottom) {
+        window.scrollBy(0, cb - usableBottom);
+      }
       kbMax = window.scrollY;
     };
 
