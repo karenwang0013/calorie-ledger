@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.31', d: '10-21', items: [
+    '改：拍照识别结果里，照片旁边原来显示「01:45 拍摄」—— 这个时间跟这顿饭没关系，现在换成「食物照片」（如果还拍了营养成分表，会显示「食物照片 + 营养成分表」）',
+  ]},
   { v: 'v3.30', d: '10-21', items: [
     '修：底部弹出的提示条（「现在是 10-20 23:00 那份…」这类消息）会压到 Dock 上；现在改成按 Dock 的位置算，固定浮在 Dock 上方，不再重叠',
   ]},
@@ -662,7 +665,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.30';
+const APP_VERSION = 'v3.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1370,13 +1373,12 @@ function renderResult() {
   const box = $('#resultItems');
   let shot = '';
   if (S.photoData) {
-    const t = new Date(S.photoAt || Date.now());
-    const hh = String(t.getHours()).padStart(2, '0');
-    const mm = String(t.getMinutes()).padStart(2, '0');
+    // 这里显示「拍的是什么」比显示时间有用：拍摄时间跟这顿饭没关系
+    const tag = S.photo2Data ? '食物照片 + 营养成分表' : '食物照片';
     shot = `<div class="shotrow">
       <img src="${S.photoData}" alt="">
       <div class="sinfo">
-        <b>${hh}:${mm} 拍摄</b>
+        <b>${tag}</b>
         <span>识别出 ${S.items.length} 项 · 克数可改</span>
       </div>
     </div>`;
