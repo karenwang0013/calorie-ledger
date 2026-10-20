@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.87', d: '10-20', items: [
+    '修：多次点击位置不稳定 —— 之前根据键盘高度变化实时定位，但键盘动画每次 timing 不同，导致落点不一致',
+    '现在统一等 500ms（键盘动画一定结束后）再定位，保证每次落点完全一致',
+  ]},
   { v: 'v2.86', d: '10-20', items: [
     '修：关掉键盘再点，位置和第一次不一样 —— 之前只在"高度稳定"那一刻定位一次，如果键盘动画结束得晚，第二次就停在了中间值',
     '现在 1.6 秒内键盘高度每变一次就重新贴一次，最后一定停在同一个位置',
@@ -453,7 +457,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.86';
+const APP_VERSION = 'v2.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2604,16 +2608,9 @@ function init() {
     };
 
     // 等键盘高度稳定（连续两次采样一致）再定位，避免卡片跟着键盘动画来回跳
-    // 键盘高度每变一次就重新贴一次（1.6 秒内），保证第一次和第二次点落在同一位置
+    // 等 500ms 再定位，确保键盘动画完全结束
     const placeWhenSettled = (t) => {
-      let last = null;
-      const until = Date.now() + 1600;
-      const tick = () => {
-        const h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
-        if (h !== last) { last = h; placeCard(t); }
-        if (Date.now() < until) setTimeout(tick, 80);
-      };
-      tick();
+      setTimeout(() => placeCard(t), 500);
     };
 
     // 再点同一个输入框不会触发 focus，这里补一个点击兜底
