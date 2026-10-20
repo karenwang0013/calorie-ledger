@@ -172,6 +172,9 @@ select {
 }
 /* 键盘弹起时把内容底部拉长：让"页面末尾"远远甩到键盘下面去，
    键盘上方永远都是实打实的页面内容，而不是页面的尽头 */
+/* 键盘弹起后锁住页面滚动：手指滑动不再有任何位移 */
+html.kb, html.kb body { touch-action: none; overscroll-behavior: none; }
+
 html.kb .sc-body {
   /* 只要让"页面末尾"落在键盘下面就行，不用留很长，否则能往下拉一大段空区域 */
   padding-bottom: 20vh;
