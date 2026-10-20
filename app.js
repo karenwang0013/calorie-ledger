@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.35', d: '10-21', items: [
+    '改：拍照结果里的照片摘要按「你拍的是什么」来显示 —— 拍实物显示「食物照片」，拍营养成分表显示「营养成分表照片」（下面写「按标签每 100 克换算」）',
+    '两张都拍就两行都列出来，各配各自的图',
+    '改：只拍了营养成分表，记录列表里也能看到那张缩略图了',
+  ]},
   { v: 'v3.34', d: '10-21', items: [
     '改：食物名字再长也只在框里显示 —— 末尾省略，绝不会伸到框外，也不会把右边的卡路里挤出卡片；连续的长英文/数字也会在框内折行',
     '同时补了「每一餐 / 组详情 / 识别结果」三处的框内裁切，任何长度都不会顶破卡片',
@@ -679,7 +684,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.34';
+const APP_VERSION = 'v3.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1386,16 +1391,19 @@ function showResult(title, note) {
 function renderResult() {
   const box = $('#resultItems');
   let shot = '';
-  if (S.photoData) {
-    // 这里显示「拍的是什么」比显示时间有用：拍摄时间跟这顿饭没关系
-    const tag = S.photo2Data ? '食物照片 + 营养成分表' : '食物照片';
-    shot = `<div class="shotrow">
-      <img src="${S.photoData}" alt="">
+  // 拍的是什么就显示什么：拍实物 →「食物照片」，拍营养成分表 →「营养成分表照片」；
+  // 两样都拍了就两行都列出来，各自配各自的图
+  if (S.photoData || S.photo2Data) {
+    const rows = [];
+    if (S.photoData) rows.push({ src: S.photoData, tag: '食物照片' });
+    if (S.photo2Data) rows.push({ src: S.photo2Data, tag: '营养成分表照片' });
+    shot = rows.map(r => `<div class="shotrow">
+      <img src="${r.src}" alt="">
       <div class="sinfo">
-        <b>${tag}</b>
-        <span>识别出 ${S.items.length} 项 · 克数可改</span>
+        <b>${r.tag}</b>
+        <span>${r.tag === '营养成分表照片' ? '按标签每 100 克换算' : `识别出 ${S.items.length} 项 · 克数可改`}</span>
       </div>
-    </div>`;
+    </div>`).join('');
   }
   $('#shotBox').innerHTML = shot;
   // 多项才需要给这一餐起名（识别到的菜名会自动填进来）
@@ -1467,8 +1475,9 @@ async function saveItems() {
   try {
     const batch = 'b' + Date.now();
     let shot = '';
-    if (batch && S.photoData) {
-      try { shot = await makeThumb(S.photoData); } catch (e) { /* 图存不下就算了 */ }
+    const thumbSrc = S.photoData || S.photo2Data;
+    if (batch && thumbSrc) {
+      try { shot = await makeThumb(thumbSrc); } catch (e) { /* 图存不下就算了 */ }
     }
     await api('/api/logs', {
       date: S.date,
