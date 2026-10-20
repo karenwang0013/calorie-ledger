@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.21', d: '10-20', items: [
+    '修：手动填的缺口（如 -300）在再点一次「保存」后会变回建议值 -275 —— 原因是拿「已生效的值」去和「建议值」比较，两者相等就当成没填',
+    '现在拿「纯建议值」比较：填多少存多少，反复点保存都不会变',
+  ]},
   { v: 'v2.20', d: '10-20', items: [
     '切模式不再弹窗确认，直接按建议值填好',
     '「营养目标」改名为「饮食目标」（现在包含减脂/维持/增肌三档，不只是营养）',
@@ -186,7 +190,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.20';
+const APP_VERSION = 'v2.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

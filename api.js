@@ -128,6 +128,7 @@ function targetsOf(p, exp) {
   // —— 用户手动指定的缺口 / 盈余（正=缺口，负=盈余） ——
   const ov0 = setting('target_override', {}) || {};
   const hasDefOv = ov0.deficit !== undefined && ov0.deficit !== null && ov0.deficit !== '' && isFinite(Number(ov0.deficit));
+  const wantAuto = want;              // 纯自动建议值（不含手动缺口），保存时用它判断「是否等于建议」
   if (hasDefOv) want = Number(ov0.deficit);
 
   // —— 自动建议值 ——
@@ -165,7 +166,7 @@ function targetsOf(p, exp) {
       protein_g: proteinAuto,
       fat_g: fatAuto,
       carb_g: carbAuto,
-      deficit: Math.round(want),
+      deficit: Math.round(wantAuto),
     },
   };
 }
