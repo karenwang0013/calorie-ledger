@@ -14,6 +14,12 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.63', d: '10-20', items: [
+    '底色恢复成原来的配色（墨绿渐变 + 光晕 + 波点），并改由一层"固定背景"绘制：滑动时不再重绘背景，动画才顺',
+    '弹窗位置再往下：卡片底边几乎贴着键盘上沿',
+    '键盘弹起后只能往上滑、往下滑不动（底部留白按"刚好不能再往下"实时计算）',
+    '去掉页面回弹的果冻感',
+  ]},
   { v: 'v2.62', d: '10-20', items: [
     '弹出位置再往下：卡片底边几乎贴着键盘上沿',
     '键盘弹起后只能往上滑、往下滑不动 —— 底部留白由脚本算到"刚好不能再往下"，不会滑出键盘',
@@ -354,7 +360,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.62';
+const APP_VERSION = 'v2.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2482,25 +2488,27 @@ function init() {
         const vH = vv2 ? vv2.height : window.innerHeight;
         const root = document.documentElement;
         const card = t.closest('.card') || t;
-        // 先给足下方空间，才能把它滚到位
-        root.style.setProperty('--kb-pad', '70vh');
+        root.style.setProperty('--kb-pad', '100vh');      // 先给足下方空间
         requestAnimationFrame(() => requestAnimationFrame(() => {
           const rb = card.getBoundingClientRect().bottom;
-          const want = vH - 20;                      // 卡片底边几乎贴着键盘
+          const want = vH - 12;                            // 卡片底边几乎贴着键盘
           if (rb > want) window.scrollBy(0, rb - want);
           const r = t.getBoundingClientRect();
           if (r.top < 96) window.scrollBy(0, r.top - 96);
-          // 再把底部留白收紧到"最大滚动量 = 当前位置"：往下滑不动，往上还能滑
+          // 收紧底部留白：让"能滚的距离"正好用完 → 只能往上滚，往下滚不动
           const body = document.getElementById('scBody');
-          if (!body) return;
-          const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
-          const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
-          const pad = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
-          root.style.setProperty('--kb-pad', pad + 'px');
+          if (body) {
+            const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+            const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
+            const pad = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
+            root.style.setProperty('--kb-pad', pad + 'px');
+          }
+          const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+          if (window.scrollY > maxY) window.scrollTo(0, maxY);
         }));
       };
       // 键盘弹起有动画，位置要连续校正几次
-      [0, 80, 200, 350, 550, 800, 1200].forEach(ms => setTimeout(put, ms));
+      [0, 150, 400, 800].forEach(ms => setTimeout(put, ms));
     });
   };
 

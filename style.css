@@ -29,20 +29,14 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html {
-  /* 改回整页原生滚动：交给系统管键盘与页面的关系 */
   min-height: 100%;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
+  background: #080b09;
+  overscroll-behavior: none;
 }
 body {
-  /* 与内容区同一套底纹：万一键盘上方留出空隙，也只会看到同样的波点，而不是一条黑边 */
-  background:
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
+  background: #080b09;
+  overscroll-behavior: none;
 }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
@@ -125,18 +119,16 @@ select {
   margin: 0;
   min-height: 100vh;
   display: block;
-}
-
-/* 内容滚动容器：页面本身不滚，只有这一层滚 */
-.scroller {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: visible;
-  padding-top: var(--topbar-h, 64px);
-  /* 背景交给不滚动的那一层去画：滚动层自己画背景，iOS 会漏画，露出纯黑 */
+  position: relative;
   background: transparent;
 }
-.app {
+/* 固定背景层：光晕 + 点阵 + 底色。它不随内容滚动，所以滑动时不会反复重绘 */
+.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background:
     /* 顶部光：与底部完全镜像，半径更大更散 */
     radial-gradient(175% 62% at 50% -16%,
@@ -161,17 +153,26 @@ select {
       rgba(var(--glow-rgb), 0.018) 52%,
       rgba(var(--glow-rgb), 0) 80%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(var(--glow-rgb),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    /* 底色：墨绿渐层 */
-    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
+    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    /* 底色：墨绿渐层（原始配色） */
+    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+}
+.app > * { position: relative; z-index: 1; }
+
+/* 内容滚动容器：页面本身不滚，只有这一层滚 */
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
+  padding-top: var(--topbar-h, 64px);
+  /* 背景交给不滚动的那一层去画：滚动层自己画背景，iOS 会漏画，露出纯黑 */
+  background: transparent;
 }
 .sc-body {
   /* 不要给这一层加 backface-visibility / will-change：会让 iOS 单独合成，滚动到底会漏画成纯黑 */
   padding-bottom: calc(118px + var(--safe-b));
 }
-/* 键盘弹起时把内容底部拉长：让"页面末尾"远远甩到键盘下面去，
-   键盘上方永远都是实打实的页面内容，而不是页面的尽头 */
 /* 键盘弹起后：底部留白由脚本精确算好，
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
 html.kb .sc-body {
