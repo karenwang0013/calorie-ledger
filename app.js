@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.62', d: '10-20', items: [
+    '弹出位置再往下：卡片底边几乎贴着键盘上沿',
+    '键盘弹起后只能往上滑、往下滑不动 —— 底部留白由脚本算到"刚好不能再往下"，不会滑出键盘',
+  ]},
   { v: 'v2.61', d: '10-20', items: [
     '键盘弹起后页面锁死：手指上下滑动不再有任何位移，卡片就停在弹出时的位置',
     '弹出的位置改成按"整张卡片的底边贴着键盘上方"来对齐，不再按单个输入框的高度算，卡片整体位置更靠下',
@@ -350,7 +354,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.61';
+const APP_VERSION = 'v2.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2476,11 +2480,24 @@ function init() {
       const put = () => {
         const vv2 = window.visualViewport;
         const vH = vv2 ? vv2.height : window.innerHeight;
-        const r = t.getBoundingClientRect();
-        const bottomLimit = vH - 24;
-        if (r.bottom > bottomLimit || r.top < 90) {
-          window.scrollBy(0, r.top - 230);
-        }
+        const root = document.documentElement;
+        const card = t.closest('.card') || t;
+        // 先给足下方空间，才能把它滚到位
+        root.style.setProperty('--kb-pad', '70vh');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const rb = card.getBoundingClientRect().bottom;
+          const want = vH - 20;                      // 卡片底边几乎贴着键盘
+          if (rb > want) window.scrollBy(0, rb - want);
+          const r = t.getBoundingClientRect();
+          if (r.top < 96) window.scrollBy(0, r.top - 96);
+          // 再把底部留白收紧到"最大滚动量 = 当前位置"：往下滑不动，往上还能滑
+          const body = document.getElementById('scBody');
+          if (!body) return;
+          const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+          const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
+          const pad = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
+          root.style.setProperty('--kb-pad', pad + 'px');
+        }));
       };
       // 键盘弹起有动画，位置要连续校正几次
       [0, 80, 200, 350, 550, 800, 1200].forEach(ms => setTimeout(put, ms));
