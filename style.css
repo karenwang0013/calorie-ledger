@@ -413,13 +413,12 @@ html.kb .sc-body {
 .pen {
   flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 22px; padding: 0; border: 0;
-  border-radius: 7px;
-  background: rgba(214, 255, 75, 0.12);
+  width: 24px; height: 22px; padding: 0; border: 0;
+  background: none;
   color: var(--lime);
 }
 .pen svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.pen:active { background: rgba(214, 255, 75, 0.22); }
+.pen:active { opacity: .55; }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }
 .mitem.ghead .sub { color: var(--muted2); }
@@ -446,23 +445,12 @@ html.kb .sc-body {
   padding: 14px 14px 12px;
 }
 .modal .mhd .mt { flex: 1; min-width: 0; }
-.modal .mhd h3 { margin: 0; font-size: 17px; font-weight: 600; }
-.modal .mhd .mt span { display: block; font-size: 11px; color: var(--muted2); margin-top: 3px; }
+.modal .mhd h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--text); }
+.modal .mhd .mt #grpMeta { display: block; font-size: 11px; color: var(--muted2); margin-top: 3px; }
 .modal .mren {
   font-size: 11.5px; color: var(--lime); padding: 5px 10px;
   border-radius: 9px; background: rgba(214,255,75,.12); flex: 0 0 auto;
 }
-/* 标题边上的小铅笔：和「改名」同一个样式（绿字 + 浅绿圆角底），但只占一个图标的位置 */
-.modal .mhd h3 .mren {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 24px; padding: 0; margin-left: 6px;
-  border-radius: 8px; vertical-align: 1px; flex: 0 0 auto;
-}
-.modal .mhd h3 .mren svg {
-  width: 13px; height: 13px; stroke: currentColor; fill: none;
-  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-}
-.modal .mhd h3 .mren:active { background: rgba(214,255,75,.22); }
 .modal .mx { font-size: 22px; color: var(--muted2); padding: 0 2px 0 6px; }
 .modal .mbody { overflow-y: auto; padding: 0 16px 16px; }
 .modal .mshot {
