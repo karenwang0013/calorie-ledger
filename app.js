@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.31', d: '10-20', items: [
+    '修：键盘上方那条黑色空带（外壳不再缩高度，而是整屏铺满、让键盘盖住下沿）',
+    '点输入框时立刻把该栏拉到上方，iOS 不需要再自己推移整页，标题栏就不会被顶走',
+    '顶部安全区实色带加高并提到最上层，尽量压掉系统状态的模糊',
+  ]},
   { v: 'v2.30', d: '10-20', items: [
     '修：点「目标缺口」时标题栏整个消失 —— 键盘占掉下半屏后 iOS 把整页往上推，现在外壳高度实时跟随可见区域，不再被推',
     '顶部状态栏恢复纯色，不再出现模糊与内容透出',
@@ -228,7 +233,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.30';
+const APP_VERSION = 'v2.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2311,7 +2316,6 @@ function init() {
       document.documentElement.classList.toggle('kb', kb);
       // 关键：把外壳高度设成「当前可见高度」。
       // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
-      document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
       // 如果系统仍然把可视区域平移了，按当前偏移量把外壳摆回去（每次都是「设成」，不是累加）
       const app = document.querySelector('.app');
       if (app) {
@@ -2331,16 +2335,18 @@ function init() {
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
-      setTimeout(() => {
+      // 立刻把输入框拉到上方（不等键盘弹完），这样 iOS 根本不需要自己位移整页
+      const put = () => {
         const vv2 = window.visualViewport;
         const vTop = vv2 ? (vv2.offsetTop || 0) : 0;
         const vH = vv2 ? vv2.height : window.innerHeight;
         const r = t.getBoundingClientRect();
-        const top = vTop + 96, bottom = vTop + vH - 28;
-        if (r.top < top || r.bottom > bottom) {
-          SC.el.scrollTop += r.top - Math.max(top, vTop + vH * 0.30);
-        }
-      }, 280);
+        const want = vTop + Math.min(180, vH * 0.26);
+        if (r.top > want) SC.el.scrollTop += r.top - want;
+      };
+      put();
+      setTimeout(put, 120);
+      setTimeout(put, 320);
     });
   };
 
