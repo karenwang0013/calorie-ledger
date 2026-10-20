@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.43', d: '10-20', items: [
+    '顶栏三个按钮加大（内边距和图标都放大），并固定住宽度，标题再长也不会把它们挤出屏幕',
+    '底部：中间加号按钮放大，两侧图标放大；整条栏矮一点、往下移',
+  ]},
   { v: 'v2.42', d: '10-20', items: [
     '顶栏底边加宽 5px，顶栏按钮与下方内容之间不再贴在一起',
     '底部导航的三个按钮整体上移 10px，离屏幕最底（home 指示条）更远、更好按',
@@ -278,7 +282,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.42';
+const APP_VERSION = 'v2.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
