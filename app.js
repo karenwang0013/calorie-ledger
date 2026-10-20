@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.59', d: '10-21', items: [
+    '加：锁屏通知（真推送）—— 通知页的「锁屏通知」现在是真开关。开启后 iPhone / iPad 锁屏、App 关着也能收到「热量账本」的通知，两台设备各自订阅、都能收到',
+    '配套：仓库新增 push/worker.js（Cloudflare Worker 的推送服务代码）和 push/README.md（10 分钟设置步骤）。这台服务免费，一次配好就不用再管',
+    '通知正文由 App 自己算：今天已记多少千卡 / 今天还没记录；点通知直接打开 App',
+  ]},
   { v: 'v3.58', d: '10-21', items: [
     '改：改名入口从铅笔换成「三个点」，颜色改成和「还没记录」那种小字一样浅灰（不再是绿色）',
   ]},
@@ -773,7 +778,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.58';
+const APP_VERSION = 'v3.59';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1956,6 +1961,61 @@ function notifyCfg() {
   Object.keys(def).forEach(k => { if (typeof v[k] === 'boolean') out[k] = v[k]; });
   return out;
 }
+let pushOn = false;                       // 这台设备是否已经订阅锁屏推送
+const pushSupported = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+const b64uToBytes = (b64) => {
+  const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
+  const raw = atob(pad.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+};
+async function refreshPushState() {
+  pushOn = false;
+  if (!pushSupported()) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    pushOn = !!(await reg.pushManager.getSubscription());
+  } catch (e) { pushOn = false; }
+}
+async function enablePush() {
+  if (!pushSupported()) { toast('这台设备不支持网页推送', 3600); return false; }
+  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) { toast('先把 App「添加到主屏幕」，从主屏幕图标打开再来开这个', 5200); return false; }
+  const old = setting('push_worker', '') || '';
+  const url = (prompt('粘贴 Cloudflare Worker 地址（形如 https://xxx.workers.dev）', old) || '').trim().replace(/\/+$/, '');
+  if (!url) return false;
+  try {
+    const cfg = await (await fetch(url + '/config', { cache: 'no-store' })).json();
+    if (!cfg.publicKey) throw new Error('Worker 没返回公钥，确认地址正确');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('系统里没有允许通知，去 设置 → 通知 → 热量账本 打开', 5200); return false; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
+    const r = await fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) });
+    if (!r.ok) throw new Error('订阅没存上');
+    setSetting('push_worker', url);
+    pushOn = true;
+    toast('锁屏通知已开启', 2600);
+    return true;
+  } catch (e) {
+    toast('开启失败：' + (e.message || e), 5200);
+    return false;
+  }
+}
+async function disablePush() {
+  try {
+    const url = setting('push_worker', '') || '';
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      if (url) { try { await fetch(url + '/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) }); } catch (e) {} }
+      await sub.unsubscribe();
+    }
+    pushOn = false;
+    toast('已关闭锁屏通知', 2200);
+  } catch (e) { toast('关闭失败：' + (e.message || e), 3600); }
+}
+
 // 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
 function runNotifyChecks() {
   const d = S.day;
@@ -1990,6 +2050,17 @@ function runNotifyChecks() {
     delete seen.weight; localStorage.setItem('notify_seen', JSON.stringify(seen));   // 没到期就不占用今天的名额
   }
   return false;
+}
+
+function pushNote() {
+  if (!pushSupported()) return '这台设备不支持网页推送';
+  if (pushOn) {
+    const u = setting('push_worker', '');
+    let host = '';
+    try { host = new URL(u).host; } catch (e) {}
+    return '已开启' + (host ? ' · ' + host : '') + ' · 锁屏、App 关闭时也能收到';
+  }
+  return '网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始';
 }
 
 function renderMe() {
@@ -2216,16 +2287,18 @@ function renderMe() {
         <div class="switchrow" style="margin-top:16px">
           <div>
             <div class="stitle">锁屏通知</div>
-            <div class="hint" style="margin:4px 0 0">网页没法自己发锁屏通知，要用「快捷指令」跑一次</div>
+            <div class="hint" style="margin:4px 0 0">${pushNote()}</div>
           </div>
-          <span class="tag">未开启</span>
+          <label class="sw"><input type="checkbox" id="swPush" ${pushOn ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
-        <div class="hint" style="margin-top:12px;line-height:1.85">
-          1. 快捷指令 → 自动化 → 新建 → 时间 → 每天 21:30<br>
-          2. 添加动作「显示通知」，正文写：今天记完了吗？<br>
-          3. 把「运行前询问」关掉<br>
-          <span style="color:var(--muted2)">想「数据一到就通知」：在你「热量采集」脚本最后加一步「显示通知」就行。</span>
-        </div>
+        ${pushOn ? '' : `<div class="hint" style="margin-top:12px;line-height:1.85">
+          开启需要一台免费的推送服务（Cloudflare Worker），一次性设置约 10 分钟：<br>
+          1. 注册 Cloudflare → 新建 Worker → 粘贴仓库里 <b>push/worker.js</b> → Deploy<br>
+          2. 建一个 KV，变量名填 <b>SUBS</b>，绑到这个 Worker<br>
+          3. Triggers 里加定时 <b>30 13 * * *</b>（= 北京时间 21:30）<br>
+          4. 回到这里点开启，粘贴 <b>https://你的子域.workers.dev</b><br>
+          <span style="color:var(--muted2)">详细步骤见仓库 push/README.md</span>
+        </div>`}
       </div>
       <div class="card">
         <h3>通知我当…</h3>
@@ -2405,6 +2478,13 @@ function wireMe() {
       ta.remove();
     }
   });
+
+  const spPush = $('#swPush');
+  if (spPush) spPush.onchange = async () => {
+    if (spPush.checked) { const ok = await enablePush(); if (!ok) spPush.checked = false; }
+    else await disablePush();
+    renderMe();
+  };
 
   $$('[data-nfy]').forEach(b => b.onchange = () => {
     const cfg = notifyCfg();
@@ -3513,6 +3593,8 @@ function init() {
       }
     });
   }
+
+  refreshPushState().catch(() => {});
 
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => hardReloadApp();

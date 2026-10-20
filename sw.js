@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v396';
+const CACHE = 'ledger-v397';
 const ASSETS = [
   './',
   './index.html',
@@ -67,4 +67,49 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(req))
   );
+});
+
+/* ---------- 锁屏推送 ---------- */
+// 服务端（Cloudflare Worker）只发一条“空推送”，正文在这里现场算：
+// 读同源的 data.json，算出今天记了多少、有没有记录。
+self.addEventListener('push', (e) => {
+  e.waitUntil((async () => {
+    let body = '点开看看今天的记录';
+    try {
+      const r = await fetch('./data.json?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) {
+        const j = await r.json();
+        const d = (j && j.data) || {};
+        const now = new Date();
+        const p2 = (n) => String(n).padStart(2, '0');
+        const today = now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate());
+        const logs = (d.logs || []).filter((l) => l.date === today);
+        const intake = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
+        const day = (d.daily || {})[today] || {};
+        if (intake > 0) {
+          body = '今天已记 ' + intake + ' 千卡' + (day.active ? ' · 活动消耗 ' + Math.round(day.active) + ' 千卡' : '');
+        } else {
+          body = '今天还没记录，点一下记一笔';
+        }
+      }
+    } catch (err) { /* 没网就用默认文案 */ }
+    await self.registration.showNotification('热量账本', {
+      body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      tag: 'ledger-daily',
+      renotify: false,
+    });
+  })());
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of cs) {
+      if ('focus' in c) return c.focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow('./');
+  })());
 });
