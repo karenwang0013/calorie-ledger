@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.45', d: '10-20', items: [
+    '顶栏三个按钮略微缩小（内边距和图标各收一点），不再显得过大',
+    '底部导航整条往上移 10px（按钮大小不变），离屏幕最底更远一点',
+  ]},
   { v: 'v2.44', d: '10-20', items: [
     '找到顶部遮挡的真正原因：那条"状态栏实色带"在安全区高度为 0 时仍然强制占 10px，浮在最上层，把顶栏按钮和标题的上沿各切掉一截',
     '现在这条带子的高度严格等于安全区高度（为 0 就不显示），不会再盖住任何东西',
@@ -286,7 +290,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.44';
+const APP_VERSION = 'v2.45';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
