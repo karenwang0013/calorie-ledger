@@ -850,7 +850,7 @@ async function exportJson() {
   try {
     const file = new File([text], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: name.replace(/\.json$/, '') });
+      await navigator.share({ files: [file] });   // 只传文件，不带 title，否则 iOS 会多存一份纯文本
       return 'shared';
     }
   } catch (e) {
