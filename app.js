@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.47', d: '10-21', items: [
+    '改：两台设备的记录真正互相同步 —— 以前只有打开 App 那一刻才会去云端取别人记的东西；现在**切回前台就拉一次**，开着的时候每 90 秒也拉一次，所以手机上记的，iPad 切过去就能看到（反过来也一样）',
+    '前提：两台设备都在「设置 → 数据备份 → 自动同步」里开过同步、填的是同一个 GitHub Token。这是共用一份数据的前提，只需要做一次',
+  ]},
   { v: 'v3.46', d: '10-21', items: [
     '改：圆环的「光泽」重做 —— 去掉中间那道生硬的白光带，改成和卡片/对话框一样的**细边光**：整圈两侧各留一条约 1px 的亮边（上亮、往下渐暗、收尾再回一点），像玻璃边缘那样',
     '改：外发光也压弱了，不再糊成一团',
@@ -727,7 +731,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.46';
+const APP_VERSION = 'v3.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3516,6 +3520,23 @@ function init() {
       else autoCatchUp();
     });
   });
+
+  // 两台设备互相同步记录：切回前台就拉一次，开着的时候每 90 秒也拉一次
+  // （只在开了「自动同步」、两台都填了同一个 Token 时才有东西可拉）
+  const syncRecords = () => {
+    if (typeof cloudToken !== 'function' || !cloudToken()) return;
+    cloudPull().then(r => {
+      if (r !== 'pulled') return;
+      applyTheme(Store.load().settings.theme || 'lime');
+      loadDay();
+      if (S.view === 'me') renderMe();
+      if (S.view === 'trends') loadTrends();
+    }).catch(() => {});
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncRecords();
+  });
+  setInterval(() => { if (!document.hidden) syncRecords(); }, 90000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
