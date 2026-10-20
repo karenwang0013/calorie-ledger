@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.88', d: '10-20', items: [
+    '修：多次点击位置不稳定 —— 每次键盘动画的 timing 不同，导致算出的高度不同',
+    '现在缓存第一次成功的键盘高度，后续点击直接复用，保证每次落点完全一致',
+  ]},
   { v: 'v2.87', d: '10-20', items: [
     '修：多次点击位置不稳定 —— 之前根据键盘高度变化实时定位，但键盘动画每次 timing 不同，导致落点不一致',
     '现在统一等 500ms（键盘动画一定结束后）再定位，保证每次落点完全一致',
@@ -457,7 +461,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.87';
+const APP_VERSION = 'v2.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2567,19 +2571,17 @@ function init() {
       const v = parseFloat(localStorage.getItem('kb_ratio'));
       return (isFinite(v) && v >= 0.30 && v <= 0.70) ? v : 0.50;
     })();
-    const placeCard = (t) => {
+    const placeCard = (t, cachedBottom) => {
       if (!t) return;
-      // 定位前先确保键盘态样式是生效的（否则底部预留不在，位置一定算错）
       document.documentElement.classList.add('kb');
       kbOn = true;
-      void document.body.offsetHeight;   // 强制回流，让预留高度先落地
+      void document.body.offsetHeight;
       const card = t.closest('.card') || t;
       const vv3 = window.visualViewport;
       const shrunk = vv3 ? (window.innerHeight - vv3.height) : 0;
-      // 能测到键盘把可视区压小了 → 用真实值，误差为 0；测不到才退回比例估算
-      const usableBottom = (vv3 && shrunk >= 100)
+      const usableBottom = cachedBottom || ((vv3 && shrunk >= 100)
         ? Math.round(vv3.offsetTop + vv3.height - 8)
-        : Math.round(window.innerHeight * (1 - KB_RATIO));
+        : Math.round(window.innerHeight * (1 - KB_RATIO)));
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
 
       // ① 卡片底边固定在"键盘上方"这个屏幕位置（不论点哪一栏，位置都一样）
@@ -2608,9 +2610,28 @@ function init() {
     };
 
     // 等键盘高度稳定（连续两次采样一致）再定位，避免卡片跟着键盘动画来回跳
-    // 等 500ms 再定位，确保键盘动画完全结束
+    // 缓存第一次成功的键盘高度，后续复用，保证每次落点一致
+    let cachedVvBottom = null;
     const placeWhenSettled = (t) => {
-      setTimeout(() => placeCard(t), 500);
+      const vv3 = window.visualViewport;
+      if (vv3 && cachedVvBottom) {
+        // 用缓存的高度，不再等动画
+        placeCard(t, cachedVvBottom);
+      } else {
+        // 第一次：等高度稳定后缓存
+        let last = null, stable = 0;
+        const tick = () => {
+          const h = vv3 ? Math.round(vv3.height) : window.innerHeight;
+          if (h === last) stable++; else { stable = 0; last = h; }
+          if (stable >= 3) {
+            cachedVvBottom = Math.round(vv3.offsetTop + vv3.height - 8);
+            placeCard(t, cachedVvBottom);
+          } else {
+            setTimeout(tick, 60);
+          }
+        };
+        tick();
+      }
     };
 
     // 再点同一个输入框不会触发 focus，这里补一个点击兜底
@@ -2634,7 +2655,7 @@ function init() {
       setTimeout(() => {
         const el = document.activeElement;
         if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
-        kbOn = false; kbMax = Infinity;
+        kbOn = false; kbMax = Infinity; cachedVvBottom = null;
         document.documentElement.classList.remove('kb');
         const d = document.getElementById('kbDbg');
         if (d) d.remove();
