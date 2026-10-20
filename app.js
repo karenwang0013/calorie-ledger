@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.93';
+const APP_VERSION = 'v1.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2010,7 +2010,7 @@ function init() {
   }
 
   // 手写滚动：不交给系统，顶栏绝对不会跟着动
-  const SC = { el: null, body: null, y: 0, max: 0, drag: false, sy: 0, st: 0, ly: 0, lt: 0, vy: 0, raf: 0 };
+  const SC = { el: null, body: null, y: 0, max: 0, drag: false, sy: 0, st: 0, ly: 0, lt: 0, vy: 0, raf: 0, inner: null };
   const scSet = y => { SC.y = y; SC.body.style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0)'; };
   const scStop = () => { if (SC.raf) { cancelAnimationFrame(SC.raf); SC.raf = 0; } };
   const scClamp = y => Math.min(0, Math.max(-SC.max, y));
@@ -2047,6 +2047,12 @@ function init() {
 
     SC.el.addEventListener('touchstart', e => {
       if (e.touches.length !== 1) return;
+      // 手指落在内部可滚动区域（如关于页的更新日志卡片）时，交给它自己滚
+      const inner = e.target.closest && e.target.closest('.about-fill > .card:first-child');
+      if (inner && inner.scrollHeight > inner.clientHeight + 2) {
+        SC.inner = inner; SC.drag = false; scStop(); return;
+      }
+      SC.inner = null;
       scStop();
       SC.drag = true;
       SC.sy = e.touches[0].clientY; SC.st = SC.y;
@@ -2054,6 +2060,7 @@ function init() {
     }, { passive: true });
 
     SC.el.addEventListener('touchmove', e => {
+      if (SC.inner) return;          // 内部滚动优先，别抢
       if (!SC.drag) return;
       const y = e.touches[0].clientY;
       let next = SC.st + (y - SC.sy);
@@ -2068,6 +2075,7 @@ function init() {
     }, { passive: false });
 
     SC.el.addEventListener('touchend', () => {
+      if (SC.inner) { SC.inner = null; return; }
       if (!SC.drag) return;
       SC.drag = false;
       if (Math.abs(SC.vy) > 0.05 || SC.y > 0 || SC.y < -SC.max) scSpark();
