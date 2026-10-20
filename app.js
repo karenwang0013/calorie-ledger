@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.36', d: '10-21', items: [
+    '改：iPad 上 Dock 的圆角改为按「iPad 自己的屏幕圆角」算 —— iPad 的屏幕角比 iPhone 紧得多，之前照抄了手机的「高度一半」，所以看着不对；现在 iPad 用自己那档（约 20），手机保持原样（iPhone 17 约 44）',
+    '改：iPad 的 Dock 左右边距收到 14，宽度上限仍是 700；玻璃质感、高度逻辑手机和 iPad 一致',
+    'iPad 上还想微调：连点版本号 5 次，面板里能分别调「圆角 / 高度 / 离底」，调完会记住',
+  ]},
   { v: 'v3.35', d: '10-21', items: [
     '改：拍照结果里的照片摘要按「你拍的是什么」来显示 —— 拍实物显示「食物照片」，拍营养成分表显示「营养成分表照片」（下面写「按标签每 100 克换算」）',
     '两张都拍就两行都列出来，各配各自的图',
@@ -684,7 +689,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.35';
+const APP_VERSION = 'v3.36';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3232,13 +3237,19 @@ function init() {
     }
     const w = Math.round(window.innerWidth);
     const pad = window.matchMedia('(min-width: 700px)').matches;
-    let sr = 0;
-    if (pad) sr = 24;
-    else for (const [ww, r] of SCREEN_R) { if (w >= ww) sr = r; }
-    const inset = pad ? 10 : 6;
-    const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-h')) || (pad ? 96 : 88);
-    // 给到高度的一半：四个角能走到的最大弧（和屏幕圆角最接近）
-    const r = Math.max(14, Math.min(sr - inset, h / 2));
+    // 两边的边距、高度都以 CSS 里那份为准，避免脚本和样式各写一个值
+    const cs = getComputedStyle(document.documentElement);
+    const inset = parseFloat(cs.getPropertyValue('--dock-inset')) || 14;
+    const h = parseFloat(cs.getPropertyValue('--dock-h')) || (pad ? 96 : 88);
+    let r;
+    if (pad) {
+      // iPad 的屏幕圆角比 iPhone 紧得多（约 34），Dock 不能照抄手机的「高度一半」
+      r = Math.max(18, Math.min(34 - inset, h * 0.34));
+    } else {
+      let sr = 0;
+      for (const [ww, srr] of SCREEN_R) { if (w >= ww) sr = srr; }
+      r = Math.max(14, Math.min(sr - inset, h / 2));   // 手机：给到高度的一半，最贴近屏幕弧
+    }
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };
 

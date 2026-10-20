@@ -1114,7 +1114,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 @media (min-width: 700px) {
   /* iPad：Dock 用自己的一档边距（离边更远、整体更宽），手机和 iPad 各自看着都合适 */
   :root {
-    --dock-inset: 18px;
+    --dock-inset: 14px;
     --dock-bottom: 26px;
     --dock-h: 96px;
     --dock-r: 16px;
