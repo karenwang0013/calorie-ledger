@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.56', d: '10-21', items: [
+    '删：一组记录的详情弹层里，每一项后面的改名铅笔去掉了（那一层只留 × 删除）；弹层标题旁边的铅笔还在，改整组名字用它',
+    '列表、拍照识别结果里的铅笔不受影响',
+  ]},
   { v: 'v3.55', d: '10-21', items: [
     '改：铅笔再放大到 18px，并拉开「橡皮 / 笔杆 / 笔尖」三段的间隔——小尺寸下最容易辨认的就是这三段，再加上尖头',
     '如果这版还认不出来，我换成「圆角方块里挖一支笔」的做法（像系统编辑按钮那种），那种最一眼就懂',
@@ -763,7 +767,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.55';
+const APP_VERSION = 'v3.56';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1643,7 +1647,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${nameLine(l.name, `data-gedit="${l.id}"`)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
+      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
@@ -1651,29 +1655,6 @@ function openDetail(logs, isGroup, title) {
   S.detailIds = logs.map(l => l.id);
   S.detailIsGroup = !!isGroup;
   S.detailName = title || logs[0].name;
-  $$('[data-gedit]', $('#grpItems')).forEach(b => b.onclick = async ev => {
-    ev.stopPropagation();
-    const id = Number(b.dataset.gedit);
-    const cur = logs.find(l => l.id === id);
-    if (!cur) return;
-    const name = prompt('这个食物叫什么？', cur.name || '');
-    if (name === null) return;
-    const v = name.trim().slice(0, 20);
-    if (!v || v === cur.name) return;
-    const keepIds = logs.map(l => l.id);
-    const wasGroup = isGroup;
-    const oldTitle = title || logs[0].name;
-    try {
-      await api('/api/logs/rename', { ids: [id], name: v, item: true });
-      await loadDay();
-      const fresh = ((S.day && S.day.logs) || []).filter(l => keepIds.includes(l.id));
-      if (fresh.length) {
-        const t = wasGroup ? oldTitle : fresh[0].name;
-        openDetail(fresh, wasGroup, t);
-      } else { closeGroup(); }
-      toast('已改名：' + v, 1800);
-    } catch (e) { toast(e.message); }
-  });
   $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {
