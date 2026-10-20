@@ -13,6 +13,9 @@ const checks = [
   ['卡片高度比例可微调并持久化', /kb_ratio/.test(app) && /KB_RATIO/.test(app)],
   ['键盘态底部预留 120vh', /padding-bottom: 120vh/.test(css)],
   ['缺口/盈余是硬指标', /hasDefOv/.test(fs.readFileSync('api.js','utf8'))],
+  ['键盘动画期间不重复定位（只在稳定后定位一次）', !/\[0, 150, 400, 800, 1200\]\.forEach/.test(app) && /placeWhenSettled/.test(app)],
+  ['定位优先用真实可视高度（vv.offsetTop + vv.height）', /vv3\.offsetTop \+ vv3\.height/.test(app)],
+  ['失焦后不立即判定键盘收起（防瞬时错位）', /700\);/.test(app)],
 ];
 
 let bad = 0;

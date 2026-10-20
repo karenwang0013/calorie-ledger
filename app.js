@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.82', d: '10-20', items: [
+    '修：第二次点「脂肪」卡片会错位 —— 点同一个框时 iOS 会先失焦再聚焦，我一瞬间把"键盘态"关掉了，页面猛地变短再变长，卡片就错位了',
+    '现在失焦后要等 0.7 秒、且确认没有输入框在编辑，才判定键盘收起',
+  ]},
   { v: 'v2.81', d: '10-20', items: [
     '修：点「脂肪」后卡片会上下跳两三遍才停 —— 之前是在键盘动画过程中反复重算位置，每算一次就跳一下',
     '现在等键盘高度连续两次采样一致（即动画结束）后，只定位一次，不再来回跳',
@@ -433,7 +437,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.81';
+const APP_VERSION = 'v2.82';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2629,6 +2633,8 @@ function init() {
       placeWhenSettled(t);
     });
     document.addEventListener('focusout', () => {
+      // 点同一个输入框时，iOS 可能先失焦再聚焦；这里等久一点再判断，
+      // 否则键盘态被误判成"收起" → 底部预留消失 → 页面瞬时变短 → 卡片错位
       setTimeout(() => {
         const el = document.activeElement;
         if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2638,7 +2644,7 @@ function init() {
         if (d) d.remove();
         const t = document.getElementById('kbTune');
         if (t) t.remove();
-      }, 220);
+      }, 700);
     });
   };
 
