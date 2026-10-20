@@ -34,16 +34,16 @@ html {
   height: 100vh;
   overflow-x: hidden;
   background:
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 body {
   /* 与内容区同一套底纹：万一键盘上方留出空隙，也只会看到同样的波点，而不是一条黑边 */
   background:
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
@@ -172,10 +172,10 @@ select {
       rgba(var(--glow-rgb), 0.018) 52%,
       rgba(var(--glow-rgb), 0) 80%),
     /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
     /* 底色：墨绿渐层 */
-    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 .sc-body {
   backface-visibility: hidden;
