@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.19', d: '10-20', items: [
+    '切模式前会先确认：如果你已经手动定过缺口/盈余，弹窗告诉你「会被建议值覆盖」，可以取消',
+    '确认之后才改，取消则什么都不动',
+  ]},
   { v: 'v2.18', d: '10-20', items: [
     '切模式会同时给出建议的缺口/盈余：减脂 -300、维持 0、增肌 +250',
     '应用后你仍然可以自己改，之后只有你改它才变',
@@ -178,7 +182,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.18';
+const APP_VERSION = 'v2.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1535,6 +1539,13 @@ function wireMe() {
     const cur = setting('diet_mode', 'maintain');
     if (cur === k) return;
     const ov = Object.assign({}, setting('target_override', {}));
+    // 已经手动定过缺口/盈余的话，切模式前先确认要不要被建议值覆盖
+    const hasOv = ov.deficit !== undefined && ov.deficit !== null && ov.deficit !== '' && isFinite(Number(ov.deficit));
+    if (hasOv && Math.abs(Number(ov.deficit) - m.deficit) >= 1) {
+      const oldTxt = Number(ov.deficit) > 0 ? `缺口 ${Math.abs(Number(ov.deficit))}` : (Number(ov.deficit) < 0 ? `盈余 ${Math.abs(Number(ov.deficit))}` : '不缺口');
+      const newTxt = m.deficit > 0 ? `缺口 ${m.deficit}` : (m.deficit < 0 ? `盈余 ${-m.deficit}` : '不缺口');
+      if (!confirm(`你现在设的是「${oldTxt}」。\n切到「${m.n}」会把目标改成建议的「${newTxt}」。\n\n确定要改吗？`)) return;
+    }
     delete ov.protein; delete ov.carb; delete ov.fat;
     ov.deficit = m.deficit;                             // 模式同时给一个建议缺口/盈余
     await api('/api/settings', { diet_mode: k, fat_ratio: m.fat, target_override: ov });
