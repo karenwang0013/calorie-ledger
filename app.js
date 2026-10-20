@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.67', d: '10-20', items: [
+    '滑动到顶部或底部时不再"弹弹弹"：越界会被立刻拉回边界，直接停住，没有果冻回弹',
+  ]},
   { v: 'v2.66', d: '10-20', items: [
     '背景恢复：上一版把渐变和波点画到画布层时，被后面一条样式整条覆盖掉了，所以看上去是纯黑。现在已去掉那条覆盖',
     '滑动"像弹簧一样弹弹弹"：键盘关掉后滚动限制没有解除，往下滑会被反复弹回。现在只要没有输入框在编辑，限制立刻解除',
@@ -374,7 +377,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.66';
+const APP_VERSION = 'v2.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2459,12 +2462,26 @@ function init() {
     // 键盘弹起期间：允许往上滚（回看上面的内容），但不允许继续往下滚
     let kbOn = false;
     let kbMax = Infinity;
-    const guard = () => {
-      if (!kbOn) return;
-      // 键盘已经收起 / 没有输入框在编辑 → 立刻解除限制，避免"弹簧回弹"
-      if (!activeInput()) { kbOn = false; kbMax = Infinity; return; }
-      if (window.scrollY > kbMax + 1) window.scrollTo(0, kbMax);
+    // 统一处理"越界回弹"：滑到顶部/底部滑不动，而是直接停住（消掉果冻弹性）
+    let clamping = false;
+    const clamp = () => {
+      if (clamping) return;
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const y = window.scrollY;
+      let target = null;
+      if (y < 0) target = 0;
+      else if (y > max) target = max;
+      if (kbOn) {
+        if (!activeInput()) { kbOn = false; kbMax = Infinity; }   // 键盘已收起 → 解除限制
+        else if (target === null && y > kbMax + 1) target = kbMax;
+      }
+      if (target !== null) {
+        clamping = true;
+        window.scrollTo(0, target);
+        requestAnimationFrame(() => { clamping = false; });
+      }
     };
+    window.addEventListener('scroll', clamp, { passive: true });
     window.addEventListener('scroll', guard, { passive: true });
 
     // 把整张卡片放到底边贴着键盘的位置
