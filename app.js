@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.06', d: '10-20', items: [
+    '修：新设备填同一个 GitHub Token 后点「开启同步」可能报错 —— 现在会先读云端：云端有数据就用云端覆盖这台设备，云端没有才上传本机',
+    '读不到云端时只报错，不会尝试上传，避免把 iPad 上的旧记录覆盖到 iPhone 的数据上',
+    '只是想把 iPhone 的数据拿到 iPad：不用填 Token，直接用「从云端备份恢复」更简单',
+  ]},
   { v: 'v3.05', d: '10-20', items: [
     '修：键盘开着时还能往下拉出一大片空白 —— 现在内容末尾最多贴到键盘上沿（留 6 像素小缝），再往下拉不动；不管你用哪台手机都一样',
     '改：按键盘上的打勾收起键盘时，卡片不再「啪」一下掉下来，而是跟着键盘一起平滑落回原位（0.3 秒）',
@@ -535,7 +540,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.05';
+const APP_VERSION = 'v3.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1747,7 +1752,7 @@ function renderMe() {
         <div class="cardhd"><h3>自动同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
           填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>。<br>
-          换设备时在那边填同一个 Token，点「开启同步」：会先读云端，云端较新就直接恢复，不会用这台设备的旧数据覆盖。
+          换设备时在那边填同一个 Token，点「开启同步」：会先读云端，有云端数据就用云端覆盖这台设备，云端没有才上传本机。
         </div>
         <div class="field">
           <label>GitHub Token</label>

@@ -26,6 +26,7 @@ const checks = [
   ['跨设备备份：上传 / 恢复入口都在', /id="cloudBackup"/.test(app) && /id="cloudRestore"/.test(app) && /function cloudBackupUpload\(/.test(api) && /function cloudBackupFetch\(/.test(api)],
   ['云端备份不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
   ['云端恢复保留本机 Token / AI Key', /gh_token: local\.settings/.test(api) && /dashscope_key: local\.settings/.test(api)],
+  ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
 ];
 

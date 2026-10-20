@@ -732,6 +732,13 @@ function cloudLastError() { return cloudErr; }
 function cloudToken() {
   return (setting('gh_token', '') || '').trim();
 }
+/* 只把 Token 写进本机，不触发自动上传、不动 updatedAt。
+   用于"开启同步"：先比较云端，再决定拉还是推。 */
+function setCloudTokenSilently(token) {
+  const d = Store.load();
+  d.settings.gh_token = token;
+  try { localStorage.setItem(Store.KEY, JSON.stringify(d)); } catch (e) { /* 存储满时忽略 */ }
+}
 function b64encode(str) {
   return btoa(unescape(encodeURIComponent(str)));
 }
@@ -824,7 +831,8 @@ async function cloudPush() {
 }
 
 /* 启动时拉一次：云端更新就覆盖本地 */
-async function cloudPull() {
+async function cloudPull(force) {
+  cloudErr = '';
   if (!cloudToken()) return false;
   cloudPulling = true;
   try {
@@ -837,7 +845,7 @@ async function cloudPull() {
     const local = Store.load();
     const rAt = String(remote.updatedAt || '');
     const lAt = String((local.settings && local.settings.updatedAt) || '');
-    if (rAt && rAt > lAt) {
+    if (force || (rAt && rAt > lAt)) {
       Object.assign(local, remote.data, { settings: Object.assign({}, local.settings, remote.data.settings) });
       local.settings.updatedAt = rAt;
       localStorage.setItem(Store.KEY, JSON.stringify(local));
@@ -846,7 +854,7 @@ async function cloudPull() {
       return 'pulled';
     }
     cloudPulling = false;
-    return false;
+    return 'behind';
   } catch (e) {
     cloudPulling = false;
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
