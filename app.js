@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.83', d: '10-20', items: [
+    '修：第二次点「脂肪」页面跳回顶部 —— 第二次点同一个框不会触发"聚焦"事件，我既没重新定位，底部预留也可能不在，位置就全乱了',
+    '现在每次点输入框都会兜底重新定位，并且定位前强制确保键盘态样式已生效',
+  ]},
   { v: 'v2.82', d: '10-20', items: [
     '修：第二次点「脂肪」卡片会错位 —— 点同一个框时 iOS 会先失焦再聚焦，我一瞬间把"键盘态"关掉了，页面猛地变短再变长，卡片就错位了',
     '现在失焦后要等 0.7 秒、且确认没有输入框在编辑，才判定键盘收起',
@@ -437,7 +441,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.82';
+const APP_VERSION = 'v2.83';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2563,6 +2567,10 @@ function init() {
 
     const placeCard = (t) => {
       if (!t) return;
+      // 定位前先确保键盘态样式是生效的（否则底部预留不在，位置一定算错）
+      document.documentElement.classList.add('kb');
+      kbOn = true;
+      void document.body.offsetHeight;   // 强制回流，让预留高度先落地
       const card = t.closest('.card') || t;
       const vv3 = window.visualViewport;
       const shrunk = vv3 ? (window.innerHeight - vv3.height) : 0;
@@ -2622,6 +2630,12 @@ function init() {
     }
     window.addEventListener('focusout', () => setTimeout(syncKB, 150));
     syncKB();
+
+    // 再点同一个输入框不会触发 focus，这里补一个点击兜底
+    SC.el.addEventListener('click', e => {
+      const t = e.target;
+      if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) placeWhenSettled(t);
+    });
 
     // 聚焦输入框时：立刻把这一栏放到键盘上方（不等键盘动画结束）
     SC.el.addEventListener('focusin', e => {
