@@ -33,12 +33,12 @@ html {
   overflow-x: hidden;
   overscroll-behavior: none;
   /* 背景画在"画布"上：整页只绘制一次，滚动时不重绘 —— 滑动才丝滑 */
-  background-color: #080b09;
+  background-color: #0b120e;
   background-image:
-    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
+    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
   background-size: auto, auto, 15px 15px, 15px 15px, 100% 100%;
   background-position: 0 0, 0 0, 0 0, 7.5px 7.5px, 0 0;
@@ -131,12 +131,12 @@ select {
   display: block;
   position: relative;
   /* 背景画在内容块上：键盘弹起、页面变长时也不会出现"下半段没有背景"的黑区 */
-  background-color: #080b09;
+  background-color: #0b120e;
   background-image:
-    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px);
+    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px);
   background-size: auto, auto, 15px 15px, 15px 15px;
   background-position: 0 0, 0 100%, 0 0, 7.5px 7.5px;
   background-repeat: no-repeat, no-repeat, repeat, repeat;
@@ -157,6 +157,9 @@ select {
 }
 /* 键盘弹起后：底部留白由脚本精确算好，
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
+/* 键盘弹起时锁住手势滚动：位置由脚本放好，手指不再能拖动页面（也就没有惯性弹跳） */
+html.kb { touch-action: none; overscroll-behavior: none; }
+
 html.kb .sc-body {
   /* 留白够用即可：太长会让惯性滑动拖得很远、还容易被弹回 */
   padding-bottom: 40vh;
