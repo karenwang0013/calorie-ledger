@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.16', d: '10-20', items: [
+    '「恢复建议」加了二次确认：避免误点把手动设置的目标缺口/营养值清掉',
+  ]},
   { v: 'v2.15', d: '10-20', items: [
     '目标缺口/盈余改成硬指标：你填多少就是多少，消耗再变它也不动',
     '每日可吃始终 = 当天消耗 − 你填的缺口，不再套用任何下限修正',
@@ -165,7 +168,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.15';
+const APP_VERSION = 'v2.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1532,6 +1535,7 @@ function wireMe() {
   };
   const rn = $('#resetNutri');
   if (rn) rn.onclick = async () => {
+    if (!confirm('恢复建议会把你自己填的目标缺口和营养值清掉，改回自动计算。确定吗？')) return;
     await api('/api/settings', { target_override: {} });
     toast('已恢复建议值');
     await loadDay();
