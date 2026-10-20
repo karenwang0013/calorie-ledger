@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.85', d: '10-20', items: [
+    '加一份"定位日志"：每次定位都会记下 滚动前/目标/上限/滚动后/可视高度/键盘态，连点版本号 5 次可以看到最近 6 条',
+    '不改任何行为，只加记录，用来一次看清第二次点击到底发生了什么',
+  ]},
   { v: 'v2.84', d: '10-20', items: [
     '修：第二次点「脂肪」仍错位 —— 原因是代码里有"两套键盘态开关"互相打架（一套按聚焦、一套按系统高度），第二次点的时候被另一套误关掉',
     '现在只保留"按聚焦判断"这一套，彻底删掉另一套，二次点击也不会再被关',
@@ -445,7 +449,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.84';
+const APP_VERSION = 'v2.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2580,8 +2584,17 @@ function init() {
       const wantTop = 110;
       if (docTop - target < wantTop) target = docTop - wantTop;
 
+      const before = window.scrollY;
       window.scrollTo(0, Math.max(0, Math.min(target, max)));
       kbMax = window.scrollY;
+      // 记录每一次定位，供排查
+      (window.__placeLog = window.__placeLog || []).push(
+        [new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+         'before ' + before, 'target ' + target, 'max ' + max,
+         'after ' + window.scrollY, 'vvH ' + Math.round((window.visualViewport || {}).height || 0),
+         'kb ' + document.documentElement.classList.contains('kb')].join(' | ')
+      );
+      if (window.__placeLog.length > 12) window.__placeLog.shift();
 
 
     };
@@ -2721,6 +2734,7 @@ function init() {
       const box = document.createElement('div');
       box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:100px;z-index:9999;background:#000;color:#7dff8a;font:12px/1.6 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:10px;white-space:pre-wrap;border:1px solid #2c5';
       box.textContent = [
+        ...((window.__placeLog || []).slice(-6)),
         '版本 ' + APP_VERSION,
         '独立模式 ' + (window.navigator.standalone === true),
         'innerH ' + innerHeight + ' / vvH ' + Math.round(vv ? vv.height : 0) + ' / off ' + Math.round(vv ? vv.offsetTop : 0) + ' / scale ' + (vv ? vv.scale : 0),
