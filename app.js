@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.07', d: '10-20', items: [
+    '拍照新增「这是什么」输入框：识别不准（比如黄心猕猴桃 vs 绿心）可以自己填，AI 按你写的品种估算',
+    '克数输入框挪到它右边，一行两个，不多占高度',
+    '卡片最大高度放宽到 88%，加字段后「识别热量」按钮仍不用下滑',
+  ]},
   { v: 'v2.04', d: '10-20', items: [
     '更新记录改成「日期 · 版本号」且每条与实际发版号对齐',
   ]},
@@ -130,7 +135,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.04';
+const APP_VERSION = 'v2.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -617,7 +622,9 @@ async function runPhoto() {
   btn.innerHTML = '<span class="spinner"></span> 识别中…';
   try {
     const grams = Number(($('#photoGrams') || {}).value) || 0;
+    const dishName = (($('#photoName') || {}).value || '').trim();
     let hint = $('#photoHint').value.trim();
+    if (dishName) hint = '用户说这是：' + dishName + '（请按这个食材估算，不要换品种）' + (hint ? '；' + hint : '');
     let modeHint;
     if (S.photoData && S.photo2Data) {
       modeHint = '第一张图是实际吃的食物本体，第二张图是包装上的营养成分表。'
