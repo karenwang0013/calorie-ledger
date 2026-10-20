@@ -14,6 +14,13 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.09', d: '10-20', items: [
+    '「克数（可选）」的字被截断了，加宽右侧输入框并缩小字号，提示完整显示',
+  ]},
+  { v: 'v2.08', d: '10-20', items: [
+    '「食材」和「克数」两栏都标成（可选）：不填就纯靠 AI 看照片识别',
+    '填了的话，AI 会结合你写的食材名和克重一起算，更适合分不清品种的情况',
+  ]},
   { v: 'v2.07', d: '10-20', items: [
     '拍照新增「这是什么」输入框：识别不准（比如黄心猕猴桃 vs 绿心）可以自己填，AI 按你写的品种估算',
     '克数输入框挪到它右边，一行两个，不多占高度',
@@ -135,7 +142,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.07';
+const APP_VERSION = 'v2.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

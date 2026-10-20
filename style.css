@@ -701,8 +701,8 @@ select {
 .drop.small .pickbtn { padding: 12px 16px; font-size: 14px; }
 .drop.small .pickbtn.on { padding: 13px 16px; font-size: 15px; }
 
-.prow2 { display: grid; grid-template-columns: 1.35fr 0.65fr; gap: 8px; margin-bottom: 10px; }
-.prow2 input { width: 100%; }
+.prow2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 10px; }
+.prow2 input { width: 100%; font-size: 13.5px; padding-left: 11px; padding-right: 8px; }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
