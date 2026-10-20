@@ -179,8 +179,14 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 .sc-body {
+  /* 内容层自己也铺一份同样的波点底纹：滚到最底部（比如在「脂肪」那一栏）时，
+     露出来的也一定是底纹，而不是某个空出来的纯色块 */
   backface-visibility: hidden;
   padding-bottom: calc(118px + var(--safe-b));
+  background:
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 
 /* ---------- 顶栏 ---------- */

@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.54', d: '10-20', items: [
+    '内容层自己也铺了一份波点底纹（之前只有内容区底层有），滚到最底部时露出的也是底纹',
+    '红色诊断层保留，用来确认那块黑到底归谁',
+  ]},
   { v: 'v2.53', d: '10-20', items: [
     '【临时诊断版】把网页最底层涂成红色，用来确认键盘上方那块黑到底是谁画的',
     '看完这张图就会改回来，不影响数据',
@@ -319,7 +323,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.53';
+const APP_VERSION = 'v2.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
