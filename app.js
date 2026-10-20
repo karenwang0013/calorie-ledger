@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.28', d: '10-20', items: [
+    '上下两条栏改成 App 布局的一部分（不再是固定/吸顶定位），中间内容区独立滚动 —— 无论是滑动还是弹键盘，顶栏和底栏都不可能被带走',
+    '键盘弹起时底栏自动收起，内容区自动扩展，不再被顶到键盘上方',
+    '点输入框后标题栏消失的问题一并解决',
+  ]},
   { v: 'v2.27', d: '10-20', items: [
     '键盘弹起时把底部导航和加号收起来：它们之前会被 iOS 顶到键盘上方浮起来',
     '顶栏继续吸顶钉住，键盘弹起、切换输入框都不移动',
@@ -215,7 +220,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.27';
+const APP_VERSION = 'v2.28';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2279,7 +2284,7 @@ function init() {
   // 顶部导航固定 + 内容用「容器原生滚动」：
   // 之前手写 transform 滚动会让 iOS 不知道输入框的真实位置，聚焦时整页乱跳、顶栏跑到中间。
   const SC = { el: null, body: null };
-  window.scTop = () => window.scrollTo(0, 0);
+  window.scTop = () => { const el = document.getElementById('scroller'); if (el) el.scrollTop = 0; };
   window.scMeasure = () => {};
   const initScroll = () => {
     SC.el = document.getElementById('scroller');
@@ -2315,7 +2320,7 @@ function init() {
         const r = t.getBoundingClientRect();
         const top = vTop + 96, bottom = vTop + vH - 28;
         if (r.top < top || r.bottom > bottom) {
-          window.scrollBy(0, r.top - Math.max(top, vTop + vH * 0.30));
+          SC.el.scrollTop += r.top - Math.max(top, vTop + vH * 0.30);
         }
       }, 280);
     });

@@ -39,9 +39,10 @@ html { background: #0d0f0e; overflow-x: hidden; }
 html, body {
   margin: 0;
   padding: 0;
-  /* 改回「文档级滚动」：iOS 对文档滚动的键盘处理是原生正确的，
-     内层容器滚动 + fixed 顶栏在键盘弹起时才会各种错位 */
-  min-height: 100%;
+  /* App 外壳：文档本身完全不滚，顶栏/底栏是布局的一部分（不 fixed、不 sticky、不 transform），
+     只有中间内容区滚动 —— 这样任何情况都不可能把上下两条栏带走 */
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior-y: none;
   background: var(--bg);
   color: var(--text);
@@ -51,12 +52,11 @@ html, body {
 }
 
 body {
-  /* 注意：body 不能设 overflow-x:hidden —— 那会让 body 变成滚动容器，
-     吸顶的顶栏就失效了（会跟着内容一起滚走）。横向溢出交给 html */
-  position: static;
+  position: relative;
   width: 100%;
-  min-height: 100%;
-  overscroll-behavior-y: none;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 
@@ -70,7 +70,7 @@ body { -webkit-overflow-scrolling: touch; }
 @keyframes slideout { to { transform: translateX(58px); opacity: 0; } }
 
 /* 弹层打开时，背后的页面不跟着滚 */
-html.lock, html.lock body, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
+html.lock .scroller, html.noscroll .scroller { overflow: hidden; overscroll-behavior: none; }
 
 /* 全局隐藏滚动条（内容照样能滑） */
 html, body, .app, .view, .sh-body, .mbody,
@@ -108,14 +108,21 @@ select {
 .app {
   max-width: 520px;
   margin: 0 auto;
-  min-height: 100%;
-  display: block;
+  height: 100%;
+  display: flex; flex-direction: column;
+  overflow: hidden;
   background: #000;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
 .scroller {
-  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   /* 顶栏改成吸顶后本身占位置，这里不再需要留白 */
 }
 .scroller {
@@ -149,14 +156,14 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
 .sc-body {
-  backface-visibility: hidden;
-  padding-bottom: calc(92px + var(--safe-b));
+  padding-bottom: 24px;
 }
 
 /* ---------- 顶栏 ---------- */
 .topbar {
-  position: sticky;
-  top: 0; left: 0; right: 0;
+  position: relative;
+  flex: 0 0 auto;
+  left: 0; right: 0;
   max-width: 520px; margin: 0 auto;
   z-index: 30;
   display: flex;
@@ -483,8 +490,8 @@ select {
 
 /* ---------- 底部导航 ---------- */
 .tabbar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 30;
   display: flex;
   justify-content: center;
