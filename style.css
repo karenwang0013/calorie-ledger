@@ -1264,6 +1264,11 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    做法：描边本身是一层渐变，裁到那 1px 边框里；填色单独一层，压在下面。
    ================================================================== */
 :root {
+  /* 磨砂玻璃：底色略微透一点（不是全透），配合 backdrop-filter 才像一层薄玻璃 */
+  --glass-card: rgba(21, 24, 27, 0.70);
+  --glass-card2: rgba(27, 31, 35, 0.66);
+  --glass-bg2: rgba(15, 17, 19, 0.76);
+  --glass-blur: blur(16px) saturate(125%);
   /* 柔一点的边缘光：亮部压下来，暗部不要拉得太开，看起来像一层雾面玻璃的边，不是金属高光 */
   --edge-gloss: linear-gradient(180deg,
     rgba(255, 255, 255, 0.105) 0%,
@@ -1278,7 +1283,17 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 }
 
 /* 底色是 --card 的框 */
-.card, .stats, .macros, .meal, .seg, .shotrow, .ritem, .setgroup, .chip {
+.card, .stats, .macros, .meal, .seg, .setgroup {
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(var(--glass-card), var(--glass-card)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+/* 卡片里的小块（识别结果、拍照摘要）留在实底上，避免一层套一层地反复模糊 */
+.shotrow, .ritem, .chip {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
   background-origin: border-box;
@@ -1309,15 +1324,21 @@ input:focus, textarea:focus, select:focus {
 /* 弹层 / 卡片详情 */
 .sheet, .modal {
   border: 1px solid transparent;
-  background-image: linear-gradient(var(--bg2), var(--bg2)), var(--edge-gloss);
+  background-color: transparent;
+  background-image: linear-gradient(var(--glass-bg2), var(--glass-bg2)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  backdrop-filter: blur(22px) saturate(130%);
 }
 
 /* 底部 Dock：底色本来是渐变，填色层换回它自己的渐变 */
 .tabbar .inner {
   border: 1px solid transparent;
-  background-image: linear-gradient(180deg, #15191c 0%, #0d1012 100%), var(--edge-gloss);
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(21, 25, 28, 0.78) 0%, rgba(13, 16, 18, 0.84) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
