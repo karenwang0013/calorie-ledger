@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.07', d: '10-20', items: [
+    '修：键盘开着时上下滑，卡片会「短短短」地抖 —— 原因是脚本每帧都在把页面往边界拽，和系统的回弹顶牛。现在手指按着时脚本完全不插手，只在你抬手、回弹走完之后收一次尾',
+    '改：键盘态底部留白改成「可见底边反算」，系统的滚动上限本身就正好停在「卡片底部贴着键盘上沿留一条小缝」，滑到底就是你要的那个位置，不需要再纠偏',
+  ]},
   { v: 'v3.06', d: '10-20', items: [
     '修：新设备填同一个 GitHub Token 后点「开启同步」可能报错 —— 现在会先读云端：云端有数据就用云端覆盖这台设备，云端没有才上传本机',
     '读不到云端时只报错，不会尝试上传，避免把 iPad 上的旧记录覆盖到 iPhone 的数据上',
@@ -540,7 +544,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.06';
+const APP_VERSION = 'v3.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2725,16 +2729,14 @@ function init() {
       const v = vv ? Math.min(window.innerHeight, vv.height) : window.innerHeight - kbH;
       return Math.round(v);
     };
-    // 键盘态该留多少底：键盘"盖"在页面上（innerHeight 不变）→ 留键盘那么高；
-    // 键盘把页面整体顶矮（innerHeight 跟着缩）→ 内容底边本来就在键盘上方，只留一条小缝
-    const kbPad = () => {
-      if (window.innerHeight < fullH - 80) return KB_GAP;
-      const covered = window.innerHeight - visibleBottom();
-      const h = covered > 80 ? covered : kbH;
-      return Math.max(140, Math.round(Math.min(h, window.innerHeight * 0.62) + KB_GAP));
-    };
-    // 键盘态下面能滑到的最远处：内容末尾 = 可见底边 - 6px，多一像素都不给
-    const kbMaxY = () => (kbB ? Math.max(0, contentEndDoc() - kbB + KB_GAP) : Infinity);
+    // 留白直接用「可见底边」反算：pad = innerHeight - kbB + 6
+    // 这样系统自己的滚动上限（scrollHeight - innerHeight）就正好等于「内容末尾贴着键盘上沿」，
+    // 不需要脚本再去每帧纠偏 —— 不纠偏就不会和系统的橡皮筋来回抢，卡片也就不会抖。
+    const kbPadFor = (b) => Math.max(KB_GAP, Math.round(window.innerHeight - b + KB_GAP));
+    // 内容末尾（文档坐标）只在进键盘态 / 键盘停稳时量一次，滚动过程中不再触发排版计算
+    let kbEndCache = 0;
+    // 键盘态能滑到的最远处（用缓存，不碰 DOM）
+    const kbMaxY = () => (kbB && kbEndCache ? Math.max(0, kbEndCache - kbB + KB_GAP) : Infinity);
     const kbWantY = () => {
       const tb = document.querySelector('.topbar');
       const tbB = tb ? tb.getBoundingClientRect().bottom : 51;
@@ -2745,7 +2747,7 @@ function init() {
       cancelAnimationFrame(closeRaf); closeRaf = 0;
       document.documentElement.classList.remove('kb');
       document.documentElement.style.removeProperty('--kb-pad');
-      kbB = 0; kbSeen = false; kbHomeY = -1;
+      kbB = 0; kbSeen = false; kbHomeY = -1; kbEndCache = 0;
     };
     const closeKb = () => {
       if (!isKb() || closeRaf) return;
@@ -2775,26 +2777,35 @@ function init() {
       const centerDoc = r.top + window.scrollY + r.height / 2;
       if (!(isKb() && kbSeen)) kbB = Math.round(window.innerHeight - kbH);   // 预测键盘弹起后的可见底边
       document.documentElement.classList.add('kb');
-      document.documentElement.style.setProperty('--kb-pad', kbPad() + 'px');
+      kbEndCache = contentEndDoc();                                          // 只量这一次
+      document.documentElement.style.setProperty('--kb-pad', kbPadFor(kbB) + 'px');
       const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), kbMaxY()));
       if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
     };
 
-    // 越界回弹：每帧最多检查一次（rAF 合并），并且现场读取真实上限，绝不使用缓存值
-    // 键盘态额外卡一条：内容末尾不许滑到键盘上沿之上（这样不管什么机型都滑不出空白）
-    let clampRaf = 0;
+    // 越界回弹：每帧最多检查一次（rAF 合并）。
+    // 手指按着的时候一律不动手 —— 键盘态以前每帧 scrollTo 去"拉回边界"，
+    // 和系统自己的橡皮筋回弹来回抢，表现就是卡片短短短地抖。
+    let clampRaf = 0, touching = false;
     const clamp = () => {
-      if (clampRaf) return;
+      if (clampRaf || touching) return;
       clampRaf = requestAnimationFrame(() => {
         clampRaf = 0;
-        let max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        if (isKb()) max = Math.min(max, kbMaxY());
+        if (touching) return;
+        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         const y = window.scrollY;
         if (y < 0) window.scrollTo(0, 0);
-        else if (y > max) window.scrollTo(0, max);
+        else if (y > max + 2) window.scrollTo(0, max);
       });
     };
     window.addEventListener('scroll', clamp, { passive: true });
+    const endTouch = () => {
+      touching = false;
+      setTimeout(() => { if (!touching) clamp(); }, 260);   // 等系统回弹走完再收一次尾
+    };
+    window.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+    window.addEventListener('touchend', endTouch, { passive: true });
+    window.addEventListener('touchcancel', endTouch, { passive: true });
 
     // 键盘弹起/收起时校准：高度只认"停稳后"的值；收起时用动画把多出来的留白还回去
     if (window.visualViewport) {
@@ -2815,9 +2826,12 @@ function init() {
               localStorage.setItem('kb_h', String(kbH));
             }
             kbB = visibleBottom();
+            kbEndCache = contentEndDoc();
             const t = activeInput();
             if (!t) return;
-            document.documentElement.style.setProperty('--kb-pad', kbPad() + 'px');
+            const want = kbPadFor(kbB);
+            const now = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
+            if (Math.abs(want - now) >= 6) document.documentElement.style.setProperty('--kb-pad', want + 'px');
             const r = t.getBoundingClientRect();
             if (Math.abs(r.top + r.height / 2 - kbWantY()) > 40) kbFill(t);   // 偏了才补，避免二次跳
           }, 240);
