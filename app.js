@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.24', d: '10-20', items: [
+    '修：键盘弹起后顶栏仍会掉到屏幕中间（上半截内容露出来）',
+    '原因是 iOS 会把 position:fixed 的 body 一起推走；现在 body 不再固定，并在键盘弹起时实时补偿顶栏位置',
+  ]},
   { v: 'v2.23', d: '10-20', items: [
     '修：点输入框时光标乱跳、滑动时整页乱跳、顶栏「热量账本」跑到屏幕中间',
     '内容区改成容器内原生滚动（页面本身仍然不能滚），iOS 能准确知道输入框在哪，键盘弹起只滚内容、不拖顶栏',
@@ -199,7 +203,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.23';
+const APP_VERSION = 'v2.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2278,6 +2282,20 @@ function init() {
     SC.el = document.getElementById('scroller');
     SC.body = document.getElementById('scBody');
     if (!SC.el || !SC.body) return;
+    // 键盘弹起时 iOS 可能会平移可视区域，这里实时补偿，保证顶栏始终在最上沿
+    const vv = window.visualViewport;
+    const syncVV = () => {
+      const off = vv ? Math.max(0, Math.round(vv.offsetTop || 0)) : 0;
+      document.documentElement.style.setProperty('--vv-top', off + 'px');
+      syncTopH();
+    };
+    if (vv) {
+      vv.addEventListener('scroll', syncVV);
+      vv.addEventListener('resize', syncVV);
+    }
+    window.addEventListener('focusin', () => setTimeout(syncVV, 80));
+    window.addEventListener('focusout', () => setTimeout(syncVV, 120));
+
     // 键盘弹起后，把正在输入的框滚到上方可见处
     SC.el.addEventListener('focusin', e => {
       const t = e.target;

@@ -50,9 +50,15 @@ html, body {
 }
 
 body {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  /* 关键：这里不能用 position:fixed —— iOS 键盘弹起时会把 fixed 的 body 一起推走，
+     顶栏就会跑到屏幕中间。用相对定位 + 高度锁定，文档本身照样滚不动 */
+  position: relative;
+  width: 100%;
   overflow: hidden; overscroll-behavior: none;
 }
+
+/* 键盘弹起导致可视区域平移时，顶栏跟着补偿，始终贴在最上沿 */
+.topbar, .statusbg { transform: translateY(var(--vv-top, 0px)); }
 
 
 body { -webkit-overflow-scrolling: touch; }
