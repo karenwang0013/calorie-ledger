@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.95', d: '10-20', items: [
+    '紧急修复：v2.94 用了"缓存的页面高度上限"，而这个值在页面还没渲染完时就算好了，导致一滑就被拉回，像果冻一样滑不动',
+    '改成每帧最多检查一次、并且现场读取真实上限（不再用缓存）',
+  ]},
   { v: 'v2.94', d: '10-20', items: [
     '恢复昨天那套丝滑滚动：背景只画在画布层（整页绘制一次），删掉了滚动层上那份每帧重绘的背景',
     '回弹检测不再在滚动事件里做布局重读（那会每帧强制重排导致卡顿），改成缓存上限、只在 resize 时重算',
@@ -486,7 +490,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.94';
+const APP_VERSION = 'v2.95';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2564,23 +2568,19 @@ function init() {
     };
 
     // 越界回弹：滑出边界就停住（不含键盘态的任何东西，避免互相打架）
-    // 越界回弹：只在越界时才滚动回边界。max 缓存起来，滚动事件里不做布局重读，避免卡顿
-    let clamping = false;
-    let maxScroll = 0;
-    const measureMax = () => { maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight); };
+    // 越界回弹：每帧最多检查一次（rAF 合并），并且现场读取真实上限，绝不使用缓存值
+    let clampRaf = 0;
     const clamp = () => {
-      if (clamping) return;
-      const y = window.scrollY;
-      if (y < 0 || y > maxScroll) {
-        clamping = true;
-        window.scrollTo(0, Math.max(0, Math.min(y, maxScroll)));
-        requestAnimationFrame(() => { clamping = false; });
-      }
+      if (clampRaf) return;
+      clampRaf = requestAnimationFrame(() => {
+        clampRaf = 0;
+        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        const y = window.scrollY;
+        if (y < 0) window.scrollTo(0, 0);
+        else if (y > max) window.scrollTo(0, max);
+      });
     };
     window.addEventListener('scroll', clamp, { passive: true });
-    window.addEventListener('resize', measureMax);
-    window.addEventListener('orientationchange', () => setTimeout(measureMax, 300));
-    measureMax();
 
     // 记住键盘高度（只用来"预判位置"，不参与任何滚动监听）
     let kbH = parseFloat(localStorage.getItem('kb_h'));
