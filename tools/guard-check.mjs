@@ -11,7 +11,7 @@ const checks = [
   ['内容层不许是独立合成层', !/backface-visibility: hidden/.test(css.split('.sc-body')[1] || '')],
   ['键盘态用"有输入框在编辑"判定', /classList\.add\('kb'\)/.test(app)],
   ['键盘高度记忆并持久化（kb_h）', /kb_h/.test(app)],
-  ['键盘态底部预留 120vh', /padding-bottom: 120vh/.test(css)],
+  ['键盘态底部留白由脚本收紧（--kb-pad）', /padding-bottom: var\(--kb-pad/.test(css) && /--kb-pad/.test(app)],
   ['缺口/盈余是硬指标', /hasDefOv/.test(fs.readFileSync('api.js','utf8'))],
   ['聚焦栏居中（centerFor）', /centerFor/.test(app)],
   ['只在"真点"时预定位（touchend 位移<8px），滑过不触发', /moved < 8/.test(app)],
