@@ -32,17 +32,16 @@ html {
   min-height: 100%;
   overflow-x: hidden;
   overscroll-behavior: none;
-  /* 背景画在"画布"上：整页只绘制一次，滚动时不重绘 —— 滑动才丝滑 */
+  /* 背景只画在"画布"这一层：整页绘制一次，滚动时不重绘 → 滑动丝滑 */
   background-color: #080b09;
   background-image:
-    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
+    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.085) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.085) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
   background-size: auto, auto, 15px 15px, 15px 15px, 100% 100%;
   background-position: 0 0, 0 0, 0 0, 7.5px 7.5px, 0 0;
-  background-attachment: scroll;
 }
 body {
   background: transparent;
@@ -130,16 +129,7 @@ select {
   min-height: 100vh;
   display: block;
   position: relative;
-  /* 背景画在内容块上：键盘弹起、页面变长时也不会出现"下半段没有背景"的黑区 */
-  background-color: #080b09;
-  background-image:
-    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px);
-  background-size: auto, auto, 15px 15px, 15px 15px;
-  background-position: 0 0, 0 100%, 0 0, 7.5px 7.5px;
-  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  background: transparent;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
@@ -159,15 +149,6 @@ select {
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
 /* 键盘弹起时页面会变长、光晕被摊薄，所以只在这个状态下把背景补亮：
    其他页面/状态仍然用原来的强度 */
-html.kb .app {
-  background-color: #0b120e;
-  background-image:
-    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.16) 0%, rgba(var(--glow-rgb), 0) 70%),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px),
-    radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px);
-}
-
 /* 键盘弹起时只允许"往下拨"（= 页面往上走，回看上面的内容）；
    往上拨（= 继续往下滚到空白处）不允许，也就没有那下弹跳 */
 html.kb { touch-action: pan-down; overscroll-behavior: none; }

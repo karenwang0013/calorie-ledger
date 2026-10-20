@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.94', d: '10-20', items: [
+    '恢复昨天那套丝滑滚动：背景只画在画布层（整页绘制一次），删掉了滚动层上那份每帧重绘的背景',
+    '回弹检测不再在滚动事件里做布局重读（那会每帧强制重排导致卡顿），改成缓存上限、只在 resize 时重算',
+  ]},
   { v: 'v2.93', d: '10-20', items: [
     '彻底清理：删掉所有互相打架的滚动逻辑（touchstart 直接滚、点击兜底、多次定时器、vv resize 重滚、键盘态滚动限制）',
     '只保留一个动作：手指"真点"到输入框时，在键盘弹起前就把它放到正中间；聚焦后再补一次（偏差 >16px 才动）',
@@ -482,7 +486,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.93';
+const APP_VERSION = 'v2.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2560,18 +2564,23 @@ function init() {
     };
 
     // 越界回弹：滑出边界就停住（不含键盘态的任何东西，避免互相打架）
+    // 越界回弹：只在越界时才滚动回边界。max 缓存起来，滚动事件里不做布局重读，避免卡顿
     let clamping = false;
+    let maxScroll = 0;
+    const measureMax = () => { maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight); };
     const clamp = () => {
       if (clamping) return;
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const y = window.scrollY;
-      if (y < 0 || y > max) {
+      if (y < 0 || y > maxScroll) {
         clamping = true;
-        window.scrollTo(0, Math.max(0, Math.min(y, max)));
+        window.scrollTo(0, Math.max(0, Math.min(y, maxScroll)));
         requestAnimationFrame(() => { clamping = false; });
       }
     };
     window.addEventListener('scroll', clamp, { passive: true });
+    window.addEventListener('resize', measureMax);
+    window.addEventListener('orientationchange', () => setTimeout(measureMax, 300));
+    measureMax();
 
     // 记住键盘高度（只用来"预判位置"，不参与任何滚动监听）
     let kbH = parseFloat(localStorage.getItem('kb_h'));
