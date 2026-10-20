@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.94';
+const APP_VERSION = 'v1.95';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2205,6 +2205,20 @@ function init() {
     if (Store.load().settings.sync_toast !== false) {
       toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
     }
+  });
+
+  // 跨天检测：放在后台过夜，第二天打开要自动切到今天
+  const checkDay = () => {
+    const t = todayISO();
+    if (t === S.today) return;
+    S.today = t;
+    S.date = t;
+    loadDay();
+  };
+  setTimeout(checkDay, 1500);
+  setInterval(checkDay, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkDay();
   });
 
   // 从后台切回来时再拉一次
