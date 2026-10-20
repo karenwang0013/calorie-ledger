@@ -14,6 +14,12 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.64', d: '10-20', items: [
+    '键盘上方那块黑：底部留白恢复到足够长，页面尽头始终在键盘下方；往下能不能滑由脚本卡住',
+    '键盘弹起期间：只能往上滑回看内容，继续往下滑会被立刻挡回原处',
+    '滑动的流畅度：去掉了滚动过程中反复执行的处理（之前滚动时每帧都在算键盘状态），只在键盘开关的那一刻处理一次',
+    '卡片位置再往下，底边贴着键盘上沿',
+  ]},
   { v: 'v2.63', d: '10-20', items: [
     '底色恢复成原来的配色（墨绿渐变 + 光晕 + 波点），并改由一层"固定背景"绘制：滑动时不再重绘背景，动画才顺',
     '弹窗位置再往下：卡片底边几乎贴着键盘上沿',
@@ -360,7 +366,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.63';
+const APP_VERSION = 'v2.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2441,74 +2447,56 @@ function init() {
       const el = document.activeElement;
       return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
     };
-    // iOS 在键盘弹起后会有一块区域没被重绘（表现为纯黑，滑动几下才消失）。
-    // 这里主动做一个 1px 的滚动抖动，逼它重画。
-    const nudge = () => {
-      const y = window.scrollY;
-      window.scrollTo(0, y + 1);
-      requestAnimationFrame(() => window.scrollTo(0, y));
+
+    // 键盘弹起期间：允许往上滚（回看上面的内容），但不允许继续往下滚
+    let kbOn = false;
+    let kbMax = Infinity;
+    const guard = () => {
+      if (!kbOn) return;
+      if (window.scrollY > kbMax + 1) window.scrollTo(0, kbMax);
     };
-    const revealActive = () => {
-      const t = activeInput();
-      if (!t || !SC.el) return;
+    window.addEventListener('scroll', guard, { passive: true });
+
+    // 把整张卡片放到底边贴着键盘的位置
+    const placeCard = (t) => {
+      if (!t) return;
       const vv2 = window.visualViewport;
       const vH = vv2 ? vv2.height : window.innerHeight;
+      const card = t.closest('.card') || t;
+      const rb = card.getBoundingClientRect().bottom;
+      const want = vH - 12;
+      if (rb > want) window.scrollBy(0, rb - want);
       const r = t.getBoundingClientRect();
-      const topLimit = 96, bottomLimit = vH - 24;
-      if (r.bottom > bottomLimit) SC.el.scrollTop += r.bottom - bottomLimit;
-      else if (r.top < topLimit) SC.el.scrollTop -= (topLimit - r.top);
+      if (r.top < 96) window.scrollBy(0, r.top - 96);
+      kbMax = window.scrollY;
     };
+
     const syncKB = () => {
       const h = vv ? vv.height : window.innerHeight;
-      const kb = (maxH - h) > 120;
-      document.documentElement.classList.toggle('kb', kb);
-      setTimeout(revealActive, 60);
-      setTimeout(revealActive, 260);
-      setTimeout(nudge, 320);
-      setTimeout(nudge, 700);
-      // 关键：把外壳高度设成「当前可见高度」。
-      // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
-      // 不要给外壳加 transform：iOS 的 offsetTop 在键盘弹起时并不可靠，
-      // 一旦位移就会把内容整体推回上方（看起来像"页面跳回顶部"）
+      const on = (maxH - h) > 120;
+      if (on === kbOn) return;              // 只在"开/关"变化时处理，滚动过程中不再做事
+      kbOn = on;
+      document.documentElement.classList.toggle('kb', on);
+      if (on) {
+        const t = activeInput();
+        [0, 160, 420, 800].forEach(ms => setTimeout(() => { if (kbOn) placeCard(t || activeInput()); }, ms));
+      } else {
+        kbMax = Infinity;
+      }
+      setTimeout(syncTopH, 50);
     };
     if (vv) {
-      vv.addEventListener('resize', () => { syncKB(); setTimeout(syncTopH, 50); });
+      vv.addEventListener('resize', syncKB);
       vv.addEventListener('scroll', syncKB, { passive: true });
     }
     window.addEventListener('focusout', () => setTimeout(syncKB, 150));
     syncKB();
 
-    // 键盘弹起后，把正在输入的框滚到上方可见处
+    // 聚焦输入框时：立刻把这一栏放到键盘上方（不等键盘动画结束）
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
-      // 立刻把输入框拉到上方（不等键盘弹完），这样 iOS 根本不需要自己位移整页
-      const put = () => {
-        const vv2 = window.visualViewport;
-        const vH = vv2 ? vv2.height : window.innerHeight;
-        const root = document.documentElement;
-        const card = t.closest('.card') || t;
-        root.style.setProperty('--kb-pad', '100vh');      // 先给足下方空间
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          const rb = card.getBoundingClientRect().bottom;
-          const want = vH - 12;                            // 卡片底边几乎贴着键盘
-          if (rb > want) window.scrollBy(0, rb - want);
-          const r = t.getBoundingClientRect();
-          if (r.top < 96) window.scrollBy(0, r.top - 96);
-          // 收紧底部留白：让"能滚的距离"正好用完 → 只能往上滚，往下滚不动
-          const body = document.getElementById('scBody');
-          if (body) {
-            const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
-            const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
-            const pad = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
-            root.style.setProperty('--kb-pad', pad + 'px');
-          }
-          const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-          if (window.scrollY > maxY) window.scrollTo(0, maxY);
-        }));
-      };
-      // 键盘弹起有动画，位置要连续校正几次
-      [0, 150, 400, 800].forEach(ms => setTimeout(put, ms));
+      [0, 150, 400, 800].forEach(ms => setTimeout(() => placeCard(t), ms));
     });
   };
 
