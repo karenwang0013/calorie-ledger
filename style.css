@@ -168,8 +168,9 @@ html.kb .app {
     radial-gradient(circle, rgba(var(--glow-rgb), 0.075) 1px, transparent 1.3px);
 }
 
-/* 键盘弹起时锁住手势滚动：位置由脚本放好，手指不再能拖动页面（也就没有惯性弹跳） */
-html.kb { touch-action: none; overscroll-behavior: none; }
+/* 键盘弹起时只允许"往下拨"（= 页面往上走，回看上面的内容）；
+   往上拨（= 继续往下滚到空白处）不允许，也就没有那下弹跳 */
+html.kb { touch-action: pan-down; overscroll-behavior: none; }
 
 html.kb .sc-body {
   /* 留白够用即可：太长会让惯性滑动拖得很远、还容易被弹回 */

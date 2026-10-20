@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.72', d: '10-20', items: [
+    '点哪一栏，就把哪一栏放到可视区域的正中间（顶栏下沿到键盘上沿之间），不会再压到键盘、也不会跑到屏幕外',
+    '键盘弹起时不再锁死：手指往下拨可以回看上面的内容；只有"继续往下滚到空白处"被挡住',
+  ]},
   { v: 'v2.71', d: '10-20', items: [
     '全局背景恢复原来的强度（首页、趋势页不再过艳）；只有键盘弹起的那个界面把背景补亮，和你说"刚好的那个状态"一致',
     '反复点「脂肪」不再乱跳：弹出位置改成按"绝对位置"计算，点多少次都停在同一个高度',
@@ -393,7 +397,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.71';
+const APP_VERSION = 'v2.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2504,10 +2508,10 @@ function init() {
       if (!t) return;
       const vv2 = window.visualViewport;
       const vH = vv2 ? vv2.height : window.innerHeight;
-      const card = t.closest('.card') || t;
-      // 用"绝对位置"算目标，而不是相对滚动 —— 反复点同一栏也不会越滚越偏
-      const docBottom = card.getBoundingClientRect().bottom + window.scrollY;
-      let target = Math.round(docBottom - (vH - 12));
+      // 目标：把正在编辑的这一栏放到"顶栏下沿 与 键盘上沿"这段可视区域的中间
+      const r0 = t.getBoundingClientRect();
+      const docCenter = r0.top + window.scrollY + r0.height / 2;
+      let target = Math.round(docCenter - (96 + vH) / 2);
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       target = Math.max(0, Math.min(target, max));
       window.scrollTo(0, target);
@@ -2539,7 +2543,7 @@ function init() {
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
-      [0, 150, 400, 800].forEach(ms => setTimeout(() => placeCard(t), ms));
+      [0, 150, 400, 800, 1200].forEach(ms => setTimeout(() => placeCard(t), ms));
     });
   };
 
