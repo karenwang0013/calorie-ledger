@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.30', d: '10-21', items: [
+    '修：底部弹出的提示条（「现在是 10-20 23:00 那份…」这类消息）会压到 Dock 上；现在改成按 Dock 的位置算，固定浮在 Dock 上方，不再重叠',
+  ]},
   { v: 'v3.29', d: '10-21', items: [
     '改：中间那个绿色加号按钮的圆角也改成「跟 Dock 同心」—— Dock 圆角减去加号到 Dock 边的距离，一层套一层（屏幕圆角 → Dock 圆角 → 加号圆角），不再是一个随手写死的值',
   ]},
@@ -659,7 +662,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.29';
+const APP_VERSION = 'v3.30';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
