@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.56', d: '10-20', items: [
+    '键盘弹起后主动触发一次重绘：iOS 会有一块区域没画上（纯黑，滑几下才消失），现在弹起后自动把这块补画',
+    '滑动时右侧的滚动条彻底隐藏（之前只对部分容器生效，漏了主内容区）',
+  ]},
   { v: 'v2.55', d: '10-20', items: [
     '找到最可能的真正原因：内容层被设成了独立合成层（backface-visibility: hidden），iOS 在滚动到最底部时，这一层的末端之外会渲染成纯黑',
     '去掉这个合成层设置，并撤掉上一版多加的那层底纹（就是你说的"两层波点"），红色诊断层也已移除',
@@ -327,7 +331,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.55';
+const APP_VERSION = 'v2.56';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2408,6 +2412,15 @@ function init() {
       const el = document.activeElement;
       return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
     };
+    // iOS 在键盘弹起后会有一块区域没被重绘（表现为纯黑，滑动几下才消失）。
+    // 这里主动做一个 1px 的滚动抖动，逼它重画。
+    const nudge = () => {
+      const el = SC.el;
+      if (!el) return;
+      const y = el.scrollTop;
+      el.scrollTop = y + 1;
+      requestAnimationFrame(() => { el.scrollTop = y; });
+    };
     const revealActive = () => {
       const t = activeInput();
       if (!t || !SC.el) return;
@@ -2424,6 +2437,8 @@ function init() {
       document.documentElement.classList.toggle('kb', kb);
       setTimeout(revealActive, 60);
       setTimeout(revealActive, 260);
+      setTimeout(nudge, 320);
+      setTimeout(nudge, 700);
       // 关键：把外壳高度设成「当前可见高度」。
       // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
       // 不要给外壳加 transform：iOS 的 offsetTop 在键盘弹起时并不可靠，
