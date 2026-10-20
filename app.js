@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.41', d: '10-21', items: [
+    '改：圆环加了一点渐变 —— 起点亮一档、终点暗一档（同一个色系，不换色相）。绿、橙、红三种状态都有这层淡淡的光泽，不会再看着是一条纯色带',
+  ]},
   { v: 'v3.40', d: '10-21', items: [
     '改：吃超（热量盈余）时，圈的颜色不再发粉 —— 之前中间那档是玫红 #ff2e88，现在换成更正的红 #ff2323，两端也统一成橙红 → 红',
     '改：圈里的数字跟着圈的颜色走（吃超时就是同一个红），不再是单独的橙色',
@@ -705,7 +708,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.40';
+const APP_VERSION = 'v3.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -864,9 +867,15 @@ function renderToday() {
     c1 = mix('#ff9a3d', '#ff2323', t);
     c2 = mix('#ff7a3d', '#ff3b30', t);
   }
-  $('#ringS0').setAttribute('stop-color', c0);
+  // 让弧线有一点渐变：起点亮一点、终点暗一点（同一个色系，不换色相）
+  const shade = (hex, amt) => {
+    const p = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const f = v => Math.max(0, Math.min(255, Math.round(amt > 0 ? v + (255 - v) * amt : v * (1 + amt))));
+    return '#' + p(hex).map(v => f(v).toString(16).padStart(2, '0')).join('');
+  };
+  $('#ringS0').setAttribute('stop-color', shade(c0, 0.26));
   $('#ringS1').setAttribute('stop-color', c1);
-  $('#ringS2').setAttribute('stop-color', c2);
+  $('#ringS2').setAttribute('stop-color', shade(c2, -0.22));
 
 
   const hero = $('#hero');
