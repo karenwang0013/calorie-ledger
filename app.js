@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.92', d: '10-20', items: [
+    '彻底不晃：手指一按下（键盘还没弹起）就先把位置算好、先滚到位，等键盘起来时它已经在正中间，系统不需要再滚一次',
+    '后续只在偏差超过 14px 时才微调',
+  ]},
   { v: 'v2.91', d: '10-20', items: [
     '修："上下晃一下"：系统先把输入框滚到键盘上方，我又把它滚到正中间，两次位移看起来就是晃一下',
     '改成平滑滚动（一次顺滑移动），并减少定位次数；位移小于 8px 时完全不动',
@@ -473,7 +477,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.91';
+const APP_VERSION = 'v2.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2583,6 +2587,36 @@ function init() {
       const v = parseFloat(localStorage.getItem('kb_ratio'));
       return (isFinite(v) && v >= 0.30 && v <= 0.70) ? v : 0.50;
     })();
+    // 记住上次的键盘高度：点下去之前就能算出"键盘弹起后该在哪"，从而一次到位，不产生二次位移
+    let kbH = parseFloat(localStorage.getItem('kb_h'));
+    if (!isFinite(kbH) || kbH < 200 || kbH > 600) kbH = 440;
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        const v = window.visualViewport;
+        const h = window.innerHeight - v.height;
+        if (h > 200) { kbH = Math.round(h); localStorage.setItem('kb_h', String(kbH)); }
+      });
+    }
+
+    const centerFor = (t, keyboardH) => {
+      const top = 96;
+      const bottom = window.innerHeight - keyboardH;
+      const centerScreen = (top + bottom) / 2;
+      const r = t.getBoundingClientRect();
+      const inputCenterDoc = r.top + window.scrollY + r.height / 2;
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      return Math.max(0, Math.min(Math.round(inputCenterDoc - centerScreen), max));
+    };
+
+    // 手指一按下就先算好位：键盘起来后它已经在正中间，系统无需再滚 → 不会晃
+    SC.el.addEventListener('touchstart', e => {
+      const t = e.target;
+      if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
+      document.documentElement.classList.add('kb');
+      void document.body.offsetHeight;
+      window.scrollTo(0, centerFor(t, kbH));
+    }, { passive: true });
+
     // 只做一件事：把正在编辑的那一栏，放到"顶栏下沿 ↔ 键盘上沿"这段区域的正中间
     const placeCard = (t) => {
       if (!t) return;
@@ -2605,7 +2639,7 @@ function init() {
 
       const want = Math.max(0, Math.min(target, max));
       // 位移超过 8px 才滚，而且用平滑滚动：看起来是一次顺滑的移动，而不是"弹一下"
-      if (Math.abs(window.scrollY - want) > 8) {
+      if (Math.abs(window.scrollY - want) > 14) {
         window.scrollTo({ top: want, behavior: 'smooth' });
       }
       kbMax = Infinity;
