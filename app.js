@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.03', d: '10-20', items: [
+    '修：点任意输入框页面会乱跳 —— 以前不管点哪一栏，都把「卡片底边」对到键盘上方：点上面几栏时输入框被顶出屏幕，系统再自己去找位置，就一上一下地跳。现在改成：点到哪一栏，就把那一栏放到顶栏和键盘的正中间',
+    '修：用键盘上的「上一项 / 下一项」切到下一栏时，位置也按同一条规则对齐，不会跳两遍',
+    '修：键盘弹起后下方空白滑不完 —— 页面底部留白固定成「键盘高度 + 6px」，最多只能滑到内容末尾贴着键盘上沿，滑不出一大片空白，也看不到底部的黑影',
+  ]},
   { v: 'v3.02', d: '10-20', items: [
     '改：iPad 回到和手机一模一样的单列画面 —— 从上到下还是「日期 → 圆环 → 摄入/消耗 → 营养素 → 今天吃了什么」，不再左右分栏',
     'iPad 上只是整页放大并居中：圆环更大、字更好读，底部导航仍然是手机那条全宽条',
@@ -520,7 +525,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.02';
+const APP_VERSION = 'v3.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2612,57 +2617,54 @@ function init() {
     };
     window.addEventListener('scroll', clamp, { passive: true });
 
-    // 记住键盘高度（只用来"预判位置"，不参与任何滚动监听）
+    // 记住键盘高度（只用来定位，不参与任何滚动监听）
     let kbH = parseFloat(localStorage.getItem('kb_h'));
     if (!isFinite(kbH) || kbH < 200 || kbH > 600) kbH = 440;
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => {
-        const h = window.innerHeight - window.visualViewport.height;
-        if (h > 200) { kbH = Math.round(h); localStorage.setItem('kb_h', String(kbH)); }
-      });
-    }
 
-    // 居中目标（按绝对位置计算，重复算结果不变）
-    const centerFor = (t, keyboardH) => {
-      const centerScreen = (96 + (window.innerHeight - keyboardH)) / 2;
-      const r = t.getBoundingClientRect();
-      const inputCenterDoc = r.top + window.scrollY + r.height / 2;
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      return Math.max(0, Math.min(Math.round(inputCenterDoc - centerScreen), max));
+    // ── 键盘态定位：只有一套公式，重复调用结果相同，所以不会二次跳 ────────────────
+    // 目标：被点的输入框落在「顶栏下沿 ~ 键盘上沿」的正中间。
+    // 底部留白固定成「键盘高度 + 6px」：
+    //   · 页面最多只能滑到「内容末尾贴着键盘上沿」，再往下没有可滑空间 → 滑不出一大片空白；
+    //   · 这个留白也足够把最下面的输入框滚上来（页面再短也补得够）。
+    // 之前是"不管点哪一栏，都把卡片底边对到键盘上方"：点上面几栏时输入框会被顶出屏幕，
+    // 系统再自己去找位置，表现就是一上一下地乱跳。
+    const KB_GAP = 6;
+    const kbWantY = () => {
+      const tb = document.querySelector('.topbar');
+      const tbB = tb ? tb.getBoundingClientRect().bottom : 51;      // 顶栏下沿（fixed，视口坐标）
+      const kbTop = Math.max(tbB + 140, window.innerHeight - kbH);  // 键盘上沿
+      return tbB + (kbTop - tbB) * 0.5;                             // 可用区域的中间
     };
-
-    // 定位到居中后，把底部留白收紧到"刚好够"（+24px 余量）：往下只能再拉一点点
-    const placeAndTrim = (t) => {
+    const kbFill = (t) => {
+      if (!t) return;
       const root = document.documentElement;
       root.classList.add('kb');
-      try {
-        // ① 先给足下方空间，保证能滚到位
-        root.style.setProperty('--kb-pad', '60vh');
-        void document.body.offsetHeight;
-
-        // ② 把卡片底边对到键盘上沿上方 12px（按屏幕坐标算，滚两次以消除夹取误差）
-        const card = t.closest('.card') || t;
-        const want = window.innerHeight - kbH - 12;
-        for (let i = 0; i < 2; i++) {
-          const d = card.getBoundingClientRect().bottom - want;
-          if (Math.abs(d) < 2) break;
-          window.scrollBy(0, d);
-        }
-
-        // ③ 收紧留白：页面尽头正好在屏幕底边（下方没多余空间、也看不到黑影）
-        const body = document.getElementById('scBody');
-        if (body) {
-          const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
-          const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
-          let need = Math.round(window.scrollY + window.innerHeight - contentEnd);
-          if (!isFinite(need) || need < 0) need = 0;
-          if (need > window.innerHeight * 1.2) need = Math.round(window.innerHeight * 0.6); // 兜底
-          root.style.setProperty('--kb-pad', need + 'px');
-        }
-      } catch (e) {
-        root.style.setProperty('--kb-pad', Math.round(kbH + 40) + 'px');
-      }
+      root.style.setProperty('--kb-pad', Math.max(140, Math.round(kbH + KB_GAP)) + 'px');
+      const r = t.getBoundingClientRect();
+      const centerDoc = r.top + window.scrollY + r.height / 2;
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      // 靠下的输入框到不了正中间（那会把卡片底边抬进键盘里），就停在"卡片底边贴键盘"的位置
+      const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), max));
+      if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
     };
+
+    // 键盘真的弹起来后校准一次高度（这台设备 vv.height 是准的：894 里键盘占 440）
+    if (window.visualViewport) {
+      let kbSettle = 0;
+      window.visualViewport.addEventListener('resize', () => {
+        const h = window.innerHeight - window.visualViewport.height;
+        if (h < 200) return;                        // 键盘没弹 / 已收起
+        const changed = Math.abs(h - kbH) >= 10;
+        kbH = Math.round(h);
+        localStorage.setItem('kb_h', String(kbH));
+        if (!changed) return;
+        clearTimeout(kbSettle);                     // 键盘还在动，等它停稳再补一次
+        kbSettle = setTimeout(() => {
+          const t = activeInput();
+          if (t) kbFill(t);
+        }, 240);
+      });
+    }
 
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
     let tX = 0, tY = 0, tT = 0, tEl = null;
@@ -2677,27 +2679,29 @@ function init() {
       const moved = Math.abs(c.clientY - tY) + Math.abs(c.clientX - tX);
       const dur = Date.now() - tT;
       if (moved < 8 && dur < 400) {
-        placeAndTrim(tEl);
+        kbFill(tEl);
       }
       tEl = null;
     }, { passive: true });
 
-    // 聚焦兜底：只补一次，偏差 >16px 才动（键盘箭头切换焦点时 touchend 不会触发）
+    // 兜底：用键盘上的「上一项 / 下一项」切焦点时没有真点；等键盘稳了按同一条公式再对一次
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
       document.documentElement.classList.add('kb');
       setTimeout(() => {
         if (activeInput() !== t) return;
-        const want = centerFor(t, kbH);
-        if (Math.abs(window.scrollY - want) > 16) placeAndTrim(t);
-      }, 350);
+        const r = t.getBoundingClientRect();
+        const off = Math.abs(r.top + r.height / 2 - kbWantY());
+        if (off > 40) kbFill(t);     // 已经在中间附近就不动，避免二次跳
+      }, 380);
     });
 
     document.addEventListener('focusout', () => {
       setTimeout(() => {
         if (activeInput()) return;
         document.documentElement.classList.remove('kb');
+        document.documentElement.style.removeProperty('--kb-pad');
       }, 700);
     });
   };
