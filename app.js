@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.34', d: '10-20', items: [
+    '恢复顶部实色带（之前就是靠它压掉 iOS 主屏幕 App 状态栏的磨砂/模糊），这次层级放在顶栏下面，只填状态栏那一条，不会遮按钮',
+    '撤销上一版对状态栏声明和配色的改动，回到"没有模糊"时的样子',
+  ]},
   { v: 'v2.33', d: '10-20', items: [
     '顶部模糊：状态栏声明改为不透明黑色，页面配色（theme-color / manifest / 顶栏）统一成同一个色值',
     '打开 App 时主动重绘一次顶栏，把系统启动时临时压上去的半透明底立刻清掉，不用再等它自己消失',
@@ -241,7 +245,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.33';
+const APP_VERSION = 'v2.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

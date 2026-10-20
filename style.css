@@ -29,8 +29,14 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 html { background: #0d0f0e; overflow-x: hidden; }
 body { background: #0d0f0e; }
-/* 顶部状态栏区域由顶栏自己的背景铺满（不再用额外的 fixed 色带，
-   那条色带会盖住按钮上沿，造成遮挡） */
+/* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
+   层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
+.statusbg {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: min(max(10px, var(--safe-t)), 90px);
+  background: #0d0f0e;
+  z-index: 20; pointer-events: none;
+}
 
 html, body {
   margin: 0;
