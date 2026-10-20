@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.29', d: '10-20', items: [
+    '修：顶部状态栏出现模糊、左右两侧显示不整 —— iOS 聚焦输入框时会把整页放大（那个克数框字号只有 13.5px）',
+    '现在所有输入框都不小于 16px，并禁用了页面缩放；顶栏、页面底色也补齐了全宽',
+  ]},
   { v: 'v2.28', d: '10-20', items: [
     '上下两条栏改成 App 布局的一部分（不再是固定/吸顶定位），中间内容区独立滚动 —— 无论是滑动还是弹键盘，顶栏和底栏都不可能被带走',
     '键盘弹起时底栏自动收起，内容区自动扩展，不再被顶到键盘上方',
@@ -220,7 +224,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.28';
+const APP_VERSION = 'v2.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

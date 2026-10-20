@@ -28,6 +28,7 @@
 
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 html { background: #0d0f0e; overflow-x: hidden; }
+body { background: #0d0f0e; }
 /* 贴在最上沿的实色带：让状态栏取这个颜色 */
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
@@ -106,6 +107,7 @@ select {
 }
 
 .app {
+  width: 100%;
   max-width: 520px;
   margin: 0 auto;
   height: 100%;
@@ -163,8 +165,7 @@ select {
 .topbar {
   position: relative;
   flex: 0 0 auto;
-  left: 0; right: 0;
-  max-width: 520px; margin: 0 auto;
+  width: 100%;
   z-index: 30;
   display: flex;
   align-items: center;
@@ -737,7 +738,7 @@ select {
 .drop.small .pickbtn.on { padding: 13px 16px; font-size: 15px; }
 
 .prow2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 10px; }
-.prow2 input { width: 100%; font-size: 13.5px; padding-left: 11px; padding-right: 8px; }
+.prow2 input { width: 100%; font-size: 16px; padding-left: 11px; padding-right: 8px; }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
