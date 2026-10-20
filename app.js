@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.46', d: '10-21', items: [
+    '改：圆环的「光泽」重做 —— 去掉中间那道生硬的白光带，改成和卡片/对话框一样的**细边光**：整圈两侧各留一条约 1px 的亮边（上亮、往下渐暗、收尾再回一点），像玻璃边缘那样',
+    '改：外发光也压弱了，不再糊成一团',
+  ]},
   { v: 'v3.45', d: '10-21', items: [
     '改：圆环整体加了一层「玻璃感」—— ① 顺着弧线一道很淡的白色高光，整圈都有，不再是只有一角看得出渐变；② 整圈再带一点同色柔光（像发光的玻璃），不是贴上去的一条色带',
     '渐变的明暗过渡仍然很轻，不抢数字',
@@ -723,7 +727,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.45';
+const APP_VERSION = 'v3.46';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -860,8 +864,8 @@ function renderToday() {
   const C = 527.8;
   const dash = String(C * (1 - Math.min(pct, 1)));
   ring.style.strokeDashoffset = dash;
-  const sheen = $('#ringSheen');
-  if (sheen) sheen.style.strokeDashoffset = dash;   // 高光跟着同一段弧走
+  const rim = $('#ringRim');
+  if (rim) rim.style.strokeDashoffset = dash;      // 边光跟着同一段弧走
 
   // 颜色语言：绿=还有余量、橙=接近上限、红=已经吃超（盈余）
   // 颜色随进度平滑过渡：绿 → 橙 → 红
@@ -902,7 +906,7 @@ function renderToday() {
     const [r, g, b] = p(hex);
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   };
-  ring.style.filter = `drop-shadow(0 0 9px ${rgba(c1, 0.28)})`;
+  ring.style.filter = `drop-shadow(0 0 7px ${rgba(c1, 0.18)})`;
 
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
