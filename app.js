@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.02', d: '10-20', items: [
+    '改：iPad 回到和手机一模一样的单列画面 —— 从上到下还是「日期 → 圆环 → 摄入/消耗 → 营养素 → 今天吃了什么」，不再左右分栏',
+    'iPad 上只是整页放大并居中：圆环更大、字更好读，底部导航仍然是手机那条全宽条',
+    '横竖屏都保持同一套单列顺序，转屏只调整列宽和字号，不会把内容挪到右边',
+  ]},
   { v: 'v3.01', d: '10-20', items: [
     '新增：iPad 适配。iPad mini / Air / 11 寸 / 12.9 寸打开不再是「拉宽的 iPhone」，今日页改成左边汇总、右边记录的双栏，趋势和设置也居中排版',
     '新增：横竖屏都能用。iPad 转过来会自动重排，安装到主屏幕后也不再锁竖屏',
@@ -515,7 +520,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.01';
+const APP_VERSION = 'v3.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1647,7 +1652,7 @@ function renderMe() {
       </div>
       <div class="card" style="margin-top:14px">
         <h3>版本更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
-        <div class="hint" style="margin:0 0 14px">iPhone 会缓存网页。看到旧界面就点下面的按钮强制刷新，不动数据。</div>
+        <div class="hint" style="margin:0 0 14px">iPhone / iPad 会缓存网页。看到旧界面就点下面的按钮强制刷新，不动数据。</div>
         <button class="btn primary" id="hardReload">强制更新</button>
       </div>
       <div style="height:26px"></div>`;
