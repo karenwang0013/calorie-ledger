@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.81', d: '10-20', items: [
+    '修：点「脂肪」后卡片会上下跳两三遍才停 —— 之前是在键盘动画过程中反复重算位置，每算一次就跳一下',
+    '现在等键盘高度连续两次采样一致（即动画结束）后，只定位一次，不再来回跳',
+  ]},
   { v: 'v2.80', d: '10-20', items: [
     '卡片位置改用系统给的真实可视高度来算（实测这台设备的值是准的：894 里键盘占到 454），误差为 0；量不到时才用比例兜底',
     '去掉界面上的绿色调试读数和小调节条（值已经记住，不再需要）',
@@ -429,7 +433,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.80';
+const APP_VERSION = 'v2.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2580,6 +2584,18 @@ function init() {
 
     };
 
+    // 等键盘高度稳定（连续两次采样一致）再定位，避免卡片跟着键盘动画来回跳
+    const placeWhenSettled = (t) => {
+      let last = -1, stable = 0, tries = 0;
+      const tick = () => {
+        const h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
+        if (h === last) stable++; else { stable = 0; last = h; }
+        if (stable >= 2 || tries++ > 30) { placeCard(t); return; }
+        setTimeout(tick, 60);
+      };
+      tick();
+    };
+
     const syncKB = () => {
       const h = vv ? vv.height : window.innerHeight;
       const on = (maxH - h) > 120;
@@ -2588,7 +2604,7 @@ function init() {
       document.documentElement.classList.toggle('kb', on);
       if (on) {
         const t = activeInput();
-        [0, 160, 420, 800].forEach(ms => setTimeout(() => { if (kbOn) placeCard(t || activeInput()); }, ms));
+        if (t) placeWhenSettled(t);
       } else {
         kbMax = Infinity;
         const d = document.getElementById('kbDbg');
@@ -2610,7 +2626,7 @@ function init() {
       // 用"是否有输入框在编辑"来判定键盘态，比读系统高度可靠
       document.documentElement.classList.add('kb');
       kbOn = true;
-      [0, 150, 400, 800, 1200].forEach(ms => setTimeout(() => placeCard(t), ms));
+      placeWhenSettled(t);
     });
     document.addEventListener('focusout', () => {
       setTimeout(() => {
