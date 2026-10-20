@@ -124,7 +124,8 @@ select {
   height: 100vh;          /* 用 vh：键盘弹起时这个值不变，外壳不会被压短 */
   display: flex; flex-direction: column;
   overflow: hidden;
-  background: #060907;
+  /* 透明：让最底层的波点底纹透上来，任何露出的区域都是底纹而不是黑块 */
+  background: transparent;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
