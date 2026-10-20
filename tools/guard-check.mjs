@@ -27,6 +27,9 @@ const checks = [
   ['自动同步不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
   ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
+  ['底部 Dock 是悬浮圆角条（不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css) && /border-radius: var\(--dock-r\)/.test(css)],
+  ['Dock 三个按钮居中（加号永远在正中，两侧按钮各自居中）', /grid-template-columns: 1fr auto 1fr/.test(css)],
+  ['Dock 圆角按设备分开适配（手机 / iPad 各一套，不照抄同一个值）', /--dock-r: clamp\(/.test(css) && /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-r: 26px;/.test(css)],
 ];
 
 let bad = 0;
