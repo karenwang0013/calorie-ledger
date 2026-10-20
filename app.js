@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.49', d: '10-21', items: [
+    '修：右上角「强制更新」点了没反应 —— 之前那段代码只在「设置」页渲染时才绑上，所以停在首页点它是不生效的；现在 App 一启动就绑好',
+    '改：它的图标换成「双弧刷新」，和左边「数据同步」的单弧带箭头明显区分开',
+  ]},
   { v: 'v3.48', d: '10-21', items: [
     '改：右上角中间那个手表按钮，换成「强制更新」（大小位置都没变，图标换成更新的圆圈箭头）—— 点一下清缓存并重开，和设置页里的那个一样',
     '删：手表数据的手动功能整套去掉（弹窗、选截图读消耗、手动填活动/静息/步数，以及背后的截图识别接口）。快捷指令写数据 + 顶部「数据同步」刷新这条照旧',
@@ -735,7 +739,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.48';
+const APP_VERSION = 'v3.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2337,25 +2341,8 @@ function wireMe() {
 
   const w2 = $('#openWeight2'); if (w2) w2.onclick = openWeight;
 
-  // 强制更新：清掉 Service Worker 和缓存，带随机参数重开（绕开 Pages 的 CDN 缓存）
-  // 设置页的按钮和右上角那个按钮都走这里
-  const hardReload = async () => {
-    try {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    } catch (e) {}
-    toast('正在更新…', 1200);
-    setTimeout(() => {
-      const u = location.pathname + '?r=' + Date.now();
-      location.replace(u);
-    }, 400);
-  };
   const hr = $('#hardReload');
-  if (hr) hr.onclick = hardReload;
-  const hrTop = $('#hardReloadTop');
-  if (hrTop) hrTop.onclick = hardReload;
+  if (hr) hr.onclick = () => hardReloadApp();
 
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   const ghInp = $('#fGhToken'), ghSave = $('#saveGhToken'), ghNow = $('#syncNow'), ghState = $('#cloudState');
@@ -2514,6 +2501,22 @@ function wireMe() {
       toast('连接正常：' + r.message);
     } catch (e) { toast(e.message, 5000); }
   };
+}
+
+/* 强制更新：清掉 Service Worker 和缓存，带随机参数重开（绕开 Pages 的 CDN 缓存）
+   右上角那个按钮和设置页里的按钮都调它 */
+async function hardReloadApp() {
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  } catch (e) {}
+  toast('正在更新…', 1200);
+  setTimeout(() => {
+    const u = location.pathname + '?r=' + Date.now();
+    location.replace(u);
+  }, 400);
 }
 
 /* ---------------- 体重 ---------------- */
@@ -3404,6 +3407,9 @@ function init() {
       }
     });
   }
+
+  const hrTop = $('#hardReloadTop');
+  if (hrTop) hrTop.onclick = () => hardReloadApp();
 
   loadDay();
   if (synced) {
