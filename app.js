@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.42', d: '10-20', items: [
+    '顶栏底边加宽 5px，顶栏按钮与下方内容之间不再贴在一起',
+    '底部导航的三个按钮整体上移 10px，离屏幕最底（home 指示条）更远、更好按',
+  ]},
   { v: 'v2.41', d: '10-20', items: [
     '顶栏内容整体往上提了一点，离状态栏更近',
     '底部导航加高：去掉 viewport-fit 后系统不再给底部安全区高度，导致底栏被压得很矮、贴着屏幕最底，现在手动补回去',
@@ -274,7 +278,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.41';
+const APP_VERSION = 'v2.42';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
