@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.01', d: '10-20', items: [
+    '新增：iPad 适配。iPad mini / Air / 11 寸 / 12.9 寸打开不再是「拉宽的 iPhone」，今日页改成左边汇总、右边记录的双栏，趋势和设置也居中排版',
+    '新增：横竖屏都能用。iPad 转过来会自动重排，安装到主屏幕后也不再锁竖屏',
+    '底部导航在 iPad 上变成居中的悬浮条，弹层和图表同步放大，字号更好读',
+  ]},
   { v: 'v3.00', d: '10-20', items: [
     '修：卡片离键盘空出很大一截 —— 之前"收紧留白"那一步如果没算好，会留下 120% 屏高的空白',
     '现在改成：先把卡片底边对齐到键盘上沿（滚两次消除误差），再把留白收紧到屏幕底边；任何一步出错都有兜底值',
@@ -510,7 +515,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.00';
+const APP_VERSION = 'v3.01';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2800,8 +2805,13 @@ function init() {
   }
   syncTopH();
   initScroll();
-  window.addEventListener('resize', syncTopH);
-  window.addEventListener('orientationchange', syncTopH);
+  const relayout = () => {
+    syncTopH();
+    // 横竖屏切换后「关于」页的铺满高度要重算，否则会照搬竖屏的高度
+    if (typeof fitAboutFill === 'function') fitAboutFill();
+  };
+  window.addEventListener('resize', relayout);
+  window.addEventListener('orientationchange', relayout);
 
   // 版本自检：线上版本变了就带随机参数重开，绕开缓存
   const checkVersion = async () => {

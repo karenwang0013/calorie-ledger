@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const app = fs.readFileSync('app.js', 'utf8');
 const css = fs.readFileSync('style.css', 'utf8');
+const manifest = fs.readFileSync('manifest.webmanifest', 'utf8');
 
 const checks = [
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
@@ -17,6 +18,8 @@ const checks = [
   ['只在"真点"时预定位（touchend 位移<8px），滑过不触发', /moved < 8/.test(app)],
   ['失焦后不立即判定键盘收起（防瞬时错位）', /700\);/.test(app)],
   ['没有多套键盘定位定时器互相打架', !/\[260, 700\]\.forEach/.test(app)],
+  ['iPad 双栏适配存在（700px 起今日页分栏）', /@media \(min-width: 700px\)[\s\S]*?\.today-grid \{[^}]*display: grid;/.test(css)],
+  ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
 ];
 
 let bad = 0;
