@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.19', d: '10-21', items: [
+    '改：底部「今日 / 趋势」被选中时不再有绿色方块，只把文字变成绿色（图标仍是绿色）',
+    '加：连点标题旁版本号 5 次，弹出的自查面板最下面多了「圆角 − / ＋ / 复位」—— 可以在手机上现场把 Dock 的圆角调到顺眼为止，调完的数值会记住，不用等我发版',
+    '圆角默认值仍是按屏幕圆角算的（iPhone 17 约 32）',
+  ]},
   { v: 'v3.18', d: '10-21', items: [
     '改：Dock 变扁一点（手机 88、iPad 96），不再那么高',
     '改：圆角上限收到「高度的 36%」——两端留出一小段直边，iPhone 17 上约 32；iPad 仍按它自己的屏幕圆角算',
@@ -613,7 +618,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.18';
+const APP_VERSION = 'v3.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3130,6 +3135,11 @@ function init() {
   // 各代 iPhone 的屏幕圆角本来就不一样，iPad 的又比手机紧得多，所以按屏宽取一档，不写死一个值。
   const SCREEN_R = [[320, 0], [375, 44], [390, 47], [393, 55], [402, 55], [414, 49], [428, 53], [430, 55], [440, 62], [460, 66]];
   const syncDockR = () => {
+    const ov = parseFloat(localStorage.getItem('dock_r') || '');
+    if (ov >= 8 && ov <= 48) {                 // 自查面板里手动调过的值优先
+      document.documentElement.style.setProperty('--dock-r', Math.round(ov) + 'px');
+      return;
+    }
     const w = Math.round(window.innerWidth);
     const pad = window.matchMedia('(min-width: 700px)').matches;
     let sr = 0;
@@ -3187,13 +3197,41 @@ function init() {
           '点击 ' + (k.taps || '-'),
         ].join('\n');
       };
-      box.textContent = rows();
       box.onclick = () => box.remove();
+      const textEl = document.createElement('div');
+      textEl.style.cssText = 'white-space:pre-wrap';
+      textEl.textContent = rows();
+      box.appendChild(textEl);
+
+      // Dock 圆角现场微调：在真机上一边看一边调，不用来回发版
+      const bar = document.createElement('div');
+      bar.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:9px';
+      const rv = document.createElement('span');
+      const curR = () => Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-r')) || 0);
+      const showR = () => { rv.textContent = 'R ' + curR(); };
+      const setR = (v) => {
+        v = Math.max(8, Math.min(48, Math.round(v)));
+        document.documentElement.style.setProperty('--dock-r', v + 'px');
+        localStorage.setItem('dock_r', String(v));
+        showR();
+      };
+      const mkBtn = (label, fn) => {
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.style.cssText = 'flex:1;padding:8px 0;border-radius:9px;background:#0e2116;color:#7dff8a;border:1px solid #2c5;font:12px ui-monospace,Menlo,monospace';
+        b.onclick = (ev) => { ev.stopPropagation(); fn(); };
+        return b;
+      };
+      rv.style.cssText = 'min-width:52px;text-align:center;color:#d6ff4b;font-weight:700';
+      showR();
+      bar.append(mkBtn('圆角 −', () => setR(curR() - 4)), rv, mkBtn('圆角 +', () => setR(curR() + 4)));
+      bar.append(mkBtn('复位', () => { localStorage.removeItem('dock_r'); syncDockR(); showR(); }));
+      box.appendChild(bar);
       document.body.appendChild(box);
       // 边滑边更新，方便一次截图看清
       const tick = setInterval(() => {
         if (!box.isConnected) { clearInterval(tick); return; }
-        box.textContent = rows();
+        textEl.textContent = rows();
       }, 200);
     });
   }

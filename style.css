@@ -580,9 +580,9 @@ html.kb .sc-body {
   padding: 6px 16px; border-radius: 16px;
   transition: background .18s ease, color .18s ease;
 }
-.tab.on { background: rgba(214, 255, 75, 0.09); }
+
 .tab svg { width: 29px; height: 29px; stroke: currentColor; fill: none; stroke-width: 2.9; stroke-linecap: round; stroke-linejoin: round; }
-.tab.on { color: var(--text); }
+.tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 .fab {
   justify-self: center;
