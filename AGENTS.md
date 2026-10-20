@@ -60,6 +60,30 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - 数字口径：基础代谢用 Mifflin-St Jeor；消耗 = 基础代谢 + 手表活动能量；缺口封顶为消耗的 22%
 - 测试：`python3 -m http.server` 起本地静态服务，或直接对线上验证
 
+## 顶部磨砂（踩过很多次的坑，别再改）
+
+主屏幕 App 打开时，状态栏那块会出现一层磨砂/模糊。**唯一有效的做法**（v2.39 验证通过）：
+
+1. `index.html` 最上方保留 `<div class="statusbg">`，CSS 里 `.statusbg` 必须是 `position: fixed; top: 0;` 实色 `#0d0f0e; z-index: 40`
+2. `.topbar` 必须 `position: fixed; top: 0`，背景 `#0d0f0e`（和状态栏同色，不能是别的黑）
+3. `.scroller` 用 `padding-top: var(--topbar-h, 64px)` 给顶栏让位
+4. `index.html` 的 viewport **不要**带 `viewport-fit=cover`
+5. `html/body` 背景 `#060907`（内容区最底端的颜色，键盘弹起时下方那条才接得上）
+
+反面教材（都试过、都没用，或引出别的问题）：
+- 把顶栏改成 `sticky` / `relative` 让它参与布局 → 磨砂回来
+- 给顶栏加 `transform: translateY(offsetTop)` 补偿 → 越点越往下掉
+- 删掉 `.statusbg` → 磨砂回来
+- 加 `apple-mobile-web-app-status-bar-style` → 没效果
+
+同时：**绝对不能给顶栏加任何 transform 位移补偿**（`visualViewport.offsetTop` 在键盘弹起时不可靠，会导致"标题栏被顶走/越点越往下"）。
+
+## 键盘弹起
+
+- 底栏用 `html.kb` 收起（`.tabbar` 和 `.fab`），避免被 iOS 顶到键盘上方浮动
+- 点输入框后，把该栏滚到顶栏下方约 150px（`focusin` 里连续校正 7 次）
+- 不要在键盘弹起时调用 `window.scrollTo(0,0)`，也不要用 `visualViewport.offsetTop` 去移动容器
+
 ## 沟通方式
 
 用户不是工程师。改动时：

@@ -27,8 +27,9 @@
 [hidden] { display: none !important; }
 
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
-html { background: #0d0f0e; overflow-x: hidden; }
-body { background: #0d0f0e; }
+/* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
+html { background: #060907; overflow-x: hidden; }
+body { background: #060907; }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
 .statusbg {
@@ -114,7 +115,7 @@ select {
   height: 100%;
   display: flex; flex-direction: column;
   overflow: hidden;
-  background: #000;
+  background: #060907;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
