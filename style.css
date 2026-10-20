@@ -524,13 +524,13 @@ select {
 .tab.on svg { stroke: var(--lime); }
 .fab {
   flex: 0 0 auto;
-  width: 76px; height: 50px; border-radius: 17px;
+  width: 84px; height: 55px; border-radius: 18px;
   align-self: center;
   margin-top: 3px;
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;
-  font-size: 30px; font-weight: 300;
+  font-size: 34px; font-weight: 300;
   margin: 0 10px;
   box-shadow: 0 6px 16px rgba(214, 255, 75, 0.26);
 }

@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.47', d: '10-20', items: [
+    '底部中间的加号按钮再加大一点（76×50 → 84×55，加号字号 30 → 34）',
+  ]},
   { v: 'v2.46', d: '10-20', items: [
     '底部导航再往上移一点（底部留白 34→42），整条栏也略高一点（上内边距 8→11）',
   ]},
@@ -293,7 +296,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.46';
+const APP_VERSION = 'v2.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
