@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.37', d: '10-21', items: [
+    '改：拍了两张（实物 + 营养成分表）时，照片摘要里**两张图都显示**，并排放在左边、下面各带一个小标签「食物」「营养表」，不再只显示一张、也不是两行',
+    '只拍一张时照旧：显示「食物照片」或「营养成分表照片」',
+  ]},
   { v: 'v3.36', d: '10-21', items: [
     '改：iPad 上 Dock 的圆角改为按「iPad 自己的屏幕圆角」算 —— iPad 的屏幕角比 iPhone 紧得多，之前照抄了手机的「高度一半」，所以看着不对；现在 iPad 用自己那档（约 20），手机保持原样（iPhone 17 约 44）',
     '改：iPad 的 Dock 左右边距收到 14，宽度上限仍是 700；玻璃质感、高度逻辑手机和 iPad 一致',
@@ -689,7 +693,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.36';
+const APP_VERSION = 'v3.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1399,16 +1403,22 @@ function renderResult() {
   // 拍的是什么就显示什么：拍实物 →「食物照片」，拍营养成分表 →「营养成分表照片」；
   // 两样都拍了就两行都列出来，各自配各自的图
   if (S.photoData || S.photo2Data) {
-    const rows = [];
-    if (S.photoData) rows.push({ src: S.photoData, tag: '食物照片' });
-    if (S.photo2Data) rows.push({ src: S.photo2Data, tag: '营养成分表照片' });
-    shot = rows.map(r => `<div class="shotrow">
-      <img src="${r.src}" alt="">
+    const two = !!(S.photoData && S.photo2Data);
+    const shotThumb = (src, cap) => `<span class="sthumb"><img src="${src}" alt=""><i>${cap}</i></span>`;
+    const thumbs = [
+      S.photoData ? shotThumb(S.photoData, '食物') : '',
+      S.photo2Data ? shotThumb(S.photo2Data, '营养表') : '',
+    ].join('');
+    const title = two ? '两张照片' : (S.photo2Data ? '营养成分表照片' : '食物照片');
+    const sub = two ? `识别出 ${S.items.length} 项 · 克数可改`
+                    : (S.photo2Data ? '按标签每 100 克换算' : `识别出 ${S.items.length} 项 · 克数可改`);
+    shot = `<div class="shotrow">
+      <div class="sthumbs">${thumbs}</div>
       <div class="sinfo">
-        <b>${r.tag}</b>
-        <span>${r.tag === '营养成分表照片' ? '按标签每 100 克换算' : `识别出 ${S.items.length} 项 · 克数可改`}</span>
+        <b>${title}</b>
+        <span>${sub}</span>
       </div>
-    </div>`).join('');
+    </div>`;
   }
   $('#shotBox').innerHTML = shot;
   // 多项才需要给这一餐起名（识别到的菜名会自动填进来）
