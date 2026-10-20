@@ -17,6 +17,11 @@ const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 const PEN_ICON = `<svg viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16v4Z"/><path d="M13.8 6.2l4 4"/></svg>`;
 
 const RELEASES = [
+  { v: 'v3.15', d: '10-21', items: [
+    '改：底部 Dock 左右两端改成平的（不再画圆弧），整体也拉宽了 —— 手机几乎贴到屏幕两侧，iPad 用自己更宽的一档',
+    '改：一组记录详情里的「改名」文字换成小铅笔，紧跟在标题后面；样式和原来一样（绿色图标 + 浅绿圆角底），点一下就改',
+    '小铅笔改完名字，列表里的那一条会立刻跟着变；单条记录、整组、拍照识别结果三处都能改',
+  ]},
   { v: 'v3.14', d: '10-21', items: [
     '改：底部 Dock 再高一点，并且整体往上挪了一点（四周留白更明显）',
     '新增：记录好的每一条食物，名字边上多了一个小铅笔 —— 点它可以改名字（识别错的、自己打错的都能改），改完列表和统计立刻跟着更新',
@@ -588,7 +593,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.14';
+const APP_VERSION = 'v3.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1410,7 +1415,7 @@ function openDetail(logs, isGroup, title) {
   const kcal = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
   const batchKey = logs[0].batch || '';
   const shot = (S.day && S.day.shots && S.day.shots[batchKey]) || '';
-  $('#grpName').textContent = title || logs[0].name;
+  $('#grpNameTxt').textContent = title || logs[0].name;
   $('#grpMeta').textContent = isGroup
     ? `${logs.length} 项 · 蛋${sum('p')} / 碳${sum('c')} / 脂${sum('f')}`
     : `${Math.round(logs[0].grams)}g`;

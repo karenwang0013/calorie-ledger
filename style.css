@@ -18,11 +18,10 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
-  --dock-inset: 12px;      /* 左右离屏幕边 */
+  --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
   --dock-bottom: 22px;     /* 下边离屏幕底（抬高一点，四周留白更明显） */
-  /* 同心圆角：Dock 圆角 ≈ 屏幕圆角 − 内缩距离（iPhone 17 屏幕圆角约 62 → 这里取到接近半高，
-     看起来就是"顺着屏幕那圈弧走"）。屏幕越宽圆角越大，所以按屏宽算，不写死。 */
-  --dock-r: clamp(34px, 10.2vmin, 46px);
+  /* 两端做成平的（不要圆弧） */
+  --dock-r: 0px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
@@ -443,6 +442,17 @@ html.kb .sc-body {
   font-size: 11.5px; color: var(--lime); padding: 5px 10px;
   border-radius: 9px; background: rgba(214,255,75,.12); flex: 0 0 auto;
 }
+/* 标题边上的小铅笔：和「改名」同一个样式（绿字 + 浅绿圆角底），但只占一个图标的位置 */
+.modal .mhd h3 .mren {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 24px; padding: 0; margin-left: 6px;
+  border-radius: 8px; vertical-align: 1px; flex: 0 0 auto;
+}
+.modal .mhd h3 .mren svg {
+  width: 13px; height: 13px; stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.modal .mhd h3 .mren:active { background: rgba(214,255,75,.22); }
 .modal .mx { font-size: 22px; color: var(--muted2); padding: 0 2px 0 6px; }
 .modal .mbody { overflow-y: auto; padding: 0 16px 16px; }
 .modal .mshot {
@@ -560,8 +570,7 @@ html.kb .sc-body {
 .fab {
   justify-self: center;
   width: 88px; height: 64px;
-  /* 内层圆角跟着外框走，看起来才是"一层套一层"的同心圆角 */
-  border-radius: calc(var(--dock-r) - 12px);
+  border-radius: 20px;
   background: var(--lime);
   color: #0a0b0c;
   display: grid; place-items: center;
@@ -1094,12 +1103,11 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    原则：和手机完全同一套单列布局，从上到下顺序不变，只整体放大并居中
    ================================================================== */
 @media (min-width: 700px) {
-  /* iPad：屏幕圆角比 iPhone 更"紧"，Dock 用自己的一档（半径更小、离边更远），
-     这样两代设备各自看着都像"贴着屏幕圆角"的一层 */
+  /* iPad：Dock 用自己的一档边距（离边更远、整体更宽），手机和 iPad 各自看着都合适 */
   :root {
-    --dock-inset: 16px;
+    --dock-inset: 10px;
     --dock-bottom: 26px;
-    --dock-r: 26px;
+    --dock-r: 0px;
   }
   /* 顶栏两端与内容列对齐 */
   .topbar {
@@ -1196,7 +1204,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 
   /* 底部 Dock：iPad 屏幕圆角比 iPhone "紧"，半径和间距都换成 iPad 的一档；
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
-  .tabbar .inner { padding: 17px 18px; max-width: 620px; }
+  .tabbar .inner { padding: 17px 18px; max-width: 760px; }
   .tab svg { width: 32px; height: 32px; }
   .tab { font-size: 13px; }
   .fab { width: 100px; height: 68px; font-size: 36px; }
