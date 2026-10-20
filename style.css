@@ -29,10 +29,11 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html {
-  /* 键盘弹起时布局视口可能被压短，页面外层露出的部分就是 html 的背景，
-     所以这里也铺同一套波点底纹，避免露出一条纯色黑带 */
+  /* 【临时诊断】涂红：用来判断那块黑到底属于网页还是系统键盘 */
+  background: #ff0000;
   height: 100vh;
   overflow-x: hidden;
+  /* 【临时诊断】这一层涂成红色：如果页面上出现红色，说明那块区域属于网页；没有红色则属于系统键盘 */
   background:
     radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
     radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
