@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=385">
+<link rel="stylesheet" href="style.css?v=386">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -26,9 +26,9 @@
         </svg>
         数据同步
       </button>
-      <button class="topbtn topicon" id="quickWatch" aria-label="手表数据" title="手表数据">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9.5 6V3.5h5V6M9.5 18v2.5h5V18"/>
+      <button class="topbtn topicon" id="hardReloadTop" aria-label="强制更新" title="强制更新">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 11a8 8 0 1 0-2.4 6.3"/><path d="M20.5 4.5v6h-6"/>
         </svg>
       </button>
       <button class="topbtn topicon" id="goMe" aria-label="设置">
@@ -279,47 +279,6 @@
   </div>
 </div>
 
-<!-- ============ 手表弹层 ============ -->
-<div class="sheet-mask" id="watchMask"></div>
-<div class="sheet" id="watchSheet">
-  <div class="grab"></div>
-  <div class="sh-hd">
-    <h2>手表数据</h2>
-    <button class="x" id="watchClose">×</button>
-  </div>
-  <div class="sh-body">
-    <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin:0 0 14px">
-      截一张 Apple Watch「健身」App 活动圆环那页的图，我读出消耗。<br>
-      <span style="color:var(--muted2);font-size:11.5px">也可以直接在下面手动填。</span>
-    </p>
-    <input type="file" accept="image/*" id="watchInput" hidden>
-    <button class="btn" id="watchPick">📷 选截图，自动读取</button>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
-      <div class="field" style="margin:0">
-        <label>活动消耗</label>
-        <input id="wActive" type="number" inputmode="decimal" placeholder="420">
-      </div>
-      <div class="field" style="margin:0">
-        <label>静息 / 基础代谢</label>
-        <input id="wResting" type="number" inputmode="decimal" placeholder="1580">
-      </div>
-      <div class="field" style="margin:0">
-        <label>总消耗（有就填）</label>
-        <input id="wTotal" type="number" inputmode="decimal" placeholder="2000">
-      </div>
-      <div class="field" style="margin:0">
-        <label>步数</label>
-        <input id="wSteps" type="number" inputmode="numeric" placeholder="8500">
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.6" id="watchNote"></div>
-  </div>
-  <div class="sh-foot">
-    <button class="btn primary" id="watchSave">保存到 <span id="watchDate"></span></button>
-  </div>
-</div>
-
 <!-- ============ 体重弹层 ============ -->
 <div class="sheet-mask" id="weightMask"></div>
 <div class="sheet" id="weightSheet">
@@ -376,8 +335,8 @@
   </div>
 </div>
 
-<script src="foods.js?v=385"></script>
-<script src="api.js?v=385"></script>
-<script src="app.js?v=385"></script>
+<script src="foods.js?v=386"></script>
+<script src="api.js?v=386"></script>
+<script src="app.js?v=386"></script>
 </body>
 </html>

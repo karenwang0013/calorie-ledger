@@ -372,19 +372,6 @@ const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃�
 只输出 JSON，不要 markdown 代码块：
 {"items":[{"name":"食物中文名","grams":150,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8}],"dish":"一句话描述","note":"不确定之处，没有就填空字符串"}`;
 
-const WATCH_PROMPT = `这张截图来自 Apple Watch 或 iPhone 的「健身」「健康」App。请读出其中与能量消耗相关的数字。
-
-需要找的信息：
-- 活动能量 / 活动卡路里（active energy，千卡）
-- 静息能量 / 基础代谢（resting energy，千卡）
-- 总卡路里 / 总消耗（total calories，千卡）
-- 步数
-
-注意区分「千卡」和「千焦」。如果是千焦请换算成千卡（除以 4.184）。
-如果某项在图中不存在，填 null，不要编造。
-
-只输出 JSON，不要 markdown 代码块：
-{"active_kcal":420,"resting_kcal":1580,"total_kcal":2000,"steps":8500,"date":"2026-10-18","note":"不确定之处，没有就填空字符串"}`;
 
 async function callModel(content) {
   const key = (setting('dashscope_key', '') || '').trim();
@@ -493,38 +480,6 @@ async function analyzeText(text) {
   return cleanItems(extractJson(await callModel(content)));
 }
 
-async function analyzeWatch(image) {
-  const content = [
-    { type: 'image_url', image_url: { url: image } },
-    { type: 'text', text: WATCH_PROMPT },
-  ];
-  const obj = extractJson(await callModel(content));
-  const pick = (...keys) => {
-    for (const k of keys) {
-      const v = obj[k];
-      if (v !== null && v !== undefined && String(v).toLowerCase() !== 'null') {
-        const n = num(v, null);
-        if (n !== null) return n;
-      }
-    }
-    return null;
-  };
-  const res = {
-    active_kcal: pick('active_kcal', 'active', '活动能量'),
-    resting_kcal: pick('resting_kcal', 'resting', '静息能量'),
-    total_kcal: pick('total_kcal', 'total', '总卡路里'),
-    steps: pick('steps', '步数'),
-    date: obj.date || '',
-    note: obj.note || '',
-  };
-  if (!res.active_kcal && !res.resting_kcal && !res.total_kcal) {
-    throw new Error('这张截图里没读出能量数据。截「健身」App 活动圆环那页试试。');
-  }
-  if (res.total_kcal && !res.resting_kcal && res.active_kcal) {
-    res.resting_kcal = Math.max(0, res.total_kcal - res.active_kcal);
-  }
-  return res;
-}
 
 /* ---------------- 路由：保持和原来一样的接口形状 ---------------- */
 
@@ -688,10 +643,6 @@ async function api(path, body, method) {
   if (pathname === '/api/ai/text' && m === 'POST') {
     return Object.assign({ ok: true }, await analyzeText(body.text || ''));
   }
-  if (pathname === '/api/ai/watch' && m === 'POST') {
-    return Object.assign({ ok: true }, await analyzeWatch(body.image));
-  }
-
   throw new Error('未知操作：' + pathname);
 }
 

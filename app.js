@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.48', d: '10-21', items: [
+    '改：右上角中间那个手表按钮，换成「强制更新」（大小位置都没变，图标换成更新的圆圈箭头）—— 点一下清缓存并重开，和设置页里的那个一样',
+    '删：手表数据的手动功能整套去掉（弹窗、选截图读消耗、手动填活动/静息/步数，以及背后的截图识别接口）。快捷指令写数据 + 顶部「数据同步」刷新这条照旧',
+  ]},
   { v: 'v3.47', d: '10-21', items: [
     '改：两台设备的记录真正互相同步 —— 以前只有打开 App 那一刻才会去云端取别人记的东西；现在**切回前台就拉一次**，开着的时候每 90 秒也拉一次，所以手机上记的，iPad 切过去就能看到（反过来也一样）',
     '前提：两台设备都在「设置 → 数据备份 → 自动同步」里开过同步、填的是同一个 GitHub Token。这是共用一份数据的前提，只需要做一次',
@@ -731,7 +735,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.47';
+const APP_VERSION = 'v3.48';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1897,7 +1901,6 @@ function goBack() {
   if (on('#grpSheet')) return closeGroup();
   if (on('#addSheet')) return closeAdd();
   if (on('#helpSheet')) return closeHelp();
-  if (on('#watchSheet')) return closeWatch();
   if (on('#weightSheet')) return closeWeight();
   if (mePage) {
     const v = $('#view-me');
@@ -2334,8 +2337,9 @@ function wireMe() {
 
   const w2 = $('#openWeight2'); if (w2) w2.onclick = openWeight;
 
-  const hr = $('#hardReload');
-  if (hr) hr.onclick = async () => {
+  // 强制更新：清掉 Service Worker 和缓存，带随机参数重开（绕开 Pages 的 CDN 缓存）
+  // 设置页的按钮和右上角那个按钮都走这里
+  const hardReload = async () => {
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r => r.unregister()));
@@ -2343,12 +2347,15 @@ function wireMe() {
       await Promise.all(keys.map(k => caches.delete(k)));
     } catch (e) {}
     toast('正在更新…', 1200);
-    // 带一个随机参数重开，绕开 GitHub Pages 的 10 分钟 CDN 缓存
     setTimeout(() => {
       const u = location.pathname + '?r=' + Date.now();
       location.replace(u);
     }, 400);
   };
+  const hr = $('#hardReload');
+  if (hr) hr.onclick = hardReload;
+  const hrTop = $('#hardReloadTop');
+  if (hrTop) hrTop.onclick = hardReload;
 
   const ec = $('#exportCsv'); if (ec) ec.onclick = () => { downloadCsv(); toast('已导出 CSV'); };
   const ghInp = $('#fGhToken'), ghSave = $('#saveGhToken'), ghNow = $('#syncNow'), ghState = $('#cloudState');
@@ -2507,70 +2514,6 @@ function wireMe() {
       toast('连接正常：' + r.message);
     } catch (e) { toast(e.message, 5000); }
   };
-}
-
-/* ---------------- 手表 ---------------- */
-function openWatch() {
-  const w = (S.day && S.day.watch) || {};
-  $('#wActive').value = w.active ?? '';
-  $('#wResting').value = w.resting ?? '';
-  $('#wTotal').value = w.total ?? '';
-  $('#wSteps').value = w.steps ?? '';
-  $('#watchDate').textContent = S.date === S.today ? '今天' : S.date.slice(5);
-  let note = w.source === 'photo' ? '上次是从截图读的。' : '';
-  if (w.source === 'cloud' && w.cloudAt) {
-    note = `云端最近一次：${String(w.cloudAt).slice(5)} · 活动 ${w.active} 千卡。快捷指令只在它运行时写新数据，数字不变就是还没写新的。`;
-  }
-  $('#watchNote').textContent = note;
-  $('#watchMask').classList.add('on');
-  $('#watchSheet').classList.add('on');
-}
-function closeWatch() {
-  $('#watchMask').classList.remove('on');
-  $('#watchSheet').classList.remove('on');
-}
-
-async function saveWatch() {
-  const num = id => {
-    const v = $(id).value.trim();
-    return v === '' ? null : Number(v);
-  };
-  const body = {
-    date: S.date,
-    active: num('#wActive'),
-    resting: num('#wResting'),
-    total: num('#wTotal'),
-    steps: num('#wSteps'),
-    source: 'manual',
-  };
-  if (body.active == null && body.total == null && body.resting == null) {
-    return toast('至少填一项');
-  }
-  try {
-    await api('/api/daily', body);
-    closeWatch();
-    toast('已保存');
-    await loadDay();
-    if (S.view === 'trends') loadTrends();
-    if (S.view === 'me') renderMe();
-  } catch (e) { toast(e.message); }
-}
-
-async function readWatchShot(file) {
-  if (!file) return;
-  try {
-    const img = await compress(file, 1400, 0.85);
-    toast('正在读取截图…');
-    const r = await api('/api/ai/watch', { image: img });
-    if (r.active_kcal != null) $('#wActive').value = Math.round(r.active_kcal);
-    if (r.resting_kcal != null) $('#wResting').value = Math.round(r.resting_kcal);
-    if (r.total_kcal != null) $('#wTotal').value = Math.round(r.total_kcal);
-    if (r.steps != null) $('#wSteps').value = Math.round(r.steps);
-    $('#watchNote').textContent = r.note || '读出来了，核对一下再保存。';
-    toast('读取完成');
-  } catch (e) {
-    toast(e.message, 5000);
-  }
 }
 
 /* ---------------- 体重 ---------------- */
@@ -2840,8 +2783,6 @@ function init() {
     renderMealPick();
   });
 
-  const qw = $('#quickWatch');
-  if (qw) qw.onclick = openWatch;
   const gm = $('#goMe');
   if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
   const refreshBtn = $('#cloudRefresh');
@@ -2883,11 +2824,7 @@ function init() {
     else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
-  if (refreshBtn) refreshBtn.onclick = () => pullNow();  $('#watchClose').onclick = closeWatch;
-  $('#watchMask').onclick = closeWatch;
-  $('#watchSave').onclick = saveWatch;
-  $('#watchPick').onclick = () => $('#watchInput').click();
-  $('#watchInput').onchange = e => readWatchShot(e.target.files[0]);
+  if (refreshBtn) refreshBtn.onclick = () => pullNow();
 
   $('#weightClose').onclick = closeWeight;
   $('#weightMask').onclick = closeWeight;
