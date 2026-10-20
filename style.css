@@ -1347,6 +1347,13 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* 底部 Dock：底色本来是渐变，填色层换回它自己的渐变 */
+/* 「从相册选」继续保持虚线（有光泽的那套描边会把虚线吃掉） */
+.pickbtn.ghost {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background-image: none;
+  background-color: transparent;
+}
+
 .tabbar .inner {
   border: 1px solid transparent;
   background-color: transparent;
