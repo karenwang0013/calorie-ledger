@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.21', d: '10-21', items: [
+    '改：Dock 往下挪了一点（离底 22 → 14），四个角默认给到「高度的一半」—— 这是贴着屏幕圆角能走到的最大弧',
+    '加：自查面板（连点版本号 5 次）现在能现场调三样：圆角 / 高度 / 离底，每样都有 − 和 ＋，调完会记住',
+  ]},
   { v: 'v3.20', d: '10-21', items: [
     '改：所有框的描边换成「有光泽」的那种 —— 上沿最亮、往下渐暗、最底部再回一点反光，像一层薄玻璃的边缘，不再是生硬的一条灰线',
     '统一到：卡片、统计条、每一餐、营养素块、设置分组、输入框、按钮、分段条、弹层、底部 Dock',
@@ -623,7 +627,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.20';
+const APP_VERSION = 'v3.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3139,9 +3143,21 @@ function init() {
   // Dock 的圆角：跟这台设备自己的屏幕圆角"同心"（屏幕圆角半径 − Dock 离屏幕边的距离）。
   // 各代 iPhone 的屏幕圆角本来就不一样，iPad 的又比手机紧得多，所以按屏宽取一档，不写死一个值。
   const SCREEN_R = [[320, 0], [375, 44], [390, 47], [393, 55], [402, 55], [414, 49], [428, 53], [430, 55], [440, 62], [460, 66]];
+  // 自查面板里手动调过的三个值（圆角 / 高度 / 离底）优先，调好会记住
+  const applyDockTune = () => {
+    const de = document.documentElement;
+    const num = (k, min, max) => {
+      const v = parseFloat(localStorage.getItem(k) || '');
+      if (!(v >= min && v <= max)) return null;
+      return Math.round(v);
+    };
+    const h = num('dock_h', 64, 140), b = num('dock_b', 4, 60);
+    if (h) de.style.setProperty('--dock-h', h + 'px');
+    if (b) de.style.setProperty('--dock-bottom', b + 'px');
+  };
   const syncDockR = () => {
     const ov = parseFloat(localStorage.getItem('dock_r') || '');
-    if (ov >= 8 && ov <= 48) {                 // 自查面板里手动调过的值优先
+    if (ov >= 8 && ov <= 60) {                 // 自查面板里手动调过的值优先
       document.documentElement.style.setProperty('--dock-r', Math.round(ov) + 'px');
       return;
     }
@@ -3151,9 +3167,9 @@ function init() {
     if (pad) sr = 24;
     else for (const [ww, r] of SCREEN_R) { if (w >= ww) sr = r; }
     const inset = pad ? 10 : 6;
-    const h = pad ? 96 : 88;
-    // 最多到高度的 36%：再大两端就变成半圆了，看着不再是"圆角矩形"
-    const r = Math.max(14, Math.min(sr - inset, h * 0.36));
+    const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-h')) || (pad ? 96 : 88);
+    // 给到高度的一半：四个角能走到的最大弧（和屏幕圆角最接近）
+    const r = Math.max(14, Math.min(sr - inset, h / 2));
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };
 
@@ -3208,18 +3224,14 @@ function init() {
       textEl.textContent = rows();
       box.appendChild(textEl);
 
-      // Dock 圆角现场微调：在真机上一边看一边调，不用来回发版
-      const bar = document.createElement('div');
-      bar.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:9px';
-      const rv = document.createElement('span');
-      const curR = () => Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock-r')) || 0);
-      const showR = () => { rv.textContent = 'R ' + curR(); };
-      const setR = (v) => {
-        v = Math.max(8, Math.min(48, Math.round(v)));
-        document.documentElement.style.setProperty('--dock-r', v + 'px');
-        localStorage.setItem('dock_r', String(v));
-        showR();
+      // Dock 现场微调：圆角 / 高度 / 离底 —— 在真机上一边看一边调，不用来回发版
+      const de = document.documentElement;
+      const cur = (k, dflt) => {
+        const v = parseFloat(getComputedStyle(de).getPropertyValue(k));
+        return Math.round(isFinite(v) && v > 0 ? v : dflt);
       };
+      const bar = document.createElement('div');
+      bar.style.cssText = 'display:flex;flex-direction:column;gap:7px;margin-top:9px';
       const mkBtn = (label, fn) => {
         const b = document.createElement('button');
         b.textContent = label;
@@ -3227,10 +3239,26 @@ function init() {
         b.onclick = (ev) => { ev.stopPropagation(); fn(); };
         return b;
       };
-      rv.style.cssText = 'min-width:52px;text-align:center;color:#d6ff4b;font-weight:700';
-      showR();
-      bar.append(mkBtn('圆角 −', () => setR(curR() - 4)), rv, mkBtn('圆角 +', () => setR(curR() + 4)));
-      bar.append(mkBtn('复位', () => { localStorage.removeItem('dock_r'); syncDockR(); showR(); }));
+      const row = (name, key, cssVar, min, max, step, after) => {
+        const r = document.createElement('div');
+        r.style.cssText = 'display:flex;gap:7px;align-items:center';
+        const v = document.createElement('span');
+        v.style.cssText = 'min-width:74px;text-align:center;color:#d6ff4b;font-weight:700;font-size:11px';
+        const show = () => { v.textContent = name + ' ' + cur(cssVar, min); };
+        const set = (val) => {
+          val = Math.max(min, Math.min(max, Math.round(val)));
+          de.style.setProperty(cssVar, val + 'px');
+          localStorage.setItem(key, String(val));
+          if (after) after();
+          show();
+        };
+        show();
+        r.append(mkBtn('−', () => set(cur(cssVar, min) - step)), v, mkBtn('＋', () => set(cur(cssVar, min) + step)));
+        return r;
+      };
+      bar.append(row('圆角', 'dock_r', '--dock-r', 8, 60, 4));
+      bar.append(row('高度', 'dock_h', '--dock-h', 64, 140, 4));
+      bar.append(row('离底', 'dock_b', '--dock-bottom', 4, 48, 4));
       box.appendChild(bar);
       document.body.appendChild(box);
       // 边滑边更新，方便一次截图看清
@@ -3241,6 +3269,7 @@ function init() {
     });
   }
   syncTopH();
+  applyDockTune();
   syncDockR();
   initScroll();
   const relayout = () => {

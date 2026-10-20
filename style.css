@@ -19,7 +19,7 @@
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
   --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
-  --dock-bottom: 22px;     /* 下边离屏幕底（抬高一点，四周留白更明显） */
+  --dock-bottom: 14px;     /* 下边离屏幕底（贴近屏幕圆角那一圈） */
   /* Dock 高度（固定，圆角上限要看它） */
   --dock-h: 88px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
