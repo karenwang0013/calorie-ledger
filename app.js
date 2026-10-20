@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.13', d: '10-21', items: [
+    '改：底部 Dock 抬高一点（内容上下更松，加号也大一号），整体更像"浮起来的一层"',
+    '改：Dock 的圆角加大，按屏幕宽度算（iPhone 17 上基本是顺着头尾两端的弧走），和屏幕自己的圆角对得上；iPad 仍是自己那套更小的圆角',
+  ]},
   { v: 'v3.12', d: '10-21', items: [
     '改：底部那一栏换成「悬浮 Dock」—— 左右和底部都留出一条边，四个角做圆角，浮在内容上面，不再是一条贴满屏幕底边的黑条',
     '圆角跟着屏幕的圆角走：iPhone 17 屏幕圆角大，Dock 就更圆；iPad 屏幕圆角更"紧"，Dock 半径相应收小 —— 两台设备各自贴合自己的屏幕，不是照抄同一个值',
@@ -575,7 +579,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.12';
+const APP_VERSION = 'v3.13';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
