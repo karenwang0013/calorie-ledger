@@ -427,7 +427,7 @@ html.kb .sc-body {
   background: none;
   color: var(--lime);
 }
-.pen svg { width: 18px; height: 18px; stroke: none; fill: currentColor; }
+.pen svg { width: 18px; height: 18px; }
 .pen:active { opacity: .55; }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 .mitem.ghead { cursor: pointer; }

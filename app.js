@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(45 12 12)"><rect x="9.2" y="1.6" width="5.6" height="3.4" rx="1"/><rect x="9.2" y="6.2" width="5.6" height="9.6"/><path d="M9.2 16.6h5.6L12 22.2z"/></g></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="currentColor"><path d="M15.6 4.4 19.8 8.6 9 19.4H4.8v-4.2L15.6 4.4Z"/><path d="M12.6 7.4 16.8 11.6" stroke="#0b0d0e" stroke-width="2" fill="none"/></g></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.57', d: '10-21', items: [
+    '改：铅笔按你选的 H 做（斜笔身 + 一道分色），并把所有拐角改成圆角（用圆角描边把尖角磨掉），不再那么尖',
+  ]},
   { v: 'v3.56', d: '10-21', items: [
     '删：一组记录的详情弹层里，每一项后面的改名铅笔去掉了（那一层只留 × 删除）；弹层标题旁边的铅笔还在，改整组名字用它',
     '列表、拍照识别结果里的铅笔不受影响',
@@ -767,7 +770,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.56';
+const APP_VERSION = 'v3.57';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
