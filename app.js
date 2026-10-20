@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.76', d: '10-20', items: [
+    '先把键盘预留量提高到屏幕高度的 60%，确保卡片绝不压到键盘；如果位置显得太靠上，再按步长往下调',
+    '聚焦输入框时，屏幕左上角会显示一行小字（innerH / clientH / vvH），方便一次看出键盘到底占了多高',
+  ]},
   { v: 'v2.75', d: '10-20', items: [
     '卡片位置固定：不论点哪一栏，卡片底边都停在"键盘上方固定的那个屏幕位置"，不再时高时低',
     '设备不报键盘高度，改成按屏幕高度的固定比例估算（预留 47%），所以不会再压到键盘',
@@ -409,7 +413,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.75';
+const APP_VERSION = 'v2.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2518,7 +2522,7 @@ function init() {
     // 把整张卡片放到底边贴着键盘的位置
     // 这台设备不把"键盘压小了可视区"报给网页，所以按固定比例估算键盘高度：
     // 屏幕高度的 47% 留给键盘（含上方工具条），卡片底边永远停在它上面
-    const KB_RATIO = 0.47;
+    const KB_RATIO = 0.60;   // 预留屏幕底部 60%（含键盘 + 上方工具条），先保证绝不重叠
 
     const placeCard = (t) => {
       if (!t) return;
@@ -2538,6 +2542,18 @@ function init() {
 
       window.scrollTo(0, Math.max(0, Math.min(target, max)));
       kbMax = window.scrollY;
+
+      // 临时读数：帮助我们看清键盘到底占了多高（收起键盘自动消失）
+      let dbg = document.getElementById('kbDbg');
+      if (!dbg) {
+        dbg = document.createElement('div');
+        dbg.id = 'kbDbg';
+        dbg.style.cssText = 'position:fixed;left:8px;top:6px;z-index:9999;background:rgba(0,0,0,.75);color:#7dff8a;font:11px/1.4 ui-monospace,Menlo,monospace;padding:4px 7px;border-radius:8px;pointer-events:none';
+        document.body.appendChild(dbg);
+      }
+      dbg.textContent = 'innerH ' + window.innerHeight + ' / clientH ' + document.documentElement.clientHeight +
+        ' / vvH ' + (window.visualViewport ? Math.round(window.visualViewport.height) : '-') +
+        ' / 底边 ' + (window.scrollY + window.innerHeight - Math.round(window.innerHeight * (1 - KB_RATIO)));
     };
 
     const syncKB = () => {
@@ -2551,6 +2567,8 @@ function init() {
         [0, 160, 420, 800].forEach(ms => setTimeout(() => { if (kbOn) placeCard(t || activeInput()); }, ms));
       } else {
         kbMax = Infinity;
+        const d = document.getElementById('kbDbg');
+        if (d) d.remove();
       }
       setTimeout(syncTopH, 50);
     };
