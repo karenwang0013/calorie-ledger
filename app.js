@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.95';
+const APP_VERSION = 'v1.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -134,6 +134,14 @@ async function loadDay() {
 function renderToday() {
   const d = S.day;
   if (!d) return;
+  // 用实时时钟兜底：如果看的是"今天"但日期已经翻篇，直接切过去
+  const nowDay = todayISO();
+  if (S.date === S.today && nowDay !== S.today) {
+    S.today = nowDay;
+    S.date = nowDay;
+    loadDay();
+    return;
+  }
 
   const dt = parseISO(d.date);
   $('#dateLabel').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日`;
@@ -1693,7 +1701,16 @@ async function saveWeight() {
 }
 
 /* ---------------- 导航 ---------------- */
+function refreshTodayIfNeeded() {
+  const t = todayISO();
+  if (t === S.today) return false;
+  S.today = t;
+  if (S.date !== t) S.date = t;
+  loadDay();
+  return true;
+}
 function switchView(v) {
+  refreshTodayIfNeeded();
   if (v !== 'me') document.documentElement.classList.remove('noscroll');
   if (window.scTop) window.scTop();
   S.view = v;
