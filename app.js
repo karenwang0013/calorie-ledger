@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.86';
+const APP_VERSION = 'v1.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -343,6 +343,7 @@ function openAdd(meal) {
   S.batchName = null;
   $('#batchName').value = '';
   resetPhotoUI();
+  restoreDraft();
   $('#photoHint').value = '';
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
@@ -428,6 +429,7 @@ async function handlePhoto(file) {
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
+    saveDraft();
   } catch (e) {
     toast('图片读取失败');
   }
@@ -451,9 +453,52 @@ async function handlePhoto2(file) {
     $('#del2').hidden = false;
     $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
+    saveDraft();
   } catch (e) {
     toast('图片读取失败');
   }
+}
+
+/* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */
+const DRAFT_KEY = 'calorie-ledger-draft';
+function readDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || !d.at || Date.now() - d.at > 24 * 3600e3) { localStorage.removeItem(DRAFT_KEY); return null; }
+    return d;
+  } catch (e) { return null; }
+}
+function saveDraft() {
+  const d = { photo: S.photoData || null, photo2: S.photo2Data || null, at: Date.now() };
+  try {
+    if (!d.photo && !d.photo2) localStorage.removeItem(DRAFT_KEY);
+    else localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch (e) { /* 存不下就算了 */ }
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+/* 把草稿里的照片放回界面 */
+function restoreDraft() {
+  const d = readDraft();
+  if (!d) return;
+  if (d.photo) {
+    S.photoData = d.photo;
+    $('#photoPreview').src = d.photo;
+    $('#photoPreview').hidden = false;
+    $('#photoDel').hidden = false;
+    $('#emptyA').hidden = true;
+  }
+  if (d.photo2) {
+    S.photo2Data = d.photo2;
+    $('#pv2').src = d.photo2;
+    $('#pv2').hidden = false;
+    $('#del2').hidden = false;
+    $('#emptyB').hidden = true;
+  }
+  if (d.photo || d.photo2) $('#photoActions').hidden = false;
 }
 
 /* 把拍照区恢复成「还没选图」的样子 */
@@ -750,6 +795,7 @@ async function saveItems() {
     });
     closeAdd();
     S.batchName = null;
+    clearDraft();
     toast(`已记入${MEAL_NAME[S.meal]} · ${Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0))} 千卡`);
     await loadDay();
     if (S.view === 'trends') loadTrends();
@@ -1816,6 +1862,7 @@ function init() {
     $('#pv2').hidden = true;
     $('#del2').hidden = true;
     $('#emptyB').hidden = false;
+    saveDraft();
   };
 
   // 点两个照片框本身也能调起系统相册
@@ -1837,7 +1884,7 @@ function init() {
   const pickAlb = () => $('#photoAlbum').click();
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
-  $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); };
+  $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;
@@ -1845,6 +1892,7 @@ function init() {
   $('#resultReset').onclick = () => {
     S.items = [];
     resetPhotoUI();
+    clearDraft();
     $('#resultArea').hidden = true;
     $('#addFoot').hidden = true;
   };
