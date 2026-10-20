@@ -912,8 +912,8 @@ html.kb .sc-body {
   margin-bottom: 9px;
 }
 .ritem .top { display: flex; align-items: baseline; gap: 8px; }
-.ritem .nm { font-size: 14px; font-weight: 550; flex: 1; }
-.ritem .kc { font-size: 13px; color: var(--lime); font-variant-numeric: tabular-nums; }
+.ritem .nm { font-size: 14px; font-weight: 550; flex: 1; min-width: 0; }
+.ritem .kc { font-size: 13px; color: var(--lime); font-variant-numeric: tabular-nums; flex: 0 0 auto; margin-left: 8px; }
 .ritem .meta { font-size: 10.5px; color: var(--muted2); margin-top: 5px; }
 .ritem .gr {
   display: flex; align-items: center; gap: 8px; margin-top: 10px;

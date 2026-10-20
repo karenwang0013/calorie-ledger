@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.33', d: '10-21', items: [
+    '改：识别结果里每一项右边那个 × 去掉了；右边只剩卡路里数字，不会再被挤到卡片外面',
+    '修：名字很长时现在会在末尾省略，不会把右边的数字顶出去',
+    '想排除某一项：把它的「克数」改成 0，保存时就不会计入',
+  ]},
   { v: 'v3.32', d: '10-21', items: [
     '改：所有卡片和底部 Dock 换成「磨砂玻璃」—— 底色只透一点点（70% 左右），后面加一层模糊，背景的波点和光晕会透过一点点，不是全透明',
     '弹层（记录食物、组详情、提示卡）也换成磨砂，模糊更重一点，像盖在内容上的一层玻璃',
@@ -670,7 +675,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.32';
+const APP_VERSION = 'v3.33';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1402,7 +1407,6 @@ function renderResult() {
         <div class="top">
           <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
           <span class="kc">${Math.round(kcal)}</span>
-          <button class="del" data-rm="${i}" style="color:var(--muted2);font-size:16px;padding:0 0 0 6px">×</button>
         </div>
         <div class="meta">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</div>
         <div class="gr">
@@ -1427,10 +1431,6 @@ function renderResult() {
     const v = name.trim().slice(0, 20);
     if (!v) return;
     it.name = v;
-    renderResult();
-  });
-  $$('[data-rm]', box).forEach(b => b.onclick = () => {
-    S.items.splice(Number(b.dataset.rm), 1);
     renderResult();
   });
   $$('[data-u]', box).forEach(b => b.onclick = () => {
