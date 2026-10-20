@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.17', d: '10-21', items: [
+    '改：Dock 的圆角改成「按这台设备自己的屏幕圆角来算」—— 屏幕圆角半径减去 Dock 离屏幕边的距离，再受 Dock 高度限制（最多到高度的一半）。iPhone 17 上会取到接近半圆的圆角，和屏幕那圈弧最接近；iPad 屏幕圆角更紧，取到的值相应小',
+    '改：Dock 高度固定下来（手机 100、iPad 112），三个按钮依旧上下居中',
+  ]},
   { v: 'v3.16', d: '10-21', items: [
     '改：Dock 左右两边是直的，四个角做成圆角 —— 圆角跟着屏幕圆角走（手机按屏宽自动收放，iPad 自己一档），不是照抄同一个值',
     '加：所有食物名字后面都加了小铅笔（绿字 + 浅绿圆角底），和名字同一行、齐平；名字太长就省略尾巴，铅笔绝不会被挤到名字下面去',
@@ -604,7 +608,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.16';
+const APP_VERSION = 'v3.17';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3117,6 +3121,21 @@ function init() {
     }
   }, { passive: true });
 
+  // Dock 的圆角：跟这台设备自己的屏幕圆角"同心"（屏幕圆角半径 − Dock 离屏幕边的距离）。
+  // 各代 iPhone 的屏幕圆角本来就不一样，iPad 的又比手机紧得多，所以按屏宽取一档，不写死一个值。
+  const SCREEN_R = [[320, 0], [375, 44], [390, 47], [393, 55], [402, 55], [414, 49], [428, 53], [430, 55], [440, 62], [460, 66]];
+  const syncDockR = () => {
+    const w = Math.round(window.innerWidth);
+    const pad = window.matchMedia('(min-width: 700px)').matches;
+    let sr = 0;
+    if (pad) sr = 24;
+    else for (const [ww, r] of SCREEN_R) { if (w >= ww) sr = r; }
+    const inset = pad ? 10 : 6;
+    const h = pad ? 112 : 100;
+    const r = Math.max(12, Math.min(sr - inset, h / 2));   // 不超过 Dock 高度的一半
+    document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
+  };
+
   // 顶栏改成 fixed：量出实际高度，给内容让出空间
   const syncTopH = () => {
     const tb = document.querySelector('.topbar');
@@ -3173,9 +3192,11 @@ function init() {
     });
   }
   syncTopH();
+  syncDockR();
   initScroll();
   const relayout = () => {
     syncTopH();
+    syncDockR();
     // 横竖屏切换后「关于」页的铺满高度要重算，否则会照搬竖屏的高度
     if (typeof fitAboutFill === 'function') fitAboutFill();
   };

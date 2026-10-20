@@ -20,8 +20,10 @@
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
   --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
   --dock-bottom: 22px;     /* 下边离屏幕底（抬高一点，四周留白更明显） */
-  /* 左右两边是直的，四个角做圆角，跟着屏幕的圆角走（屏幕越宽圆角越大） */
-  --dock-r: clamp(26px, 7.7vmin, 34px);
+  /* Dock 高度（固定，圆角上限要看它） */
+  --dock-h: 100px;
+  /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
+  --dock-r: 44px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
@@ -559,11 +561,13 @@ html.kb .sc-body {
   /* 1fr | 加号 | 1fr：两侧等宽 → 加号永远落在正中，左右两个按钮各自落在左右半区的正中 */
   grid-template-columns: 1fr auto 1fr;
   align-items: center;    /* 三个按钮都在 Dock 的上下正中 */
-  padding: 15px 12px;
+  height: var(--dock-h);
+  padding: 0 12px;
   pointer-events: auto;
   background: #101315;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: var(--dock-r);
+  /* 圆角最多到高度的一半：这样四个角和屏幕的圆角最接近 */
+  border-radius: min(var(--dock-r), calc(var(--dock-h) / 2));
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.62), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
 .tab {
@@ -1115,7 +1119,8 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   :root {
     --dock-inset: 10px;
     --dock-bottom: 26px;
-    --dock-r: 26px;
+    --dock-h: 112px;
+    --dock-r: 16px;
   }
   /* 顶栏两端与内容列对齐 */
   .topbar {
@@ -1212,7 +1217,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 
   /* 底部 Dock：iPad 屏幕圆角比 iPhone "紧"，半径和间距都换成 iPad 的一档；
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
-  .tabbar .inner { padding: 17px 18px; max-width: 760px; }
+  .tabbar .inner { padding: 0 18px; max-width: 760px; }
   .tab svg { width: 32px; height: 32px; }
   .tab { font-size: 13px; }
   .fab { width: 100px; height: 68px; font-size: 36px; }
