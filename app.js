@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.84', d: '10-20', items: [
+    '修：第二次点「脂肪」仍错位 —— 原因是代码里有"两套键盘态开关"互相打架（一套按聚焦、一套按系统高度），第二次点的时候被另一套误关掉',
+    '现在只保留"按聚焦判断"这一套，彻底删掉另一套，二次点击也不会再被关',
+  ]},
   { v: 'v2.83', d: '10-20', items: [
     '修：第二次点「脂肪」页面跳回顶部 —— 第二次点同一个框不会触发"聚焦"事件，我既没重新定位，底部预留也可能不在，位置就全乱了',
     '现在每次点输入框都会兜底重新定位，并且定位前强制确保键盘态样式已生效',
@@ -441,7 +445,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.83';
+const APP_VERSION = 'v2.84';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2513,11 +2517,6 @@ function init() {
     if (!SC.el || !SC.body) return;
     // 键盘弹起时：底部导航和加号直接收起来（否则 iOS 会把它顶到键盘上方浮动），
     // 顶栏用 sticky 交给浏览器钉住，不做任何 transform 位移。
-    const vv = window.visualViewport;
-    let maxH = vv ? Math.max(vv.height, window.innerHeight) : window.innerHeight;
-    window.addEventListener('resize', () => {
-      maxH = Math.max(maxH, window.innerHeight, vv ? vv.height : 0);
-    });
     const activeInput = () => {
       const el = document.activeElement;
       return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
@@ -2556,15 +2555,6 @@ function init() {
       const v = parseFloat(localStorage.getItem('kb_ratio'));
       return (isFinite(v) && v >= 0.30 && v <= 0.70) ? v : 0.50;
     })();
-    const setKbRatio = (v) => {
-      KB_RATIO = Math.min(0.70, Math.max(0.30, Math.round(v * 100) / 100));
-      localStorage.setItem('kb_ratio', String(KB_RATIO));
-      const t = document.activeElement;
-      if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) placeCard(t);
-      const lab = document.getElementById('kbRatioLab');
-      if (lab) lab.textContent = KB_RATIO.toFixed(2);
-    };   // 预留屏幕底部 60%（含键盘 + 上方工具条），先保证绝不重叠
-
     const placeCard = (t) => {
       if (!t) return;
       // 定位前先确保键盘态样式是生效的（否则底部预留不在，位置一定算错）
@@ -2607,29 +2597,6 @@ function init() {
       };
       tick();
     };
-
-    const syncKB = () => {
-      const h = vv ? vv.height : window.innerHeight;
-      const on = (maxH - h) > 120;
-      if (on === kbOn) return;              // 只在"开/关"变化时处理，滚动过程中不再做事
-      kbOn = on;
-      document.documentElement.classList.toggle('kb', on);
-      if (on) {
-        const t = activeInput();
-        if (t) placeWhenSettled(t);
-      } else {
-        kbMax = Infinity;
-        const d = document.getElementById('kbDbg');
-        if (d) d.remove();
-      }
-      setTimeout(syncTopH, 50);
-    };
-    if (vv) {
-      vv.addEventListener('resize', syncKB);
-      vv.addEventListener('scroll', syncKB, { passive: true });
-    }
-    window.addEventListener('focusout', () => setTimeout(syncKB, 150));
-    syncKB();
 
     // 再点同一个输入框不会触发 focus，这里补一个点击兜底
     SC.el.addEventListener('click', e => {
