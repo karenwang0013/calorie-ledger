@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.25', d: '10-21', items: [
+    '改：底部 Dock 左右各收窄一点（手机离边 6 → 14，iPad 10 → 18，宽度上限 760 → 700），四个角和屏幕圆角更呼应',
+    '删：食品条目「左右滑动删除」的手势去掉了 —— 现在只保留右侧的 × 和组详情里的删除，不会误滑删掉东西',
+  ]},
   { v: 'v3.24', d: '10-21', items: [
     '修：拍完 / 选完照片后，预览图比虚线的框小一圈（被一条旧的 160px 高度上限截住了）—— 现在预览图和虚线框严丝合缝一样大，圆角也一致',
     '修：页面里同一个上传控件写了两遍（id 重复），会调起两次、行为不一致；现在只留一套',
@@ -641,7 +645,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.24';
+const APP_VERSION = 'v3.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -914,10 +918,9 @@ function renderMeals() {
   }).join('');
 
   groupMap = groupsById;
-  const swiped = () => window.__rowSwiped && Date.now() - window.__rowSwiped < 500;
-  $$('[data-group]', box).forEach(b => b.onclick = () => { if (swiped()) return; openGroup(b.dataset.group); });
+  $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
   $$('[data-item]', box).forEach(b => b.onclick = ev => {
-    if (swiped() || ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]')) return;
+    if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]')) return;
     openDetail([d.logs.find(l => String(l.id) === b.dataset.item)].filter(Boolean), false);
   });
 
@@ -977,78 +980,6 @@ function renderMeals() {
   $$('[data-add]', box).forEach(b => b.onclick = () => {
     openAdd(b.dataset.add);
   });
-}
-
-/* 列表里横向滑动删除：向右或向左拉出一条红底，松手就删 */
-function initRowSwipe() {
-  const box = $('#meals');
-  if (!box) return;
-  let row = null, x0 = 0, y0 = 0, dx = 0, horiz = false;
-
-  const clear = () => {
-    if (row) {
-      row.classList.remove('swiping', 'sr', 'sl', 'armed');
-      row.style.transition = 'transform .18s ease';
-      row.style.transform = '';
-      const el = row;
-      setTimeout(() => { if (el) el.style.transition = ''; }, 200);
-    }
-    row = null; dx = 0; horiz = false;
-  };
-
-  box.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0];
-    if (t.clientX < 36) return;                    // 左边缘留给「返回」手势
-    if (e.target.closest && e.target.closest('button')) return;  // 按在 × / 铅笔 / ＋ 上不算滑
-    const el = e.target.closest ? e.target.closest('.mitem') : null;
-    if (!el) return;
-    row = el; x0 = t.clientX; y0 = t.clientY; dx = 0; horiz = false;
-    el.style.transition = '';
-  }, { passive: true });
-
-  box.addEventListener('touchmove', e => {
-    if (!row) return;
-    const t = e.touches[0];
-    const ddx = t.clientX - x0, ddy = t.clientY - y0;
-    if (!horiz) {
-      if (Math.abs(ddx) < 14) return;
-      if (Math.abs(ddx) < Math.abs(ddy) * 1.4) { row = null; return; }   // 竖着滑 = 滚页面
-      horiz = true;
-      row.classList.add('swiping');
-    }
-    if (e.cancelable) e.preventDefault();
-    dx = ddx;
-    const cap = Math.sign(dx) * Math.min(110, Math.abs(dx));
-    row.style.transform = 'translateX(' + cap + 'px)';
-    row.classList.toggle('sr', dx > 0);
-    row.classList.toggle('sl', dx < 0);
-    row.classList.toggle('armed', Math.abs(dx) >= 64);
-  }, { passive: false });
-
-  const finish = () => {
-    if (!row) return;
-    const el = row, far = horiz && Math.abs(dx) >= 64;
-    clear();
-    if (far) { window.__rowSwiped = Date.now(); deleteRow(el); }
-  };
-  box.addEventListener('touchend', finish);
-  box.addEventListener('touchcancel', finish);
-}
-
-async function deleteRow(el) {
-  try {
-    if (el.dataset.item) {
-      await api('/api/logs/' + el.dataset.item, null, 'DELETE');
-    } else if (el.dataset.group) {
-      const g = groupMap.get(el.dataset.group);
-      if (!g) return;
-      for (const l of g.logs) await api('/api/logs/' + l.id, null, 'DELETE');
-    } else return;
-    await loadDay();
-    if (S.view === 'trends') loadTrends();
-    toast('已删除', 1500);
-  } catch (e) { toast(e.message); }
 }
 
 /* ---------------- 记录弹层 ---------------- */
@@ -3370,7 +3301,6 @@ function init() {
     });
   }
   syncTopH();
-  initRowSwipe();
   applyDockTune();
   syncDockR();
   initScroll();

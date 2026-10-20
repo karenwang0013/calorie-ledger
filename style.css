@@ -18,7 +18,7 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
-  --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
+  --dock-inset: 14px;      /* 左右离屏幕边（收窄一点，和屏幕圆角更呼应） */
   --dock-bottom: 14px;     /* 下边离屏幕底（贴近屏幕圆角那一圈） */
   /* Dock 高度（固定，圆角上限要看它） */
   --dock-h: 88px;
@@ -393,18 +393,6 @@ html.kb .sc-body {
   border-top: 1px solid var(--line);
   font-size: 13px;
 }
-.mitem { position: relative; touch-action: pan-y; }
-/* 横向滑动删除：拉出一层红底 + 一个「删除」提示，松手就删 */
-.mitem.swiping { background: rgba(255, 93, 93, 0.12); border-radius: 12px; }
-.mitem.swiping.armed { background: rgba(255, 93, 93, 0.22); }
-.mitem.swiping::before {
-  content: '删除';
-  position: absolute; top: 50%; transform: translateY(-50%);
-  font-size: 11.5px; font-weight: 600; letter-spacing: .5px;
-  color: #ff8a8a; pointer-events: none;
-}
-.mitem.swiping.sr::before { left: 10px; }
-.mitem.swiping.sl::before { right: 10px; }
 .mitem .n { flex: 1; min-width: 0; }
 .mitem .n .sub { display: block; font-size: 11px; color: var(--muted2); margin-top: 2px; }
 .mitem .k { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
@@ -1123,7 +1111,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 @media (min-width: 700px) {
   /* iPad：Dock 用自己的一档边距（离边更远、整体更宽），手机和 iPad 各自看着都合适 */
   :root {
-    --dock-inset: 10px;
+    --dock-inset: 18px;
     --dock-bottom: 26px;
     --dock-h: 96px;
     --dock-r: 16px;
@@ -1223,7 +1211,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 
   /* 底部 Dock：iPad 屏幕圆角比 iPhone "紧"，半径和间距都换成 iPad 的一档；
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
-  .tabbar .inner { padding: 0 18px; max-width: 760px; }
+  .tabbar .inner { padding: 0 18px; max-width: 700px; }
   .tab svg { width: 32px; height: 32px; }
   .tab { font-size: 13px; }
   .fab { width: 100px; height: 68px; font-size: 36px; }
