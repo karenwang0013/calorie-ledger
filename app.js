@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.93', d: '10-20', items: [
+    '彻底清理：删掉所有互相打架的滚动逻辑（touchstart 直接滚、点击兜底、多次定时器、vv resize 重滚、键盘态滚动限制）',
+    '只保留一个动作：手指"真点"到输入框时，在键盘弹起前就把它放到正中间；聚焦后再补一次（偏差 >16px 才动）',
+    '滑动经过输入框不再触发定位，因此"不点页面也乱跳"不会再发生',
+  ]},
   { v: 'v2.92', d: '10-20', items: [
     '彻底不晃：手指一按下（键盘还没弹起）就先把位置算好、先滚到位，等键盘起来时它已经在正中间，系统不需要再滚一次',
     '后续只在偏差超过 14px 时才微调',
@@ -477,7 +482,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.92';
+const APP_VERSION = 'v2.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2554,141 +2559,75 @@ function init() {
       return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
     };
 
-    // 键盘弹起期间：允许往上滚（回看上面的内容），但不允许继续往下滚
-    let kbOn = false;
-    let kbMax = Infinity;
-    // 统一处理"越界回弹"：滑到顶部/底部滑不动，而是直接停住（消掉果冻弹性）
+    // 越界回弹：滑出边界就停住（不含键盘态的任何东西，避免互相打架）
     let clamping = false;
     const clamp = () => {
       if (clamping) return;
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const y = window.scrollY;
-      let target = null;
-      if (y < 0) target = 0;
-      else if (y > max) target = max;
-      if (kbOn) {
-        if (!activeInput()) { kbOn = false; kbMax = Infinity; }   // 键盘已收起 → 解除限制
-        else if (target === null && y > kbMax + 1) target = kbMax;
-      }
-      if (target !== null) {
+      if (y < 0 || y > max) {
         clamping = true;
-        window.scrollTo(0, target);
+        window.scrollTo(0, Math.max(0, Math.min(y, max)));
         requestAnimationFrame(() => { clamping = false; });
       }
     };
     window.addEventListener('scroll', clamp, { passive: true });
 
-    // 把整张卡片放到底边贴着键盘的位置
-    // 这台设备不把"键盘压小了可视区"报给网页，所以按固定比例估算键盘高度：
-    // 屏幕高度的 47% 留给键盘（含上方工具条），卡片底边永远停在它上面
-    // 键盘预留比例：默认 0.50（正好在"压键盘"和"太靠上"之间）
-    // 可在界面上用 ▲▼ 微调，调完自动记住，以你这台设备为准
-    let KB_RATIO = (function () {
-      const v = parseFloat(localStorage.getItem('kb_ratio'));
-      return (isFinite(v) && v >= 0.30 && v <= 0.70) ? v : 0.50;
-    })();
-    // 记住上次的键盘高度：点下去之前就能算出"键盘弹起后该在哪"，从而一次到位，不产生二次位移
+    // 记住键盘高度（只用来"预判位置"，不参与任何滚动监听）
     let kbH = parseFloat(localStorage.getItem('kb_h'));
     if (!isFinite(kbH) || kbH < 200 || kbH > 600) kbH = 440;
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
-        const v = window.visualViewport;
-        const h = window.innerHeight - v.height;
+        const h = window.innerHeight - window.visualViewport.height;
         if (h > 200) { kbH = Math.round(h); localStorage.setItem('kb_h', String(kbH)); }
       });
     }
 
+    // 居中目标（按绝对位置计算，重复算结果不变）
     const centerFor = (t, keyboardH) => {
-      const top = 96;
-      const bottom = window.innerHeight - keyboardH;
-      const centerScreen = (top + bottom) / 2;
+      const centerScreen = (96 + (window.innerHeight - keyboardH)) / 2;
       const r = t.getBoundingClientRect();
       const inputCenterDoc = r.top + window.scrollY + r.height / 2;
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       return Math.max(0, Math.min(Math.round(inputCenterDoc - centerScreen), max));
     };
 
-    // 手指一按下就先算好位：键盘起来后它已经在正中间，系统无需再滚 → 不会晃
+    // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
+    let tX = 0, tY = 0, tT = 0, tEl = null;
     SC.el.addEventListener('touchstart', e => {
-      const t = e.target;
-      if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
-      document.documentElement.classList.add('kb');
-      void document.body.offsetHeight;
-      window.scrollTo(0, centerFor(t, kbH));
+      const t = e.touches[0];
+      tX = t.clientX; tY = t.clientY; tT = Date.now();
+      tEl = e.target.closest ? e.target.closest('input,textarea') : null;
+    }, { passive: true });
+    SC.el.addEventListener('touchend', e => {
+      if (!tEl) return;
+      const c = e.changedTouches[0];
+      const moved = Math.abs(c.clientY - tY) + Math.abs(c.clientX - tX);
+      const dur = Date.now() - tT;
+      if (moved < 8 && dur < 400) {
+        document.documentElement.classList.add('kb');
+        void document.body.offsetHeight;
+        window.scrollTo(0, centerFor(tEl, kbH));
+      }
+      tEl = null;
     }, { passive: true });
 
-    // 只做一件事：把正在编辑的那一栏，放到"顶栏下沿 ↔ 键盘上沿"这段区域的正中间
-    const placeCard = (t) => {
-      if (!t) return;
-      document.documentElement.classList.add('kb');
-      kbOn = true;
-      void document.body.offsetHeight;          // 让底部预留先落地，滚动才够用
-
-      const vv3 = window.visualViewport;
-      // 键盘还没弹起来（可视区没被压小）时先不动，否则会先按全屏算一次、再按键盘算一次 → 上下弹一下
-      if (vv3 && (window.innerHeight - vv3.height) < 100) return;
-
-      const top = 96;                            // 顶栏下沿
-      const bottom = vv3 ? (vv3.offsetTop + vv3.height) : window.innerHeight;
-      const centerScreen = (top + bottom) / 2;   // 可视区域的垂直中心（屏幕坐标）
-
-      const r = t.getBoundingClientRect();
-      const inputCenterDoc = r.top + window.scrollY + r.height / 2;
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const target = Math.round(inputCenterDoc - centerScreen);
-
-      const want = Math.max(0, Math.min(target, max));
-      // 位移超过 8px 才滚，而且用平滑滚动：看起来是一次顺滑的移动，而不是"弹一下"
-      if (Math.abs(window.scrollY - want) > 14) {
-        window.scrollTo({ top: want, behavior: 'smooth' });
-      }
-      kbMax = Infinity;
-      (window.__placeLog = window.__placeLog || []).push(
-        [new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-         'center ' + Math.round(centerScreen), 'target ' + target,
-         'after ' + window.scrollY, 'vvH ' + Math.round((vv3 || {}).height || 0)].join(' | ')
-      );
-      if (window.__placeLog.length > 12) window.__placeLog.shift();
-    };
-
-    // 键盘还在动的时候会被多次调用，但每次都算同一个绝对目标，所以不会跳
-    const placeWhenSettled = (t) => {
-      [260, 700].forEach(ms => setTimeout(() => placeCard(t), ms));
-      const vv3 = window.visualViewport;
-      if (vv3) {
-        const onResize = () => placeCard(t);
-        vv3.addEventListener('resize', onResize);
-        setTimeout(() => vv3.removeEventListener('resize', onResize), 1500);
-      }
-    };
-
-    // 再点同一个输入框不会触发 focus，这里补一个点击兜底
-    SC.el.addEventListener('click', e => {
-      const t = e.target;
-      if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) placeWhenSettled(t);
-    });
-
-    // 聚焦输入框时：立刻把这一栏放到键盘上方（不等键盘动画结束）
+    // 聚焦兜底：只补一次，偏差 >16px 才动（键盘箭头切换焦点时 touchend 不会触发）
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
-      // 用"是否有输入框在编辑"来判定键盘态，比读系统高度可靠
       document.documentElement.classList.add('kb');
-      kbOn = true;
-      placeWhenSettled(t);
-    });
-    document.addEventListener('focusout', () => {
-      // 点同一个输入框时，iOS 可能先失焦再聚焦；这里等久一点再判断，
-      // 否则键盘态被误判成"收起" → 底部预留消失 → 页面瞬时变短 → 卡片错位
       setTimeout(() => {
-        const el = document.activeElement;
-        if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
-        kbOn = false; kbMax = Infinity;
+        if (activeInput() !== t) return;
+        const want = centerFor(t, kbH);
+        if (Math.abs(window.scrollY - want) > 16) window.scrollTo(0, want);
+      }, 350);
+    });
+
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (activeInput()) return;
         document.documentElement.classList.remove('kb');
-        const d = document.getElementById('kbDbg');
-        if (d) d.remove();
-        const t = document.getElementById('kbTune');
-        if (t) t.remove();
       }, 700);
     });
   };
