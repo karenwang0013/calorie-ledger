@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.86', d: '10-20', items: [
+    '修：关掉键盘再点，位置和第一次不一样 —— 之前只在"高度稳定"那一刻定位一次，如果键盘动画结束得晚，第二次就停在了中间值',
+    '现在 1.6 秒内键盘高度每变一次就重新贴一次，最后一定停在同一个位置',
+  ]},
   { v: 'v2.85', d: '10-20', items: [
     '加一份"定位日志"：每次定位都会记下 滚动前/目标/上限/滚动后/可视高度/键盘态，连点版本号 5 次可以看到最近 6 条',
     '不改任何行为，只加记录，用来一次看清第二次点击到底发生了什么',
@@ -449,7 +453,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.85';
+const APP_VERSION = 'v2.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2600,13 +2604,14 @@ function init() {
     };
 
     // 等键盘高度稳定（连续两次采样一致）再定位，避免卡片跟着键盘动画来回跳
+    // 键盘高度每变一次就重新贴一次（1.6 秒内），保证第一次和第二次点落在同一位置
     const placeWhenSettled = (t) => {
-      let last = -1, stable = 0, tries = 0;
+      let last = null;
+      const until = Date.now() + 1600;
       const tick = () => {
         const h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
-        if (h === last) stable++; else { stable = 0; last = h; }
-        if (stable >= 2 || tries++ > 30) { placeCard(t); return; }
-        setTimeout(tick, 60);
+        if (h !== last) { last = h; placeCard(t); }
+        if (Date.now() < until) setTimeout(tick, 80);
       };
       tick();
     };
