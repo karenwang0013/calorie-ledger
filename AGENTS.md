@@ -106,3 +106,24 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 ```
 
 并且同步在「关于与更新」里加一条对应版本的记录，文案要写**动作和效果**，不要只写提交摘要。
+
+## 不可回退清单（每条都对应一个已验证通过的版本）
+
+发版前必须跑 `node tools/guard-check.mjs`，有一项不过就不许发。
+
+| # | 规则 | 锁定版本 | 为什么 |
+|---|---|---|---|
+| 1 | 顶部必须有 `.statusbg` 实色带，`position: fixed; z-index: 25` | v2.34 / v2.44 | 没有这层，iOS 主屏幕 App 的状态栏会出现磨砂；层级必须低于顶栏（30），否则会切掉按钮上沿 |
+| 2 | `.topbar` 必须 `position: fixed`，背景 `#0d0f0e` | v2.39 | 改成 relative/sticky 会把磨砂和位移问题带回来 |
+| 3 | **绝不给顶栏加 transform 位移补偿** | v2.25 / v2.46 | `visualViewport.offsetTop` 不可靠，会累积成"越点越往下" |
+| 4 | `.sc-body` 不许 `backface-visibility: hidden` | v2.55 | 会变成独立合成层，滚动到底部漏画成纯黑 |
+| 5 | 键盘态判定用「有输入框在编辑」（focusin 加类），**不要依赖 `visualViewport.height`** | v2.77 | 这台设备不把键盘高度报给网页，依赖它就等于什么都没做 |
+| 6 | 卡片定位：按**绝对位置**算，用 `KB_RATIO`（默认 0.50，可 ▲▼ 微调，存 `localStorage.kb_ratio`） | v2.79 | 相对滚动会累积误差；固定比例加减一能一次调准 |
+| 7 | 键盘态 `.sc-body` 底部预留 `120vh` | v2.77 | 预留不够时滚动会被上限卡住，卡片推不上去 |
+| 8 | 目标缺口/盈余是硬指标（`hasDefOv`） | v2.15 | 用户设定的值不许被任何公式改动 |
+
+## 教训（写给以后的自己）
+
+- **不要靠猜。** 数值类问题（高度、间距、比例）先取中间值，再让用户在该界面上直接微调，调好的值持久化 —— 比反复改代码试快十倍。
+- **每次只改一处，改完让用户验一次**，验过立刻写进上面的清单并加进自检脚本。
+- 改之前先查已装技能：`mobile-web-viewport-pitfalls`（真机视口/键盘）、`systematic-debugging`、`dogfood`。
