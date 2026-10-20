@@ -34,9 +34,12 @@ body { background: #060907; }
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
-  height: min(max(10px, var(--safe-t)), 90px);
+  /* 只在页面真的延伸到状态栏下面时才需要这条带子（那时 safe-t > 0）。
+     现在去掉了 viewport-fit=cover，safe-t 为 0，这条带子高度也必须是 0，
+     否则它会浮在最上层，把顶栏按钮/标题的上沿切掉一块（这就是"遮挡"） */
+  height: min(var(--safe-t, 0px), 90px);
   background: #0d0f0e;
-  z-index: 40; pointer-events: none;
+  z-index: 25; pointer-events: none;
 }
 
 html, body {
