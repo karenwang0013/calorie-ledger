@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.27', d: '10-20', items: [
+    '键盘弹起时把底部导航和加号收起来：它们之前会被 iOS 顶到键盘上方浮起来',
+    '顶栏继续吸顶钉住，键盘弹起、切换输入框都不移动',
+  ]},
   { v: 'v2.26', d: '10-20', items: [
     '彻底改掉滚动方式：内容改回「整页原生滚动」，标题栏改成吸顶（sticky）',
     '之前是"内层容器滚动 + 固定顶栏"，iOS 一弹键盘就会把这套结构错位；现在是浏览器最标准的做法，键盘、光标、顶栏都由系统按常规处理',
@@ -211,7 +215,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.26';
+const APP_VERSION = 'v2.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2281,11 +2285,24 @@ function init() {
     SC.el = document.getElementById('scroller');
     SC.body = document.getElementById('scBody');
     if (!SC.el || !SC.body) return;
-    // 注意：不要用 visualViewport.offsetTop 去位移顶栏。
-    // iOS 上顶栏本来就跟着可视区域走，再补一次会「越点越往下」，缺口越拉越大。
-    // 这里只在键盘高度变化时重新量一次顶栏高度。
+    // 键盘弹起时：底部导航和加号直接收起来（否则 iOS 会把它顶到键盘上方浮动），
+    // 顶栏用 sticky 交给浏览器钉住，不做任何 transform 位移。
     const vv = window.visualViewport;
-    if (vv) vv.addEventListener('resize', () => setTimeout(syncTopH, 50));
+    let maxH = vv ? Math.max(vv.height, window.innerHeight) : window.innerHeight;
+    window.addEventListener('resize', () => {
+      maxH = Math.max(maxH, window.innerHeight, vv ? vv.height : 0);
+    });
+    const syncKB = () => {
+      const h = vv ? vv.height : window.innerHeight;
+      const kb = (maxH - h) > 120;
+      document.documentElement.classList.toggle('kb', kb);
+    };
+    if (vv) {
+      vv.addEventListener('resize', () => { syncKB(); setTimeout(syncTopH, 50); });
+      vv.addEventListener('scroll', syncKB, { passive: true });
+    }
+    window.addEventListener('focusout', () => setTimeout(syncKB, 150));
+    syncKB();
 
     // 键盘弹起后，把正在输入的框滚到上方可见处
     SC.el.addEventListener('focusin', e => {
