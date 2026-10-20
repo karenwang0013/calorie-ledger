@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.37', d: '10-20', items: [
+    '顶部那条"雾带"：状态栏是纯黑、顶栏是深灰绿，两种颜色贴在一起看成了一条模糊带；现在顶栏改成和状态栏一样的纯黑',
+    '点最下面的「脂肪」：改为连续校正 7 次（0~1.2 秒），键盘动画结束后也会把这一栏推到顶栏下方可见位置',
+    '去掉了键盘弹起时强制把页面拉回顶部的那一行代码',
+  ]},
   { v: 'v2.36', d: '10-20', items: [
     '顶部磨砂：页面不再延伸到状态栏下面（去掉 viewport-fit=cover），状态栏整块交给系统用不透明黑绘制，系统没有内容可模糊',
     '修：点最下面的「脂肪」时键盘把它挡住 —— 键盘每次改变可见高度，都会重新把当前输入框滚到可见位置',
@@ -254,7 +259,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.36';
+const APP_VERSION = 'v2.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2355,7 +2360,6 @@ function init() {
       // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
       // 不要给外壳加 transform：iOS 的 offsetTop 在键盘弹起时并不可靠，
       // 一旦位移就会把内容整体推回上方（看起来像"页面跳回顶部"）
-      if (kb) { try { window.scrollTo(0, 0); } catch (e) {} }
     };
     if (vv) {
       vv.addEventListener('resize', () => { syncKB(); setTimeout(syncTopH, 50); });
@@ -2373,18 +2377,14 @@ function init() {
         const vv2 = window.visualViewport;
         const vH = vv2 ? vv2.height : window.innerHeight;
         const r = t.getBoundingClientRect();
-        const topLimit = 96;                                   // 顶栏下沿
-        const bottomLimit = Math.min(vH - 28, window.innerHeight - 28);
-        // 被键盘挡住 → 只往上推，推到中间偏上一点
-        if (r.bottom > bottomLimit) {
-          SC.el.scrollTop += r.bottom - bottomLimit;
-        } else if (r.top < topLimit) {
-          SC.el.scrollTop -= (topLimit - r.top);
+        const bottomLimit = vH - 24;
+        // 只要下半部分被键盘压住，就把这一栏推到顶栏下方约 150px 的位置
+        if (r.bottom > bottomLimit || r.top < 90) {
+          SC.el.scrollTop += r.top - 150;
         }
       };
-      put();
-      setTimeout(put, 120);
-      setTimeout(put, 320);
+      // 键盘弹起有动画，位置要连续校正几次
+      [0, 80, 200, 350, 550, 800, 1200].forEach(ms => setTimeout(put, ms));
     });
   };
 

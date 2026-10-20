@@ -168,7 +168,8 @@ select {
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
   padding: min(calc(14px + var(--safe-t)), 88px) 18px 9px;
-  background: #0d0f0e;
+  /* 和系统状态栏同一色（纯黑），否则状态栏黑、顶栏深灰绿，会看成一条"雾带" */
+  background: #000;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar {
