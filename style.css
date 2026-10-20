@@ -664,7 +664,11 @@ html.kb .sc-body {
   flex: 1; padding: 8px; border-radius: 9px;
   font-size: 12.5px; color: var(--muted);
 }
-.seg button.on { background: var(--card2); color: var(--text); box-shadow: 0 1px 0 rgba(255,255,255,.05) inset; }
+.seg button.on {
+  /* 选中的那格用绿色实底，别和底色混在一起看不清 */
+  background: var(--lime); color: #0a0b0c; font-weight: 700;
+  box-shadow: 0 3px 10px rgba(214, 255, 75, 0.20);
+}
 
 /* ---------- 图表 ---------- */
 .chart { width: 100%; height: auto; display: block; overflow: visible; }
