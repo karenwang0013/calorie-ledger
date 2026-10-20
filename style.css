@@ -57,8 +57,6 @@ body {
   overflow: hidden; overscroll-behavior: none;
 }
 
-/* 键盘弹起导致可视区域平移时，顶栏跟着补偿，始终贴在最上沿 */
-.topbar, .statusbg { transform: translateY(var(--vv-top, 0px)); }
 
 
 body { -webkit-overflow-scrolling: touch; }
