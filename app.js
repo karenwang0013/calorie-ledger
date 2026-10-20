@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.43', d: '10-21', items: [
+    '改：两张照片并排时，右边那行文字改回来说明「食物照片 + 营养成分表」（之前写的是笼统的「两张照片」）；缩略图下面仍保留「食物 / 营养表」小标签',
+  ]},
   { v: 'v3.42', d: '10-21', items: [
     '修：「从相册选」那圈虚线回来了 —— 之前被新加的「有光泽描边」覆盖成了透明边，看着就像没有框',
   ]},
@@ -711,7 +714,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.42';
+const APP_VERSION = 'v3.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1436,7 +1439,7 @@ function renderResult() {
       S.photoData ? shotThumb(S.photoData, '食物') : '',
       S.photo2Data ? shotThumb(S.photo2Data, '营养表') : '',
     ].join('');
-    const title = two ? '两张照片' : (S.photo2Data ? '营养成分表照片' : '食物照片');
+    const title = two ? '食物照片 + 营养成分表' : (S.photo2Data ? '营养成分表照片' : '食物照片');
     const sub = two ? `识别出 ${S.items.length} 项 · 克数可改`
                     : (S.photo2Data ? '按标签每 100 克换算' : `识别出 ${S.items.length} 项 · 克数可改`);
     shot = `<div class="shotrow">
