@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.39', d: '10-20', items: [
+    '把顶部/底部的结构完整退回"没有磨砂、上下栏不动"的那一版（顶栏固定 + 顶部实色带 + 内容区留白 + 底栏固定）',
+    '只保留后来真正需要的修复：去掉了会累积的位移补偿、输入框滚动定位、键盘弹起收起底栏',
+  ]},
   { v: 'v2.38', d: '10-20', items: [
     '排查用：连点标题旁边的版本号 5 次，会显示一行环境信息（版本、独立模式、可视高度、安全区、顶栏底色、滚动位置），再点一下关闭',
   ]},
@@ -262,7 +266,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.38';
+const APP_VERSION = 'v2.39';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

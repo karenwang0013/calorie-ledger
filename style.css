@@ -31,7 +31,12 @@ html { background: #0d0f0e; overflow-x: hidden; }
 body { background: #0d0f0e; }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
-.statusbg { display: none; }
+.statusbg {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: min(max(10px, var(--safe-t)), 90px);
+  background: #0d0f0e;
+  z-index: 40; pointer-events: none;
+}
 
 html, body {
   margin: 0;
@@ -121,7 +126,7 @@ select {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  /* 顶栏改成吸顶后本身占位置，这里不再需要留白 */
+  padding-top: var(--topbar-h, 64px);
 }
 .scroller {
   background:
@@ -154,22 +159,22 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
 .sc-body {
-  padding-bottom: 24px;
+  backface-visibility: hidden;
+  padding-bottom: calc(92px + var(--safe-b));
 }
 
 /* ---------- 顶栏 ---------- */
 .topbar {
-  position: relative;
-  flex: 0 0 auto;
-  width: 100%;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  max-width: 520px; margin: 0 auto;
   z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
-  padding: min(calc(14px + var(--safe-t)), 88px) 18px 9px;
-  /* 和系统状态栏同一色（纯黑），否则状态栏黑、顶栏深灰绿，会看成一条"雾带" */
-  background: #000;
+  padding: min(calc(10px + var(--safe-t)), 88px) 18px 9px;
+  background: #0d0f0e;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar {
@@ -488,8 +493,8 @@ select {
 
 /* ---------- 底部导航 ---------- */
 .tabbar {
-  position: relative;
-  flex: 0 0 auto;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
   z-index: 30;
   display: flex;
   justify-content: center;
