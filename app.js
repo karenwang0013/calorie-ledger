@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.22', d: '10-20', items: [
+    '缺口/盈余不合理时会给提示：填的时候实时显示，保存时也会弹一句，但绝不改你填的数',
+    '判断标准：缺口不超过消耗的 25%（且 ≤500）、每日可吃不低于基础代谢；盈余建议 200–300',
+  ]},
   { v: 'v2.21', d: '10-20', items: [
     '修：手动填的缺口（如 -300）在再点一次「保存」后会变回建议值 -275 —— 原因是拿「已生效的值」去和「建议值」比较，两者相等就当成没填',
     '现在拿「纯建议值」比较：填多少存多少，反复点保存都不会变',
@@ -190,7 +194,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.21';
+const APP_VERSION = 'v2.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1196,6 +1200,28 @@ const DIET_MODES = {
   bulk:     { n: '增肌', p: 1.8, fat: 0.25, deficit: -250, tip: '盈余 250 · 蛋白 1.8' },
 };
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
+
+// 缺口/盈余合理性提示：只提醒，绝不改用户填的数
+function deficitAdvice(exp, deficit, bmr) {
+  const d = Number(deficit) || 0;
+  const e = Number(exp) || 0;
+  const abs = Math.abs(d);
+  if (!e) return null;
+  const pct = Math.round(abs / e * 100);
+  const safe = Math.round(Math.min(e * 0.25, 500));
+  if (d > 0) {                                    // 缺口
+    if (d >= e) return { lv: 'hard', t: `缺口 ${d} 已超过当天消耗 ${e}，每日可吃会变成 0。建议不超过 ${safe}（消耗的 25%）。` };
+    if (bmr && e - d < bmr * 0.75) return { lv: 'hard', t: `每日可吃只剩 ${e - d}，已低于基础代谢 ${bmr} 的 75%，长期会掉肌肉、代谢变慢。建议缺口不超过 ${safe}。` };
+    if (abs > 500 || pct > 25) return { lv: 'warn', t: `缺口偏大（占消耗 ${pct}%，约 ${(abs * 7 / 7700).toFixed(2)} kg/周）。一般建议不超过 ${safe}（25%），减得稳、不易反弹。` };
+    return null;
+  }
+  if (d < 0) {                                    // 盈余
+    if (abs > 700) return { lv: 'hard', t: `盈余 ${abs} 偏大，多出的热量更容易变成脂肪。增肌一般建议 200–300。` };
+    if (abs > 400) return { lv: 'warn', t: `盈余 ${abs}（约 ${(abs * 7 / 7700).toFixed(2)} kg/周），多数人 200–300 已经够用。` };
+    return null;
+  }
+  return null;
+}
 // 每个主题的[主光色, 副光色]，背景光晕和点阵跟着变
 const GLOWS = {
   lime: ['#d6ff4b', '#46ffc4'],
@@ -1410,11 +1436,12 @@ function renderMe() {
           <label>目标缺口 / 盈余（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
           <div class="hint"><b>负数 = 缺口</b>（如 -300），<b>正数 = 盈余</b>（如 300）。填 0 就等于维持。</div>
+          <div class="warnline" id="nDefWarn" hidden></div>
         </div>
         <div class="field">
           <label>每日可吃（千卡）</label>
           <input id="nKcal" type="number" inputmode="numeric" value="${d.targets.kcal_budget}">
-          <div class="hint">= 全天消耗 ${d.expenditure} ${d.targets.deficit >= 0 ? '− 缺口 ' + Math.abs(d.targets.deficit) : '+ 盈余 ' + Math.abs(d.targets.deficit)}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
+          <div class="hint" id="nKcalHint">= 全天消耗 ${d.expenditure} ${d.targets.deficit >= 0 ? '− 缺口 ' + Math.abs(d.targets.deficit) : '+ 盈余 ' + Math.abs(d.targets.deficit)}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
         </div>
         <div class="field">
           <label>蛋白质（g）</label>
@@ -1537,8 +1564,28 @@ function wireMe() {
   const nd = $('#nDef'), nk = $('#nKcal');
   if (nd && nk) {
     const exp = (S.day && S.day.expenditure) || 0;
-    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp + (Number(nd.value) || 0))); };
-    nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); };
+    const bmr = Math.round((S.day && S.day.expenditure_detail && S.day.expenditure_detail.resting) || 0);
+    const paintWarn = () => {
+      const box = $('#nDefWarn');
+      if (!box) return null;
+      const adv = deficitAdvice(exp, -Number(nd.value || 0), bmr);
+      if (!adv) { box.hidden = true; box.textContent = ''; box.className = 'warnline'; return null; }
+      box.hidden = false;
+      box.className = 'warnline' + (adv.lv === 'hard' ? ' hard' : '');
+      box.textContent = adv.t;
+      return adv;
+    };
+    const paintKcalHint = () => {
+      const box = $('#nKcalHint');
+      if (!box) return;
+      const d = -Number(nd.value || 0);
+      const tail = box.querySelector('span') ? box.querySelector('span').outerHTML : '';
+      box.innerHTML = `= 全天消耗 ${exp} ${d >= 0 ? '− 缺口 ' + abs0(d) : '+ 盈余 ' + abs0(d)}<br>${tail}`;
+    };
+    const abs0 = (n) => Math.abs(Math.round(n));
+    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp + (Number(nd.value) || 0))); paintWarn(); paintKcalHint(); };
+    nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); paintWarn(); };
+    paintWarn();
   }
   $$('#dietModes button').forEach(b => b.onclick = async () => {
     const k = b.dataset.mode;
@@ -1581,7 +1628,13 @@ function wireMe() {
       };
       Object.keys(ov).forEach(k => ov[k] === undefined && delete ov[k]);
       await api('/api/settings', { target_override: ov });
-      toast(Object.keys(ov).length ? '已保存饮食目标' : '已恢复为建议值');
+      const adv = (function () {
+        const e = (S.day && S.day.expenditure) || 0;
+        const b = Math.round((S.day && S.day.expenditure_detail && S.day.expenditure_detail.resting) || 0);
+        return deficitAdvice(e, -defRaw, b);
+      })();
+      if (adv) toast(adv.t, adv.lv === 'hard' ? 5200 : 4200);
+      else toast(Object.keys(ov).length ? '已保存饮食目标' : '已恢复为建议值');
       await loadDay();
       renderMe();
     } catch (e) { toast(e.message); }
