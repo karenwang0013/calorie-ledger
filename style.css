@@ -65,7 +65,7 @@ html, body {
   padding: 0;
   min-height: 100%;
   overscroll-behavior-y: none;
-  background: var(--bg);
+  /* 这里不要再写 background，否则会把 html 上的渐变+波点整条覆盖掉 */
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
     "Helvetica Neue", Arial, sans-serif;
