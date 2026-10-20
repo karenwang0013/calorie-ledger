@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.89';
+const APP_VERSION = 'v1.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1245,9 +1245,9 @@ function renderMe() {
       <div class="card">
         <div class="hint" style="margin:0 0 16px">全留空 = 用建议值（会随体重和消耗自动变）。填了就以你填的为准。</div>
         <div class="field">
-          <label>目标缺口（千卡 / 天）</label>
-          <input id="nDef" type="number" inputmode="numeric" value="${d.targets.deficit}">
-          <div class="hint">= 目标速度 ${Math.abs(Number(p.goal_rate ?? 0))} kg/周 × 7700 ÷ 7${d.targets.deficit !== (a.deficit ?? d.targets.deficit) ? '（已封顶）' : ''}</div>
+          <label>目标缺口 / 盈余（千卡 / 天）</label>
+          <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
+          <div class="hint"><b>负数 = 缺口</b>（如 -300），<b>正数 = 盈余</b>（如 300）。填 0 就等于维持。</div>
         </div>
         <div class="field">
           <label>每日可吃（千卡）</label>
@@ -1381,8 +1381,8 @@ function wireMe() {
   const nd = $('#nDef'), nk = $('#nKcal');
   if (nd && nk) {
     const exp = (S.day && S.day.expenditure) || 0;
-    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp - (Number(nd.value) || 0))); };
-    nk.oninput = () => { nd.value = Math.round(exp - (Number(nk.value) || 0)); };
+    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp + (Number(nd.value) || 0))); };
+    nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); };
   }
   const sn = $('#saveNutri');
   if (sn) sn.onclick = async () => {
@@ -1395,7 +1395,11 @@ function wireMe() {
         if (autoVal && Math.abs(v - autoVal) < 1) return undefined;
         return v;
       };
+      const defRaw = Number(($('#nDef') || {}).value);
+      const autoDef = Number(a.deficit || 0);
+      const defValue = (isFinite(defRaw) && defRaw !== 0 && Math.abs(-defRaw - autoDef) >= 1) ? -defRaw : undefined;
       const ov = {
+        deficit: defValue,
         kcal: pick('#nKcal', a.kcal_budget),
         protein: pick('#nProt', a.protein_g),
         carb: pick('#nCarb', a.carb_g),

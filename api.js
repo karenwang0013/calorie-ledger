@@ -125,6 +125,12 @@ function targetsOf(p, exp) {
   want = Math.max(-600, Math.min(700, want));
   if (want > 0) want = Math.min(want, exp * 0.22);   // 缺口不超过消耗 22%
 
+  // —— 用户手动指定的缺口 / 盈余（正=缺口，负=盈余） ——
+  const ov0 = setting('target_override', {}) || {};
+  if (ov0.deficit !== undefined && ov0.deficit !== null && ov0.deficit !== '' && isFinite(Number(ov0.deficit))) {
+    want = Number(ov0.deficit);
+  }
+
   // —— 自动建议值 ——
   const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
   const budgetAuto = Math.max(1000, exp - want);
