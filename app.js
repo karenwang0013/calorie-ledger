@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.13', d: '10-20', items: [
+    '去掉「整盘菜、外卖盒」「可选，更准」两行小字，腾出的空间给照片框',
+    '照片框改为略高的竖版（1:1.12），看食物更清楚',
+  ]},
   { v: 'v2.12', d: '10-20', items: [
     '「识别热量」按钮加粗加高（高度 44 → 56px，字号 14 → 16），更好按',
   ]},
@@ -153,7 +157,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.12';
+const APP_VERSION = 'v2.13';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

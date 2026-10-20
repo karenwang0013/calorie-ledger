@@ -679,6 +679,7 @@ select {
 .pslot { min-width: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .prow-hd {
   display: inline-block;
+  margin-bottom: 7px;
   background: var(--lime); color: #0a0b0c;
   border-radius: 8px; padding: 4px 9px;
   font-size: 11.5px; font-weight: 600; line-height: 1.3;
@@ -693,10 +694,10 @@ select {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; color: var(--muted2);
   border: 1px dashed var(--line2); border-radius: 14px;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1.12;
 }
 .pslot-body .preview {
-  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+  width: 100%; aspect-ratio: 1 / 1.12; object-fit: cover;
   border-radius: 14px; display: block;
 }
 .prow-pick { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
