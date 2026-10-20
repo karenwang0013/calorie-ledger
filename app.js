@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.45', d: '10-21', items: [
+    '改：圆环整体加了一层「玻璃感」—— ① 顺着弧线一道很淡的白色高光，整圈都有，不再是只有一角看得出渐变；② 整圈再带一点同色柔光（像发光的玻璃），不是贴上去的一条色带',
+    '渐变的明暗过渡仍然很轻，不抢数字',
+  ]},
   { v: 'v3.44', d: '10-21', items: [
     '改：拍照页去掉两个框上面那两块绿色标签（「1 食物照片」「2 营养成分表」）',
     '改：标签文字挪进虚线框里 —— 空着的时候直接显示「食物照片」「营养成分表」，不用再猜哪个框是哪个',
@@ -719,7 +723,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.44';
+const APP_VERSION = 'v3.45';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -854,7 +858,10 @@ function renderToday() {
   const pct = t.kcal_budget > 0 ? intake / t.kcal_budget : 0;
   const ring = $('#ring');
   const C = 527.8;
-  ring.style.strokeDashoffset = String(C * (1 - Math.min(pct, 1)));
+  const dash = String(C * (1 - Math.min(pct, 1)));
+  ring.style.strokeDashoffset = dash;
+  const sheen = $('#ringSheen');
+  if (sheen) sheen.style.strokeDashoffset = dash;   // 高光跟着同一段弧走
 
   // 颜色语言：绿=还有余量、橙=接近上限、红=已经吃超（盈余）
   // 颜色随进度平滑过渡：绿 → 橙 → 红
@@ -888,6 +895,14 @@ function renderToday() {
   $('#ringS1').setAttribute('stop-color', c1);
   $('#ringS2').setAttribute('stop-color', shade(c2, -0.22));
 
+
+  // 一圈很淡的同色光晕：让环看着像玻璃，不是贴上去的色带
+  const rgba = (hex, a) => {
+    const p = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+    const [r, g, b] = p(hex);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  };
+  ring.style.filter = `drop-shadow(0 0 9px ${rgba(c1, 0.28)})`;
 
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
