@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.39', d: '10-21', items: [
+    '改：识别结果里，删除的 × 移到卡片右上角，独占一角，不再和名字、数字抢位置',
+    '改：卡路里数字（660 / 196）挪到下面「克数」那一行的最右边，名字那一行只留名字和铅笔',
+  ]},
   { v: 'v3.38', d: '10-21', items: [
     '加：识别结果里每一项右边都加回了 ×（固定大小，不会再被长名字挤到卡片外面），点一下就删掉这一项',
     '改：把项目都删光以后，上面那两张照片也会跟着清掉，不会留一张没用上的图',
@@ -697,7 +701,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.38';
+const APP_VERSION = 'v3.39';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1435,16 +1439,16 @@ function renderResult() {
     const low = it.confidence != null && it.confidence < 0.55;
     return `
       <div class="ritem" data-low="${low ? 1 : 0}">
+        <button class="del" data-rm="${i}" aria-label="删掉这一项">×</button>
         <div class="top">
           <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
-          <span class="kc">${Math.round(kcal)}</span>
-          <button class="del" data-rm="${i}" aria-label="删掉这一项">×</button>
         </div>
         <div class="meta">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</div>
         <div class="gr">
           <input type="number" inputmode="decimal" value="${it.grams}" data-g="${i}">
           <span class="u">克</span>
           <div class="chips">${chips}</div>
+          <span class="kc">${Math.round(kcal)}</span>
         </div>
       </div>`;
   }).join('');

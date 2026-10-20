@@ -911,20 +911,22 @@ html.kb .sc-body {
 
 /* 识别结果行 */
 .ritem {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 9px;
 }
-.ritem .top { display: flex; align-items: baseline; gap: 8px; }
+.ritem .top { display: flex; align-items: baseline; gap: 8px; padding-right: 32px; }
 .ritem .nm { font-size: 14px; font-weight: 550; flex: 1; min-width: 0; }
-.ritem .kc { font-size: 13px; color: var(--lime); font-variant-numeric: tabular-nums; flex: 0 0 auto; margin-left: 8px; }
-/* 每项右边的删除：固定占位，不再被长名字挤出去 */
+.ritem .kc { font-size: 14px; color: var(--lime); font-variant-numeric: tabular-nums; flex: 0 0 auto; margin-left: auto; }
+/* 删除按钮挪到卡片右上角，独占一角，不再和名字、数字抢位置 */
 .ritem .del {
-  flex: 0 0 auto; width: 26px; height: 26px; margin-left: 6px; padding: 0;
+  position: absolute; top: 6px; right: 6px; z-index: 1;
+  width: 28px; height: 28px; padding: 0;
   display: grid; place-items: center;
-  color: var(--muted2); font-size: 17px; line-height: 1;
+  color: var(--muted2); font-size: 18px; line-height: 1;
 }
 .ritem .meta { font-size: 10.5px; color: var(--muted2); margin-top: 5px; overflow-wrap: anywhere; }
 .ritem .gr {
@@ -935,7 +937,7 @@ html.kb .sc-body {
   font-variant-numeric: tabular-nums;
 }
 .ritem .gr .u { font-size: 11.5px; color: var(--muted2); }
-.ritem .gr .chips { margin-left: auto; display: flex; gap: 5px; }
+.ritem .gr .chips { margin-left: 0; display: flex; gap: 5px; }
 .ritem .gr .chips button {
   padding: 5px 9px; border-radius: 8px; font-size: 11px;
   background: var(--card2); color: var(--muted);
