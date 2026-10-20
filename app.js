@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.10', d: '10-20', items: [
+    '「补充说明」的提示语精简成「补充说明（可选）」，去掉后面的举例，和上面两栏统一',
+  ]},
   { v: 'v2.09', d: '10-20', items: [
     '「克数（可选）」的字被截断了，加宽右侧输入框并缩小字号，提示完整显示',
   ]},
@@ -142,7 +145,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.09';
+const APP_VERSION = 'v2.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
