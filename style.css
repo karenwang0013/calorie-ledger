@@ -29,7 +29,8 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html {
-  height: 100vh;
+  /* 改回整页原生滚动：交给系统管键盘与页面的关系 */
+  min-height: 100%;
   overflow-x: hidden;
   background:
     radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
@@ -58,9 +59,7 @@ body {
 html, body {
   margin: 0;
   padding: 0;
-  /* 高度用 100vh：键盘弹起时这个值不变，外壳不会被压短、也不会露出底层 */
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100%;
   overscroll-behavior-y: none;
   background: var(--bg);
   color: var(--text);
@@ -72,8 +71,7 @@ html, body {
 body {
   position: relative;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100%;
   overscroll-behavior: none;
 }
 
@@ -87,7 +85,7 @@ body {
 @keyframes slideout { to { transform: translateX(58px); opacity: 0; } }
 
 /* 弹层打开时，背后的页面不跟着滚 */
-html.lock .scroller, html.noscroll .scroller { overflow: hidden; overscroll-behavior: none; }
+html.lock, html.lock body, html.noscroll, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
 
 /* 全局隐藏滚动条（内容照样能滑） */
 html, body, .app, .view, .sh-body, .mbody,
@@ -125,19 +123,15 @@ select {
   width: 100%;
   max-width: none;
   margin: 0;
-  height: 100vh;          /* 用 vh：键盘弹起时这个值不变，外壳不会被压短 */
-  display: flex; flex-direction: column;
-  overflow: hidden;
+  min-height: 100vh;
+  display: block;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
 .scroller {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  overflow: visible;
   padding-top: var(--topbar-h, 64px);
   /* 背景交给不滚动的那一层去画：滚动层自己画背景，iOS 会漏画，露出纯黑 */
   background: transparent;

@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.58', d: '10-20', items: [
+    '试一次结构性改动：整页改回浏览器原生滚动（不再用内层滚动容器），键盘与页面的关系完全交给系统处理',
+    '顶栏、底栏仍是固定不动；如果这一版效果不好，可以随时退回 v2.57（已做备份）',
+  ]},
   { v: 'v2.57', d: '10-20', items: [
     '真正的原因：背景图案原本画在"正在滚动的那一层"上，iOS 对这种层会漏画，漏掉的地方就是纯黑（滑动几下才补上）',
     '现在背景改由不滚动的外壳层绘制，滚动层完全透明 —— 结构上不会再出现没画到的地方；同时去掉了会触发该问题的旧属性',
@@ -335,7 +339,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.57';
+const APP_VERSION = 'v2.58';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2399,7 +2403,7 @@ function init() {
   // 顶部导航固定 + 内容用「容器原生滚动」：
   // 之前手写 transform 滚动会让 iOS 不知道输入框的真实位置，聚焦时整页乱跳、顶栏跑到中间。
   const SC = { el: null, body: null };
-  window.scTop = () => { const el = document.getElementById('scroller'); if (el) el.scrollTop = 0; };
+  window.scTop = () => window.scrollTo(0, 0);
   window.scMeasure = () => {};
   const initScroll = () => {
     SC.el = document.getElementById('scroller');
@@ -2419,11 +2423,9 @@ function init() {
     // iOS 在键盘弹起后会有一块区域没被重绘（表现为纯黑，滑动几下才消失）。
     // 这里主动做一个 1px 的滚动抖动，逼它重画。
     const nudge = () => {
-      const el = SC.el;
-      if (!el) return;
-      const y = el.scrollTop;
-      el.scrollTop = y + 1;
-      requestAnimationFrame(() => { el.scrollTop = y; });
+      const y = window.scrollY;
+      window.scrollTo(0, y + 1);
+      requestAnimationFrame(() => window.scrollTo(0, y));
     };
     const revealActive = () => {
       const t = activeInput();
@@ -2465,9 +2467,8 @@ function init() {
         const vH = vv2 ? vv2.height : window.innerHeight;
         const r = t.getBoundingClientRect();
         const bottomLimit = vH - 24;
-        // 只要下半部分被键盘压住，就把这一栏推到顶栏下方约 150px 的位置
         if (r.bottom > bottomLimit || r.top < 90) {
-          SC.el.scrollTop += r.top - 230;
+          window.scrollBy(0, r.top - 230);
         }
       };
       // 键盘弹起有动画，位置要连续校正几次
