@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.28', d: '10-21', items: [
+    '改：「从相册选」改成只收具体图片类型（JPEG / PNG / HEIC / HEIF / WebP），不再用通配的 image/* —— iOS 对通配类型会进「多选确认」那一页，指定具体类型才有机会选完直接回来',
+    '如果你的相册里那张图选不亮（灰掉），告诉我是哪种格式，我把它加进白名单',
+  ]},
   { v: 'v3.27', d: '10-21', items: [
     '改：改名用的小铅笔，换成和「描述」那个标签上同一款笔（圆头、细一点、斜着的那支），记录列表、识别结果、组详情标题三处统一',
   ]},
@@ -652,7 +656,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.27';
+const APP_VERSION = 'v3.28';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
