@@ -13,7 +13,16 @@ const MEALS = [
 ];
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
+// 名字边上的小铅笔（记录列表 / 识别结果都用它）
+const PEN_ICON = `<svg viewBox="0 0 24 24"><path d="M4 20h4l9.5-9.5-4-4L4 16v4Z"/><path d="M13.8 6.2l4 4"/></svg>`;
+
 const RELEASES = [
+  { v: 'v3.14', d: '10-21', items: [
+    '改：底部 Dock 再高一点，并且整体往上挪了一点（四周留白更明显）',
+    '新增：记录好的每一条食物，名字边上多了一个小铅笔 —— 点它可以改名字（识别错的、自己打错的都能改），改完列表和统计立刻跟着更新',
+    '新增：拍照/AI 识别出来的结果里，每一项名字边上也有小铅笔，保存前就能把菜名改对',
+    '同一份识别出来的多条（比如「沙县小吃」那一行），点那一行的铅笔改的是整组的名字',
+  ]},
   { v: 'v3.13', d: '10-21', items: [
     '改：底部 Dock 抬高一点（内容上下更松，加号也大一号），整体更像"浮起来的一层"',
     '改：Dock 的圆角加大，按屏幕宽度算（iPhone 17 上基本是顺着头尾两端的弧走），和屏幕自己的圆角对得上；iPad 仍是自己那套更小的圆角',
@@ -579,7 +588,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.13';
+const APP_VERSION = 'v3.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -789,7 +798,7 @@ function renderMeals() {
   const itemRow = l => `
       <div class="mitem" data-item="${l.id}">
         ${thumbOf(l)}
-        <div class="n">${esc(l.name)}
+        <div class="n">${esc(l.name)}<button class="pen" data-pen="${l.id}" aria-label="改名字">${PEN_ICON}</button>
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
             l.p ? ' · 蛋' + Math.round(l.p) + '/碳' + Math.round(l.c) + '/脂' + Math.round(l.f) : ''}</span>
         </div>
@@ -824,7 +833,7 @@ function renderMeals() {
       return `
       <div class="mitem ghead" data-group="${esc(g.key)}">
         ${thumbOf(g.logs[0])}
-        <div class="n">${esc(g.name || '未命名')}
+        <div class="n">${esc(g.name || '未命名')}<button class="pen" data-pen-g="${esc(g.key)}" aria-label="改名字">${PEN_ICON}</button>
           <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
         </div>
         <div class="k">${kcal}</div>
@@ -853,8 +862,39 @@ function renderMeals() {
   groupMap = groupsById;
   $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
   $$('[data-item]', box).forEach(b => b.onclick = ev => {
-    if (ev.target.closest('[data-del]')) return;
+    if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]')) return;
     openDetail([d.logs.find(l => String(l.id) === b.dataset.item)].filter(Boolean), false);
+  });
+
+  // 名字边上的小铅笔：改这一条的名字（识别错了也能自己改回来）
+  $$('[data-pen]', box).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation(); ev.preventDefault();
+    const l = d.logs.find(x => String(x.id) === b.dataset.pen);
+    if (!l) return;
+    const name = prompt('这个食物叫什么？', l.name || '');
+    if (name === null) return;
+    const v = name.trim().slice(0, 20);
+    if (!v || v === l.name) return;
+    try {
+      await api('/api/logs/rename', { ids: [l.id], name: v, item: true });
+      await loadDay();
+      if (S.view === 'trends') loadTrends();
+      toast('已改名：' + v, 1800);
+    } catch (e) { toast(e.message); }
+  });
+  $$('[data-pen-g]', box).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation(); ev.preventDefault();
+    const g = groupsById.get(b.dataset.penG);
+    if (!g) return;
+    const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
+    if (name === null) return;
+    const v = name.trim().slice(0, 20);
+    if (!v || v === g.name) return;
+    try {
+      await api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: v, item: false });
+      await loadDay();
+      toast('已改名：' + v, 1800);
+    } catch (e) { toast(e.message); }
   });
 
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
@@ -1265,7 +1305,7 @@ function renderResult() {
     return `
       <div class="ritem" data-low="${low ? 1 : 0}">
         <div class="top">
-          <span class="nm">${esc(it.name)}</span>
+          <span class="nm">${esc(it.name)}<button class="pen" data-ren="${i}" aria-label="改名字">${PEN_ICON}</button></span>
           <span class="kc">${Math.round(kcal)}</span>
           <button class="del" data-rm="${i}" style="color:var(--muted2);font-size:16px;padding:0 0 0 6px">×</button>
         </div>
@@ -1283,6 +1323,17 @@ function renderResult() {
   $('#addFoot').hidden = S.items.length === 0;
   $('#resultArea').hidden = S.items.length === 0;
 
+  $$('[data-ren]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    const it = S.items[Number(b.dataset.ren)];
+    if (!it) return;
+    const name = prompt('这个食物叫什么？', it.name || '');
+    if (name === null) return;
+    const v = name.trim().slice(0, 20);
+    if (!v) return;
+    it.name = v;
+    renderResult();
+  });
   $$('[data-rm]', box).forEach(b => b.onclick = () => {
     S.items.splice(Number(b.dataset.rm), 1);
     renderResult();
