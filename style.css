@@ -31,11 +31,21 @@
 html {
   min-height: 100%;
   overflow-x: hidden;
-  background: #080b09;
   overscroll-behavior: none;
+  /* 背景画在"画布"上：整页只绘制一次，滚动时不重绘 —— 滑动才丝滑 */
+  background-color: #080b09;
+  background-image:
+    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
+    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+  background-size: auto, auto, 15px 15px, 15px 15px, 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 7.5px 7.5px, 0 0;
+  background-attachment: scroll;
 }
 body {
-  background: #080b09;
+  background: transparent;
   overscroll-behavior: none;
 }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
@@ -122,43 +132,6 @@ select {
   position: relative;
   background: transparent;
 }
-/* 固定背景层：光晕 + 点阵 + 底色。它不随内容滚动，所以滑动时不会反复重绘 */
-.app::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    /* 顶部光：与底部完全镜像，半径更大更散 */
-    radial-gradient(175% 62% at 50% -16%,
-      rgba(var(--glow2-rgb), 0.045) 0%,
-      rgba(var(--glow2-rgb), 0.022) 32%,
-      rgba(var(--glow2-rgb), 0.006) 60%,
-      rgba(var(--glow2-rgb), 0) 84%),
-    radial-gradient(155% 54% at 50% -10%,
-      rgba(var(--glow-rgb), 0.085) 0%,
-      rgba(var(--glow-rgb), 0.05) 26%,
-      rgba(var(--glow-rgb), 0.018) 52%,
-      rgba(var(--glow-rgb), 0) 80%),
-    /* 底部光：与顶部镜像 */
-    radial-gradient(175% 62% at 50% 116%,
-      rgba(var(--glow2-rgb), 0.045) 0%,
-      rgba(var(--glow2-rgb), 0.022) 32%,
-      rgba(var(--glow2-rgb), 0.006) 60%,
-      rgba(var(--glow2-rgb), 0) 84%),
-    radial-gradient(155% 54% at 50% 110%,
-      rgba(var(--glow-rgb), 0.085) 0%,
-      rgba(var(--glow-rgb), 0.05) 26%,
-      rgba(var(--glow-rgb), 0.018) 52%,
-      rgba(var(--glow-rgb), 0) 80%),
-    /* 点阵：淡淡的绿色小点 */
-    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    /* 底色：墨绿渐层（原始配色） */
-    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
-}
-.app > * { position: relative; z-index: 1; }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
 .scroller {
