@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.30', d: '10-20', items: [
+    '修：点「目标缺口」时标题栏整个消失 —— 键盘占掉下半屏后 iOS 把整页往上推，现在外壳高度实时跟随可见区域，不再被推',
+    '顶部状态栏恢复纯色，不再出现模糊与内容透出',
+  ]},
   { v: 'v2.29', d: '10-20', items: [
     '修：顶部状态栏出现模糊、左右两侧显示不整 —— iOS 聚焦输入框时会把整页放大（那个克数框字号只有 13.5px）',
     '现在所有输入框都不小于 16px，并禁用了页面缩放；顶栏、页面底色也补齐了全宽',
@@ -224,7 +228,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.29';
+const APP_VERSION = 'v2.30';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2305,6 +2309,16 @@ function init() {
       const h = vv ? vv.height : window.innerHeight;
       const kb = (maxH - h) > 120;
       document.documentElement.classList.toggle('kb', kb);
+      // 关键：把外壳高度设成「当前可见高度」。
+      // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
+      document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+      // 如果系统仍然把可视区域平移了，按当前偏移量把外壳摆回去（每次都是「设成」，不是累加）
+      const app = document.querySelector('.app');
+      if (app) {
+        const off = kb && vv ? Math.round(vv.offsetTop || 0) : 0;
+        app.style.transform = off ? 'translateY(' + off + 'px)' : '';
+      }
+      if (kb) { try { window.scrollTo(0, 0); } catch (e) {} }
     };
     if (vv) {
       vv.addEventListener('resize', () => { syncKB(); setTimeout(syncTopH, 50); });
