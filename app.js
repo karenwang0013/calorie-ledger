@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.90', d: '10-20', items: [
+    '修：点下去页面会上下弹一下 —— 键盘还没完全弹起时，我先按"整屏"算了一次位置，键盘弹起后又按"键盘上方"算了一次，所以会弹两下',
+    '现在键盘没弹起之前一律不动，只在键盘真正占位后才定位',
+  ]},
   { v: 'v2.89', d: '10-20', items: [
     '换思路：不再算"卡片该放哪"，只做一件事 —— 把正在编辑的那一栏放到可视区域的正中间（顶栏下沿到键盘上沿的中点）',
     '因为每次都算同一个绝对位置，所以点多少次都停在同一个地方，不会跳、不会错位',
@@ -465,7 +469,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.89';
+const APP_VERSION = 'v2.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2583,6 +2587,9 @@ function init() {
       void document.body.offsetHeight;          // 让底部预留先落地，滚动才够用
 
       const vv3 = window.visualViewport;
+      // 键盘还没弹起来（可视区没被压小）时先不动，否则会先按全屏算一次、再按键盘算一次 → 上下弹一下
+      if (vv3 && (window.innerHeight - vv3.height) < 100) return;
+
       const top = 96;                            // 顶栏下沿
       const bottom = vv3 ? (vv3.offsetTop + vv3.height) : window.innerHeight;
       const centerScreen = (top + bottom) / 2;   // 可视区域的垂直中心（屏幕坐标）
@@ -2604,7 +2611,7 @@ function init() {
 
     // 键盘还在动的时候会被多次调用，但每次都算同一个绝对目标，所以不会跳
     const placeWhenSettled = (t) => {
-      [0, 120, 300, 600, 1000].forEach(ms => setTimeout(() => placeCard(t), ms));
+      [220, 420, 700, 1100].forEach(ms => setTimeout(() => placeCard(t), ms));
       const vv3 = window.visualViewport;
       if (vv3) {
         const onResize = () => placeCard(t);
