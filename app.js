@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.10', d: '10-20', items: [
+    '修：设置 → 饮食目标 / 身体与目标，点某一行（比如「碳水」）光标却跑到别的一行（比如「脂肪」）—— 原因是点下去的那一下页面立刻自己挪了一段，系统把这一下点击算到了挪过去以后手指底下的那一栏。现在定位改成「抬手后紧跟着一瞬间」再做，点击认的就是你点的那一栏',
+    '修：这些栏连点几下会发卡 —— 以前每点一下都要让整页重新排一次版。现在只有真的需要才重排，点在已经在中间的那一栏也不再挪动',
+    '其他都没动：点哪一栏那一栏照样落在顶栏和键盘中间；滑到底照样停在「离键盘一条小缝」；收键盘照样平滑落回去',
+  ]},
   { v: 'v3.09', d: '10-20', items: [
     '修：设置 → 饮食目标 / 身体与目标，点输入框把键盘调出来之后往下滑到底 —— 不会再先被拽出一大片空白、紧接着弹回去',
     '现在的效果：滑到「卡片底边离键盘上沿一条小缝」就当场停住，再怎么拉也不动；连滑两次，空白大小和停住的位置完全一样',
@@ -558,7 +563,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.09';
+const APP_VERSION = 'v3.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2688,6 +2693,7 @@ function init() {
     let kbSeen = false;               // 见过键盘真的弹起来
     let kbHomeY = -1;                 // 弹键盘之前的滚动位置（收键盘时平滑落回这里）
     let closeRaf = 0;                 // 收键盘动画句柄
+    let fillRaf = 0, fillTarget = null; // 点输入框后的定位（合并成每帧最多一次）
 
     const isKb = () => document.documentElement.classList.contains('kb');
     // 滚动容器的顶边（正常是 0；Safari 里顶上有一条提示条时会往下挪），
@@ -2719,14 +2725,25 @@ function init() {
       const bottom = Math.max(tbB + 140, kbB || (window.innerHeight - kbH));
       return tbB + (bottom - tbB) * 0.5;
     };
+    // 留白只在数值真的变了才写：每点一下输入框都写一遍 --kb-pad，整页就要重新排版一次，
+    // 连点几下就会明显发卡
+    let kbPadNow = -1;
+    const setKbPad = (v) => {
+      if (Math.round(v) === kbPadNow) return;
+      kbPadNow = Math.round(v);
+      document.documentElement.style.setProperty('--kb-pad', kbPadNow + 'px');
+    };
     const endKb = () => {
       cancelAnimationFrame(closeRaf); closeRaf = 0;
+      cancelAnimationFrame(fillRaf); fillRaf = 0; fillTarget = null;
       document.documentElement.classList.remove('kb');
       document.documentElement.style.removeProperty('--kb-pad');
+      kbPadNow = -1;
       kbB = 0; kbSeen = false; kbHomeY = -1; kbEndCache = 0;
     };
     const closeKb = () => {
       if (!isKb() || closeRaf) return;
+      cancelAnimationFrame(fillRaf); fillRaf = 0; fillTarget = null;
       const y0 = scY();
       const padKb = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
       const extra = Math.max(0, padKb - basePad);
@@ -2745,18 +2762,34 @@ function init() {
       };
       closeRaf = requestAnimationFrame(step);
     };
+    // 点输入框只"记一下"，真正滚动放到下一帧再做：
+    // 如果 touchend 里立刻滚，iOS 会把这一下点击算到「滚动后挪到手指底下的那一栏」——
+    // 表现就是点碳水/蛋白质，光标却跑到脂肪。合并成「一帧一次、以最后一次点击为准」，连点也不抖。
+    const applyFill = () => {
+      fillRaf = 0;
+      const t = fillTarget; fillTarget = null;
+      if (!t || !isKb()) return;
+      // 手指还按着的时候不动：否则正在点的那一下会被"页面自己挪走"，点击就落到别的栏上了
+      if (touching) return;
+      const r = t.getBoundingClientRect();
+      const centerVp = r.top + r.height / 2;                                 // 输入框中心（视口坐标）
+      const y = Math.max(0, Math.min(Math.round(scY() + centerVp - kbWantY()), kbMaxY()));
+      if (Math.abs(scY() - y) >= 8) scTo(y);        // 已经差不多在中间就不动，免得连点微抖
+    };
     const kbFill = (t) => {
       if (!t) return;
       cancelAnimationFrame(closeRaf); closeRaf = 0;
-      if (!isKb()) kbHomeY = scY();      // 记下弹键盘前的位置
-      const r = t.getBoundingClientRect();
-      const centerVp = r.top + r.height / 2;                                 // 输入框中心（视口坐标）
-      kbB = kbBottomY();                                                     // 键盘弹起后的可见底边
-      document.documentElement.classList.add('kb');
-      kbEndCache = contentEndDoc();                                          // 只量这一次
-      document.documentElement.style.setProperty('--kb-pad', kbPadVal() + 'px');
-      const y = Math.max(0, Math.min(Math.round(scY() + centerVp - kbWantY()), kbMaxY()));
-      if (Math.abs(scY() - y) >= 2) scTo(y);
+      // 已经在键盘态里（多点几下就是这种情况）就不要再量一遍排版：
+      // 每次点都量「内容末尾」会强制重新排版一次，连点几下就发卡
+      if (!isKb() || !kbB) {
+        if (!isKb()) kbHomeY = scY();    // 记下弹键盘前的位置
+        kbB = kbBottomY();                                                     // 键盘弹起后的可见底边
+        document.documentElement.classList.add('kb');
+        kbEndCache = contentEndDoc();                                          // 只量这一次
+        setKbPad(kbPadVal());
+      }
+      fillTarget = t;
+      if (!fillRaf) fillRaf = requestAnimationFrame(applyFill);
     };
 
     // 排查用：连点版本号 5 次的面板会读这些数字
@@ -2839,9 +2872,7 @@ function init() {
             }
             kbB = kbBottomY();
             kbEndCache = contentEndDoc();
-            const want = kbPadVal();
-            const now = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
-            if (Math.abs(want - now) >= 6) document.documentElement.style.setProperty('--kb-pad', want + 'px');
+            setKbPad(kbPadVal());
             const t = activeInput();
             if (!t) return;
             const r = t.getBoundingClientRect();
