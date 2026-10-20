@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.89', d: '10-20', items: [
+    '换思路：不再算"卡片该放哪"，只做一件事 —— 把正在编辑的那一栏放到可视区域的正中间（顶栏下沿到键盘上沿的中点）',
+    '因为每次都算同一个绝对位置，所以点多少次都停在同一个地方，不会跳、不会错位',
+  ]},
   { v: 'v2.88', d: '10-20', items: [
     '修：多次点击位置不稳定 —— 每次键盘动画的 timing 不同，导致算出的高度不同',
     '现在缓存第一次成功的键盘高度，后续点击直接复用，保证每次落点完全一致',
@@ -461,7 +465,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.88';
+const APP_VERSION = 'v2.89';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2571,66 +2575,41 @@ function init() {
       const v = parseFloat(localStorage.getItem('kb_ratio'));
       return (isFinite(v) && v >= 0.30 && v <= 0.70) ? v : 0.50;
     })();
-    const placeCard = (t, cachedBottom) => {
+    // 只做一件事：把正在编辑的那一栏，放到"顶栏下沿 ↔ 键盘上沿"这段区域的正中间
+    const placeCard = (t) => {
       if (!t) return;
       document.documentElement.classList.add('kb');
       kbOn = true;
-      void document.body.offsetHeight;
-      const card = t.closest('.card') || t;
+      void document.body.offsetHeight;          // 让底部预留先落地，滚动才够用
+
       const vv3 = window.visualViewport;
-      const shrunk = vv3 ? (window.innerHeight - vv3.height) : 0;
-      const usableBottom = cachedBottom || ((vv3 && shrunk >= 100)
-        ? Math.round(vv3.offsetTop + vv3.height - 8)
-        : Math.round(window.innerHeight * (1 - KB_RATIO)));
+      const top = 96;                            // 顶栏下沿
+      const bottom = vv3 ? (vv3.offsetTop + vv3.height) : window.innerHeight;
+      const centerScreen = (top + bottom) / 2;   // 可视区域的垂直中心（屏幕坐标）
+
+      const r = t.getBoundingClientRect();
+      const inputCenterDoc = r.top + window.scrollY + r.height / 2;
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const target = Math.round(inputCenterDoc - centerScreen);
 
-      // ① 卡片底边固定在"键盘上方"这个屏幕位置（不论点哪一栏，位置都一样）
-      const cardBottomDoc = card.getBoundingClientRect().bottom + window.scrollY;
-      let target = Math.round(cardBottomDoc - usableBottom);
-
-      // ② 保证正在编辑的这一栏不会跑到顶栏里
-      const r0 = t.getBoundingClientRect();
-      const docTop = r0.top + window.scrollY;
-      const wantTop = 110;
-      if (docTop - target < wantTop) target = docTop - wantTop;
-
-      const before = window.scrollY;
       window.scrollTo(0, Math.max(0, Math.min(target, max)));
-      kbMax = window.scrollY;
-      // 记录每一次定位，供排查
+      kbMax = Infinity;
       (window.__placeLog = window.__placeLog || []).push(
         [new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-         'before ' + before, 'target ' + target, 'max ' + max,
-         'after ' + window.scrollY, 'vvH ' + Math.round((window.visualViewport || {}).height || 0),
-         'kb ' + document.documentElement.classList.contains('kb')].join(' | ')
+         'center ' + Math.round(centerScreen), 'target ' + target,
+         'after ' + window.scrollY, 'vvH ' + Math.round((vv3 || {}).height || 0)].join(' | ')
       );
       if (window.__placeLog.length > 12) window.__placeLog.shift();
-
-
     };
 
-    // 等键盘高度稳定（连续两次采样一致）再定位，避免卡片跟着键盘动画来回跳
-    // 缓存第一次成功的键盘高度，后续复用，保证每次落点一致
-    let cachedVvBottom = null;
+    // 键盘还在动的时候会被多次调用，但每次都算同一个绝对目标，所以不会跳
     const placeWhenSettled = (t) => {
+      [0, 120, 300, 600, 1000].forEach(ms => setTimeout(() => placeCard(t), ms));
       const vv3 = window.visualViewport;
-      if (vv3 && cachedVvBottom) {
-        // 用缓存的高度，不再等动画
-        placeCard(t, cachedVvBottom);
-      } else {
-        // 第一次：等高度稳定后缓存
-        let last = null, stable = 0;
-        const tick = () => {
-          const h = vv3 ? Math.round(vv3.height) : window.innerHeight;
-          if (h === last) stable++; else { stable = 0; last = h; }
-          if (stable >= 3) {
-            cachedVvBottom = Math.round(vv3.offsetTop + vv3.height - 8);
-            placeCard(t, cachedVvBottom);
-          } else {
-            setTimeout(tick, 60);
-          }
-        };
-        tick();
+      if (vv3) {
+        const onResize = () => placeCard(t);
+        vv3.addEventListener('resize', onResize);
+        setTimeout(() => vv3.removeEventListener('resize', onResize), 1500);
       }
     };
 
@@ -2655,7 +2634,7 @@ function init() {
       setTimeout(() => {
         const el = document.activeElement;
         if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
-        kbOn = false; kbMax = Infinity; cachedVvBottom = null;
+        kbOn = false; kbMax = Infinity;
         document.documentElement.classList.remove('kb');
         const d = document.getElementById('kbDbg');
         if (d) d.remove();
