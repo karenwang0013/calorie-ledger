@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(45 12 12)"><rect x="9.3" y="1.4" width="5.4" height="4.2" rx="1.2"/><rect x="9.3" y="5.9" width="5.4" height="11.2"/><path d="M9.3 17.3h5.4L12 22.4z"/></g></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.54', d: '10-21', items: [
+    '改：铅笔换成「粗笔身」的实心铅笔（笔杆 + 笔尖 + 上面一小截橡皮），尺寸 16px —— 之前那支虽然实心但笔身太细，看着像一条线',
+  ]},
   { v: 'v3.53', d: '10-21', items: [
     '改：齿轮换成标准的饱满实心齿轮（一圈齿 + 中间圆孔，不再是细细的一圈）',
     '改：铅笔换成常见的实心铅笔造型（笔身 + 笔尖，斜着的那支），并放大到 15px —— 之前那个太小、看不出是笔',
@@ -756,7 +759,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.53';
+const APP_VERSION = 'v3.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1946,6 +1949,58 @@ function meBackBar(title) {
   </div>`;
 }
 
+/* ---------------- 通知 ---------------- */
+const NOTIFY_ITEMS = {
+  watch:  { t: '手表数据更新了', d: '拉到手表的消耗数据时，告诉你今天消耗多少、还能吃多少' },
+  goal:   { t: '今天吃超了',     d: '超出每日目标时提醒一句' },
+  day:    { t: '今天还没记录',   d: '晚上 8 点后还没记录就提醒' },
+  weight: { t: '该称体重了',     d: '超过 7 天没记体重时提醒' },
+  fail:   { t: '同步失败',       d: '读不到云端数据时告诉你' },
+};
+function notifyCfg() {
+  const v = setting('notify_flags', null);
+  const def = { watch: true, goal: true, day: true, weight: true, fail: true };
+  if (!v || typeof v !== 'object') return def;
+  const out = Object.assign({}, def);
+  Object.keys(def).forEach(k => { if (typeof v[k] === 'boolean') out[k] = v[k]; });
+  return out;
+}
+// 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
+function runNotifyChecks() {
+  const d = S.day;
+  if (!d || !S.date || S.date !== S.today) return false;
+  const cfg = notifyCfg();
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem('notify_seen') || '{}') || {}; } catch (e) { seen = {}; }
+  const hit = (k) => { if (!cfg[k] || seen[k] === S.today) return false; seen[k] = S.today; localStorage.setItem('notify_seen', JSON.stringify(seen)); return true; };
+  const t = d.targets || {};
+  const intake = d.intake || 0;
+  const left = Math.round((t.kcal_budget || 0) - intake);
+  const exp = Math.round(d.expenditure || 0);
+
+  if (d.watch && d.watch.source === 'cloud' && hit('watch')) {
+    toast(`⌚ 数据已更新：消耗 ${exp} 千卡 · 还可以吃 ${left} 千卡`, 4200);
+    return true;
+  }
+  if (intake > 0 && left < 0 && hit('goal')) {
+    toast(`⚠️ 今天已超出目标 ${Math.abs(left)} 千卡`, 4200);
+    return true;
+  }
+  if (new Date().getHours() >= 20 && !((d.logs || []).length) && hit('day')) {
+    toast('今天还没记录，别忘了记一笔', 4200);
+    return true;
+  }
+  if (hit('weight')) {
+    const ws = (Store.load().weights || {});
+    const dates = Object.keys(ws).sort();
+    const last = dates[dates.length - 1];
+    const days = last ? Math.floor((Date.now() - new Date(last + 'T00:00:00').getTime()) / 86400000) : 999;
+    if (days >= 7) { toast(last ? `该称体重了：上次记是 ${days} 天前` : '还没记过体重，今晚称一下？', 4200); return true; }
+    delete seen.weight; localStorage.setItem('notify_seen', JSON.stringify(seen));   // 没到期就不占用今天的名额
+  }
+  return false;
+}
+
 function renderMe() {
   const d = S.day;
   if (!d) return;
@@ -2155,58 +2210,44 @@ function renderMe() {
         </div>
       </div>`;
   } else if (mePage === 'notify') {
-    const copyBtn = (txt) => `<button class="btn sm" data-copy="${esc(txt)}" style="margin-top:10px;width:auto;padding:8px 14px;font-size:12px">复制这段文字</button>`;
+    const cfg = notifyCfg();
+    const swOne = k => `<label class="sw"><input type="checkbox" data-nfy="${k}" ${cfg[k] ? 'checked' : ''}><i></i></label>`;
     h = meBackBar('通知') + `
       <div class="card">
-        <h3>App 内提示</h3>
+        <h3>通知渠道</h3>
         <div class="switchrow">
           <div>
-            <div class="stitle">同步完成后弹提示</div>
-            <div class="hint" style="margin:4px 0 0">拉到新的手表数据时，顶部弹一条提示；关掉就安静同步。</div>
+            <div class="stitle">App 内提醒</div>
+            <div class="hint" style="margin:4px 0 0">打开 App、拉到数据时，顶部弹一条</div>
           </div>
-          <label class="sw"><input type="checkbox" id="swToast" ${d.sync_toast ? 'checked' : ''}><i></i></label>
+          <span class="tag" style="color:var(--lime);background:rgba(214,255,75,.12)">已开启</span>
+        </div>
+        <div class="switchrow" style="margin-top:16px">
+          <div>
+            <div class="stitle">锁屏通知</div>
+            <div class="hint" style="margin:4px 0 0">网页没法自己发锁屏通知，要用「快捷指令」跑一次</div>
+          </div>
+          <span class="tag">未开启</span>
+        </div>
+        <div class="hint" style="margin-top:12px;line-height:1.85">
+          1. 快捷指令 → 自动化 → 新建 → 时间 → 每天 21:30<br>
+          2. 添加动作「显示通知」，正文写：今天记完了吗？<br>
+          3. 把「运行前询问」关掉<br>
+          <span style="color:var(--muted2)">想「数据一到就通知」：在你「热量采集」脚本最后加一步「显示通知」就行。</span>
         </div>
       </div>
-
       <div class="card">
-        <h3>锁屏通知（推荐）</h3>
-        <div class="hint" style="margin:0 0 4px;line-height:1.7">
-          网页 App 自己发不了锁屏通知 —— 苹果只允许「装到主屏幕 + 有自己的推送服务器」的网页推送，
-          而这个 App 是纯静态的、没有服务器。所以锁屏通知走**快捷指令**：它能在后台跑，锁屏照样弹。
-        </div>
+        <h3>通知我当…</h3>
+        ${Object.entries(NOTIFY_ITEMS).map(([k, v], i) => `
+          <div class="switchrow" style="margin-top:${i === 0 ? 6 : 16}px">
+            <div>
+              <div class="stitle">${v.t}</div>
+              <div class="hint" style="margin:4px 0 0">${v.d}</div>
+            </div>
+            ${swOne(k)}
+          </div>`).join('')}
       </div>
-
-      <div class="card">
-        <h3>① 数据采到了就通知</h3>
-        <div class="hint" style="margin:0;line-height:1.75">
-          在你现有的「热量采集」快捷指令**最后**加一个动作「显示通知」，标题和正文这样写（正文里插变量）：
-        </div>
-        <div class="copybox">⌚ 热量已更新
-活动 {活动能量} 千卡 · 静息 {静息能量} 千卡</div>
-        ${copyBtn('⌚ 热量已更新\n活动 {活动能量} 千卡 · 静息 {静息能量} 千卡')}
-      </div>
-
-      <div class="card">
-        <h3>② 每晚 21:30 提醒补记</h3>
-        <div class="hint" style="margin:0;line-height:1.75">
-          快捷指令 → 自动化 → 时间 → 每天 21:30 → 添加动作「显示通知」，正文：
-        </div>
-        <div class="copybox">今天记完了吗？打开热量账本看一眼缺口</div>
-        ${copyBtn('今天记完了吗？打开热量账本看一眼缺口')}
-      </div>
-
-      <div class="card">
-        <h3>③ 每周一早上提醒称体重</h3>
-        <div class="hint" style="margin:0;line-height:1.75">
-          自动化 → 每周一 08:00 → 「显示通知」，正文：
-        </div>
-        <div class="copybox">空腹称一下，记到「趋势 → 记录体重」</div>
-        ${copyBtn('空腹称一下，记到「趋势 → 记录体重」')}
-      </div>
-
-      <div class="hint" style="padding:0 22px 26px;line-height:1.7">
-        想发到锁屏还有别的花样（Bark、Pushcut 这类 App 也行），但触发方式一样：**得靠快捷指令去发**。
-      </div>`;
+      <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="about-fill">
@@ -2372,6 +2413,13 @@ function wireMe() {
       try { document.execCommand('copy'); toast('已复制'); } catch (_) { toast('复制失败，长按文字手动复制'); }
       ta.remove();
     }
+  });
+
+  $$('[data-nfy]').forEach(b => b.onchange = () => {
+    const cfg = notifyCfg();
+    cfg[b.dataset.nfy] = b.checked;
+    setSetting('notify_flags', cfg);
+    toast(b.checked ? '已打开' : '已关闭', 1400);
   });
 
   const sw = $('#swToast');
@@ -2885,7 +2933,7 @@ function init() {
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
-    if (date) { retryLeft = 0; toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800); }
+    if (date) { retryLeft = 0; if (!runNotifyChecks()) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800); }
     else if (c && c.at) {
       retryLeft = 3;
       retryPullCloud();
@@ -3479,6 +3527,7 @@ function init() {
   if (hrTop) hrTop.onclick = () => hardReloadApp();
 
   loadDay();
+  setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);
   }
@@ -3536,11 +3585,13 @@ function init() {
   const syncRecords = () => {
     if (typeof cloudToken !== 'function' || !cloudToken()) return;
     cloudPull().then(r => {
+      if (r === 'error' && notifyCfg().fail) { toast('☁️ 同步失败：读不到云端数据', 3600); return; }
       if (r !== 'pulled') return;
       applyTheme(Store.load().settings.theme || 'lime');
       loadDay();
       if (S.view === 'me') renderMe();
       if (S.view === 'trends') loadTrends();
+      try { runNotifyChecks(); } catch (e) {}
     }).catch(() => {});
   };
   document.addEventListener('visibilitychange', () => {
