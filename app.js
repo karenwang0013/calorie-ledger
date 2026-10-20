@@ -14,12 +14,24 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
-  { v: 'v2.00', d: '10-20', items: [
-    '更新记录改成「这一版做了什么、修了什么」，一眼能看懂',
-    '之前只写提交摘要，太简略，现在每条都写清楚动作和效果',
+  { v: 'v2.04', d: '10-20', items: [
+    '更新记录改成「日期 · 版本号」且每条与实际发版号对齐',
+  ]},
+  { v: 'v2.03', d: '10-20', items: [
+    '更新记录里每条版本号与实际发版号一一对齐',
+  ]},
+  { v: 'v2.02', d: '10-20', items: [
+    '修：更新记录顶部那条版本号漏了字母 v',
+  ]},
+  { v: 'v2.01', d: '10-20', items: [
+    '更新记录标题改成「日期 · 版本号」：日期在前、版本号在后',
   ]},
   { v: 'v2.00', d: '10-20', items: [
-    '更新记录改成逐版本对应：版本号、日期、这一版做了什么',
+    '更新记录改成「这一版做了什么、修了什么」，不再只写提交摘要',
+    '每条都写清楚动作和效果，一眼能看懂',
+  ]},
+  { v: 'v1.99', d: '10-20', items: [
+    '更新记录改成逐版本对应：一个版本一条，不再按日期堆在一起',
   ]},
   { v: 'v1.97', d: '10-20', items: [
     '补全 10-20 当天的更新记录（之前只写到 10-19）',
@@ -118,7 +130,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.00';
+const APP_VERSION = 'v2.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1387,7 +1399,7 @@ function renderMe() {
       <div class="card">
         <h3>最近更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
         ${RELEASES.map(r => `
-          <div class="rel-date">${r.v}${r.d && r.v !== r.d ? ' · ' + r.d : ''}</div>
+          <div class="rel-date">${r.d}${r.v && r.v !== r.d ? ' · ' + r.v : ''}</div>
           <ul class="rel-list">${r.items.map(t => `<li>${t}</li>`).join('')}</ul>
         `).join('')}
       </div>
