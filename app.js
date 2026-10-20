@@ -14,6 +14,9 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.51', d: '10-20', items: [
+    '键盘上方那条纯黑：键盘弹起时页面的最外层（html）被压短，露出的正是它的纯色底；现在连这一层也铺了波点底纹，高度也锁定成不随键盘变化',
+  ]},
   { v: 'v2.50', d: '10-20', items: [
     '外壳背景改成透明，直接把最底层的波点底纹透出来 —— 之前外壳是不透明的深色，任何一处露出都会是一条黑块',
   ]},
@@ -308,7 +311,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.50';
+const APP_VERSION = 'v2.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
