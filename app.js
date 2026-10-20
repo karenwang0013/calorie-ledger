@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.20', d: '10-20', items: [
+    '切模式不再弹窗确认，直接按建议值填好',
+    '「营养目标」改名为「饮食目标」（现在包含减脂/维持/增肌三档，不只是营养）',
+  ]},
   { v: 'v2.19', d: '10-20', items: [
     '切模式前会先确认：如果你已经手动定过缺口/盈余，弹窗告诉你「会被建议值覆盖」，可以取消',
     '确认之后才改，取消则什么都不动',
@@ -182,7 +186,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.19';
+const APP_VERSION = 'v2.20';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1262,7 +1266,7 @@ function renderMe() {
           <em>${p.height_cm || 165}cm · ${p.weight_kg || 60}kg</em><i>›</i>
         </button>
         <button class="srow" data-page="nutri">
-          <span>营养目标</span>
+          <span>饮食目标</span>
           <em>${d.targets.kcal_budget} 千卡 / 天</em><i>›</i>
         </button>
       </div>
@@ -1388,7 +1392,7 @@ function renderMe() {
 `;
   } else if (mePage === 'nutri') {
     const a = (d.targets.auto) || {};
-    h = meBackBar('营养目标') + `
+    h = meBackBar('饮食目标') + `
       <div class="card">
         <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">目标模式</label>
         <div class="modes" id="dietModes">
@@ -1476,7 +1480,7 @@ function renderMe() {
         <div class="hint" style="margin:0;line-height:1.6;font-size:11px">
           <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
           <b style="color:var(--text)">全天消耗</b>：手表给了活动能量 → 基础代谢 + 活动能量；给的是总消耗 → 直接用；都没 → 基础代谢 × 活动系数。<br>
-          <b style="color:var(--text)">目标缺口 / 盈余</b>：优先用你在「营养目标」里填的值（负数=缺口，正数=盈余）；留空则按目标速度 × 7700 ÷ 7 估算，并封顶在当天消耗的 22%。<br>
+          <b style="color:var(--text)">目标缺口 / 盈余</b>：优先用你在「饮食目标」里填的值（负数=缺口，正数=盈余）；留空则按目标速度 × 7700 ÷ 7 估算，并封顶在当天消耗的 22%。<br>
           <b style="color:var(--text)">还能吃</b>：全天消耗 − 目标缺口 − 已吃。<br>
           <b style="color:var(--text)">实际缺口</b>：全天消耗 − 已吃。正数缺口，负数盈余。<br>
           <b style="color:var(--text)">实测消耗</b>（趋势页）：体重回归斜率 × 7700。<br>
@@ -1539,13 +1543,6 @@ function wireMe() {
     const cur = setting('diet_mode', 'maintain');
     if (cur === k) return;
     const ov = Object.assign({}, setting('target_override', {}));
-    // 已经手动定过缺口/盈余的话，切模式前先确认要不要被建议值覆盖
-    const hasOv = ov.deficit !== undefined && ov.deficit !== null && ov.deficit !== '' && isFinite(Number(ov.deficit));
-    if (hasOv && Math.abs(Number(ov.deficit) - m.deficit) >= 1) {
-      const oldTxt = Number(ov.deficit) > 0 ? `缺口 ${Math.abs(Number(ov.deficit))}` : (Number(ov.deficit) < 0 ? `盈余 ${Math.abs(Number(ov.deficit))}` : '不缺口');
-      const newTxt = m.deficit > 0 ? `缺口 ${m.deficit}` : (m.deficit < 0 ? `盈余 ${-m.deficit}` : '不缺口');
-      if (!confirm(`你现在设的是「${oldTxt}」。\n切到「${m.n}」会把目标改成建议的「${newTxt}」。\n\n确定要改吗？`)) return;
-    }
     delete ov.protein; delete ov.carb; delete ov.fat;
     ov.deficit = m.deficit;                             // 模式同时给一个建议缺口/盈余
     await api('/api/settings', { diet_mode: k, fat_ratio: m.fat, target_override: ov });
@@ -1580,7 +1577,7 @@ function wireMe() {
       };
       Object.keys(ov).forEach(k => ov[k] === undefined && delete ov[k]);
       await api('/api/settings', { target_override: ov });
-      toast(Object.keys(ov).length ? '已保存营养目标' : '已恢复为建议值');
+      toast(Object.keys(ov).length ? '已保存饮食目标' : '已恢复为建议值');
       await loadDay();
       renderMe();
     } catch (e) { toast(e.message); }
