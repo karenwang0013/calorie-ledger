@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.74', d: '10-20', items: [
+    '修：卡片反而更压在键盘上了 —— 这台设备上系统没有把"可视区域被键盘压小"这个值报给网页，我按错误的高度算，算出来的位置自然偏低',
+    '现在：只有确实测到键盘压小了可视区域，我才自己定位；测不到就不动，交给 iOS 自己把输入框滚到键盘上方',
+  ]},
   { v: 'v2.73', d: '10-20', items: [
     '修：点「脂肪」后卡片底部和键盘上方那条工具条重叠（保存按钮被压住）',
     '原因：计算位置时把工具条那块高度也算进了可用区域；现在可用区域的下边额外留出 88px，并且加了一道"卡片底边不许越过工具条"的兜底',
@@ -401,7 +405,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.73';
+const APP_VERSION = 'v2.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2511,24 +2515,25 @@ function init() {
     const placeCard = (t) => {
       if (!t) return;
       const vv2 = window.visualViewport;
-      // 可视区域的底边（键盘上沿）
-      const vBottom = vv2 ? (vv2.offsetTop + vv2.height) : window.innerHeight;
-      const usableTop = 100;                 // 顶栏下沿
-      const usableBottom = vBottom - 88;     // 再多留 88px，避开键盘上方那条工具条
+      // 只有"确实能测到键盘把可视区域压小了"时才自己动手；
+      // 测不到就完全交给 iOS 自己把输入框滚到键盘上方（别瞎猜，猜就是重叠）
+      const vh = vv2 ? vv2.height : window.innerHeight;
+      const shrunk = window.innerHeight - vh;
+      if (!vv2 || shrunk < 80) return;
+
+      const vBottom = vv2.offsetTop + vh;
+      const usableTop = 100;
+      const usableBottom = vBottom - 88;
       const card = t.closest('.card') || t;
 
-      // ① 让"正在编辑的这一栏"落在可视区域正中间
       const r0 = t.getBoundingClientRect();
       const docCenter = r0.top + window.scrollY + r0.height / 2;
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      let target = Math.round(docCenter - (usableTop + usableBottom) / 2);
+      const target = Math.round(docCenter - (usableTop + usableBottom) / 2);
       window.scrollTo(0, Math.max(0, Math.min(target, max)));
 
-      // ② 兜底：整张卡片的底边绝不能越过工具条 —— 就不会再和键盘重叠
       const cb = card.getBoundingClientRect().bottom;
-      if (cb > usableBottom) {
-        window.scrollBy(0, cb - usableBottom);
-      }
+      if (cb > usableBottom) window.scrollBy(0, cb - usableBottom);
       kbMax = window.scrollY;
     };
 
