@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.91';
+const APP_VERSION = 'v1.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1321,15 +1321,12 @@ function renderMe() {
           `).join('')}
         `).join('')}
       </div>
-      <div class="card tight" style="margin-bottom:0">
-        <div class="hint" style="margin:0;font-size:10.5px;color:var(--muted2)" id="dbgLine">—</div>
-      </div>
       <div class="card tight">
         <h3>这套算法在算什么</h3>
         <div class="hint" style="margin:0;line-height:1.6;font-size:11px">
           <b style="color:var(--text)">基础代谢</b>：Mifflin-St Jeor 公式（体重、身高、年龄、性别）。<br>
           <b style="color:var(--text)">全天消耗</b>：手表给了活动能量 → 基础代谢 + 活动能量；给的是总消耗 → 直接用；都没 → 基础代谢 × 活动系数。<br>
-          <b style="color:var(--text)">目标缺口</b>：目标速度 × 7700 ÷ 7，封顶在当天消耗的 22%。<br>
+          <b style="color:var(--text)">目标缺口 / 盈余</b>：优先用你在「营养目标」里填的值（负数=缺口，正数=盈余）；留空则按目标速度 × 7700 ÷ 7 估算，并封顶在当天消耗的 22%。<br>
           <b style="color:var(--text)">还能吃</b>：全天消耗 − 目标缺口 − 已吃。<br>
           <b style="color:var(--text)">实际缺口</b>：全天消耗 − 已吃。正数缺口，负数盈余。<br>
           <b style="color:var(--text)">实测消耗</b>（趋势页）：体重回归斜率 × 7700。<br>
