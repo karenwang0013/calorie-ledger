@@ -127,9 +127,8 @@ function targetsOf(p, exp) {
 
   // —— 用户手动指定的缺口 / 盈余（正=缺口，负=盈余） ——
   const ov0 = setting('target_override', {}) || {};
-  if (ov0.deficit !== undefined && ov0.deficit !== null && ov0.deficit !== '' && isFinite(Number(ov0.deficit))) {
-    want = Number(ov0.deficit);
-  }
+  const hasDefOv = ov0.deficit !== undefined && ov0.deficit !== null && ov0.deficit !== '' && isFinite(Number(ov0.deficit));
+  if (hasDefOv) want = Number(ov0.deficit);
 
   // —— 自动建议值 ——
   const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
@@ -144,7 +143,10 @@ function targetsOf(p, exp) {
     const n = Number(v);
     return isFinite(n) && n > 0 ? Math.round(n) : d;
   };
-  const kcal_budget = num(ov.kcal, Math.round(budgetAuto));
+  // 指定了缺口/盈余时，每日可吃必须跟着它走（否则会出现「填 -300 却算出 -378」）
+  const kcal_budget = hasDefOv
+    ? Math.max(800, Math.round(exp - want))
+    : num(ov.kcal, Math.round(budgetAuto));
   const protein_g = num(ov.protein, proteinAuto);
   const fat_g = num(ov.fat, fatAuto);
   const carb_g = num(ov.carb, carbAuto);

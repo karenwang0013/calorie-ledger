@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.14', d: '10-20', items: [
+    '修：填了「目标缺口 -300」，隔一会儿却显示成 -378 —— 原因是同时存了旧的「每日可吃」，消耗一变两者就打架',
+    '现在以「目标缺口/盈余」为准，每日可吃自动跟着算；同时保存时不再存多余的每日可吃',
+  ]},
   { v: 'v2.13', d: '10-20', items: [
     '去掉「整盘菜、外卖盒」「可选，更准」两行小字，腾出的空间给照片框',
     '照片框改为略高的竖版（1:1.12），看食物更清楚',
@@ -157,7 +161,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.13';
+const APP_VERSION = 'v2.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1509,7 +1513,8 @@ function wireMe() {
       const defValue = (isFinite(defRaw) && defRaw !== 0 && Math.abs(-defRaw - autoDef) >= 1) ? -defRaw : undefined;
       const ov = {
         deficit: defValue,
-        kcal: pick('#nKcal', a.kcal_budget),
+        // 填了缺口/盈余就不用再存「每日可吃」，否则两者会打架
+        kcal: defValue !== undefined ? undefined : pick('#nKcal', a.kcal_budget),
         protein: pick('#nProt', a.protein_g),
         carb: pick('#nCarb', a.carb_g),
         fat: pick('#nFat', a.fat_g),
