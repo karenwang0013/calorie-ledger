@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.35', d: '10-20', items: [
+    '修：点最下面的「脂肪」时，页面会跳回最上面、脂肪这一栏被键盘挡住 —— 原因是键盘弹起时我按系统偏移把整页往下推了一次，这个偏移并不可靠',
+    '现在只按「这一栏是否被键盘挡住」来滚动，挡到才往上推，绝不回滚',
+    '顶部状态栏声明为不透明黑（系统不再在其上叠磨砂层）',
+  ]},
   { v: 'v2.34', d: '10-20', items: [
     '恢复顶部实色带（之前就是靠它压掉 iOS 主屏幕 App 状态栏的磨砂/模糊），这次层级放在顶栏下面，只填状态栏那一条，不会遮按钮',
     '撤销上一版对状态栏声明和配色的改动，回到"没有模糊"时的样子',
@@ -245,7 +250,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.34';
+const APP_VERSION = 'v2.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2328,12 +2333,8 @@ function init() {
       document.documentElement.classList.toggle('kb', kb);
       // 关键：把外壳高度设成「当前可见高度」。
       // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
-      // 如果系统仍然把可视区域平移了，按当前偏移量把外壳摆回去（每次都是「设成」，不是累加）
-      const app = document.querySelector('.app');
-      if (app) {
-        const off = kb && vv ? Math.round(vv.offsetTop || 0) : 0;
-        app.style.transform = off ? 'translateY(' + off + 'px)' : '';
-      }
+      // 不要给外壳加 transform：iOS 的 offsetTop 在键盘弹起时并不可靠，
+      // 一旦位移就会把内容整体推回上方（看起来像"页面跳回顶部"）
       if (kb) { try { window.scrollTo(0, 0); } catch (e) {} }
     };
     if (vv) {
@@ -2350,11 +2351,16 @@ function init() {
       // 立刻把输入框拉到上方（不等键盘弹完），这样 iOS 根本不需要自己位移整页
       const put = () => {
         const vv2 = window.visualViewport;
-        const vTop = vv2 ? (vv2.offsetTop || 0) : 0;
         const vH = vv2 ? vv2.height : window.innerHeight;
         const r = t.getBoundingClientRect();
-        const want = vTop + Math.min(180, vH * 0.26);
-        if (r.top > want) SC.el.scrollTop += r.top - want;
+        const topLimit = 96;                                   // 顶栏下沿
+        const bottomLimit = Math.min(vH - 28, window.innerHeight - 28);
+        // 被键盘挡住 → 只往上推，推到中间偏上一点
+        if (r.bottom > bottomLimit) {
+          SC.el.scrollTop += r.bottom - bottomLimit;
+        } else if (r.top < topLimit) {
+          SC.el.scrollTop -= (topLimit - r.top);
+        }
       };
       put();
       setTimeout(put, 120);
