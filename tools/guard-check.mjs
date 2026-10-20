@@ -10,12 +10,13 @@ const checks = [
   ['顶栏不许有任何 transform 位移', !/topbar\.style\.transform|tbEl\.style\.transform/.test(app)],
   ['内容层不许是独立合成层', !/backface-visibility: hidden/.test(css.split('.sc-body')[1] || '')],
   ['键盘态用"有输入框在编辑"判定', /classList\.add\('kb'\)/.test(app)],
-  ['卡片高度比例可微调并持久化', /kb_ratio/.test(app) && /KB_RATIO/.test(app)],
+  ['键盘高度记忆并持久化（kb_h）', /kb_h/.test(app)],
   ['键盘态底部预留 120vh', /padding-bottom: 120vh/.test(css)],
   ['缺口/盈余是硬指标', /hasDefOv/.test(fs.readFileSync('api.js','utf8'))],
-  ['键盘动画期间不重复定位（只在稳定后定位一次）', !/\[0, 150, 400, 800, 1200\]\.forEach/.test(app) && /placeWhenSettled/.test(app)],
-  ['定位优先用真实可视高度（vv.offsetTop + vv.height）', /vv3\.offsetTop \+ vv3\.height/.test(app)],
+  ['聚焦栏居中（centerFor）', /centerFor/.test(app)],
+  ['只在"真点"时预定位（touchend 位移<8px），滑过不触发', /moved < 8/.test(app)],
   ['失焦后不立即判定键盘收起（防瞬时错位）', /700\);/.test(app)],
+  ['没有多套键盘定位定时器互相打架', !/\[260, 700\]\.forEach/.test(app)],
 ];
 
 let bad = 0;
