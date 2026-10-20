@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.60', d: '10-21', items: [
+    '改：通知页「App 内提醒」右边那个绿字「已开启」换成开关（显示更统一）；这是总开关，关掉后下面五类提醒全部静音',
+  ]},
   { v: 'v3.59', d: '10-21', items: [
     '加：锁屏通知（真推送）—— 通知页的「锁屏通知」现在是真开关。开启后 iPhone / iPad 锁屏、App 关着也能收到「热量账本」的通知，两台设备各自订阅、都能收到',
     '配套：仓库新增 push/worker.js（Cloudflare Worker 的推送服务代码）和 push/README.md（10 分钟设置步骤）。这台服务免费，一次配好就不用再管',
@@ -778,7 +781,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.59';
+const APP_VERSION = 'v3.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2018,6 +2021,7 @@ async function disablePush() {
 
 // 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
 function runNotifyChecks() {
+  if (setting('notify_inapp', true) === false) return false;   // 总开关关掉就全部静音
   const d = S.day;
   if (!d || !S.date || S.date !== S.today) return false;
   const cfg = notifyCfg();
@@ -2280,9 +2284,9 @@ function renderMe() {
         <div class="switchrow">
           <div>
             <div class="stitle">App 内提醒</div>
-            <div class="hint" style="margin:4px 0 0">打开 App、拉到数据时，顶部弹一条</div>
+            <div class="hint" style="margin:4px 0 0">总开关。关掉下面所有提醒都不弹</div>
           </div>
-          <span class="tag" style="color:var(--lime);background:rgba(214,255,75,.12)">已开启</span>
+          <label class="sw"><input type="checkbox" id="swInApp" ${setting('notify_inapp', true) === false ? '' : 'checked'}><i></i></label>
         </div>
         <div class="switchrow" style="margin-top:16px">
           <div>
@@ -2478,6 +2482,12 @@ function wireMe() {
       ta.remove();
     }
   });
+
+  const spIn = $('#swInApp');
+  if (spIn) spIn.onchange = () => {
+    setSetting('notify_inapp', spIn.checked);
+    toast(spIn.checked ? 'App 内提醒已打开' : 'App 内提醒已静音', 1600);
+  };
 
   const spPush = $('#swPush');
   if (spPush) spPush.onchange = async () => {
