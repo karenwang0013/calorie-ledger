@@ -29,11 +29,8 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html {
-  /* 【临时诊断】涂红：用来判断那块黑到底属于网页还是系统键盘 */
-  background: #ff0000;
   height: 100vh;
   overflow-x: hidden;
-  /* 【临时诊断】这一层涂成红色：如果页面上出现红色，说明那块区域属于网页；没有红色则属于系统键盘 */
   background:
     radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
     radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
@@ -179,14 +176,9 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 .sc-body {
-  /* 内容层自己也铺一份同样的波点底纹：滚到最底部（比如在「脂肪」那一栏）时，
-     露出来的也一定是底纹，而不是某个空出来的纯色块 */
-  backface-visibility: hidden;
+  /* 不要给这一层加 backface-visibility / will-change：
+     iOS 会把它提升成独立合成层，滚动到最底部时层的末端之外会渲染成纯黑（就是那块黑） */
   padding-bottom: calc(118px + var(--safe-b));
-  background:
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 0 0 / 15px 15px,
-    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.055) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
-    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 60%, #090e0b 100%);
 }
 
 /* ---------- 顶栏 ---------- */

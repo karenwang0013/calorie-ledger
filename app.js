@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.55', d: '10-20', items: [
+    '找到最可能的真正原因：内容层被设成了独立合成层（backface-visibility: hidden），iOS 在滚动到最底部时，这一层的末端之外会渲染成纯黑',
+    '去掉这个合成层设置，并撤掉上一版多加的那层底纹（就是你说的"两层波点"），红色诊断层也已移除',
+  ]},
   { v: 'v2.54', d: '10-20', items: [
     '内容层自己也铺了一份波点底纹（之前只有内容区底层有），滚到最底部时露出的也是底纹',
     '红色诊断层保留，用来确认那块黑到底归谁',
@@ -323,7 +327,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.54';
+const APP_VERSION = 'v2.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
