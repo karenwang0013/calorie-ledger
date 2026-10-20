@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.71', d: '10-20', items: [
+    '全局背景恢复原来的强度（首页、趋势页不再过艳）；只有键盘弹起的那个界面把背景补亮，和你说"刚好的那个状态"一致',
+    '反复点「脂肪」不再乱跳：弹出位置改成按"绝对位置"计算，点多少次都停在同一个高度',
+  ]},
   { v: 'v2.70', d: '10-20', items: [
     '键盘弹起后背景（渐变和波点）调强：底色更绿、波点更明显、顶部光晕更亮',
     '键盘弹起时锁住手势滚动：卡片位置由程序放好，手指不再能拖动页面 —— 惯性弹跳彻底消失',
@@ -389,7 +393,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.70';
+const APP_VERSION = 'v2.71';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2501,11 +2505,12 @@ function init() {
       const vv2 = window.visualViewport;
       const vH = vv2 ? vv2.height : window.innerHeight;
       const card = t.closest('.card') || t;
-      const rb = card.getBoundingClientRect().bottom;
-      const want = vH - 12;
-      if (rb > want) window.scrollBy(0, rb - want);
-      const r = t.getBoundingClientRect();
-      if (r.top < 96) window.scrollBy(0, r.top - 96);
+      // 用"绝对位置"算目标，而不是相对滚动 —— 反复点同一栏也不会越滚越偏
+      const docBottom = card.getBoundingClientRect().bottom + window.scrollY;
+      let target = Math.round(docBottom - (vH - 12));
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      target = Math.max(0, Math.min(target, max));
+      window.scrollTo(0, target);
       kbMax = window.scrollY;
     };
 
