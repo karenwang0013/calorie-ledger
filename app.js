@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.40', d: '10-21', items: [
+    '改：吃超（热量盈余）时，圈的颜色不再发粉 —— 之前中间那档是玫红 #ff2e88，现在换成更正的红 #ff2323，两端也统一成橙红 → 红',
+    '改：圈里的数字跟着圈的颜色走（吃超时就是同一个红），不再是单独的橙色',
+  ]},
   { v: 'v3.39', d: '10-21', items: [
     '改：识别结果里，删除的 × 移到卡片右上角，独占一角，不再和名字、数字抢位置',
     '改：卡路里数字（660 / 196）挪到下面「克数」那一行的最右边，名字那一行只留名字和铅笔',
@@ -701,7 +705,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.39';
+const APP_VERSION = 'v3.40';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -854,10 +858,11 @@ function renderToday() {
     c1 = mix('#57ffc8', '#ff9a3d', t);
     c2 = mix('#d6ff4b', '#ff7a3d', t);
   } else {
+    // 吃超了：橙 → 正红（以前中间那档是玫红，发粉）
     const t = Math.min(1, (pct - 1) / 0.15);
-    c0 = mix('#ffc44b', '#ff6b6b', t);
-    c1 = mix('#ff9a3d', '#ff2e88', t);
-    c2 = mix('#ff7a3d', '#ff5d5d', t);
+    c0 = mix('#ffc44b', '#ff6a4a', t);
+    c1 = mix('#ff9a3d', '#ff2323', t);
+    c2 = mix('#ff7a3d', '#ff3b30', t);
   }
   $('#ringS0').setAttribute('stop-color', c0);
   $('#ringS1').setAttribute('stop-color', c1);
@@ -866,6 +871,8 @@ function renderToday() {
 
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
+  // 圈里的数字跟着圈的中间色走（吃超时就是那档红）
+  hero.style.setProperty('--hero-c', c1);
 
   const goalDef = Math.round(t.deficit);   // 正=缺口，负=盈余
   let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
