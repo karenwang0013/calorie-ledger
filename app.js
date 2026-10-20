@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.97', d: '10-20', items: [
+    '修：键盘上方又出现黑影 —— 那其实是"页面最底端"露出来了',
+    '现在底部留白按键盘高度算（键盘高度 + 80），页面尽头永远在屏幕下方；同时把往下能滑的距离限制在 24px 内',
+  ]},
   { v: 'v2.96', d: '10-20', items: [
     '修：键盘弹起后能往下拉出一大片空白 —— 之前底部固定预留了 120% 屏高',
     '现在留白由脚本收紧到"刚好够这一栏居中 + 24px 余量"，往下只能再拉一点点',
@@ -494,7 +498,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.96';
+const APP_VERSION = 'v2.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2580,8 +2584,10 @@ function init() {
         clampRaf = 0;
         const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         const y = window.scrollY;
+        const kb = document.documentElement.classList.contains('kb');
+        const limit = kb ? Math.min(max, kbScrollLimit) : max;
         if (y < 0) window.scrollTo(0, 0);
-        else if (y > max) window.scrollTo(0, max);
+        else if (y > limit) window.scrollTo(0, limit);
       });
     };
     window.addEventListener('scroll', clamp, { passive: true });
@@ -2606,18 +2612,17 @@ function init() {
     };
 
     // 定位到居中后，把底部留白收紧到"刚好够"（+24px 余量）：往下只能再拉一点点
+    let kbScrollLimit = Infinity;   // 键盘态下允许的最大滚动位置（只比落点多一点点）
     const placeAndTrim = (t) => {
       const root = document.documentElement;
       root.classList.add('kb');
       root.style.setProperty('--kb-pad', '120vh');
       void document.body.offsetHeight;
       window.scrollTo(0, centerFor(t, kbH));
-      const body = document.getElementById('scBody');
-      if (!body) return;
-      const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
-      const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
-      const need = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd) + 24);
-      root.style.setProperty('--kb-pad', need + 'px');
+      // 底部留白 = 键盘高度 + 80：保证"页面尽头"永远在屏幕下方，不会露出黑影
+      root.style.setProperty('--kb-pad', Math.round(kbH + 80) + 'px');
+      // 但只允许再往下滑 24px
+      kbScrollLimit = window.scrollY + 24;
     };
 
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
@@ -2654,6 +2659,7 @@ function init() {
       setTimeout(() => {
         if (activeInput()) return;
         document.documentElement.classList.remove('kb');
+        kbScrollLimit = Infinity;
       }, 700);
     });
   };
