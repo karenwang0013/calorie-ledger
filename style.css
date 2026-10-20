@@ -130,7 +130,16 @@ select {
   min-height: 100vh;
   display: block;
   position: relative;
-  background: transparent;
+  /* 背景画在内容块上：键盘弹起、页面变长时也不会出现"下半段没有背景"的黑区 */
+  background-color: #080b09;
+  background-image:
+    radial-gradient(120% 720px at 50% 0%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(120% 720px at 50% 100%, rgba(var(--glow-rgb), 0.10) 0%, rgba(var(--glow-rgb), 0) 70%),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px),
+    radial-gradient(circle, rgba(var(--glow-rgb), 0.042) 1px, transparent 1.3px);
+  background-size: auto, auto, 15px 15px, 15px 15px;
+  background-position: 0 0, 0 100%, 0 0, 7.5px 7.5px;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
@@ -149,10 +158,8 @@ select {
 /* 键盘弹起后：底部留白由脚本精确算好，
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
 html.kb .sc-body {
-  /* 键盘弹起时页面底部留得足够长：页面的"尽头"始终在键盘下方，
-     所以键盘上方不会出现"页面到头了"的那块纯黑；
-     往下能不能滚，由脚本卡住（只能往上滚） */
-  padding-bottom: 60vh;
+  /* 留白够用即可：太长会让惯性滑动拖得很远、还容易被弹回 */
+  padding-bottom: 40vh;
 }
 
 /* ---------- 顶栏 ---------- */
