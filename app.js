@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.11', d: '10-20', items: [
+    '快捷指令采集后不用再手动点「数据同步」：回到 App 会自动拉，且没新数据会静默重试',
+    'health.json 改从 raw.githubusercontent 取（提交后几秒可见），不再等 GitHub Pages 那 30–60 秒的发布',
+    '取不到时自动回落到 Pages 上的副本，不影响离线可用',
+  ]},
   { v: 'v2.10', d: '10-20', items: [
     '「补充说明」的提示语精简成「补充说明（可选）」，去掉后面的举例，和上面两栏统一',
   ]},
@@ -145,7 +150,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.10';
+const APP_VERSION = 'v2.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1905,11 +1910,26 @@ function parseLooseDate(s) {
 /* 最近一次从 health.json 读到的内容，给刷新提示用 */
 let lastCloud = null;
 
+/* 优先从 raw.githubusercontent 取（提交后几秒就有），失败再回落到 Pages 上的副本 */
+async function fetchHealthText() {
+  const urls = [
+    'https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/health.json',
+    'health.json',
+  ];
+  for (const u of urls) {
+    try {
+      const res = await fetch(u + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) continue;
+      const t = (await res.text()).trim();
+      if (t) return t;
+    } catch (e) { /* 换下一个源 */ }
+  }
+  return '';
+}
+
 async function pullCloudData() {
   try {
-    const res = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return null;
-    const txt = (await res.text()).trim();
+    const txt = await fetchHealthText();
     if (!txt) return null;
     const sep = txt.includes('|') ? '|' : ',';
     const i = txt.lastIndexOf(sep);
@@ -2329,19 +2349,29 @@ function init() {
     if (document.visibilityState === 'visible') checkDay();
   });
 
-  // 从后台切回来时再拉一次
-  let lastPull = Date.now();
+  // 从后台切回来：立刻拉一次；没新数据就静默补拉几次（快捷指令刚写完时 Pages 还没发布）
+  let lastPull = 0, autoN = 0;
+  const autoCatchUp = () => {
+    if (autoN >= 4) return;
+    autoN++;
+    setTimeout(async () => {
+      const d = await pullCloudData();
+      if (d) {
+        autoN = 0;
+        loadDay();
+        toast('⌚ 已自动同步最新手表数据', 2600);
+      } else {
+        autoCatchUp();
+      }
+    }, 20000);
+  };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
-    if (pendingSync) {
-      pendingSync = false;
-      lastPull = Date.now();
-      pullCloudData().then(() => { loadDay(); toast('⌚ 已读取手表数据', 2200); });
-      return;
-    }
-    if (Date.now() - lastPull < 15000) return;
     lastPull = Date.now();
-    pullCloudData().then(date => { if (date) loadDay(); });
+    pullCloudData().then(date => {
+      if (date) { loadDay(); toast('⌚ 已读取手表数据', 2200); }
+      else autoCatchUp();
+    });
   });
 }
 
