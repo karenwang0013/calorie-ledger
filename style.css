@@ -26,7 +26,8 @@
 /* hidden 要真的隐藏：.preview 等规则自带 display，会盖掉浏览器默认的 [hidden] */
 [hidden] { display: none !important; }
 
-html { background: #0d0f0e; }
+/* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
+html { background: #0d0f0e; overflow-x: hidden; }
 /* 贴在最上沿的实色带：让状态栏取这个颜色 */
 .statusbg {
   position: fixed; top: 0; left: 0; right: 0;
@@ -38,9 +39,9 @@ html { background: #0d0f0e; }
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  overflow: hidden;
-  /* 关键：iOS 的橡皮筋会把 fixed 顶栏一起拖着走，禁掉顶部回弹才能让顶栏真的不动 */
+  /* 改回「文档级滚动」：iOS 对文档滚动的键盘处理是原生正确的，
+     内层容器滚动 + fixed 顶栏在键盘弹起时才会各种错位 */
+  min-height: 100%;
   overscroll-behavior-y: none;
   background: var(--bg);
   color: var(--text);
@@ -50,11 +51,12 @@ html, body {
 }
 
 body {
-  /* 关键：这里不能用 position:fixed —— iOS 键盘弹起时会把 fixed 的 body 一起推走，
-     顶栏就会跑到屏幕中间。用相对定位 + 高度锁定，文档本身照样滚不动 */
-  position: relative;
+  /* 注意：body 不能设 overflow-x:hidden —— 那会让 body 变成滚动容器，
+     吸顶的顶栏就失效了（会跟着内容一起滚走）。横向溢出交给 html */
+  position: static;
   width: 100%;
-  overflow: hidden; overscroll-behavior: none;
+  min-height: 100%;
+  overscroll-behavior-y: none;
 }
 
 
@@ -68,8 +70,7 @@ body { -webkit-overflow-scrolling: touch; }
 @keyframes slideout { to { transform: translateX(58px); opacity: 0; } }
 
 /* 弹层打开时，背后的页面不跟着滚 */
-html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; }
-html.noscroll .scroller { overflow: hidden; overscroll-behavior: none; }
+html.lock, html.lock body, html.noscroll body { overflow: hidden; overscroll-behavior: none; }
 
 /* 全局隐藏滚动条（内容照样能滑） */
 html, body, .app, .view, .sh-body, .mbody,
@@ -107,24 +108,15 @@ select {
 .app {
   max-width: 520px;
   margin: 0 auto;
-  height: 100%;
-  display: flex; flex-direction: column;
-  overflow: hidden;
+  min-height: 100%;
+  display: block;
   background: #000;
 }
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚 */
 .scroller {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding-top: var(--topbar-h, 64px);
-  /* 容器内原生滚动：文档本身不能滚（body 固定），所以顶栏不会被拖走，
-     同时 iOS 能准确知道输入框位置，聚焦时不会再整页乱跳 */
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  display: block;
+  /* 顶栏改成吸顶后本身占位置，这里不再需要留白 */
 }
 .scroller {
   background:
@@ -163,7 +155,7 @@ select {
 
 /* ---------- 顶栏 ---------- */
 .topbar {
-  position: fixed;
+  position: sticky;
   top: 0; left: 0; right: 0;
   max-width: 520px; margin: 0 auto;
   z-index: 30;

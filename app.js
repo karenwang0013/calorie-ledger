@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.26', d: '10-20', items: [
+    '彻底改掉滚动方式：内容改回「整页原生滚动」，标题栏改成吸顶（sticky）',
+    '之前是"内层容器滚动 + 固定顶栏"，iOS 一弹键盘就会把这套结构错位；现在是浏览器最标准的做法，键盘、光标、顶栏都由系统按常规处理',
+  ]},
   { v: 'v2.24', d: '10-20', items: [
     '修：键盘弹起后顶栏仍会掉到屏幕中间（上半截内容露出来）',
     '原因是 iOS 会把 position:fixed 的 body 一起推走；现在 body 不再固定，并在键盘弹起时实时补偿顶栏位置',
@@ -207,7 +211,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.25';
+const APP_VERSION = 'v2.26';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2263,24 +2267,15 @@ function init() {
   });
   syncLock();
 
-  // 保底：如果系统仍把整个 webview 拖走，用 visualViewport 的反向补偿把顶栏钉回去
-  const tbEl = document.querySelector('.topbar');
-  const vv = window.visualViewport;
-  if (tbEl && vv) {
-    const pinTop = () => {
-      const off = Math.round((vv.offsetTop || 0) + (window.scrollY || 0));
-      tbEl.style.transform = off ? 'translateY(' + off + 'px)' : '';
-    };
-    vv.addEventListener('scroll', pinTop, { passive: true });
-    vv.addEventListener('resize', pinTop, { passive: true });
-    window.addEventListener('scroll', pinTop, { passive: true });
-  }
+  // 注意：不要给顶栏加 transform 做「补偿」。
+  // 之前这里用 offsetTop + scrollY 去位移顶栏，键盘弹起后每点一个更靠下的输入框就多叠一次，
+  // 表现就是标题栏越来越往下、和内容之间的缺口越来越大。顶栏现在用 sticky，交给浏览器处理。
 
   // 手写滚动：不交给系统，顶栏绝对不会跟着动
   // 顶部导航固定 + 内容用「容器原生滚动」：
   // 之前手写 transform 滚动会让 iOS 不知道输入框的真实位置，聚焦时整页乱跳、顶栏跑到中间。
   const SC = { el: null, body: null };
-  window.scTop = () => { const el = SC.el || document.getElementById('scroller'); if (el) el.scrollTop = 0; };
+  window.scTop = () => window.scrollTo(0, 0);
   window.scMeasure = () => {};
   const initScroll = () => {
     SC.el = document.getElementById('scroller');
@@ -2303,7 +2298,7 @@ function init() {
         const r = t.getBoundingClientRect();
         const top = vTop + 96, bottom = vTop + vH - 28;
         if (r.top < top || r.bottom > bottom) {
-          SC.el.scrollTop += r.top - Math.max(top, vTop + vH * 0.30);
+          window.scrollBy(0, r.top - Math.max(top, vTop + vH * 0.30));
         }
       }, 280);
     });
