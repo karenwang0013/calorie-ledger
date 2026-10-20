@@ -14,6 +14,14 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.08', d: '10-20', items: [
+    '修：键盘开着往下滑时，先出现一大片空白、紧接着又弹回来，第二次滑的时候空白大小又不一样 —— 根因是留白原先拿「视觉视口高度」反推，Safari 的地址栏/工具栏一收一展这个值就变，留白跟着变，于是空白忽大忽小、背景看着在飘',
+    '改：留白只由「记住的键盘高」决定（键盘高 + 6px），不再随视口变化 → 内容末尾和键盘上沿之间的间隙是恒定的一条小缝，滑到底就停在那儿',
+    '加：键盘态滑到头（最底/最顶）还要继续拉时，直接吃掉这段手势 —— 不会再被系统拽出一大片空白再弹回来',
+    '加：连点标题旁版本号 5 次，弹出的自查面板现在会实时显示 键盘态/键盘高记忆/可见底边/留白/滚动/内容末尾/间隙，遇到问题截个图就能一次定位',
+    '删：数据备份里的「iPhone ↔ iPad 备份」卡片。自动同步已经能让两台设备共用一份数据，这一块重复了',
+    '数据备份页现在只剩两块：「自动同步」（日常用）和「手动备份 / 回滚」（误删、误改、卸载前用）',
+  ]},
   { v: 'v3.07', d: '10-20', items: [
     '修：键盘开着时上下滑，卡片会「短短短」地抖 —— 原因是脚本每帧都在把页面往边界拽，和系统的回弹顶牛。现在手指按着时脚本完全不插手，只在你抬手、回弹走完之后收一次尾',
     '改：键盘态底部留白改成「可见底边反算」，系统的滚动上限本身就正好停在「卡片底部贴着键盘上沿留一条小缝」，滑到底就是你要的那个位置，不需要再纠偏',
@@ -544,7 +552,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.07';
+const APP_VERSION = 'v3.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1742,17 +1750,6 @@ function renderMe() {
   } else if (mePage === 'data') {
     h = meBackBar('数据备份') + `
       <div class="card">
-        <h3>iPhone ↔ iPad 备份</h3>
-        <div class="hint" style="margin:0 0 14px">
-          在 iPhone 上点「上传备份到云端」，再到 iPad 上点「从云端备份恢复」，iPad 就会变成 iPhone 那份数据。<br>
-          包含饮食、体重、照片和设置；<b>不包含</b> AI Key 和 GitHub Token。<br>
-          <span style="color:var(--muted2)">只恢复不需要 Token；上传需要下面「自动同步」里的 Token。</span>
-        </div>
-        <button class="btn primary" id="cloudBackup">上传备份到云端</button>
-        <button class="btn sm" id="cloudRestore" style="margin-top:10px">从云端备份恢复</button>
-        <div class="hint" id="cloudBackupAt" style="margin-top:12px"></div>
-      </div>
-      <div class="card">
         <div class="cardhd"><h3>自动同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
           填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>。<br>
@@ -1770,9 +1767,10 @@ function renderMe() {
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
       <div class="card">
-        <h3>文件备份（iCloud / AirDrop）</h3>
+        <h3>手动备份 / 回滚（iCloud / AirDrop）</h3>
         <div class="hint" style="margin:0 0 14px">
-          卸载 / 重新添加主屏幕 App 会清空数据。<b>卸载前先点下面的备份</b>，装回来再「从文件恢复」。<br>
+          自动同步只保留最新一份；万一误删、误改，用这里存的快照恢复。<br>
+          卸载 / 重新添加主屏幕 App 会清空数据，卸载前先备份。<br>
           iPhone 备份后，在 iPad 选同一个文件也能恢复。
         </div>
         <button class="btn primary" id="exportJson">备份文件</button>
@@ -2147,46 +2145,6 @@ function wireMe() {
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
-  };
-
-  const cba = $('#cloudBackupAt');
-  const setBackupState = txt => { if (cba) cba.textContent = txt; };
-  if (cba) {
-    const t = setting('lastCloudBackupAt', '');
-    cba.textContent = t ? '上次云端备份：' + t : '还没有云端备份记录';
-  }
-  const cb = $('#cloudBackup');
-  if (cb) cb.onclick = async () => {
-    if (!cloudToken()) return toast('先在下面的「自动同步」里填 GitHub Token', 4000);
-    if (!confirm('上传会用这台设备现在的数据，覆盖云端上一份备份。\n\n确定吗？')) return;
-    try {
-      const r = await busyBtn(cb, '上传中…', () => cloudBackupUpload());
-      setBackupState('已上传：' + r.at);
-      toast('✅ 云端备份完成：' + r.at, 3200);
-    } catch (e) { toast('备份失败：' + e.message, 4500); }
-  };
-  const cr = $('#cloudRestore');
-  if (cr) cr.onclick = async () => {
-    let info;
-    try {
-      info = await busyBtn(cr, '检查中…', () => cloudBackupFetch());
-    } catch (e) { return toast(e.message, 4500); }
-    const when = info.savedAt
-      ? new Date(info.savedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-      : '时间未知';
-    const msg = `云端备份时间：${when}\n${info.logs} 条饮食 · ${info.weights} 次体重 · ${info.shots} 张照片\n\n恢复会覆盖这台设备现在的全部数据，确定吗？`;
-    if (!confirm(msg)) return;
-    try {
-      await busyBtn(cr, '恢复中…', async () => {
-        importCloudData(info.data);
-        applyTheme(Store.load().settings.theme || 'lime');
-        await loadDay();
-      });
-      renderMe();
-      const el = $('#cloudBackupAt');
-      if (el) el.textContent = '已恢复云端备份：' + when;
-      toast('✅ 已恢复云端备份', 3500);
-    } catch (e) { toast('恢复失败：' + e.message, 4500); }
   };
 
   const ba = $('#backupAt');
@@ -2729,10 +2687,13 @@ function init() {
       const v = vv ? Math.min(window.innerHeight, vv.height) : window.innerHeight - kbH;
       return Math.round(v);
     };
-    // 留白直接用「可见底边」反算：pad = innerHeight - kbB + 6
-    // 这样系统自己的滚动上限（scrollHeight - innerHeight）就正好等于「内容末尾贴着键盘上沿」，
-    // 不需要脚本再去每帧纠偏 —— 不纠偏就不会和系统的橡皮筋来回抢，卡片也就不会抖。
-    const kbPadFor = (b) => Math.max(KB_GAP, Math.round(window.innerHeight - b + KB_GAP));
+    // 留白只由「记住的键盘高」决定：pad = 键盘高 + 6。
+    // 绝不拿视觉视口（visualViewport）去反推 —— Safari 的地址栏/工具栏一收一展，
+    // innerHeight 和 vv 都会变，拿它算留白就会出现「空白忽大忽小、背景飘忽不定」。
+    // 这样不管 innerHeight 怎么变，「内容末尾 ~ 键盘上沿」的间隙都是恒定的 6px。
+    const shrunkLayout = () => window.innerHeight < fullH - 80;   // 键盘把页面整体顶矮（不是盖在上面）
+    const kbPadVal = () => (shrunkLayout() ? KB_GAP : Math.max(KB_GAP, Math.round(kbH + KB_GAP)));
+    const kbBottomY = () => (shrunkLayout() ? window.innerHeight : Math.round(window.innerHeight - kbH));
     // 内容末尾（文档坐标）只在进键盘态 / 键盘停稳时量一次，滚动过程中不再触发排版计算
     let kbEndCache = 0;
     // 键盘态能滑到的最远处（用缓存，不碰 DOM）
@@ -2775,12 +2736,26 @@ function init() {
       if (!isKb()) kbHomeY = window.scrollY;      // 记下弹键盘前的位置
       const r = t.getBoundingClientRect();
       const centerDoc = r.top + window.scrollY + r.height / 2;
-      if (!(isKb() && kbSeen)) kbB = Math.round(window.innerHeight - kbH);   // 预测键盘弹起后的可见底边
+      kbB = kbBottomY();                                                     // 键盘弹起后的可见底边
       document.documentElement.classList.add('kb');
       kbEndCache = contentEndDoc();                                          // 只量这一次
-      document.documentElement.style.setProperty('--kb-pad', kbPadFor(kbB) + 'px');
+      document.documentElement.style.setProperty('--kb-pad', kbPadVal() + 'px');
       const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), kbMaxY()));
       if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
+    };
+
+    // 排查用：连点版本号 5 次的面板会读这些数字
+    window.__kbd = () => {
+      const vv = window.visualViewport;
+      const pad = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
+      const endVp = SC.body.getBoundingClientRect().bottom - pad;
+      return {
+        kb: isKb() ? 1 : 0, seen: kbSeen ? 1 : 0,
+        innerH: Math.round(window.innerHeight), vvH: Math.round(vv ? vv.height : 0), vvTop: Math.round(vv ? vv.offsetTop : 0),
+        kbH: Math.round(kbH), kbB: Math.round(kbB), pad: Math.round(pad), base: Math.round(basePad),
+        y: Math.round(window.scrollY), max: Math.round(Math.max(0, document.documentElement.scrollHeight - window.innerHeight)),
+        end: Math.round(endVp), gap: Math.round(kbB ? endVp - kbB : 0), home: kbHomeY,
+      };
     };
 
     // 越界回弹：每帧最多检查一次（rAF 合并）。
@@ -2807,6 +2782,28 @@ function init() {
     window.addEventListener('touchend', endTouch, { passive: true });
     window.addEventListener('touchcancel', endTouch, { passive: true });
 
+    // 键盘态滑到头就别让它继续拽：iOS 的橡皮筋会把内容拽出一大片空白再弹回来，
+    // 这一下 Web 层关不掉，只能在「已经到底还要继续拉」的时候把这段手势直接吃掉 —— 硬停。
+    let edgeStartY = 0, edgeDir = 0;
+    window.addEventListener('touchstart', (e) => {
+      if (!isKb()) { edgeDir = 0; return; }
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      edgeStartY = t.clientY;
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const y = window.scrollY;
+      edgeDir = y <= 1 ? 1 : (y >= max - 1 ? 2 : 0);   // 1=已经在最顶 2=已经在最底
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (!isKb()) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      const dy = edgeStartY - t.clientY;               // >0 = 手指往上划（想往下看）
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const y = window.scrollY;
+      if ((dy > 0 && y >= max - 1) || (dy < 0 && y <= 1)) e.preventDefault();
+    }, { passive: false });
+
     // 键盘弹起/收起时校准：高度只认"停稳后"的值；收起时用动画把多出来的留白还回去
     if (window.visualViewport) {
       let settle = 0;
@@ -2825,13 +2822,13 @@ function init() {
               kbH = Math.round(covered);
               localStorage.setItem('kb_h', String(kbH));
             }
-            kbB = visibleBottom();
+            kbB = kbBottomY();
             kbEndCache = contentEndDoc();
-            const t = activeInput();
-            if (!t) return;
-            const want = kbPadFor(kbB);
+            const want = kbPadVal();
             const now = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
             if (Math.abs(want - now) >= 6) document.documentElement.style.setProperty('--kb-pad', want + 'px');
+            const t = activeInput();
+            if (!t) return;
             const r = t.getBoundingClientRect();
             if (Math.abs(r.top + r.height / 2 - kbWantY()) > 40) kbFill(t);   // 偏了才补，避免二次跳
           }, 240);
@@ -2968,24 +2965,27 @@ function init() {
       if (taps < 5) return;
       taps = 0;
       const vv = window.visualViewport;
-      const tb = document.querySelector('.topbar');
-      const cs = getComputedStyle(tb);
-      const el = document.getElementById('scroller');
       const box = document.createElement('div');
-      box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:100px;z-index:9999;background:#000;color:#7dff8a;font:12px/1.6 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:10px;white-space:pre-wrap;border:1px solid #2c5';
-      box.textContent = [
-        ...((window.__placeLog || []).slice(-6)),
-        '版本 ' + APP_VERSION,
-        '独立模式 ' + (window.navigator.standalone === true),
-        'innerH ' + innerHeight + ' / vvH ' + Math.round(vv ? vv.height : 0) + ' / off ' + Math.round(vv ? vv.offsetTop : 0) + ' / scale ' + (vv ? vv.scale : 0),
-        'safe-t ' + getComputedStyle(document.documentElement).getPropertyValue('--safe-t'),
-        '顶栏底色 ' + cs.backgroundColor,
-        'body 底色 ' + getComputedStyle(document.body).backgroundColor,
-        '滚动位置 ' + (el ? Math.round(el.scrollTop) : '-'),
-        '顶栏高度 ' + Math.round(tb.getBoundingClientRect().height) + ' / top ' + Math.round(tb.getBoundingClientRect().top),
-      ].join('\n');
+      box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:96px;z-index:9999;background:#000;color:#7dff8a;font:12px/1.5 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:10px;white-space:pre-wrap;border:1px solid #2c5';
+      const rows = () => {
+        const k = (window.__kbd && window.__kbd()) || {};
+        return [
+          '版本 ' + APP_VERSION + (window.navigator.standalone === true ? ' 独立' : ' 浏览器'),
+          '键盘态 ' + (k.kb || 0) + ' 见过 ' + (k.seen || 0) + ' 键盘高记忆 ' + (k.kbH || 0),
+          'innerH ' + (k.innerH || 0) + ' vvH ' + (k.vvH || 0) + ' vvTop ' + (k.vvTop || 0),
+          '可见底边 ' + (k.kbB || 0) + ' 留白 ' + (k.pad || 0) + '(基础 ' + (k.base || 0) + ')',
+          '滚动 ' + (k.y || 0) + ' / 上限 ' + (k.max || 0),
+          '内容末尾 ' + (k.end || 0) + ' 间隙 ' + (k.gap || 0) + ' 回位 ' + (k.home === undefined ? '-' : k.home),
+        ].join('\n');
+      };
+      box.textContent = rows();
       box.onclick = () => box.remove();
       document.body.appendChild(box);
+      // 边滑边更新，方便一次截图看清
+      const tick = setInterval(() => {
+        if (!box.isConnected) { clearInterval(tick); return; }
+        box.textContent = rows();
+      }, 200);
     });
   }
   syncTopH();
