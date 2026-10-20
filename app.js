@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.41', d: '10-20', items: [
+    '顶栏内容整体往上提了一点，离状态栏更近',
+    '底部导航加高：去掉 viewport-fit 后系统不再给底部安全区高度，导致底栏被压得很矮、贴着屏幕最底，现在手动补回去',
+  ]},
   { v: 'v2.40', d: '10-20', items: [
     '修：点最下面的「脂肪」时，键盘上方会露出一条黑边（键盘工具条占掉的高度没有被内容盖住）',
     '把页面底色改成内容区最底端的颜色，空出来的那一条与内容自然接上',
@@ -270,7 +274,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.40';
+const APP_VERSION = 'v2.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
