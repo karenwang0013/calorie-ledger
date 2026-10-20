@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.51', d: '10-21', items: [
+    '改：通知页重做 —— 分成「App 内提示」和「锁屏通知」两块，锁屏通知给三条现成做法：① 数据采到就通知（在你现有的「热量采集」快捷指令最后加一步）② 每晚 21:30 提醒补记 ③ 每周一早上提醒称体重',
+    '加：每条做法下面都有「复制这段文字」按钮，粘到快捷指令里就能用',
+    '说明：网页 App 自己发不了锁屏通知（苹果只允许有推送服务器的网页推送），所以锁屏提醒统一走快捷指令；这页已经写清楚了',
+  ]},
   { v: 'v3.50', d: '10-21', items: [
     '改：趋势页「7 天 / 30 天 / 90 天」选中那一格改成绿色实底 + 深色字（原来是和底色差不多的深灰，看不清选的是哪个）',
     '别的分段切换（设置里同类控件）也跟着一起变绿，保持一致',
@@ -743,7 +748,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.50';
+const APP_VERSION = 'v3.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2142,8 +2147,10 @@ function renderMe() {
         </div>
       </div>`;
   } else if (mePage === 'notify') {
+    const copyBtn = (txt) => `<button class="btn sm" data-copy="${esc(txt)}" style="margin-top:10px;width:auto;padding:8px 14px;font-size:12px">复制这段文字</button>`;
     h = meBackBar('通知') + `
       <div class="card">
+        <h3>App 内提示</h3>
         <div class="switchrow">
           <div>
             <div class="stitle">同步完成后弹提示</div>
@@ -2152,12 +2159,45 @@ function renderMe() {
           <label class="sw"><input type="checkbox" id="swToast" ${d.sync_toast ? 'checked' : ''}><i></i></label>
         </div>
       </div>
+
       <div class="card">
-        <h3>关于推送</h3>
-        <div class="hint" style="margin:0">
-          网页 App 不能像原生 App 那样在后台推送通知，这是 iOS 的限制。<br>
-          需要「到点提醒」的话，可以在快捷指令的自动化里加一个「显示通知」动作。
+        <h3>锁屏通知（推荐）</h3>
+        <div class="hint" style="margin:0 0 4px;line-height:1.7">
+          网页 App 自己发不了锁屏通知 —— 苹果只允许「装到主屏幕 + 有自己的推送服务器」的网页推送，
+          而这个 App 是纯静态的、没有服务器。所以锁屏通知走**快捷指令**：它能在后台跑，锁屏照样弹。
         </div>
+      </div>
+
+      <div class="card">
+        <h3>① 数据采到了就通知</h3>
+        <div class="hint" style="margin:0;line-height:1.75">
+          在你现有的「热量采集」快捷指令**最后**加一个动作「显示通知」，标题和正文这样写（正文里插变量）：
+        </div>
+        <div class="copybox">⌚ 热量已更新
+活动 {活动能量} 千卡 · 静息 {静息能量} 千卡</div>
+        ${copyBtn('⌚ 热量已更新\n活动 {活动能量} 千卡 · 静息 {静息能量} 千卡')}
+      </div>
+
+      <div class="card">
+        <h3>② 每晚 21:30 提醒补记</h3>
+        <div class="hint" style="margin:0;line-height:1.75">
+          快捷指令 → 自动化 → 时间 → 每天 21:30 → 添加动作「显示通知」，正文：
+        </div>
+        <div class="copybox">今天记完了吗？打开热量账本看一眼缺口</div>
+        ${copyBtn('今天记完了吗？打开热量账本看一眼缺口')}
+      </div>
+
+      <div class="card">
+        <h3>③ 每周一早上提醒称体重</h3>
+        <div class="hint" style="margin:0;line-height:1.75">
+          自动化 → 每周一 08:00 → 「显示通知」，正文：
+        </div>
+        <div class="copybox">空腹称一下，记到「趋势 → 记录体重」</div>
+        ${copyBtn('空腹称一下，记到「趋势 → 记录体重」')}
+      </div>
+
+      <div class="hint" style="padding:0 22px 26px;line-height:1.7">
+        想发到锁屏还有别的花样（Bark、Pushcut 这类 App 也行），但触发方式一样：**得靠快捷指令去发**。
       </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
@@ -2310,6 +2350,21 @@ function wireMe() {
     await loadDay();
     renderMe();
   };
+
+  // 「通知」页里那几段可直接复制的文字
+  $$('[data-copy]').forEach(b => b.onclick = async () => {
+    const txt = b.dataset.copy || '';
+    try {
+      await navigator.clipboard.writeText(txt);
+      toast('已复制');
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('已复制'); } catch (_) { toast('复制失败，长按文字手动复制'); }
+      ta.remove();
+    }
+  });
 
   const sw = $('#swToast');
   if (sw) sw.onchange = async () => {

@@ -403,6 +403,16 @@ html.kb .sc-body {
 .mitem .k .ai { color: var(--blue); font-size: 10px; }
 .mitem .del { color: var(--muted2); font-size: 15px; padding: 2px 0 2px 8px; }
 
+/* 通知页里可直接复制的文字块 */
+.copybox {
+  margin-top: 10px; padding: 11px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  font-size: 12.5px; line-height: 1.7; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+
 /* 名字 + 小铅笔：名字一行，铅笔永远贴在名字右边同一行，放不下就把名字尾巴省略，
    绝不把铅笔挤到下一行去 */
 .nameline { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; }
