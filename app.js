@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.23', d: '10-20', items: [
+    '修：点输入框时光标乱跳、滑动时整页乱跳、顶栏「热量账本」跑到屏幕中间',
+    '内容区改成容器内原生滚动（页面本身仍然不能滚），iOS 能准确知道输入框在哪，键盘弹起只滚内容、不拖顶栏',
+    '键盘弹起时自动把正在输入的框滚到上方可见处',
+  ]},
   { v: 'v2.22', d: '10-20', items: [
     '缺口/盈余不合理时会给提示：填的时候实时显示，保存时也会弹一句，但绝不改你填的数',
     '判断标准：缺口不超过消耗的 25%（且 ≤500）、每日可吃不低于基础代谢；盈余建议 200–300',
@@ -194,7 +199,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.22';
+const APP_VERSION = 'v2.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2264,90 +2269,29 @@ function init() {
   }
 
   // 手写滚动：不交给系统，顶栏绝对不会跟着动
-  const SC = { el: null, body: null, y: 0, max: 0, drag: false, sy: 0, st: 0, ly: 0, lt: 0, vy: 0, raf: 0, inner: null };
-  const scSet = y => { SC.y = y; SC.body.style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0)'; };
-  const scStop = () => { if (SC.raf) { cancelAnimationFrame(SC.raf); SC.raf = 0; } };
-  const scClamp = y => Math.min(0, Math.max(-SC.max, y));
-  const scMeasure = () => {
-    if (!SC.el || !SC.body) return;
-    SC.max = Math.max(0, SC.body.offsetHeight - SC.el.clientHeight);
-    scSet(scClamp(SC.y));
-  };
-  const scSpark = () => {
-    scStop();
-    const step = () => {
-      SC.vy *= 0.94;
-      let next = SC.y + SC.vy * 16;
-      if (next > 0 || next < -SC.max) {
-        const target = next > 0 ? 0 : -SC.max;
-        next += (target - next) * 0.18;
-        SC.vy *= 0.6;
-        scSet(next);
-        if (Math.abs(target - next) < 0.6) { scSet(target); SC.vy = 0; SC.raf = 0; return; }
-      } else {
-        if (Math.abs(SC.vy) < 0.015) { SC.raf = 0; return; }
-        scSet(next);
-      }
-      SC.raf = requestAnimationFrame(step);
-    };
-    SC.raf = requestAnimationFrame(step);
-  };
-  window.scTop = () => { scStop(); scSet(0); };
-
+  // 顶部导航固定 + 内容用「容器原生滚动」：
+  // 之前手写 transform 滚动会让 iOS 不知道输入框的真实位置，聚焦时整页乱跳、顶栏跑到中间。
+  const SC = { el: null, body: null };
+  window.scTop = () => { const el = SC.el || document.getElementById('scroller'); if (el) el.scrollTop = 0; };
+  window.scMeasure = () => {};
   const initScroll = () => {
     SC.el = document.getElementById('scroller');
     SC.body = document.getElementById('scBody');
     if (!SC.el || !SC.body) return;
-
-    SC.el.addEventListener('touchstart', e => {
-      if (e.touches.length !== 1) return;
-      // 手指落在内部可滚动区域（如关于页的更新日志卡片）时，交给它自己滚
-      const inner = e.target.closest && e.target.closest('.about-fill > .card:first-child');
-      if (inner && inner.scrollHeight > inner.clientHeight + 2) {
-        SC.inner = inner; SC.drag = false; scStop(); return;
-      }
-      SC.inner = null;
-      scStop();
-      SC.drag = true;
-      SC.sy = e.touches[0].clientY; SC.st = SC.y;
-      SC.ly = SC.sy; SC.lt = performance.now(); SC.vy = 0;
-    }, { passive: true });
-
-    SC.el.addEventListener('touchmove', e => {
-      if (SC.inner) return;          // 内部滚动优先，别抢
-      if (!SC.drag) return;
-      const y = e.touches[0].clientY;
-      let next = SC.st + (y - SC.sy);
-      if (next > 0) next *= 0.35;
-      else if (next < -SC.max) next = -SC.max + (next + SC.max) * 0.35;
-      const now = performance.now();
-      const dt = Math.max(8, now - SC.lt);
-      SC.vy = (y - SC.ly) / dt;
-      SC.ly = y; SC.lt = now;
-      scSet(next);
-      if (e.cancelable) e.preventDefault();
-    }, { passive: false });
-
-    SC.el.addEventListener('touchend', () => {
-      if (SC.inner) { SC.inner = null; return; }
-      if (!SC.drag) return;
-      SC.drag = false;
-      if (Math.abs(SC.vy) > 0.05 || SC.y > 0 || SC.y < -SC.max) scSpark();
+    // 键盘弹起后，把正在输入的框滚到上方可见处
+    SC.el.addEventListener('focusin', e => {
+      const t = e.target;
+      if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
+      setTimeout(() => {
+        const r = t.getBoundingClientRect();
+        const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        const top = 90, bottom = vh - 24;
+        if (r.top < top || r.bottom > bottom) {
+          SC.el.scrollTop += r.top - Math.max(top, vh * 0.28);
+        }
+      }, 260);
     });
-    SC.el.addEventListener('touchcancel', () => { SC.drag = false; });
-
-    SC.el.addEventListener('wheel', e => {
-      scStop();
-      scSet(scClamp(SC.y - e.deltaY));
-      e.preventDefault();
-    }, { passive: false });
-
-    scMeasure();
-    window.addEventListener('resize', scMeasure);
-    window.addEventListener('orientationchange', () => setTimeout(scMeasure, 300));
-    if (window.ResizeObserver) new ResizeObserver(scMeasure).observe(SC.body);
   };
-  window.scMeasure = scMeasure;
 
   // 左边缘拖动返回：卡片跟手滑动，松手决定回退还是弹回
   let sw = null;

@@ -114,8 +114,13 @@ select {
   flex: 1 1 auto;
   min-height: 0;
   padding-top: var(--topbar-h, 64px);
-  overflow: hidden;          /* 不用原生滚动，改由 JS 手写，彻底断掉系统回弹 */
-  touch-action: pan-x;
+  /* 容器内原生滚动：文档本身不能滚（body 固定），所以顶栏不会被拖走，
+     同时 iOS 能准确知道输入框位置，聚焦时不会再整页乱跳 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .scroller {
   background:
@@ -148,7 +153,6 @@ select {
     linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
 }
 .sc-body {
-  will-change: transform;
   backface-visibility: hidden;
   padding-bottom: calc(92px + var(--safe-b));
 }
