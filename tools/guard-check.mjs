@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const app = fs.readFileSync('app.js', 'utf8');
 const css = fs.readFileSync('style.css', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
+const api = fs.readFileSync('api.js', 'utf8');
 const manifest = fs.readFileSync('manifest.webmanifest', 'utf8');
 
 const checks = [
@@ -22,6 +23,9 @@ const checks = [
   ['失焦后不立即判定键盘收起（防瞬时错位）', /700\);/.test(app)],
   ['没有多套键盘定位定时器互相打架', !/\[260, 700\]\.forEach/.test(app)],
   ['iPad 保持手机单列（首页不许左右分栏）', !/today-grid|today-sum|today-log/.test(html + css) && /#view-today, #view-trends, #view-me \{[\s\S]*?max-width: 720px/.test(css)],
+  ['跨设备备份：上传 / 恢复入口都在', /id="cloudBackup"/.test(app) && /id="cloudRestore"/.test(app) && /function cloudBackupUpload\(/.test(api) && /function cloudBackupFetch\(/.test(api)],
+  ['云端备份不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
+  ['云端恢复保留本机 Token / AI Key', /gh_token: local\.settings/.test(api) && /dashscope_key: local\.settings/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
 ];
 

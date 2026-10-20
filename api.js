@@ -855,6 +855,147 @@ async function cloudPull() {
   }
 }
 
+/* ---------------- 跨设备备份（仓库里的 backup.json，iPhone → iPad） ---------------- */
+const BACKUP_FILE = 'backup.json';
+let backupSha = null;
+
+function backupApiUrl() {
+  return `https://api.github.com/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${BACKUP_FILE}`;
+}
+function backupRawUrls() {
+  return [
+    `https://raw.githubusercontent.com/${CLOUD.owner}/${CLOUD.repo}/main/${BACKUP_FILE}`,
+    `https://${CLOUD.owner}.github.io/${CLOUD.repo}/${BACKUP_FILE}`,
+  ];
+}
+function backupTimeText(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function backupText() {
+  const data = JSON.parse(JSON.stringify(Store.load()));
+  // 和云端同步一样：密钥绝不进仓库
+  if (data.settings) {
+    delete data.settings.gh_token;
+    delete data.settings.dashscope_key;
+  }
+  const savedAt = new Date().toISOString();
+  if (!data.settings) data.settings = {};
+  data.settings.lastCloudBackupAt = backupTimeText(savedAt);
+  const pack = () => JSON.stringify({ v: 1, kind: 'backup', savedAt, data });
+  let json = pack();
+  // 控制体积：超过 6MB 从最旧的缩略图开始丢，正常数据远小于这个值
+  const limit = 6 * 1024 * 1024;
+  if (json.length > limit && data.shots) {
+    const keys = Object.keys(data.shots);
+    while (json.length > limit && keys.length) {
+      delete data.shots[keys.shift()];
+      json = pack();
+    }
+  }
+  return { json, savedAt };
+}
+async function cloudBackupUpload() {
+  if (!cloudToken()) throw new Error('先在下面的「自动同步」里填 GitHub Token');
+  const { json, savedAt } = backupText();
+  const content = b64encode(json);
+  const getSha = async () => {
+    const r = await fetchT(backupApiUrl(), { headers: cloudHeaders(), cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); return j.sha; }
+    if (r.status === 404) return null;
+    throw new Error('检查云端备份失败 ' + r.status);
+  };
+  if (!backupSha) backupSha = await getSha();
+  const put = () => {
+    const body = { message: 'backup ' + backupTimeText(savedAt), content, branch: 'main' };
+    if (backupSha) body.sha = backupSha;
+    return fetchT(backupApiUrl(), {
+      method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body), cache: 'no-store',
+    });
+  };
+  let res = await put();
+  if (res.status === 409 || res.status === 422) {
+    backupSha = await getSha();
+    res = await put();
+  }
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.text()).slice(0, 120); } catch (e) { /* 忽略 */ }
+    if (/Secret detected/i.test(detail)) throw new Error('云端拒绝：备份里检测到密钥');
+    throw new Error('上传失败 ' + res.status + (detail ? '：' + detail.slice(0, 60) : ''));
+  }
+  const out = await res.json();
+  backupSha = out.content && out.content.sha;
+  setSetting('lastCloudBackupAt', backupTimeText(savedAt));
+  return { savedAt, at: backupTimeText(savedAt), bytes: json.length };
+}
+async function cloudBackupFetch() {
+  // 公开仓库读文件不需要 token：先走 API（上传后立刻能读到），失败再试 raw / Pages
+  const urls = [{ url: backupApiUrl(), api: true }];
+  backupRawUrls().forEach(u => urls.push({ url: u + (u.includes('?') ? '&' : '?') + 't=' + Date.now(), api: false }));
+  let lastErr = null;
+  for (const item of urls) {
+    try {
+      const headers = item.api ? { Accept: 'application/vnd.github+json' } : {};
+      const res = await fetchT(item.url, { headers, cache: 'no-store' }, 10000);
+      if (res.status === 404) { lastErr = new Error('还没找到云端备份'); continue; }
+      if (!res.ok) { lastErr = new Error('读取失败 ' + res.status); continue; }
+      const j = await res.json();
+      let obj = null;
+      if (item.api) {
+        if (j.content) {
+          obj = JSON.parse(b64decode(j.content));
+        } else if (j.sha) {
+          // 文件超过 1MB 时 Contents API 不直接给内容，改读 Git Blob（公开仓库同样不需要 token）
+          const rb = await fetchT(
+            `https://api.github.com/repos/${CLOUD.owner}/${CLOUD.repo}/git/blobs/${j.sha}`,
+            { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' }, 10000
+          );
+          if (!rb.ok) throw new Error('读取备份内容失败 ' + rb.status);
+          const jb = await rb.json();
+          obj = JSON.parse(b64decode(jb.content || ''));
+        } else if (j.download_url) {
+          const rr = await fetchT(j.download_url + '?t=' + Date.now(), { cache: 'no-store' }, 10000);
+          if (!rr.ok) throw new Error('读取备份内容失败 ' + rr.status);
+          obj = await rr.json();
+        } else {
+          throw new Error('备份内容不完整');
+        }
+      } else {
+        obj = j;
+      }
+      const data = obj && obj.data ? obj.data : obj;
+      if (!data || !data.profile) throw new Error('备份内容不完整');
+      return {
+        data,
+        savedAt: obj.savedAt || (data.settings && data.settings.lastCloudBackupAt) || '',
+        logs: (data.logs || []).length,
+        weights: Object.keys(data.weights || {}).length,
+        shots: Object.keys(data.shots || {}).length,
+      };
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (lastErr && /还没找到/.test(lastErr.message)) {
+    throw new Error('还没有云端备份。请先在 iPhone 上点「上传备份到云端」。');
+  }
+  throw new Error(lastErr ? lastErr.message : '读取云端备份失败');
+}
+function importCloudData(data) {
+  // 云端备份不含密钥，恢复时保留这台设备自己的 token / AI Key
+  const local = Store.load();
+  const secrets = {
+    gh_token: local.settings && local.settings.gh_token,
+    dashscope_key: local.settings && local.settings.dashscope_key,
+  };
+  importJson(JSON.stringify(data));
+  const s = Store.load();
+  s.settings = Object.assign({}, s.settings || {}, secrets);
+  Store.save();
+}
+
 async function exportJson() {
   const text = JSON.stringify(Store.load(), null, 2);
   const name = `热量账本备份-${todayISO()}.json`;

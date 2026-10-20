@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.04', d: '10-20', items: [
+    '新增：iPhone ↔ iPad 跨设备备份。在 iPhone 的「设置 → 数据备份」点「上传备份到云端」，到 iPad 点「从云端备份恢复」，就能把 iPhone 那份饮食、体重、照片和设置搬过来',
+    '云端备份不含 AI Key 和 GitHub Token；在 iPad 上恢复不需要 Token，恢复后 iPad 自己的 Key 和 Token 不会被冲掉',
+    '「数据备份」页重新分组：跨设备备份 / 自动同步 / 文件备份（iCloud、AirDrop），每一步都写清楚了',
+  ]},
   { v: 'v3.03', d: '10-20', items: [
     '修：点任意输入框页面会乱跳 —— 以前不管点哪一栏，都把「卡片底边」对到键盘上方：点上面几栏时输入框被顶出屏幕，系统再自己去找位置，就一上一下地跳。现在改成：点到哪一栏，就把那一栏放到顶栏和键盘的正中间',
     '修：用键盘上的「上一项 / 下一项」切到下一栏时，位置也按同一条规则对齐，不会跳两遍',
@@ -525,7 +530,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.03';
+const APP_VERSION = 'v3.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1723,9 +1728,21 @@ function renderMe() {
   } else if (mePage === 'data') {
     h = meBackBar('数据备份') + `
       <div class="card">
-        <div class="cardhd"><h3>云端同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
+        <h3>iPhone ↔ iPad 备份</h3>
+        <div class="hint" style="margin:0 0 14px">
+          在 iPhone 上点「上传备份到云端」，再到 iPad 上点「从云端备份恢复」，iPad 就会变成 iPhone 那份数据。<br>
+          包含饮食、体重、照片和设置；<b>不包含</b> AI Key 和 GitHub Token。<br>
+          <span style="color:var(--muted2)">只恢复不需要 Token；上传需要下面「自动同步」里的 Token。</span>
+        </div>
+        <button class="btn primary" id="cloudBackup">上传备份到云端</button>
+        <button class="btn sm" id="cloudRestore" style="margin-top:10px">从云端备份恢复</button>
+        <div class="hint" id="cloudBackupAt" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <div class="cardhd"><h3>自动同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
-          填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>；换手机、重装 App 打开就自动恢复。
+          填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>。<br>
+          换设备时在那边填同一个 Token，打开就会自动恢复。
         </div>
         <div class="field">
           <label>GitHub Token</label>
@@ -1739,11 +1756,13 @@ function renderMe() {
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
       <div class="card">
+        <h3>文件备份（iCloud / AirDrop）</h3>
         <div class="hint" style="margin:0 0 14px">
-          卸载 / 重新添加主屏幕 App 会清空数据。<b>卸载前先点下面的备份</b>，装回来再「从 iCloud 恢复」。
+          卸载 / 重新添加主屏幕 App 会清空数据。<b>卸载前先点下面的备份</b>，装回来再「从文件恢复」。<br>
+          iPhone 备份后，在 iPad 选同一个文件也能恢复。
         </div>
-        <button class="btn primary" id="exportJson">备份到 iCloud</button>
-        <button class="btn sm" id="importJson" style="margin-top:10px">从 iCloud 恢复</button>
+        <button class="btn primary" id="exportJson">备份文件</button>
+        <button class="btn sm" id="importJson" style="margin-top:10px">从文件恢复</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
         <div class="hint" style="margin-top:12px" id="backupAt"></div>
         <div class="btnrow" style="margin-top:14px">
@@ -2093,10 +2112,49 @@ function wireMe() {
     }
   };
 
+  const cba = $('#cloudBackupAt');
+  const setBackupState = txt => { if (cba) cba.textContent = txt; };
+  if (cba) {
+    const t = setting('lastCloudBackupAt', '');
+    cba.textContent = t ? '上次云端备份：' + t : '还没有云端备份记录';
+  }
+  const cb = $('#cloudBackup');
+  if (cb) cb.onclick = async () => {
+    if (!cloudToken()) return toast('先在下面的「自动同步」里填 GitHub Token', 4000);
+    try {
+      const r = await busyBtn(cb, '上传中…', () => cloudBackupUpload());
+      setBackupState('已上传：' + r.at);
+      toast('✅ 云端备份完成：' + r.at, 3200);
+    } catch (e) { toast('备份失败：' + e.message, 4500); }
+  };
+  const cr = $('#cloudRestore');
+  if (cr) cr.onclick = async () => {
+    let info;
+    try {
+      info = await busyBtn(cr, '检查中…', () => cloudBackupFetch());
+    } catch (e) { return toast(e.message, 4500); }
+    const when = info.savedAt
+      ? new Date(info.savedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+      : '时间未知';
+    const msg = `云端备份时间：${when}\n${info.logs} 条饮食 · ${info.weights} 次体重 · ${info.shots} 张照片\n\n恢复会覆盖这台设备现在的全部数据，确定吗？`;
+    if (!confirm(msg)) return;
+    try {
+      await busyBtn(cr, '恢复中…', async () => {
+        importCloudData(info.data);
+        applyTheme(Store.load().settings.theme || 'lime');
+        await loadDay();
+      });
+      renderMe();
+      const el = $('#cloudBackupAt');
+      if (el) el.textContent = '已恢复云端备份：' + when;
+      toast('✅ 已恢复云端备份', 3500);
+    } catch (e) { toast('恢复失败：' + e.message, 4500); }
+  };
+
   const ba = $('#backupAt');
   if (ba) {
     const t = Store.load().settings.lastBackupAt;
-    ba.textContent = t ? '上次备份：' + t : '还没有备份过';
+    ba.textContent = t ? '上次文件备份：' + t : '还没有文件备份过';
   }
   const ej = $('#exportJson');
   if (ej) ej.onclick = async () => {
@@ -2105,13 +2163,13 @@ function wireMe() {
       if (r === 'cancel') return;
       const t = new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
       setSetting('lastBackupAt', t);
-      if (ba) ba.textContent = '上次备份：' + t;
+      if (ba) ba.textContent = '上次文件备份：' + t;
       toast(r === 'shared' ? '已存到「文件」/ iCloud Drive' : '已下载备份文件', 3000);
     } catch (e) { toast('备份失败：' + e.message, 4000); }
   };
   const ij = $('#importJson');
   if (ij) ij.onclick = () => {
-    if (!confirm('恢复会用备份覆盖手机上现在的全部数据，确定吗？')) return;
+    if (!confirm('恢复会用备份覆盖这台设备现在的全部数据，确定吗？')) return;
     $('#importFile').click();
   };
   const iff = $('#importFile');
