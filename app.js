@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.17', d: '10-20', items: [
+    '新增三档目标模式：减脂（蛋白 2.0 g/kg，脂肪 25%）/ 维持（1.6，28%）/ 增肌（1.8，25%）',
+    '选好模式后，蛋白质、脂肪、碳水按你的体重和当天消耗自动配比，不用自己算',
+    '模式只改配比，你设的缺口或盈余一分不动',
+  ]},
   { v: 'v2.16', d: '10-20', items: [
     '「恢复建议」加了二次确认：避免误点把手动设置的目标缺口/营养值清掉',
   ]},
@@ -168,7 +173,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.16';
+const APP_VERSION = 'v2.17';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1166,6 +1171,12 @@ function lineChart(points, start, end) {
 }
 
 /* ---------------- 主题 ---------------- */
+// 目标模式：只决定「蛋白质系数 + 脂肪占比」，不动用户设的缺口/盈余
+const DIET_MODES = {
+  cut:      { n: '减脂', p: 2.0, fat: 0.25, tip: '高蛋白保肌肉，碳水压缩' },
+  maintain: { n: '维持', p: 1.6, fat: 0.28, tip: '日常均衡' },
+  bulk:     { n: '增肌', p: 1.8, fat: 0.25, tip: '蛋白够用，多出的热量给碳水' },
+};
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
 // 每个主题的[主光色, 副光色]，背景光晕和点阵跟着变
 const GLOWS = {
@@ -1369,7 +1380,14 @@ function renderMe() {
     const a = (d.targets.auto) || {};
     h = meBackBar('营养目标') + `
       <div class="card">
-        <div class="hint" style="margin:0 0 16px">全留空 = 用建议值（会随体重和消耗自动变）。填了就以你填的为准。</div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">目标模式</label>
+        <div class="modes" id="dietModes">
+          ${Object.entries(DIET_MODES).map(([k, m]) => `
+            <button data-mode="${k}" class="${(setting('diet_mode', 'maintain') === k) ? 'on' : ''}">
+              <b>${m.n}</b><i>${m.tip}</i>
+            </button>`).join('')}
+        </div>
+        <div class="hint" style="margin:10px 0 16px">换模式只改「蛋白质 / 脂肪 / 碳水」的配比，<b>不会动你设的缺口或盈余</b>。</div>
         <div class="field">
           <label>目标缺口 / 盈余（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
@@ -1504,6 +1522,21 @@ function wireMe() {
     nd.oninput = () => { nk.value = Math.max(600, Math.round(exp + (Number(nd.value) || 0))); };
     nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); };
   }
+  $$('#dietModes button').forEach(b => b.onclick = async () => {
+    const k = b.dataset.mode;
+    const m = DIET_MODES[k];
+    if (!m) return;
+    const cur = setting('diet_mode', 'maintain');
+    if (cur === k) return;
+    const ov = Object.assign({}, setting('target_override', {}));
+    delete ov.protein; delete ov.carb; delete ov.fat;   // 让预设生效，但保留缺口
+    await api('/api/settings', { diet_mode: k, fat_ratio: m.fat, target_override: ov });
+    await api('/api/profile', { protein_per_kg: m.p });
+    toast(`已切到「${m.n}」：蛋白质 ${m.p} g/kg，脂肪 ${Math.round(m.fat * 100)}%`);
+    await loadDay();
+    renderMe();
+  });
+
   const sn = $('#saveNutri');
   if (sn) sn.onclick = async () => {
     try {

@@ -444,6 +444,18 @@ select {
 .cardhd h3 { margin: 0; }
 .linkbtn { font-size: 11.5px; line-height: 1; color: var(--muted2); padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,.05); }
 
+/* 目标模式选择 */
+.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modes button {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  padding: 10px 10px; border-radius: 12px; text-align: left;
+  background: var(--card2); border: 1px solid transparent; color: var(--muted);
+}
+.modes button b { font-size: 13px; font-weight: 600; color: var(--text); }
+.modes button i { font-style: normal; font-size: 10px; color: var(--muted2); line-height: 1.3; }
+.modes button.on { border-color: rgba(214,255,75,.45); background: rgba(214,255,75,.10); }
+.modes button.on b { color: var(--lime); }
+
 /* 关于页的更新日志 */
 .rel-date {
   font-size: 12px; font-weight: 600; color: var(--lime);

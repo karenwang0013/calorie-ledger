@@ -133,7 +133,8 @@ function targetsOf(p, exp) {
   // —— 自动建议值 ——
   const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
   const budgetAuto = Math.max(1000, exp - want);
-  const fatAuto = Math.round(Math.max(40, budgetAuto * 0.28 / 9));
+  const fatRatio = Math.min(0.4, Math.max(0.15, Number(setting('fat_ratio', 0.28)) || 0.28));
+  const fatAuto = Math.round(Math.max(40, budgetAuto * fatRatio / 9));
   const carbAuto = Math.round(Math.max(50, (budgetAuto - proteinAuto * 4 - fatAuto * 9) / 4));
 
   // —— 用户手动覆盖（营养目标页） ——
@@ -667,6 +668,8 @@ async function api(path, body, method) {
     if (body.sync_toast !== undefined) {
       setSetting('sync_toast', !!body.sync_toast);
     }
+    if (body.diet_mode !== undefined) setSetting('diet_mode', String(body.diet_mode || 'maintain'));
+    if (body.fat_ratio !== undefined) setSetting('fat_ratio', Number(body.fat_ratio) || 0.28);
     if (body.target_override !== undefined) {
       setSetting('target_override', body.target_override || {});
     }
