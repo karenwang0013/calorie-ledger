@@ -14,6 +14,12 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.11', d: '10-21', items: [
+    '修：设置 → 饮食目标 / 身体与目标，点某一行（比如「碳水」）光标还是偶尔跳到下一行（比如「脂肪」）—— 这次是从根上掐掉：点下去的那一刻，由我们自己把焦点放到你点的那一栏，并且把系统随后那一下「重新挑一个元素」的点击吃掉，不给它挑错的机会',
+    '再兜一层：万一系统还是把焦点挪到了别的输入框，半秒内会立刻拨回你真正点的那一栏',
+    '改：这些栏连着点不再触发 iOS 的双击缩放（双击会让整页视觉上跳一下，看着就像"跳到下一项"）',
+    '加：连点版本号 5 次的自查面板多一行「点击」，显示这一下点的是谁、焦点最后落在谁 —— 再有错行，截个图就能一次定位',
+  ]},
   { v: 'v3.10', d: '10-20', items: [
     '修：设置 → 饮食目标 / 身体与目标，点某一行（比如「碳水」）光标却跑到别的一行（比如「脂肪」）—— 原因是点下去的那一下页面立刻自己挪了一段，系统把这一下点击算到了挪过去以后手指底下的那一栏。现在定位改成「抬手后紧跟着一瞬间」再做，点击认的就是你点的那一栏',
     '修：这些栏连点几下会发卡 —— 以前每点一下都要让整页重新排一次版。现在只有真的需要才重排，点在已经在中间的那一栏也不再挪动',
@@ -563,7 +569,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.10';
+const APP_VERSION = 'v3.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2694,6 +2700,8 @@ function init() {
     let kbHomeY = -1;                 // 弹键盘之前的滚动位置（收键盘时平滑落回这里）
     let closeRaf = 0;                 // 收键盘动画句柄
     let fillRaf = 0, fillTarget = null; // 点输入框后的定位（合并成每帧最多一次）
+    let fromTap = false;               // 这一次定位是「真点」排的，还是延时兜底排的
+    let wantFocus = null, wantUntil = 0; // 「这一下点的是谁」——防系统把焦点挪到别的输入框
 
     const isKb = () => document.documentElement.classList.contains('kb');
     // 滚动容器的顶边（正常是 0；Safari 里顶上有一条提示条时会往下挪），
@@ -2739,6 +2747,7 @@ function init() {
       document.documentElement.classList.remove('kb');
       document.documentElement.style.removeProperty('--kb-pad');
       kbPadNow = -1;
+      wantFocus = null;
       kbB = 0; kbSeen = false; kbHomeY = -1; kbEndCache = 0;
     };
     const closeKb = () => {
@@ -2769,15 +2778,16 @@ function init() {
       fillRaf = 0;
       const t = fillTarget; fillTarget = null;
       if (!t || !isKb()) return;
-      // 手指还按着的时候不动：否则正在点的那一下会被"页面自己挪走"，点击就落到别的栏上了
-      if (touching) return;
+      // 手指还按着就不动（延时兜底那一次会被这条挡住）；真点排的那一次不受影响，它在抬手之后才跑
+      if (touching && !fromTap) return;
       const r = t.getBoundingClientRect();
       const centerVp = r.top + r.height / 2;                                 // 输入框中心（视口坐标）
       const y = Math.max(0, Math.min(Math.round(scY() + centerVp - kbWantY()), kbMaxY()));
       if (Math.abs(scY() - y) >= 8) scTo(y);        // 已经差不多在中间就不动，免得连点微抖
     };
-    const kbFill = (t) => {
+    const kbFill = (t, tap) => {
       if (!t) return;
+      fromTap = !!tap;
       cancelAnimationFrame(closeRaf); closeRaf = 0;
       // 已经在键盘态里（多点几下就是这种情况）就不要再量一遍排版：
       // 每次点都量「内容末尾」会强制重新排版一次，连点几下就发卡
@@ -2793,6 +2803,7 @@ function init() {
     };
 
     // 排查用：连点版本号 5 次的面板会读这些数字
+    window.__taps = window.__taps || [];
     window.__kbd = () => {
       const vv = window.visualViewport;
       const pad = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
@@ -2803,6 +2814,7 @@ function init() {
         kbH: Math.round(kbH), kbB: Math.round(kbB), pad: Math.round(pad), base: Math.round(basePad),
         y: Math.round(scY()), max: Math.round(scMax()),
         end: Math.round(endVp), gap: Math.round(kbB ? endVp - kbB : 0), home: kbHomeY,
+        taps: window.__taps.slice(-3).join(' · '),
       };
     };
 
@@ -2886,11 +2898,15 @@ function init() {
     }
 
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
+    // 焦点也在这里自己定：iOS 那一下"点击"是抬手之后才派发的，页面只要在这中间挪过，
+    // 它就会重新挑一次元素，落到"挪完之后手指底下"的那一栏 —— 表现就是点碳水、光标跳到脂肪。
+    // 所以：先把自己要的那一栏聚焦，再把这一下合成的点击吃掉，最后才挪页面。
     let tX = 0, tY = 0, tT = 0, tEl = null;
     SC.el.addEventListener('touchstart', e => {
       const t = e.touches[0];
       tX = t.clientX; tY = t.clientY; tT = Date.now();
       tEl = e.target.closest ? e.target.closest('input,textarea') : null;
+      wantFocus = null;                    // 新手势开始，上一轮的防线作废
     }, { passive: true });
     SC.el.addEventListener('touchend', e => {
       if (!tEl) return;
@@ -2898,10 +2914,31 @@ function init() {
       const moved = Math.abs(c.clientY - tY) + Math.abs(c.clientX - tX);
       const dur = Date.now() - tT;
       if (moved < 8 && dur < 400) {
-        kbFill(tEl);
+        const el = tEl;
+        try { el.focus({ preventScroll: true }); } catch (_) { try { el.focus(); } catch (_) {} }
+        // 焦点已经落在你点的那一栏了 → 这一下点击不需要再"选一次"，吃掉它
+        // （第一次点、键盘还没弹起时不拦：那一下交给系统自己走，保证键盘一定能出来）
+        if (document.activeElement === el && isKb()) e.preventDefault();
+        // 布防要在自己 focus 之后：否则刚才那次 focusin 会立刻把防线撤掉
+        wantFocus = el; wantUntil = Date.now() + 600;   // 只需要覆盖「抬手→点击派发」这一小段
+        if (window.__taps) window.__taps.push((el.id || el.tagName) + '→' + ((document.activeElement && (document.activeElement.id || document.activeElement.tagName)) || '?'));
+        kbFill(el, true);
       }
       tEl = null;
-    }, { passive: true });
+    }, { passive: false });
+
+    // 兜底：万一系统还是把焦点挪到了别的输入框（上面那下点击没吃掉），拨回你真正点的那一栏
+    SC.el.addEventListener('focusin', e => {
+      const want = wantFocus;
+      if (!want || Date.now() > wantUntil) return;
+      const t = e.target;
+      if (t === want) { wantFocus = null; return; }
+      if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
+      wantFocus = null;
+      if (window.__taps) window.__taps.push('修正:' + (want.id || want.tagName) + '夺回');
+      try { want.focus({ preventScroll: true }); } catch (_) { try { want.focus(); } catch (_) {} }
+      kbFill(want);
+    }, true);
 
     // 兜底：用键盘上的「上一项 / 下一项」切焦点时没有真点；等键盘稳了按同一条公式再对一次
     SC.el.addEventListener('focusin', e => {
@@ -3022,6 +3059,7 @@ function init() {
           '可见底边 ' + (k.kbB || 0) + ' 留白 ' + (k.pad || 0) + '(基础 ' + (k.base || 0) + ')',
           '滚动 ' + (k.y || 0) + ' / 上限 ' + (k.max || 0),
           '内容末尾 ' + (k.end || 0) + ' 间隙 ' + (k.gap || 0) + ' 回位 ' + (k.home === undefined ? '-' : k.home),
+          '点击 ' + (k.taps || '-'),
         ].join('\n');
       };
       box.textContent = rows();

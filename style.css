@@ -110,6 +110,9 @@ button, input, select, textarea {
   color: inherit;
 }
 button { border: 0; background: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* 手指连点时不要触发 iOS 的双击缩放（双击会让整页视觉上"跳一下"），
+   同时也把点击的延迟去掉：点击在抬手当下就派发，页面还来不及挪 */
+input, textarea, select, button, .srow, .modes button, .tab { touch-action: manipulation; }
 button:focus { outline: none; }
 button:focus-visible { outline: 2px solid rgba(214,255,75,.5); outline-offset: 2px; }
 input, textarea, select {
