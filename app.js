@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.99', d: '10-20', items: [
+    '修：越往下点，卡片底部离键盘越远、还能下拉一大截 —— 之前按"输入框居中"定位，字段越靠下，卡片就飘得越高',
+    '改成统一按"卡片底边贴着键盘上沿"对齐，不管点哪一栏，卡片都刚好在键盘上方，且下方没有多余可滑空间',
+  ]},
   { v: 'v2.98', d: '10-20', items: [
     '修：往下滑又出现抖动 —— 之前我一边允许你滑 24px、一边在越界时把你拉回来，两股劲打架就是抖',
     '现在底部留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动（没有可滑的空间，也就没有拉扯和抖动），尽头被键盘挡住所以看不到黑影',
@@ -502,7 +506,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.98';
+const APP_VERSION = 'v2.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2619,9 +2623,12 @@ function init() {
       root.classList.add('kb');
       root.style.setProperty('--kb-pad', '120vh');
       void document.body.offsetHeight;
-      window.scrollTo(0, centerFor(t, kbH));
-      // 留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动（也就没有回弹抖动），
-      // 而尽头在屏幕底边 = 被键盘挡住，看不到黑影
+      // 统一按"卡片底边贴着键盘上沿"来对齐（不论点哪一栏，卡片都刚好在键盘上方）
+      const card = t.closest('.card') || t;
+      const usableBottom = window.innerHeight - kbH - 12;
+      const cardBottomDoc = card.getBoundingClientRect().bottom + window.scrollY;
+      window.scrollTo(0, cardBottomDoc - usableBottom);
+      // 留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动，尽头被键盘挡住看不到黑影
       const body = document.getElementById('scBody');
       if (!body) return;
       const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
