@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.15', d: '10-20', items: [
+    '目标缺口/盈余改成硬指标：你填多少就是多少，消耗再变它也不动',
+    '每日可吃始终 = 当天消耗 − 你填的缺口，不再套用任何下限修正',
+  ]},
   { v: 'v2.14', d: '10-20', items: [
     '修：填了「目标缺口 -300」，隔一会儿却显示成 -378 —— 原因是同时存了旧的「每日可吃」，消耗一变两者就打架',
     '现在以「目标缺口/盈余」为准，每日可吃自动跟着算；同时保存时不再存多余的每日可吃',
@@ -161,7 +165,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.14';
+const APP_VERSION = 'v2.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

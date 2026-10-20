@@ -145,12 +145,12 @@ function targetsOf(p, exp) {
   };
   // 指定了缺口/盈余时，每日可吃必须跟着它走（否则会出现「填 -300 却算出 -378」）
   const kcal_budget = hasDefOv
-    ? Math.max(800, Math.round(exp - want))
+    ? Math.max(0, Math.round(exp - want))       // 缺口是硬指标：可吃 = 消耗 − 缺口，不做任何下限修正
     : num(ov.kcal, Math.round(budgetAuto));
   const protein_g = num(ov.protein, proteinAuto);
   const fat_g = num(ov.fat, fatAuto);
   const carb_g = num(ov.carb, carbAuto);
-  const deficit = Math.round(exp - kcal_budget);
+  const deficit = hasDefOv ? Math.round(want) : Math.round(exp - kcal_budget);
 
   return {
     deficit,
