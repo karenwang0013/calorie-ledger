@@ -14,7 +14,7 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
-const PEN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 20h3.6L19 8.6a2.2 2.2 0 0 0-3.1-3.1L4.5 17z"/><path d="M14.2 7.2l2.6 2.6"/></svg>`;
+const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.2 3.4a2.7 2.7 0 0 1 3.8 3.8l-8.2 8.2-4.8 1 1-4.8 8.2-8.2Z"/><path d="M3.6 16.6 6.9 20l-3.9 1 1.1-3.6-.5-.8Z"/></svg>`;
 
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.52', d: '10-21', items: [
+    '试：齿轮（设置）和改名字的小铅笔换成实心款 —— 齿轮保留中间的孔，铅笔是实心笔身 + 笔尖；其他图标先不动',
+    '不满意就说一声，我一条命令退回 v3.51',
+  ]},
   { v: 'v3.51', d: '10-21', items: [
     '改：通知页重做 —— 分成「App 内提示」和「锁屏通知」两块，锁屏通知给三条现成做法：① 数据采到就通知（在你现有的「热量采集」快捷指令最后加一步）② 每晚 21:30 提醒补记 ③ 每周一早上提醒称体重',
     '加：每条做法下面都有「复制这段文字」按钮，粘到快捷指令里就能用',
@@ -748,7 +752,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.51';
+const APP_VERSION = 'v3.52';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
