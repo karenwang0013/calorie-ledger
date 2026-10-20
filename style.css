@@ -31,12 +31,7 @@ html { background: #0d0f0e; overflow-x: hidden; }
 body { background: #0d0f0e; }
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
-.statusbg {
-  position: fixed; top: 0; left: 0; right: 0;
-  height: min(max(10px, var(--safe-t)), 90px);
-  background: #0d0f0e;
-  z-index: 20; pointer-events: none;
-}
+.statusbg { display: none; }
 
 html, body {
   margin: 0;
@@ -172,7 +167,7 @@ select {
   align-items: center;
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
-  padding: min(calc(10px + var(--safe-t)), 88px) 18px 9px;
+  padding: min(calc(14px + var(--safe-t)), 88px) 18px 9px;
   background: #0d0f0e;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */

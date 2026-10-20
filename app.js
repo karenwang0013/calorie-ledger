@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.36', d: '10-20', items: [
+    '顶部磨砂：页面不再延伸到状态栏下面（去掉 viewport-fit=cover），状态栏整块交给系统用不透明黑绘制，系统没有内容可模糊',
+    '修：点最下面的「脂肪」时键盘把它挡住 —— 键盘每次改变可见高度，都会重新把当前输入框滚到可见位置',
+  ]},
   { v: 'v2.35', d: '10-20', items: [
     '修：点最下面的「脂肪」时，页面会跳回最上面、脂肪这一栏被键盘挡住 —— 原因是键盘弹起时我按系统偏移把整页往下推了一次，这个偏移并不可靠',
     '现在只按「这一栏是否被键盘挡住」来滚动，挡到才往上推，绝不回滚',
@@ -250,7 +254,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.35';
+const APP_VERSION = 'v2.36';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2327,10 +2331,26 @@ function init() {
     window.addEventListener('resize', () => {
       maxH = Math.max(maxH, window.innerHeight, vv ? vv.height : 0);
     });
+    const activeInput = () => {
+      const el = document.activeElement;
+      return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
+    };
+    const revealActive = () => {
+      const t = activeInput();
+      if (!t || !SC.el) return;
+      const vv2 = window.visualViewport;
+      const vH = vv2 ? vv2.height : window.innerHeight;
+      const r = t.getBoundingClientRect();
+      const topLimit = 96, bottomLimit = vH - 24;
+      if (r.bottom > bottomLimit) SC.el.scrollTop += r.bottom - bottomLimit;
+      else if (r.top < topLimit) SC.el.scrollTop -= (topLimit - r.top);
+    };
     const syncKB = () => {
       const h = vv ? vv.height : window.innerHeight;
       const kb = (maxH - h) > 120;
       document.documentElement.classList.toggle('kb', kb);
+      setTimeout(revealActive, 60);
+      setTimeout(revealActive, 260);
       // 关键：把外壳高度设成「当前可见高度」。
       // 否则键盘占掉下半屏时，iOS 会把整个可视区域往上推，标题栏就被推到屏幕外了
       // 不要给外壳加 transform：iOS 的 offsetTop 在键盘弹起时并不可靠，
