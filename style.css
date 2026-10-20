@@ -741,11 +741,12 @@ select {
 .drop.has-photo { padding: 8px 8px 4px; position: relative; }
 /* 照片右上角的删除按钮，压在图片里 */
 .shotdel {
-  position: absolute; top: 16px; right: 16px; z-index: 2;
-  width: 28px; height: 28px; border-radius: 50%;
-  background: rgba(0,0,0,.62); color: #fff;
-  font-size: 17px; line-height: 1;
+  position: absolute; top: 6px; right: 6px; z-index: 2;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(0,0,0,.55); color: #fff;
+  font-size: 15px; line-height: 1;
   display: grid; place-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
   backdrop-filter: blur(6px);
 }
 .preview {
