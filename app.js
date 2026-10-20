@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.18', d: '10-20', items: [
+    '切模式会同时给出建议的缺口/盈余：减脂 -300、维持 0、增肌 +250',
+    '应用后你仍然可以自己改，之后只有你改它才变',
+    '每日可吃的说明按缺口/盈余分别写成「− 缺口」「+ 盈余」，不再出现负数绕人',
+  ]},
   { v: 'v2.17', d: '10-20', items: [
     '新增三档目标模式：减脂（蛋白 2.0 g/kg，脂肪 25%）/ 维持（1.6，28%）/ 增肌（1.8，25%）',
     '选好模式后，蛋白质、脂肪、碳水按你的体重和当天消耗自动配比，不用自己算',
@@ -173,7 +178,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.17';
+const APP_VERSION = 'v2.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1172,10 +1177,11 @@ function lineChart(points, start, end) {
 
 /* ---------------- 主题 ---------------- */
 // 目标模式：只决定「蛋白质系数 + 脂肪占比」，不动用户设的缺口/盈余
+// 目标模式：蛋白质系数 + 脂肪占比 + 建议缺口（正=缺口，负=盈余）
 const DIET_MODES = {
-  cut:      { n: '减脂', p: 2.0, fat: 0.25, tip: '高蛋白保肌肉，碳水压缩' },
-  maintain: { n: '维持', p: 1.6, fat: 0.28, tip: '日常均衡' },
-  bulk:     { n: '增肌', p: 1.8, fat: 0.25, tip: '蛋白够用，多出的热量给碳水' },
+  cut:      { n: '减脂', p: 2.0, fat: 0.25, deficit: 300,  tip: '缺口 300 · 蛋白 2.0' },
+  maintain: { n: '维持', p: 1.6, fat: 0.28, deficit: 0,    tip: '不缺口 · 蛋白 1.6' },
+  bulk:     { n: '增肌', p: 1.8, fat: 0.25, deficit: -250, tip: '盈余 250 · 蛋白 1.8' },
 };
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
 // 每个主题的[主光色, 副光色]，背景光晕和点阵跟着变
@@ -1387,7 +1393,7 @@ function renderMe() {
               <b>${m.n}</b><i>${m.tip}</i>
             </button>`).join('')}
         </div>
-        <div class="hint" style="margin:10px 0 16px">换模式只改「蛋白质 / 脂肪 / 碳水」的配比，<b>不会动你设的缺口或盈余</b>。</div>
+        <div class="hint" style="margin:10px 0 16px">切模式会带一个<b>建议的缺口/盈余</b>（上面每档都写着），应用后你仍然可以自己改；之后只有你改它才变。</div>
         <div class="field">
           <label>目标缺口 / 盈余（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
@@ -1396,7 +1402,7 @@ function renderMe() {
         <div class="field">
           <label>每日可吃（千卡）</label>
           <input id="nKcal" type="number" inputmode="numeric" value="${d.targets.kcal_budget}">
-          <div class="hint">= 全天消耗 ${d.expenditure} − 目标缺口 ${d.targets.deficit}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
+          <div class="hint">= 全天消耗 ${d.expenditure} ${d.targets.deficit >= 0 ? '− 缺口 ' + Math.abs(d.targets.deficit) : '+ 盈余 ' + Math.abs(d.targets.deficit)}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
         </div>
         <div class="field">
           <label>蛋白质（g）</label>
@@ -1529,10 +1535,12 @@ function wireMe() {
     const cur = setting('diet_mode', 'maintain');
     if (cur === k) return;
     const ov = Object.assign({}, setting('target_override', {}));
-    delete ov.protein; delete ov.carb; delete ov.fat;   // 让预设生效，但保留缺口
+    delete ov.protein; delete ov.carb; delete ov.fat;
+    ov.deficit = m.deficit;                             // 模式同时给一个建议缺口/盈余
     await api('/api/settings', { diet_mode: k, fat_ratio: m.fat, target_override: ov });
     await api('/api/profile', { protein_per_kg: m.p });
-    toast(`已切到「${m.n}」：蛋白质 ${m.p} g/kg，脂肪 ${Math.round(m.fat * 100)}%`);
+    const dir = m.deficit > 0 ? `缺口 ${m.deficit}` : (m.deficit < 0 ? `盈余 ${-m.deficit}` : '不缺口不盈余');
+    toast(`已切到「${m.n}」：${dir}，蛋白质 ${m.p} g/kg`, 3200);
     await loadDay();
     renderMe();
   });
