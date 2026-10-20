@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.75', d: '10-20', items: [
+    '卡片位置固定：不论点哪一栏，卡片底边都停在"键盘上方固定的那个屏幕位置"，不再时高时低',
+    '设备不报键盘高度，改成按屏幕高度的固定比例估算（预留 47%），所以不会再压到键盘',
+  ]},
   { v: 'v2.74', d: '10-20', items: [
     '修：卡片反而更压在键盘上了 —— 这台设备上系统没有把"可视区域被键盘压小"这个值报给网页，我按错误的高度算，算出来的位置自然偏低',
     '现在：只有确实测到键盘压小了可视区域，我才自己定位；测不到就不动，交给 iOS 自己把输入框滚到键盘上方',
@@ -405,7 +409,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.74';
+const APP_VERSION = 'v2.75';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2512,28 +2516,27 @@ function init() {
     window.addEventListener('scroll', clamp, { passive: true });
 
     // 把整张卡片放到底边贴着键盘的位置
+    // 这台设备不把"键盘压小了可视区"报给网页，所以按固定比例估算键盘高度：
+    // 屏幕高度的 47% 留给键盘（含上方工具条），卡片底边永远停在它上面
+    const KB_RATIO = 0.47;
+
     const placeCard = (t) => {
       if (!t) return;
-      const vv2 = window.visualViewport;
-      // 只有"确实能测到键盘把可视区域压小了"时才自己动手；
-      // 测不到就完全交给 iOS 自己把输入框滚到键盘上方（别瞎猜，猜就是重叠）
-      const vh = vv2 ? vv2.height : window.innerHeight;
-      const shrunk = window.innerHeight - vh;
-      if (!vv2 || shrunk < 80) return;
-
-      const vBottom = vv2.offsetTop + vh;
-      const usableTop = 100;
-      const usableBottom = vBottom - 88;
       const card = t.closest('.card') || t;
-
-      const r0 = t.getBoundingClientRect();
-      const docCenter = r0.top + window.scrollY + r0.height / 2;
+      const usableBottom = Math.round(window.innerHeight * (1 - KB_RATIO));
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const target = Math.round(docCenter - (usableTop + usableBottom) / 2);
-      window.scrollTo(0, Math.max(0, Math.min(target, max)));
 
-      const cb = card.getBoundingClientRect().bottom;
-      if (cb > usableBottom) window.scrollBy(0, cb - usableBottom);
+      // ① 卡片底边固定在"键盘上方"这个屏幕位置（不论点哪一栏，位置都一样）
+      const cardBottomDoc = card.getBoundingClientRect().bottom + window.scrollY;
+      let target = Math.round(cardBottomDoc - usableBottom);
+
+      // ② 保证正在编辑的这一栏不会跑到顶栏里
+      const r0 = t.getBoundingClientRect();
+      const docTop = r0.top + window.scrollY;
+      const wantTop = 110;
+      if (docTop - target < wantTop) target = docTop - wantTop;
+
+      window.scrollTo(0, Math.max(0, Math.min(target, max)));
       kbMax = window.scrollY;
     };
 
