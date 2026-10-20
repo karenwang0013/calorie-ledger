@@ -920,6 +920,12 @@ html.kb .sc-body {
 .ritem .top { display: flex; align-items: baseline; gap: 8px; }
 .ritem .nm { font-size: 14px; font-weight: 550; flex: 1; min-width: 0; }
 .ritem .kc { font-size: 13px; color: var(--lime); font-variant-numeric: tabular-nums; flex: 0 0 auto; margin-left: 8px; }
+/* 每项右边的删除：固定占位，不再被长名字挤出去 */
+.ritem .del {
+  flex: 0 0 auto; width: 26px; height: 26px; margin-left: 6px; padding: 0;
+  display: grid; place-items: center;
+  color: var(--muted2); font-size: 17px; line-height: 1;
+}
 .ritem .meta { font-size: 10.5px; color: var(--muted2); margin-top: 5px; overflow-wrap: anywhere; }
 .ritem .gr {
   display: flex; align-items: center; gap: 8px; margin-top: 10px;

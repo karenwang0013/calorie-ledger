@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.38', d: '10-21', items: [
+    '加：识别结果里每一项右边都加回了 ×（固定大小，不会再被长名字挤到卡片外面），点一下就删掉这一项',
+    '改：把项目都删光以后，上面那两张照片也会跟着清掉，不会留一张没用上的图',
+  ]},
   { v: 'v3.37', d: '10-21', items: [
     '改：拍了两张（实物 + 营养成分表）时，照片摘要里**两张图都显示**，并排放在左边、下面各带一个小标签「食物」「营养表」，不再只显示一张、也不是两行',
     '只拍一张时照旧：显示「食物照片」或「营养成分表照片」',
@@ -693,7 +697,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.37';
+const APP_VERSION = 'v3.38';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1434,6 +1438,7 @@ function renderResult() {
         <div class="top">
           <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
           <span class="kc">${Math.round(kcal)}</span>
+          <button class="del" data-rm="${i}" aria-label="删掉这一项">×</button>
         </div>
         <div class="meta">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</div>
         <div class="gr">
@@ -1449,6 +1454,13 @@ function renderResult() {
   $('#addFoot').hidden = S.items.length === 0;
   $('#resultArea').hidden = S.items.length === 0;
 
+  // 删掉某一项；如果都删光了，上面那两张照片也跟着清掉
+  $$('[data-rm]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    S.items.splice(Number(b.dataset.rm), 1);
+    if (!S.items.length) resetPhotoUI();
+    renderResult();
+  });
   $$('[data-ren]', box).forEach(b => b.onclick = ev => {
     ev.stopPropagation();
     const it = S.items[Number(b.dataset.ren)];
