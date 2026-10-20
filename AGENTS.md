@@ -30,8 +30,9 @@
 2. `index.html`：所有 `?v=NNN` 同步 +1
 3. `app.js`：`APP_VERSION` 改成同一版本号（顶栏和关于页都读它）
 4. `version.txt`：写同一个版本号
-5. 提交身份：`KarenWang <karenwang0013@users.noreply.github.com>`
-6. 推送后等 30–60 秒，用 `curl https://karenwang0013.github.io/calorie-ledger/version.txt` 确认线上已更新
+5. **每次发版必须在 `app.js` 的 `RELEASES` 里加/更新当天条目**（关于页直接读它，用户靠这个确认更新内容）
+6. 提交身份：`KarenWang <karenwang0013@users.noreply.github.com>`
+7. 推送后等 30–60 秒，用 `curl https://karenwang0013.github.io/calorie-ledger/version.txt` 确认线上已更新
 
 不要引入构建工具、框架或 npm 依赖 —— 保持「静态文件直接能跑」。
 
