@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.49', d: '10-20', items: [
+    '修：点「脂肪」后，键盘上方那条黑边越来越大 —— 键盘弹起时外壳高度被系统压短，露出一条没有底纹的纯色区',
+    '外壳改用 100vh（键盘弹起时不变），并把同样的波点底纹铺到页面底层，即使有空隙也不会是一条黑边',
+  ]},
   { v: 'v2.48', d: '10-20', items: [
     '底部导航再矮一点点',
     '点「脂肪」等靠下的输入框时，不再把它顶到最上面，往下留出一段（原来距顶 150px，现在 230px）',
@@ -301,7 +305,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.48';
+const APP_VERSION = 'v2.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

@@ -29,7 +29,13 @@
 /* 横向溢出只在 html 上裁掉，body 保持可见，吸顶才有效 */
 /* 底色用内容区最底端的那个颜色，键盘弹起时下方空出来的那条也能接上 */
 html { background: #060907; overflow-x: hidden; }
-body { background: #060907; }
+body {
+  /* 与内容区同一套底纹：万一键盘上方留出空隙，也只会看到同样的波点，而不是一条黑边 */
+  background:
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 0 0 / 15px 15px,
+    radial-gradient(circle, rgba(var(--glow-rgb, 214,255,75),0.042) 1px, transparent 1.3px) 7.5px 7.5px / 15px 15px,
+    linear-gradient(180deg, #0a0f0c 0%, #080b09 55%, #060907 100%);
+}
 /* 顶部实色带：规避 iOS 主屏幕 App 状态栏的系统磨砂/模糊。
    层级放在顶栏之下（z-index 20 < 顶栏 30），只填状态栏那一条，不会遮挡按钮 */
 .statusbg {
@@ -115,7 +121,7 @@ select {
   width: 100%;
   max-width: none;
   margin: 0;
-  height: 100%;
+  height: 100vh;          /* 用 vh：键盘弹起时这个值不变，外壳不会被压短 */
   display: flex; flex-direction: column;
   overflow: hidden;
   background: #060907;
