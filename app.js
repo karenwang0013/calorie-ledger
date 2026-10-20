@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.05', d: '10-20', items: [
+    '修：键盘开着时还能往下拉出一大片空白 —— 现在内容末尾最多贴到键盘上沿（留 6 像素小缝），再往下拉不动；不管你用哪台手机都一样',
+    '改：按键盘上的打勾收起键盘时，卡片不再「啪」一下掉下来，而是跟着键盘一起平滑落回原位（0.3 秒）',
+    '改：键盘高度只记「停稳后」的真实高度，历史记错的值自动丢掉重新学，定位更稳',
+  ]},
   { v: 'v3.04', d: '10-20', items: [
     '新增：iPhone ↔ iPad 跨设备备份。在 iPhone 的「设置 → 数据备份」点「上传备份到云端」，到 iPad 点「从云端备份恢复」，就能把 iPhone 那份饮食、体重、照片和设置搬过来',
     '云端备份不含 AI Key 和 GitHub Token；在 iPad 上恢复不需要 Token，恢复后 iPad 自己的 Key 和 Token 不会被冲掉',
@@ -530,7 +535,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.04';
+const APP_VERSION = 'v3.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1742,7 +1747,7 @@ function renderMe() {
         <div class="cardhd"><h3>自动同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
           填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>。<br>
-          换设备时在那边填同一个 Token，打开就会自动恢复。
+          换设备时在那边填同一个 Token，点「开启同步」：会先读云端，云端较新就直接恢复，不会用这台设备的旧数据覆盖。
         </div>
         <div class="field">
           <label>GitHub Token</label>
@@ -2066,15 +2071,38 @@ function wireMe() {
   if (ghSave) ghSave.onclick = async () => {
     const v = (($('#fGhToken') || {}).value || '').trim();
     if (!v) return toast('先填 token');
-    setSetting('gh_token', v);
+    const first = !cloudToken();
+    // 先只在内存里放 Token：如果先写盘，Store.save 会把 updatedAt 刷成"现在"，
+    // 云端就会误判成本机更新，从而把 iPad 的空数据推上去。
+    Store.load().settings.gh_token = v;
     cloudSha = null;
-    setCloudState('正在上传…');
-    const ok = await busyBtn(ghSave, '上传中…', () => cloudPush());
-    if (ok) {
-      toast('✅ 同步已开启，数据已上传', 3000);
+    setCloudState('正在读取云端…');
+    const r = await busyBtn(ghSave, '读取中…', async () => {
+      // 第一次在这台设备填 Token：强制以云端为准（云端没有才上传本机）
+      const pull = await cloudPull(first);
+      if (pull === 'pulled') return 'pulled';
+      if (pull === true) return 'pushed';       // 云端还没有文件，cloudPull 里已经上传
+      if (pull === 'behind') {
+        if (first) return 'error';              // 理论上不会发生：force 已经拉过了
+        const ok = await cloudPush();           // 已开启过的设备，本机较新才上传
+        return ok ? 'pushed' : 'error';
+      }
+      return 'error';                            // 读不到云端就绝不推，避免覆盖
+    });
+    // 比较结束再落盘；这一步不再触发自动上传
+    setCloudTokenSilently(v);
+    if (r === 'pulled') {
+      applyTheme(Store.load().settings.theme || 'lime');
+      await loadDay();
+      renderMe();
+      const st = $('#cloudState');
+      if (st) st.textContent = '上次同步：' + (setting('cloud_synced_at', '') || '刚刚');
+      toast('✅ 已读取云端，数据是较新的那份', 3200);
+    } else if (r === 'pushed') {
       setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
+      toast(first ? '✅ 同步已开启，本机数据已上传' : '✅ 已上传本机数据', 3000);
     } else {
-      const err = (typeof cloudLastError === 'function' ? cloudLastError() : '') || '上传失败';
+      const err = (typeof cloudLastError === 'function' ? cloudLastError() : '') || '同步失败';
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
@@ -2121,6 +2149,7 @@ function wireMe() {
   const cb = $('#cloudBackup');
   if (cb) cb.onclick = async () => {
     if (!cloudToken()) return toast('先在下面的「自动同步」里填 GitHub Token', 4000);
+    if (!confirm('上传会用这台设备现在的数据，覆盖云端上一份备份。\n\n确定吗？')) return;
     try {
       const r = await busyBtn(cb, '上传中…', () => cloudBackupUpload());
       setBackupState('已上传：' + r.at);
@@ -2660,14 +2689,101 @@ function init() {
       return el && /^(INPUT|TEXTAREA)$/.test(el.tagName) ? el : null;
     };
 
-    // 越界回弹：滑出边界就停住（不含键盘态的任何东西，避免互相打架）
+    // 键盘没弹时的基础底部留白（收键盘时要把"键盘多出来的那截"还回去）
+    const basePad = (() => {
+      const p = parseFloat(getComputedStyle(SC.body).paddingBottom);
+      return isFinite(p) && p > 0 ? p : 118;
+    })();
+
+    // ── 键盘态：一套定位公式 + 一套收键盘动画 ────────────────────────────────────
+    // 定位：被点的输入框落在「顶栏下沿 ~ 键盘上沿」的正中间。
+    // 留白：正好等于「键盘盖住的高度 + 6px」→ 内容末尾最多贴到键盘上沿，滑不出一大片空白。
+    // 收键盘：把多出来的留白用 300ms 匀掉，卡片跟着键盘一起平滑落下（不再一下子掉下来）。
+    const KB_GAP = 6;
+    let kbH = parseFloat(localStorage.getItem('kb_h'));
+    // 只认"看着像键盘"的值：太小是动画中间态、太大是历史脏数据，都丢掉重新学
+    const saneKbH = (v) => isFinite(v) && v > window.innerHeight * 0.22 && v < window.innerHeight * 0.62;
+    if (!saneKbH(kbH)) kbH = Math.round(window.innerHeight * 0.49);
+    let fullH = window.innerHeight;   // 没有键盘时的可视高
+    let kbB = 0;                      // 键盘态：可见区域底边（屏幕坐标）
+    let kbSeen = false;               // 见过键盘真的弹起来
+    let kbHomeY = -1;                 // 弹键盘之前的滚动位置（收键盘时平滑落回这里）
+    let closeRaf = 0;                 // 收键盘动画句柄
+
+    const isKb = () => document.documentElement.classList.contains('kb');
+    const contentEndDoc = () => {
+      const pad = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
+      return SC.body.getBoundingClientRect().bottom + window.scrollY - pad;
+    };
+    const visibleBottom = () => {
+      const vv = window.visualViewport;
+      const v = vv ? Math.min(window.innerHeight, vv.height) : window.innerHeight - kbH;
+      return Math.round(v);
+    };
+    // 键盘态该留多少底：键盘"盖"在页面上（innerHeight 不变）→ 留键盘那么高；
+    // 键盘把页面整体顶矮（innerHeight 跟着缩）→ 内容底边本来就在键盘上方，只留一条小缝
+    const kbPad = () => {
+      if (window.innerHeight < fullH - 80) return KB_GAP;
+      const covered = window.innerHeight - visibleBottom();
+      const h = covered > 80 ? covered : kbH;
+      return Math.max(140, Math.round(Math.min(h, window.innerHeight * 0.62) + KB_GAP));
+    };
+    // 键盘态下面能滑到的最远处：内容末尾 = 可见底边 - 6px，多一像素都不给
+    const kbMaxY = () => (kbB ? Math.max(0, contentEndDoc() - kbB + KB_GAP) : Infinity);
+    const kbWantY = () => {
+      const tb = document.querySelector('.topbar');
+      const tbB = tb ? tb.getBoundingClientRect().bottom : 51;
+      const bottom = Math.max(tbB + 140, kbB || (window.innerHeight - kbH));
+      return tbB + (bottom - tbB) * 0.5;
+    };
+    const endKb = () => {
+      cancelAnimationFrame(closeRaf); closeRaf = 0;
+      document.documentElement.classList.remove('kb');
+      document.documentElement.style.removeProperty('--kb-pad');
+      kbB = 0; kbSeen = false; kbHomeY = -1;
+    };
+    const closeKb = () => {
+      if (!isKb() || closeRaf) return;
+      const y0 = window.scrollY;
+      const padKb = parseFloat(getComputedStyle(SC.body).paddingBottom) || 0;
+      const extra = Math.max(0, padKb - basePad);
+      const maxAfter = Math.max(0, contentEndDoc() + basePad - window.innerHeight);
+      // 优先落回"弹键盘之前的位置"（卡片原样落回去）；取不到就按留白差值退回去
+      const target = kbHomeY >= 0 ? kbHomeY : Math.max(0, y0 - extra);
+      const y1 = Math.max(0, Math.min(target, maxAfter));
+      if (Math.abs(y1 - y0) < 2) { endKb(); return; }
+      const t0 = performance.now(), dur = 340;
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / dur);
+        const e = 1 - Math.pow(1 - p, 3);
+        window.scrollTo(0, Math.round(y0 + (y1 - y0) * e));
+        if (p < 1) closeRaf = requestAnimationFrame(step);
+        else { closeRaf = 0; endKb(); }
+      };
+      closeRaf = requestAnimationFrame(step);
+    };
+    const kbFill = (t) => {
+      if (!t) return;
+      cancelAnimationFrame(closeRaf); closeRaf = 0;
+      if (!isKb()) kbHomeY = window.scrollY;      // 记下弹键盘前的位置
+      const r = t.getBoundingClientRect();
+      const centerDoc = r.top + window.scrollY + r.height / 2;
+      if (!(isKb() && kbSeen)) kbB = Math.round(window.innerHeight - kbH);   // 预测键盘弹起后的可见底边
+      document.documentElement.classList.add('kb');
+      document.documentElement.style.setProperty('--kb-pad', kbPad() + 'px');
+      const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), kbMaxY()));
+      if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
+    };
+
     // 越界回弹：每帧最多检查一次（rAF 合并），并且现场读取真实上限，绝不使用缓存值
+    // 键盘态额外卡一条：内容末尾不许滑到键盘上沿之上（这样不管什么机型都滑不出空白）
     let clampRaf = 0;
     const clamp = () => {
       if (clampRaf) return;
       clampRaf = requestAnimationFrame(() => {
         clampRaf = 0;
-        const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        let max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        if (isKb()) max = Math.min(max, kbMaxY());
         const y = window.scrollY;
         if (y < 0) window.scrollTo(0, 0);
         else if (y > max) window.scrollTo(0, max);
@@ -2675,52 +2791,35 @@ function init() {
     };
     window.addEventListener('scroll', clamp, { passive: true });
 
-    // 记住键盘高度（只用来定位，不参与任何滚动监听）
-    let kbH = parseFloat(localStorage.getItem('kb_h'));
-    if (!isFinite(kbH) || kbH < 200 || kbH > 600) kbH = 440;
-
-    // ── 键盘态定位：只有一套公式，重复调用结果相同，所以不会二次跳 ────────────────
-    // 目标：被点的输入框落在「顶栏下沿 ~ 键盘上沿」的正中间。
-    // 底部留白固定成「键盘高度 + 6px」：
-    //   · 页面最多只能滑到「内容末尾贴着键盘上沿」，再往下没有可滑空间 → 滑不出一大片空白；
-    //   · 这个留白也足够把最下面的输入框滚上来（页面再短也补得够）。
-    // 之前是"不管点哪一栏，都把卡片底边对到键盘上方"：点上面几栏时输入框会被顶出屏幕，
-    // 系统再自己去找位置，表现就是一上一下地乱跳。
-    const KB_GAP = 6;
-    const kbWantY = () => {
-      const tb = document.querySelector('.topbar');
-      const tbB = tb ? tb.getBoundingClientRect().bottom : 51;      // 顶栏下沿（fixed，视口坐标）
-      const kbTop = Math.max(tbB + 140, window.innerHeight - kbH);  // 键盘上沿
-      return tbB + (kbTop - tbB) * 0.5;                             // 可用区域的中间
-    };
-    const kbFill = (t) => {
-      if (!t) return;
-      const root = document.documentElement;
-      root.classList.add('kb');
-      root.style.setProperty('--kb-pad', Math.max(140, Math.round(kbH + KB_GAP)) + 'px');
-      const r = t.getBoundingClientRect();
-      const centerDoc = r.top + window.scrollY + r.height / 2;
-      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      // 靠下的输入框到不了正中间（那会把卡片底边抬进键盘里），就停在"卡片底边贴键盘"的位置
-      const y = Math.max(0, Math.min(Math.round(centerDoc - kbWantY()), max));
-      if (Math.abs(window.scrollY - y) >= 2) window.scrollTo(0, y);
-    };
-
-    // 键盘真的弹起来后校准一次高度（这台设备 vv.height 是准的：894 里键盘占 440）
+    // 键盘弹起/收起时校准：高度只认"停稳后"的值；收起时用动画把多出来的留白还回去
     if (window.visualViewport) {
-      let kbSettle = 0;
+      let settle = 0;
       window.visualViewport.addEventListener('resize', () => {
-        const h = window.innerHeight - window.visualViewport.height;
-        if (h < 200) return;                        // 键盘没弹 / 已收起
-        const changed = Math.abs(h - kbH) >= 10;
-        kbH = Math.round(h);
-        localStorage.setItem('kb_h', String(kbH));
-        if (!changed) return;
-        clearTimeout(kbSettle);                     // 键盘还在动，等它停稳再补一次
-        kbSettle = setTimeout(() => {
-          const t = activeInput();
-          if (t) kbFill(t);
-        }, 240);
+        const vb = visibleBottom();
+        if (!isKb()) {
+          if (!activeInput()) fullH = window.innerHeight;
+          return;
+        }
+        if (vb < fullH - 80) {                       // 键盘真的弹起来了
+          kbSeen = true;
+          clearTimeout(settle);
+          settle = setTimeout(() => {
+            const covered = window.innerHeight - vb > 80 ? window.innerHeight - vb : fullH - vb;
+            if (covered > 80 && saneKbH(covered)) {  // 只记"停稳后"的真实键盘高，动画中间态不记
+              kbH = Math.round(covered);
+              localStorage.setItem('kb_h', String(kbH));
+            }
+            kbB = visibleBottom();
+            const t = activeInput();
+            if (!t) return;
+            document.documentElement.style.setProperty('--kb-pad', kbPad() + 'px');
+            const r = t.getBoundingClientRect();
+            if (Math.abs(r.top + r.height / 2 - kbWantY()) > 40) kbFill(t);   // 偏了才补，避免二次跳
+          }, 240);
+        } else if (kbSeen) {                          // 键盘收起了 → 卡片平滑落下
+          fullH = window.innerHeight;
+          closeKb();
+        }
       });
     }
 
@@ -2758,8 +2857,8 @@ function init() {
     document.addEventListener('focusout', () => {
       setTimeout(() => {
         if (activeInput()) return;
-        document.documentElement.classList.remove('kb');
-        document.documentElement.style.removeProperty('--kb-pad');
+        if (isKb()) closeKb();     // 收键盘走动画（等 700ms 是防"点了别的输入框却瞬时失焦"）
+        else endKb();
       }, 700);
     });
   };
