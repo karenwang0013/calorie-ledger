@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.77', d: '10-20', items: [
+    '关键修正：这台设备从不告诉网页"键盘压小了可视区"，所以我之前那套键盘态（预留空间、定位）根本没生效，卡片自然一直被压',
+    '现在改成"有输入框在编辑就当作键盘弹起"，底部预留空间也跟着生效（120% 屏高，够把卡片推到任意位置）',
+  ]},
   { v: 'v2.76', d: '10-20', items: [
     '先把键盘预留量提高到屏幕高度的 60%，确保卡片绝不压到键盘；如果位置显得太靠上，再按步长往下调',
     '聚焦输入框时，屏幕左上角会显示一行小字（innerH / clientH / vvH），方便一次看出键盘到底占了多高',
@@ -413,7 +417,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.76';
+const APP_VERSION = 'v2.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2583,7 +2587,20 @@ function init() {
     SC.el.addEventListener('focusin', e => {
       const t = e.target;
       if (!t || !/^(INPUT|TEXTAREA)$/.test(t.tagName)) return;
+      // 用"是否有输入框在编辑"来判定键盘态，比读系统高度可靠
+      document.documentElement.classList.add('kb');
+      kbOn = true;
       [0, 150, 400, 800, 1200].forEach(ms => setTimeout(() => placeCard(t), ms));
+    });
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        const el = document.activeElement;
+        if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+        kbOn = false; kbMax = Infinity;
+        document.documentElement.classList.remove('kb');
+        const d = document.getElementById('kbDbg');
+        if (d) d.remove();
+      }, 220);
     });
   };
 
