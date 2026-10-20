@@ -14,6 +14,11 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.48', d: '10-20', items: [
+    '底部导航再矮一点点',
+    '点「脂肪」等靠下的输入框时，不再把它顶到最上面，往下留出一段（原来距顶 150px，现在 230px）',
+    '去掉左右两侧的黑边：整个 App 铺满屏幕宽度，两侧直接是绿色波点底纹',
+  ]},
   { v: 'v2.47', d: '10-20', items: [
     '底部中间的加号按钮再加大一点（76×50 → 84×55，加号字号 30 → 34）',
   ]},
@@ -296,7 +301,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.47';
+const APP_VERSION = 'v2.48';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2417,7 +2422,7 @@ function init() {
         const bottomLimit = vH - 24;
         // 只要下半部分被键盘压住，就把这一栏推到顶栏下方约 150px 的位置
         if (r.bottom > bottomLimit || r.top < 90) {
-          SC.el.scrollTop += r.top - 150;
+          SC.el.scrollTop += r.top - 230;
         }
       };
       // 键盘弹起有动画，位置要连续校正几次
