@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.80', d: '10-20', items: [
+    '卡片位置改用系统给的真实可视高度来算（实测这台设备的值是准的：894 里键盘占到 454），误差为 0；量不到时才用比例兜底',
+    '去掉界面上的绿色调试读数和小调节条（值已经记住，不再需要）',
+  ]},
   { v: 'v2.79', d: '10-20', items: [
     '卡片高度默认改到中间值（50%），并且加了一个小调节条：右上角 ▲▼ 每次 1%，你在键盘弹起的状态下自己调到刚好，调完自动记住',
     '这样以你这台设备为准，不用再靠我猜',
@@ -425,7 +429,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.79';
+const APP_VERSION = 'v2.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2552,7 +2556,12 @@ function init() {
     const placeCard = (t) => {
       if (!t) return;
       const card = t.closest('.card') || t;
-      const usableBottom = Math.round(window.innerHeight * (1 - KB_RATIO));
+      const vv3 = window.visualViewport;
+      const shrunk = vv3 ? (window.innerHeight - vv3.height) : 0;
+      // 能测到键盘把可视区压小了 → 用真实值，误差为 0；测不到才退回比例估算
+      const usableBottom = (vv3 && shrunk >= 100)
+        ? Math.round(vv3.offsetTop + vv3.height - 8)
+        : Math.round(window.innerHeight * (1 - KB_RATIO));
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
 
       // ① 卡片底边固定在"键盘上方"这个屏幕位置（不论点哪一栏，位置都一样）
@@ -2568,33 +2577,7 @@ function init() {
       window.scrollTo(0, Math.max(0, Math.min(target, max)));
       kbMax = window.scrollY;
 
-      // 微调条：▲▼ 调卡片高度，调完自动记住
-      let bar = document.getElementById('kbTune');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'kbTune';
-        bar.style.cssText = 'position:fixed;right:10px;top:8px;z-index:9999;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.78);color:#d6ff4b;border:1px solid rgba(214,255,75,.45);border-radius:999px;padding:5px 8px;font:13px/1 -apple-system,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.5)';
-        bar.innerHTML = '<button id="kbUp" style="all:unset;padding:2px 7px;color:#d6ff4b;font-size:15px">▲</button>' +
-                        '<span id="kbRatioLab" style="min-width:34px;text-align:center;font-size:12px;opacity:.85"></span>' +
-                        '<button id="kbDown" style="all:unset;padding:2px 7px;color:#d6ff4b;font-size:15px">▼</button>';
-        document.body.appendChild(bar);
-        bar.querySelector('#kbUp').onclick = () => setKbRatio(KB_RATIO + 0.01);
-        bar.querySelector('#kbDown').onclick = () => setKbRatio(KB_RATIO - 0.01);
-      }
-      const lab0 = document.getElementById('kbRatioLab');
-      if (lab0) lab0.textContent = KB_RATIO.toFixed(2);
 
-      // 临时读数：帮助我们看清键盘到底占了多高（收起键盘自动消失）
-      let dbg = document.getElementById('kbDbg');
-      if (!dbg) {
-        dbg = document.createElement('div');
-        dbg.id = 'kbDbg';
-        dbg.style.cssText = 'position:fixed;left:8px;top:6px;z-index:9999;background:rgba(0,0,0,.75);color:#7dff8a;font:11px/1.4 ui-monospace,Menlo,monospace;padding:4px 7px;border-radius:8px;pointer-events:none';
-        document.body.appendChild(dbg);
-      }
-      dbg.textContent = 'innerH ' + window.innerHeight + ' / clientH ' + document.documentElement.clientHeight +
-        ' / vvH ' + (window.visualViewport ? Math.round(window.visualViewport.height) : '-') +
-        ' / 底边 ' + (window.scrollY + window.innerHeight - Math.round(window.innerHeight * (1 - KB_RATIO)));
     };
 
     const syncKB = () => {
