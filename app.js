@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.96', d: '10-20', items: [
+    '修：键盘弹起后能往下拉出一大片空白 —— 之前底部固定预留了 120% 屏高',
+    '现在留白由脚本收紧到"刚好够这一栏居中 + 24px 余量"，往下只能再拉一点点',
+  ]},
   { v: 'v2.95', d: '10-20', items: [
     '紧急修复：v2.94 用了"缓存的页面高度上限"，而这个值在页面还没渲染完时就算好了，导致一滑就被拉回，像果冻一样滑不动',
     '改成每帧最多检查一次、并且现场读取真实上限（不再用缓存）',
@@ -490,7 +494,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.95';
+const APP_VERSION = 'v2.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2601,6 +2605,21 @@ function init() {
       return Math.max(0, Math.min(Math.round(inputCenterDoc - centerScreen), max));
     };
 
+    // 定位到居中后，把底部留白收紧到"刚好够"（+24px 余量）：往下只能再拉一点点
+    const placeAndTrim = (t) => {
+      const root = document.documentElement;
+      root.classList.add('kb');
+      root.style.setProperty('--kb-pad', '120vh');
+      void document.body.offsetHeight;
+      window.scrollTo(0, centerFor(t, kbH));
+      const body = document.getElementById('scBody');
+      if (!body) return;
+      const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+      const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
+      const need = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd) + 24);
+      root.style.setProperty('--kb-pad', need + 'px');
+    };
+
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
     let tX = 0, tY = 0, tT = 0, tEl = null;
     SC.el.addEventListener('touchstart', e => {
@@ -2614,9 +2633,7 @@ function init() {
       const moved = Math.abs(c.clientY - tY) + Math.abs(c.clientX - tX);
       const dur = Date.now() - tT;
       if (moved < 8 && dur < 400) {
-        document.documentElement.classList.add('kb');
-        void document.body.offsetHeight;
-        window.scrollTo(0, centerFor(tEl, kbH));
+        placeAndTrim(tEl);
       }
       tEl = null;
     }, { passive: true });
@@ -2629,7 +2646,7 @@ function init() {
       setTimeout(() => {
         if (activeInput() !== t) return;
         const want = centerFor(t, kbH);
-        if (Math.abs(window.scrollY - want) > 16) window.scrollTo(0, want);
+        if (Math.abs(window.scrollY - want) > 16) placeAndTrim(t);
       }, 350);
     });
 

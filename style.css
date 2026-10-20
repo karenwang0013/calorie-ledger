@@ -154,8 +154,8 @@ select {
 html.kb { touch-action: pan-down; overscroll-behavior: none; }
 
 html.kb .sc-body {
-  /* 留白够用即可：太长会让惯性滑动拖得很远、还容易被弹回 */
-  padding-bottom: 120vh;
+  /* 由脚本算到"刚好够居中 + 一点点余量"，不再是一大块空白 */
+  padding-bottom: var(--kb-pad, 40vh);
 }
 
 /* ---------- 顶栏 ---------- */
