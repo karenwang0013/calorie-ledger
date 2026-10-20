@@ -53,7 +53,7 @@ const RELEASES = [
 ];
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v1.90';
+const APP_VERSION = 'v1.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -211,7 +211,8 @@ function renderToday() {
   const hero = $('#hero');
   hero.classList.remove('surplus', 'over');
 
-  let sub = `目标缺口 ${t.deficit}`;
+  const goalDef = Math.round(t.deficit);   // 正=缺口，负=盈余
+  let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
   if (bal < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
