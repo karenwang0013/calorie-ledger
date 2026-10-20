@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v2.33', d: '10-20', items: [
+    '顶部模糊：状态栏声明改为不透明黑色，页面配色（theme-color / manifest / 顶栏）统一成同一个色值',
+    '打开 App 时主动重绘一次顶栏，把系统启动时临时压上去的半透明底立刻清掉，不用再等它自己消失',
+  ]},
   { v: 'v2.32', d: '10-20', items: [
     '去掉顶部那条独立的实色带：它浮在最上层，把顶栏按钮的上沿切掉了一块（这就是"遮挡"和那层模糊感的来源）',
     '状态栏区域改由顶栏自身背景铺满，从屏幕最顶一直到标题下沿是一整块实色',
@@ -237,7 +241,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.32';
+const APP_VERSION = 'v2.33';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2414,6 +2418,20 @@ function init() {
     const tb = document.querySelector('.topbar');
     if (tb) document.documentElement.style.setProperty('--topbar-h', Math.round(tb.getBoundingClientRect().height) + 'px');
   };
+  // 启动时把顶栏重绘一次：iOS 主屏幕 App 刚打开时会在状态栏区域压一层半透明底，
+  // 重新合成这一层可以让它立刻消失，而不是要等一会儿
+  const clearScrim = () => {
+    const tb = document.querySelector('.topbar');
+    if (!tb) return;
+    tb.style.transform = 'translateZ(0)';
+    requestAnimationFrame(() => requestAnimationFrame(() => { tb.style.transform = ''; }));
+  };
+  setTimeout(clearScrim, 60);
+  setTimeout(clearScrim, 600);
+  setTimeout(clearScrim, 1600);
+  window.addEventListener('pageshow', () => setTimeout(clearScrim, 80));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(clearScrim, 80); });
+
   const bt = $('#brandTag');
   if (bt) bt.textContent = APP_VERSION;
   syncTopH();
