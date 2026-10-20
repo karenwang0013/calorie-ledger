@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.18', d: '10-21', items: [
+    '改：Dock 变扁一点（手机 88、iPad 96），不再那么高',
+    '改：圆角上限收到「高度的 36%」——两端留出一小段直边，iPhone 17 上约 32；iPad 仍按它自己的屏幕圆角算',
+    '改：Dock 更好看一点 —— 底色改成上亮下暗的渐变、顶边一道细高光、投影分两层；当前所在的标签（今日/趋势）多一块淡淡的底色',
+  ]},
   { v: 'v3.17', d: '10-21', items: [
     '改：Dock 的圆角改成「按这台设备自己的屏幕圆角来算」—— 屏幕圆角半径减去 Dock 离屏幕边的距离，再受 Dock 高度限制（最多到高度的一半）。iPhone 17 上会取到接近半圆的圆角，和屏幕那圈弧最接近；iPad 屏幕圆角更紧，取到的值相应小',
     '改：Dock 高度固定下来（手机 100、iPad 112），三个按钮依旧上下居中',
@@ -608,7 +613,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.17';
+const APP_VERSION = 'v3.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3131,8 +3136,9 @@ function init() {
     if (pad) sr = 24;
     else for (const [ww, r] of SCREEN_R) { if (w >= ww) sr = r; }
     const inset = pad ? 10 : 6;
-    const h = pad ? 112 : 100;
-    const r = Math.max(12, Math.min(sr - inset, h / 2));   // 不超过 Dock 高度的一半
+    const h = pad ? 96 : 88;
+    // 最多到高度的 36%：再大两端就变成半圆了，看着不再是"圆角矩形"
+    const r = Math.max(14, Math.min(sr - inset, h * 0.36));
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };
 

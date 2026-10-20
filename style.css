@@ -21,7 +21,7 @@
   --dock-inset: 6px;       /* 左右离屏幕边（拉宽） */
   --dock-bottom: 22px;     /* 下边离屏幕底（抬高一点，四周留白更明显） */
   /* Dock 高度（固定，圆角上限要看它） */
-  --dock-h: 100px;
+  --dock-h: 88px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
   --dock-r: 44px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
@@ -564,18 +564,23 @@ html.kb .sc-body {
   height: var(--dock-h);
   padding: 0 12px;
   pointer-events: auto;
-  background: #101315;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  /* 圆角最多到高度的一半：这样四个角和屏幕的圆角最接近 */
-  border-radius: min(var(--dock-r), calc(var(--dock-h) / 2));
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.62), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  background: linear-gradient(180deg, #15191c 0%, #0d1012 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--dock-r);
+  /* 浮起来的那一层：底部投影 + 顶边一道细高光，比纯色块更有厚度 */
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .tab {
   justify-self: center;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   color: var(--muted2); font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px;
-  padding: 5px 0;
+  padding: 6px 16px; border-radius: 16px;
+  transition: background .18s ease, color .18s ease;
 }
+.tab.on { background: rgba(214, 255, 75, 0.09); }
 .tab svg { width: 29px; height: 29px; stroke: currentColor; fill: none; stroke-width: 2.9; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--text); }
 .tab.on svg { stroke: var(--lime); }
@@ -1119,7 +1124,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   :root {
     --dock-inset: 10px;
     --dock-bottom: 26px;
-    --dock-h: 112px;
+    --dock-h: 96px;
     --dock-r: 16px;
   }
   /* 顶栏两端与内容列对齐 */
