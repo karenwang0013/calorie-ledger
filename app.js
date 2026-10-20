@@ -14,6 +14,10 @@ const MEALS = [
 const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 
 const RELEASES = [
+  { v: 'v3.00', d: '10-20', items: [
+    '修：卡片离键盘空出很大一截 —— 之前"收紧留白"那一步如果没算好，会留下 120% 屏高的空白',
+    '现在改成：先把卡片底边对齐到键盘上沿（滚两次消除误差），再把留白收紧到屏幕底边；任何一步出错都有兜底值',
+  ]},
   { v: 'v2.99', d: '10-20', items: [
     '修：越往下点，卡片底部离键盘越远、还能下拉一大截 —— 之前按"输入框居中"定位，字段越靠下，卡片就飘得越高',
     '改成统一按"卡片底边贴着键盘上沿"对齐，不管点哪一栏，卡片都刚好在键盘上方，且下方没有多余可滑空间',
@@ -506,7 +510,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v2.99';
+const APP_VERSION = 'v3.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2621,20 +2625,33 @@ function init() {
     const placeAndTrim = (t) => {
       const root = document.documentElement;
       root.classList.add('kb');
-      root.style.setProperty('--kb-pad', '120vh');
-      void document.body.offsetHeight;
-      // 统一按"卡片底边贴着键盘上沿"来对齐（不论点哪一栏，卡片都刚好在键盘上方）
-      const card = t.closest('.card') || t;
-      const usableBottom = window.innerHeight - kbH - 12;
-      const cardBottomDoc = card.getBoundingClientRect().bottom + window.scrollY;
-      window.scrollTo(0, cardBottomDoc - usableBottom);
-      // 留白精确到"页面尽头正好在屏幕底边"：往下一点都滑不动，尽头被键盘挡住看不到黑影
-      const body = document.getElementById('scBody');
-      if (!body) return;
-      const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
-      const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
-      const need = Math.max(0, Math.round(window.scrollY + window.innerHeight - contentEnd));
-      root.style.setProperty('--kb-pad', need + 'px');
+      try {
+        // ① 先给足下方空间，保证能滚到位
+        root.style.setProperty('--kb-pad', '60vh');
+        void document.body.offsetHeight;
+
+        // ② 把卡片底边对到键盘上沿上方 12px（按屏幕坐标算，滚两次以消除夹取误差）
+        const card = t.closest('.card') || t;
+        const want = window.innerHeight - kbH - 12;
+        for (let i = 0; i < 2; i++) {
+          const d = card.getBoundingClientRect().bottom - want;
+          if (Math.abs(d) < 2) break;
+          window.scrollBy(0, d);
+        }
+
+        // ③ 收紧留白：页面尽头正好在屏幕底边（下方没多余空间、也看不到黑影）
+        const body = document.getElementById('scBody');
+        if (body) {
+          const padNow = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+          const contentEnd = body.getBoundingClientRect().bottom + window.scrollY - padNow;
+          let need = Math.round(window.scrollY + window.innerHeight - contentEnd);
+          if (!isFinite(need) || need < 0) need = 0;
+          if (need > window.innerHeight * 1.2) need = Math.round(window.innerHeight * 0.6); // 兜底
+          root.style.setProperty('--kb-pad', need + 'px');
+        }
+      } catch (e) {
+        root.style.setProperty('--kb-pad', Math.round(kbH + 40) + 'px');
+      }
     };
 
     // 只在"真点"时预先定位（手指滑过输入框不算），键盘弹起前就位 → 之后系统无位移可做
