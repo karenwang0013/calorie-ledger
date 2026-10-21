@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.97', d: '10-21', items: [
+    '修：体脂数据兼容「一次返回多条样本」（取最新一条）和「日期为空」（用今天兜底）—— 快捷指令现在读回来是 66\n65.9 这种也能正确显示',
+  ]},
   { v: 'v3.96', d: '10-21', items: [
     '加：同步区多了「用本机覆盖云端」—— 哪台设备的记录是完整的，就在那台上点它，把云端刷成这台的样子',
   ]},
@@ -904,7 +907,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.96';
+const APP_VERSION = 'v3.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3143,20 +3146,26 @@ async function pullBodyJson() {
     const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return false;
     const j = await r.json();
-    if (!j || !j.d) return null;
-    const date = String(j.d).slice(0, 10);
-    const w = Number(j.w) || 0, bf = Number(j.bf) || 0;
-    if (!w && !bf && !Number(j.bmi) && !Number(j.ffm)) return null;
+    if (!j) return null;
+    // 快捷指令可能一次返回多条样本（"66\n65.9"），取最后一条（最新）
+    const pick = v => {
+      const lines = String(v == null ? '' : v).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      return lines.length ? Number(lines[lines.length - 1]) || 0 : 0;
+    };
+    const w = pick(j.w), bf = pick(j.bf), jbmi = pick(j.bmi), jffm = pick(j.ffm);
+    // 日期可能为空（快捷指令的日期步骤没取到），那就用今天
+    const date = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [todayISO()])[0];
+    if (!w && !bf && !jbmi && !jffm) return null;
     const d = Store.load();
     const cur = (d.body && d.body[date]) || {};
     if (d.weights[date] === w && cur.bf === bf) return j;
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
-    let bmi = Number(j.bmi) || cur.bmi || null;
+    let bmi = jbmi || cur.bmi || null;
     if (!bmi && w) {
       const h = Number(d.profile.height_cm) || 0;
       if (h > 0) bmi = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
     }
-    const ffm = Number(j.ffm) || cur.ffm || null;   // 去脂体重（秤上给的）
+    const ffm = jffm || cur.ffm || null;   // 去脂体重（秤上给的）
     d.body = d.body || {};
     d.body[date] = { bf: bf || cur.bf || null, bmi, ffm };
     Store.save({ silent: true });   // 不参与「谁更新」判定，避免两台设备互相盖掉记录
