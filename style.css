@@ -361,9 +361,21 @@ html.kb .sc-body {
 }
 
 /* 提醒记录 */
-/* 提醒记录：卡片列表 */
-#nlogSheet { max-height: 84vh; }
-#nlogList { max-height: 62vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 2px 0 4px; }
+/* 提醒记录：悬浮卡片式弹层 */
+#nlogSheet {
+  left: 12px; right: 12px;
+  bottom: calc(14px + var(--safe-b));
+  max-width: 460px;
+  min-height: 0;
+  max-height: 70dvh;
+  border-radius: var(--dock-r, 26px);
+  background: var(--bg2);
+}
+#nlogSheet .sh-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom) / 2); }
+#nlogList {
+  max-height: 54dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 2px 0 4px; display: flex; flex-direction: column; flex: 1 1 auto;
+}
 .ncard {
   background: var(--card); border: 1px solid var(--line);
   border-radius: 16px; padding: 13px 14px; margin-bottom: 10px;
@@ -378,7 +390,10 @@ html.kb .sc-body {
 }
 .ncard .nb { font-size: 12.5px; color: var(--muted2); margin-top: 5px; line-height: 1.5; }
 .ncard.nempty {
-  text-align: center; color: var(--muted); font-size: 13.5px; padding: 26px 16px; line-height: 1.7;
+  background: none; border: 0; margin: 0; padding: 0;
+  flex: 1 1 auto; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 7px;
+  text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.6;
 }
 .ncard.nempty span { font-size: 11.5px; color: var(--muted2); }
 
