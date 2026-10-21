@@ -379,24 +379,17 @@ html.kb .sc-body {
   overflow: hidden;
   box-shadow: 0 24px 56px rgba(0,0,0,.55);
 }
-/* 左上/右上两个小圆，和圆角呼应（圆心落在圆角弧心上） */
+/* 左上/右上两个圆：更大、更贴角（圆心就在圆角弧心上，几乎贴着边） */
 #nlogSheet::before, #nlogSheet::after {
   content: ""; position: absolute; pointer-events: none;
-  width: calc(var(--dock-r, 28px) * 1.02);
-  height: calc(var(--dock-r, 28px) * 1.02);
+  width: calc(var(--dock-r, 28px) * 1.62);
+  height: calc(var(--dock-r, 28px) * 1.62);
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.07);
-  top: calc(var(--dock-r, 28px) * 0.49);
+  border: 1px solid rgba(255,255,255,.10);
+  top: calc(var(--dock-r, 28px) * 0.19);
 }
-#nlogSheet::before {
-  /* 左边那个稍大一点，圆心仍在圆角弧心上，和右上角呼应 */
-  left: calc(var(--dock-r, 28px) * 0.39);
-  top: calc(var(--dock-r, 28px) * 0.39);
-  width: calc(var(--dock-r, 28px) * 1.22);
-  height: calc(var(--dock-r, 28px) * 1.22);
-  border-color: rgba(255,255,255,.085);
-}
-#nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.49); }
+#nlogSheet::before { left: calc(var(--dock-r, 28px) * 0.19); }
+#nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.19); }
 
 #nlogSheet .sh-foot {
   background: transparent;
