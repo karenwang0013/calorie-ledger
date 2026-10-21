@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.49', d: '10-22', items: [
+    '改：同步失败的错误信息翻译成人话 —— 「Load failed」→「连不上 GitHub（网络问题）· 30 秒后自动重试」；401 → Token 失效；403 → 权限/频率；404 → 云端文件不存在',
+  ]},
   { v: 'v4.48', d: '10-22', items: [
     '修：没称重却被记成「今天」—— 当快捷指令没带日期、且数值和最近一次完全一样时，不再新增日期（最近一次仍显示上次称重那天）',
   ]},
@@ -1099,7 +1102,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.48';
+const APP_VERSION = 'v4.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2457,9 +2460,23 @@ function logNotify(kind, title, body, ok = true) {
   Store.save({ silent: true });
   return true;
 }
+/* 把浏览器的英文报错翻译成人话 */
+function friendlyErr(m) {
+  const t = String(m || '');
+  if (/Load failed|Failed to fetch|NetworkError|offline|The Internet connection appears to be offline/i.test(t)) {
+    return '连不上 GitHub（网络问题）· 30 秒后会自动重试';
+  }
+  if (/401|Bad credentials|Requires authentication/i.test(t)) return 'Token 失效了 · 去 设置 → 数据同步 重新填一次';
+  if (/403/.test(t)) return 'GitHub 拒绝访问 · 可能是 token 权限不够或频率限制';
+  if (/404/.test(t)) return '云端文件不存在 · 可能被删了';
+  if (/AbortError|timeout|超时/i.test(t)) return 'GitHub 响应超时 · 网络太慢';
+  if (/409|422/.test(t)) return '云端冲突 · 稍后会自动重试';
+  return t || '未知错误';
+}
+
 /* 任何同步/读取错误都记一条（红色 ✗），不受「App 内提醒」开关影响 */
 function logError(kind, title, body) {
-  return logNotify(kind, title, body, false);
+  return logNotify(kind, title, friendlyErr(body), false);
 }
 
 function renderNotifyDot() {
