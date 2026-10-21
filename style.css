@@ -415,7 +415,7 @@ body.nlog-open .sheet-mask.on {
   padding: 14px 0 4px;
   min-height: 0;
 }
-#nlogSheet.title-center .sh-hd h2 { text-align: center; }
+#nlogSheet.title-center .sh-hd h2 { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: .3px; }
 
 /* 下滑关闭时不要有过渡延迟 */
 #nlogSheet.dragging { transition: none; }

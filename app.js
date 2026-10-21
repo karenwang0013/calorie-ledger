@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.43', d: '10-22', items: [
+    '改：提醒记录标题放大到 20px（居中后更好看）',
+  ]},
   { v: 'v4.42', d: '10-22', items: [
     '改：提醒记录去掉右上角 ×，「提醒记录」四个字改成居中，并对齐到顶部小横杠的高度',
     '加：界面开关 NLOG_UI（closeX / grab / titleCenter）—— 以后要恢复 × 或小横杠，改一个 true 就行',
@@ -1076,7 +1079,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.42';
+const APP_VERSION = 'v4.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
