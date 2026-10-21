@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.11', d: '10-21', items: [
+    '改：滑到底时卡片离 Dock 再近一点（留白 16px → 6px，iPad 20px → 8px）',
+  ]},
   { v: 'v4.10', d: '10-21', items: [
     '改：体重趋势右上角的日期，字色和字号跟「最近一次」右边的日期保持一致（12px / 加粗 / 88% 白）',
   ]},
@@ -957,7 +960,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.10';
+const APP_VERSION = 'v4.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
