@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.66', d: '10-22', items: [
+    '删：旧的 GitHub 同步通道彻底移除（不再拿 GitHub token 去请求 Gitee，避免 E03）',
+    '改：令牌只认「Gitee 私人令牌」一个字段；保存时会顺手清掉旧的 GitHub token',
+    '保留：Gitee 写入 + 离线排队自动补传',
+  ]},
   { v: 'v4.65', d: '10-22', items: [
     '改：错误文案不再写死 GitHub（现在云端是 Gitee），并在错误信息里带 @gitee 标记',
     '改：没填 Gitee 令牌时给出明确提示（E03 去设置里填），不再报含糊的网络错误',
@@ -1158,7 +1163,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.65';
+const APP_VERSION = 'v4.66';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2848,7 +2853,7 @@ function renderMe() {
         </div>
         <div class="field">
           <label>Gitee 私人令牌</label>
-          <input id="fGhToken" type="password" placeholder="${(setting('gitee_token') || setting('gh_token')) ? '已填写，需要更换再输入' : '4c25...'}" autocomplete="off">
+          <input id="fGhToken" type="password" placeholder="${setting('gitee_token') ? '已填写，需要更换再输入' : 'Gitee 私人令牌'}" autocomplete="off">
           <div class="hint">只勾 <b>projects</b> 权限即可（gitee.com → 设置 → 私人令牌）</div>
         </div>
         <div class="btnrow">
@@ -3349,7 +3354,8 @@ function wireMe() {
     const first = !cloudToken();
     // 先只在内存里放 Token：如果先写盘，Store.save 会把 updatedAt 刷成"现在"，
     // 云端就会误判成本机更新，从而把 iPad 的空数据推上去。
-    Store.load().settings.gh_token = v;
+    Store.load().settings.gitee_token = v;
+    delete Store.load().settings.gh_token;
     cloudSha = null;
     setCloudState('正在读取云端…');
     const r = await busyBtn(ghSave, '读取中…', async () => {
@@ -3385,6 +3391,7 @@ function wireMe() {
 
   const ghStop = $('#stopGh');
   if (ghStop) ghStop.onclick = () => {
+    setSetting('gitee_token', '');
     setSetting('gh_token', '');
     setSetting('cloud_seen', '');
     cloudSha = null;

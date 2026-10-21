@@ -701,7 +701,8 @@ let cloudErr = '', cloudFailUntil = 0;
 function cloudLastError() { return cloudErr; }
 
 function cloudToken() {
-  return (setting('gitee_token', '') || setting('gh_token', '') || '').trim();
+  // 只用 Gitee 令牌；旧的 GitHub token 不再参与同步（避免拿错令牌导致 E03）
+  return (setting('gitee_token', '') || '').trim();
 }
 /* 只把 Token 写进本机，不触发自动上传、不动 updatedAt。
    用于"开启同步"：先比较云端，再决定拉还是推。 */
