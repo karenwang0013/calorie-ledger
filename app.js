@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.87', d: '10-21', items: [
+    '加：「身体数据」页最下面多了「手动记一次」—— 体重 + 体脂率，填完一键保存，BMI 自动算。秤的数据自动同步不过来时，先用这个兜底',
+  ]},
   { v: 'v3.86', d: '10-21', items: [
     '改：打开 App 时不再固定拉三次体脂数据 —— 第一次拿到「今天」的数据就停，只有没拿到才补拉（最多两次，间隔 3 秒），启动更快',
   ]},
@@ -868,7 +871,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.86';
+const APP_VERSION = 'v3.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2515,6 +2518,21 @@ function renderMe() {
           <span style="margin-left:auto">${wtPts.length} 次</span></div>
       </div>` : ''}
       ${rows ? `<div class="card"><h3>历史记录</h3>${rows}</div>` : ''}
+      <div class="card">
+        <h3>手动记一次</h3>
+        <div class="split" style="margin-top:4px">
+          <div class="field">
+            <label>体重（kg）</label>
+            <input id="bdW" type="number" inputmode="decimal" step="0.1" placeholder="65.9">
+          </div>
+          <div class="field">
+            <label>体脂率（%）</label>
+            <input id="bdF" type="number" inputmode="decimal" step="0.1" placeholder="16.9">
+          </div>
+        </div>
+        <button class="btn primary" id="bdSave" style="margin-top:10px">保存到账本</button>
+        <div class="hint" style="margin-top:8px">秤上的数据自动同步不过来时，先在这里填一次；BMI 会按你的身高自动算。</div>
+      </div>
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
@@ -2682,6 +2700,19 @@ function wireMe() {
       ta.remove();
     }
   });
+
+  const bdSave = $('#bdSave');
+  if (bdSave) bdSave.onclick = async () => {
+    const kg = Number(($('#bdW') || {}).value);
+    const bf = Number(($('#bdF') || {}).value);
+    if (!kg && !bf) { toast('至少填一项'); return; }
+    try {
+      await api('/api/weight', { date: S.today, kg: kg || Store.load().weights[S.today] || Store.load().profile.weight_kg, bf, date2: S.today });
+      await loadDay();
+      renderMe();
+      toast('已保存', 2000);
+    } catch (e) { toast(e.message); }
+  };
 
   const spIn = $('#swInApp');
   if (spIn) spIn.onchange = () => {
