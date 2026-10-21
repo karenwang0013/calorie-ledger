@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.27', d: '10-21', items: [
+    '改：提醒记录卡片直接复用首页卡片的那套样式（同样的 --edge-gloss 玻璃描边），底色取玻璃卡片合成后的不透明色，所以不透、观感一致',
+  ]},
   { v: 'v4.26', d: '10-21', items: [
     '改：提醒记录卡片改成不透明实底（#15181b，跟首页卡片同色），不再像 Dock 那样透',
     '改：清空按钮再往上移一大截（底部留白 24px → 44px）',
@@ -1020,7 +1023,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.26';
+const APP_VERSION = 'v4.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
