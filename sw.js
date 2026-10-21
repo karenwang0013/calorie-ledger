@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v411';
+const CACHE = 'ledger-v412';
 const ASSETS = [
   './',
   './index.html',

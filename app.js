@@ -827,7 +827,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.73';
+const APP_VERSION = 'v3.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2013,6 +2013,7 @@ function notifyCfg() {
 const PUSH_WORKER_DEFAULT = 'https://ledger-push.karenwang228.workers.dev';   // 已部署好的推送服务
 let pushOn = false;                       // 是否真的订阅成功（真实状态）
 const pushWanted = () => setting('push_wanted', false) === true;   // 用户是否打开过这个开关
+let pushErr = '';                         // 最后一次失败原因（显示在页面上，也上报服务端）
 const pushSupported = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 const b64uToBytes = (b64) => {
   const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
@@ -2033,7 +2034,10 @@ async function refreshPushState() {
         if (cfg && cfg.publicKey) {
           sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
         }
-      } catch (e) { /* 订阅失败就维持关闭状态 */ }
+      } catch (e) {
+        pushErr = (e && (e.name ? e.name + ': ' : '') + (e.message || e)) || '订阅失败';
+        postPushDiag(pushErr);
+      }
     }
     pushOn = !!sub;
     // 已有订阅就顺手再登记一次（幂等）：万一服务端数据丢了 / 换了服务，打开 App 自己修好
@@ -2045,7 +2049,8 @@ async function refreshPushState() {
         fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
       }
     }
-  } catch (e) { pushOn = false; postPushDiag(String(e && e.message || e)); }
+  } catch (e) { pushOn = false; pushErr = String((e && e.message) || e); postPushDiag(pushErr); }
+  if (!pushErr) postPushDiag('');
 }
 
 // 把「权限 / 有没有订阅 / 报错」报给服务端，方便远程定位（不涉及任何私人数据）
@@ -2057,6 +2062,9 @@ function postPushDiag(err) {
       perm: (typeof Notification !== 'undefined') ? Notification.permission : 'none',
       sub: pushOn ? 1 : 0,
       standalone: window.navigator.standalone === true ? 1 : 0,
+      dm: (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ? 1 : 0,
+      ctrl: navigator.serviceWorker && navigator.serviceWorker.controller ? 1 : 0,
+      secure: window.isSecureContext ? 1 : 0,
       ua: /iPad/.test(navigator.userAgent) ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : 'other',
       err: err || '',
     };
@@ -2092,10 +2100,13 @@ async function enablePush() {
     if (!r.ok || !jr.ok) throw new Error(jr.error || '订阅没存上（服务端没收到）');
     setSetting('push_worker', url);
     pushOn = true;
+    pushErr = '';
     toast('锁屏通知已开启', 2600);
     return true;
   } catch (e) {
-    toast('开启失败：' + (e.message || e), 5200);
+    pushErr = (e && (e.name ? e.name + ': ' : '') + (e.message || e)) || '开启失败';
+    postPushDiag(pushErr);
+    toast('开启失败：' + pushErr, 5200);
     return false;
   }
 }
@@ -2156,6 +2167,7 @@ function pushNote() {
   const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unknown';
   const permTxt = perm === 'granted' ? '已允许' : perm === 'denied' ? '被拒绝' : '还没允许';
   if (pushOn) return `已订阅 · 通知权限${permTxt} · 锁屏、App 关闭时也能收到`;
+  if (pushWanted() && pushErr) return `已打开，但没登记上：${pushErr}`;
   if (pushWanted()) return `已打开，正在登记…（通知权限：${permTxt}）下次打开 App 会自动重试`;
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
