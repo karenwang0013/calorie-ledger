@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.86', d: '10-21', items: [
+    '改：打开 App 时不再固定拉三次体脂数据 —— 第一次拿到「今天」的数据就停，只有没拿到才补拉（最多两次，间隔 3 秒），启动更快',
+  ]},
   { v: 'v3.85', d: '10-21', items: [
     '改：右上角「数据同步」现在一次拉两份 —— 手表的热量数据 + 体脂秤的体重/体脂率，不用分两次',
   ]},
@@ -865,7 +868,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.85';
+const APP_VERSION = 'v3.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3074,13 +3077,13 @@ async function pullBodyJson() {
     const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return false;
     const j = await r.json();
-    if (!j || !j.d) return false;
+    if (!j || !j.d) return null;
     const date = String(j.d).slice(0, 10);
     const w = Number(j.w) || 0, bf = Number(j.bf) || 0;
-    if (!w && !bf) return false;
+    if (!w && !bf) return null;
     const d = Store.load();
     const cur = (d.body && d.body[date]) || {};
-    if (d.weights[date] === w && cur.bf === bf) return false;
+    if (d.weights[date] === w && cur.bf === bf) return j;
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
     let bmi = cur.bmi || null;
     if (!bmi && w) {
@@ -3090,8 +3093,8 @@ async function pullBodyJson() {
     d.body = d.body || {};
     d.body[date] = { bf: bf || cur.bf || null, bmi, ffm: cur.ffm || null };
     Store.save();
-    return true;
-  } catch (e) { return false; }
+    return j;
+  } catch (e) { return null; }
 }
 
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
@@ -3878,14 +3881,20 @@ function init() {
   loadDay();
   // 打开 App 时先拉一次；如果「打开账本自动采集」的快捷指令正在后台写数据，
   // 再补拉两次，保证它写完之后能立刻显示出来
-  const grabBody = () => pullBodyJson().then(hit => {
-    if (!hit) return;
-    try { loadDay(); } catch (e) {}
-    toast('⚖️ 已同步体脂秤数据', 2400);
+  const grabBody = (retry) => pullBodyJson().then(j => {
+    if (j) {
+      try { loadDay(); } catch (e) {}
+      toast('⚖️ 已同步体脂秤数据', 2400);
+    }
+    // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
+    const today = new Date();
+    const p2 = n => String(n).padStart(2, '0');
+    const ds = today.getFullYear() + '-' + p2(today.getMonth() + 1) + '-' + p2(today.getDate());
+    if (retry > 0 && (!j || String(j.d || '').slice(0, 10) !== ds)) {
+      setTimeout(() => grabBody(retry - 1), 3000);
+    }
   });
-  grabBody();
-  setTimeout(grabBody, 2500);
-  setTimeout(grabBody, 7000);
+  grabBody(2);
   if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
