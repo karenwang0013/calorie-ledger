@@ -406,6 +406,17 @@ body.nlog-open .sheet-mask.on {
   font-size: 28px; line-height: 1; color: var(--muted);
 }
 #nlogSheet .sh-hd h2 { margin: 0; }
+/* 弹层界面开关（NLOG_UI 控制） */
+#nlogSheet.hide-x .sh-hd .x { display: none; }
+#nlogSheet.hide-grab .grab { display: none; }
+/* 标题居中，并对齐到顶部小横杠的高度 */
+#nlogSheet.title-center .sh-hd {
+  justify-content: center;
+  padding: 14px 0 4px;
+  min-height: 0;
+}
+#nlogSheet.title-center .sh-hd h2 { text-align: center; }
+
 /* 下滑关闭时不要有过渡延迟 */
 #nlogSheet.dragging { transition: none; }
 #nlogList {

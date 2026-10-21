@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.42', d: '10-22', items: [
+    '改：提醒记录去掉右上角 ×，「提醒记录」四个字改成居中，并对齐到顶部小横杠的高度',
+    '加：界面开关 NLOG_UI（closeX / grab / titleCenter）—— 以后要恢复 × 或小横杠，改一个 true 就行',
+  ]},
   { v: 'v4.41', d: '10-22', items: [
     '改：提醒记录的 × 再往上移（中心从 0.91 个圆角半径抬到 0.52），标题同步跟着上移',
   ]},
@@ -1072,7 +1076,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.41';
+const APP_VERSION = 'v4.42';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1097,6 +1101,9 @@ function esc(s) {
 function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
+
+/* 提醒记录弹层的界面开关：以后要恢复 × 或顶部小横杠，把 true/false 改掉就行 */
+const NLOG_UI = { closeX: false, grab: false, titleCenter: true };
 let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
@@ -2456,6 +2463,11 @@ function openNotifyLog() {
   localStorage.setItem('notify_seen_ts', String(Date.now()));
   renderNotifyDot();
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  if (sheet) {
+    sheet.classList.toggle('hide-x', !NLOG_UI.closeX);
+    sheet.classList.toggle('hide-grab', !NLOG_UI.grab);
+    sheet.classList.toggle('title-center', !!NLOG_UI.titleCenter);
+  }
   document.body.classList.add('nlog-open');
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
