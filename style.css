@@ -169,7 +169,7 @@ select {
 .sc-body {
   /* 不要给这一层加 backface-visibility / will-change：会让 iOS 单独合成，滚动到底会漏画成纯黑 */
   /* 底部留白 = Dock 高度 + 一点缝：滑到底时最后一张卡就贴着 Dock 上方，不再留一大片空 */
-  padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 6px + var(--safe-b));
+  padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 2px + var(--safe-b));
 }
 /* 键盘弹起后：底部留白由脚本精确算好，
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
@@ -1340,7 +1340,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .tab svg { width: 32px; height: 32px; }
   .tab { font-size: 13px; }
   .fab { width: 100px; height: 68px; font-size: 36px; }
-  .sc-body { padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 8px + var(--safe-b)); }
+  .sc-body { padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 4px + var(--safe-b)); }
 
   /* 弹层：同一套结构，整体加大 */
   .sheet { max-width: 560px; }
