@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.91', d: '10-21', items: [
+    '改：所有同步提示统一成「✅ 已更新：更新了什么 日期 · 哪台设备」，例如「✅ 已更新：热量数据 10-21 · Karen\'s Apple Watch」「✅ 已更新：体重数据 10-21 · 米家体脂秤」',
+    '改：不再出现「已同步」这个说法，全部统一成「已更新」，前面带绿色勾',
+  ]},
   { v: 'v3.90', d: '10-21', items: [
     '改：同步提示恢复显示，但不再用手表图标 —— 直接写你的设备名字「Karen\'s Apple Watch」',
     '改：体脂数据的提示改成「已同步体重 10-21」，同样不用图标',
@@ -883,7 +887,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.90';
+const APP_VERSION = 'v3.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -909,6 +913,13 @@ function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
 const WATCH_NAME = "Karen's Apple Watch";
+const SCALE_NAME = "米家体脂秤";
+
+// 统一提示：✅ 已更新：<更新了什么> <日期> · <哪台设备>
+function updToast(what, date, device, ms = 2600) {
+  const d = date ? ' ' + String(date).slice(5) : '';
+  toast(`✅ 已更新：${what}${d}${device ? ' · ' + device : ''}`, ms);
+}
 
 function toast(msg, ms = 2200) {
   const t = $('#toast');
@@ -3278,7 +3289,7 @@ function init() {
       if (d) {
         retryLeft = 0; retryBusy = false;
         loadDay();
-        toast(`✅ 已拿到新数据：${lastCloud.at.slice(5)} · 活动 ${lastCloud.active} 千卡`, 3000);
+        updToast('热量数据', lastCloud.at, WATCH_NAME, 3000);
       } else if (retryLeft <= 0) {
         retryBusy = false;
       } else {
@@ -3297,13 +3308,20 @@ function init() {
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
-    if (date) { retryLeft = 0; if (!runNotifyChecks()) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡` + (gotBody ? ' · 体脂秤' : ''), 2800); }
+    if (date) {
+      retryLeft = 0;
+      if (!runNotifyChecks()) {
+        let msg = `✅ 已更新：热量数据 ${c.at.slice(5)} · ${WATCH_NAME}`;
+        if (gotBody) msg += `  ｜  体重数据 ${String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
+        toast(msg, 3200);
+      }
+    }
     else if (c && c.at) {
       retryLeft = 3;
       retryPullCloud();
       toast(`✅ 现在是 ${c.at.slice(5)} 那份（活动 ${c.active} 千卡），后台帮你再等新数据`, 3200);
     }
-    else if (dd.active) toast('已读取：活动消耗 ' + dd.active + ' 千卡', 2400);
+    else if (dd.active) toast('✅ 已更新：热量数据 · 本地记录', 2400);
     else toast('云端还没有今天的数据，先跑一次「热量采集」', 3000);
   }
   if (refreshBtn) refreshBtn.onclick = () => pullNow();
@@ -3901,7 +3919,8 @@ function init() {
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
       try { loadDay(); } catch (e) {}
-      toast('已同步体重 ' + String(j.d || '').slice(5), 2400);
+      const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
+      updToast(what, j.d, SCALE_NAME, 2600);
     }
     // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
     const today = new Date();
@@ -3913,7 +3932,7 @@ function init() {
   });
   grabBody(2);
   if (synced) {
-    setTimeout(() => toast(`已同步 ${synced.slice(5)} · ${WATCH_NAME}`, 3000), 700);
+    setTimeout(() => updToast('热量数据', synced, WATCH_NAME, 3000), 700);
   }
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
 
@@ -3921,7 +3940,7 @@ function init() {
   pullCloudData().then(date => {
     if (!date) return;
     loadDay();
-    toast(`已同步 ${date.slice(5)} · ${WATCH_NAME}`, 2600);
+    updToast('热量数据', date, WATCH_NAME, 2600);
   });
 
   // 跨天检测：放在后台过夜，第二天打开要自动切到今天
@@ -3948,7 +3967,7 @@ function init() {
       if (d) {
         autoN = 0;
         loadDay();
-        toast(`已同步最新 · ${WATCH_NAME}`, 2400);
+        updToast('热量数据', d, WATCH_NAME, 2400);
       } else {
         autoCatchUp();
       }
@@ -3958,7 +3977,7 @@ function init() {
     if (document.visibilityState !== 'visible') return;
     lastPull = Date.now();
     pullCloudData().then(date => {
-      if (date) { loadDay(); toast(`已读取 ${date.slice(5)} · ${WATCH_NAME}`, 2200); }
+      if (date) { loadDay(); updToast('热量数据', date, WATCH_NAME, 2200); }
       else autoCatchUp();
     });
   });
