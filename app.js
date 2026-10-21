@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.94', d: '10-21', items: [
+    '改：「最近一次」四项横着排成一行（体重 / 体脂率 / BMI / 去脂体重），去掉每个下面的小字说明',
+    '改：称重日期挪到标题右边「最近一次 10-18」',
+  ]},
   { v: 'v3.93', d: '10-21', items: [
     '改：「身体数据」的「最近一次」改成四宫格 —— 体重 / 体脂率 / BMI / 去脂体重，四项一样大，不再把去脂体重塞在下面一行小字里',
   ]},
@@ -893,7 +897,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.93';
+const APP_VERSION = 'v3.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2532,13 +2536,13 @@ function renderMe() {
     const wtPts = dates.filter(dt => wts[dt]).sort().map(dt => ({ date: dt, kg: wts[dt] }));
     h = meBackBar('身体数据') + `
       <div class="card">
-        <h3>最近一次</h3>
+        <h3>最近一次${last ? ` <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${last.slice(5)}</span>` : ''}</h3>
         ${last ? `
           <div class="stats stats4" style="margin:0">
-            <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div><div class="at">${last.slice(5)}</div></div>
-            <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div><div class="at">${b.bf ? '秤上读的' : '没有这项'}</div></div>
-            <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div><div class="at">${b.bmi ? '秤上读的' : '按身高算'}</div></div>
-            <div><div class="k">去脂体重</div><div class="v">${b.ffm || '—'}<small>kg</small></div><div class="at">${b.ffm ? '秤上读的' : '没有这项'}</div></div>
+            <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div></div>
+            <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div></div>
+            <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div></div>
+            <div><div class="k">去脂体重</div><div class="v">${b.ffm || '—'}<small>kg</small></div></div>
           </div>
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
