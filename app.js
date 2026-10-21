@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.39', d: '10-22', items: [
+    '改：提醒记录左右两个角圆缩小一点（1.62 → 1.26 倍半径）',
+    '加：卡片玻璃质感「锁死」—— 全站只允许一处定义，提醒记录必须复用 .card，guard-check 每次都检查',
+  ]},
   { v: 'v4.38', d: '10-22', items: [
     '改：提醒记录左上/右上两个圆都放大到 1.62 倍半径，位置更贴角，描边稍微亮一点',
   ]},
@@ -1061,7 +1065,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.38';
+const APP_VERSION = 'v4.39';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

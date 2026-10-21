@@ -382,14 +382,14 @@ html.kb .sc-body {
 /* 左上/右上两个圆：更大、更贴角（圆心就在圆角弧心上，几乎贴着边） */
 #nlogSheet::before, #nlogSheet::after {
   content: ""; position: absolute; pointer-events: none;
-  width: calc(var(--dock-r, 28px) * 1.62);
-  height: calc(var(--dock-r, 28px) * 1.62);
+  width: calc(var(--dock-r, 28px) * 1.26);
+  height: calc(var(--dock-r, 28px) * 1.26);
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,.10);
-  top: calc(var(--dock-r, 28px) * 0.19);
+  top: calc(var(--dock-r, 28px) * 0.28);
 }
-#nlogSheet::before { left: calc(var(--dock-r, 28px) * 0.19); }
-#nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.19); }
+#nlogSheet::before { left: calc(var(--dock-r, 28px) * 0.28); }
+#nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.28); }
 
 #nlogSheet .sh-foot {
   background: transparent;
@@ -1501,7 +1501,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
     rgba(214, 255, 75, 0.24) 100%);
 }
 
-/* 底色是 --card 的框 */
+/* 底色是 --card 的框
+   ⚠️ 质感锁死：所有卡片的玻璃质感只能由下面这一处定义（--glass-card + --edge-gloss + --glass-blur），
+      新做卡片请直接复用 .card 类，不要另写 background / backdrop-filter，guard-check 会拦住。 */
 .card, .stats, .macros, .meal, .seg, .setgroup {
   border: 1px solid transparent;
   background-color: transparent;
