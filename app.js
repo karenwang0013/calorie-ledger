@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.69', d: '10-21', items: [
+    '改：已经允许过通知的设备，打开 App 时会自动把订阅重新登记一次（幂等）—— 之前登记失败的设备，这次打开 App 就自己修好了，不用再关开关',
+  ]},
   { v: 'v3.68', d: '10-21', items: [
     '修：点了「允许通知」也显示已开启，但服务端一直收不到这台设备 —— PushSubscription 直接转 JSON 会变成空对象，必须用 toJSON()；现在能真正登记了',
     '改：登记失败会明确提示「订阅没存上（服务端没收到）」，不再假装成功',
@@ -810,7 +813,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.68';
+const APP_VERSION = 'v3.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2006,7 +2009,16 @@ async function refreshPushState() {
   if (!pushSupported()) return;
   try {
     const reg = await navigator.serviceWorker.ready;
-    pushOn = !!(await reg.pushManager.getSubscription());
+    const sub = await reg.pushManager.getSubscription();
+    pushOn = !!sub;
+    // 已有订阅就顺手再登记一次（幂等）：万一服务端数据丢了 / 换了服务，打开 App 自己修好
+    if (sub) {
+      const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
+      const payload = sub.toJSON ? sub.toJSON() : null;
+      if (url && payload && payload.endpoint) {
+        fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+      }
+    }
   } catch (e) { pushOn = false; }
 }
 async function enablePush() {
