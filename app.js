@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.16', d: '10-21', items: [
+    '改：App 内不再弹「该称体重了 / 超出目标 / 今天没记录」这些提示，统一走锁屏推送；称重提醒统一按 3 天',
+    '加：首页右上角多了一个小铃铛 —— 所有提醒（手表数据、超目标、今天没记录、该称体重）都记在里面，有未读会亮红点',
+    '加：铃铛里可以看每条提醒的时间和内容，也能一键清空',
+  ]},
   { v: 'v4.15', d: '10-21', items: [
     '改：「最近一次」右上角的日期也放大到 16px，和体重趋势那边一致',
   ]},
@@ -972,7 +977,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.15';
+const APP_VERSION = 'v4.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2306,6 +2311,54 @@ async function disablePush() {
 }
 
 // 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
+/* ---------------- 提醒记录（锁屏推送的内容，App 里也能查） ---------------- */
+function notifyLogGet() {
+  const d = Store.load();
+  return Array.isArray(d.notifyLog) ? d.notifyLog : [];
+}
+function logNotify(kind, title, body) {
+  const d = Store.load();
+  const list = Array.isArray(d.notifyLog) ? d.notifyLog : (d.notifyLog = []);
+  const today = todayISO();
+  // 同一类同一天只记一条
+  if (list.some(x => x.k === kind && String(x.d) === today)) return false;
+  list.push({ ts: Date.now(), d: today, k: kind, t: title, b: body });
+  if (list.length > 60) list.splice(0, list.length - 60);
+  Store.save({ silent: true });
+  return true;
+}
+function renderNotifyDot() {
+  const dot = $('#notifyDot');
+  if (!dot) return;
+  const list = notifyLogGet();
+  const seen = Number(localStorage.getItem('notify_seen_ts') || 0);
+  const unread = list.some(x => Number(x.ts) > seen);
+  dot.hidden = !unread;
+}
+function openNotifyLog() {
+  const list = notifyLogGet().slice().sort((a, b) => b.ts - a.ts);
+  const box = $('#nlogList');
+  if (box) {
+    box.innerHTML = list.length ? list.map(x => `
+      <div class="nrow">
+        <div class="nt">${esc(x.t || '提醒')}</div>
+        <div class="nb">${esc(x.b || '')}</div>
+        <div class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+      </div>`).join('')
+      : `<div class="hint" style="margin:6px 0 2px">还没有提醒记录。称重、热量、记录这类提醒，都会记在这里。</div>`;
+  }
+  localStorage.setItem('notify_seen_ts', String(Date.now()));
+  renderNotifyDot();
+  const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  if (mask) mask.classList.add('on');
+  if (sheet) sheet.classList.add('on');
+}
+function closeNotifyLog() {
+  const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  if (mask) mask.classList.remove('on');
+  if (sheet) sheet.classList.remove('on');
+}
+
 function runNotifyChecks() {
   if (setting('notify_inapp', true) === false) return false;   // 总开关关掉就全部静音
   const d = S.day;
@@ -2320,15 +2373,15 @@ function runNotifyChecks() {
   const exp = Math.round(d.expenditure || 0);
 
   if (d.watch && d.watch.source === 'cloud' && hit('watch')) {
-    toast(`数据已更新：消耗 ${exp} 千卡 · 还可以吃 ${left} 千卡`, 4200);
+    logNotify('watch', '手表数据已更新', `消耗 ${exp} 千卡 · 还可以吃 ${left} 千卡`);
     return true;
   }
   if (intake > 0 && left < 0 && hit('goal')) {
-    toast(`⚠️ 今天已超出目标 ${Math.abs(left)} 千卡`, 4200);
+    logNotify('goal', '今天已超出目标', `超出 ${Math.abs(left)} 千卡`);
     return true;
   }
   if (new Date().getHours() >= 20 && !((d.logs || []).length) && hit('day')) {
-    toast('今天还没记录，别忘了记一笔', 4200);
+    logNotify('day', '今天还没记录', '别忘了记一笔');
     return true;
   }
   if (hit('weight')) {
@@ -2336,7 +2389,10 @@ function runNotifyChecks() {
     const dates = Object.keys(ws).sort();
     const last = dates[dates.length - 1];
     const days = last ? Math.floor((Date.now() - new Date(last + 'T00:00:00').getTime()) / 86400000) : 999;
-    if (days >= 7) { toast(last ? `该称体重了：上次记是 ${days} 天前` : '还没记过体重，今晚称一下？', 4200); return true; }
+    if (days >= 3) {
+      logNotify('weight', '该称体重了', last ? `上次记是 ${days} 天前` : '还没记过体重，今晚称一下？');
+      return true;
+    }
     delete seen.weight; localStorage.setItem('notify_seen', JSON.stringify(seen));   // 没到期就不占用今天的名额
   }
   return false;
@@ -4199,6 +4255,17 @@ function init() {
     if (mePage === 'notify') { try { renderMe(); } catch (e) {} }
   }).catch(() => {});
 
+  const bell = $('#notifyBell');
+  if (bell) bell.onclick = () => openNotifyLog();
+  const nlogClose = $('#nlogClose'), nlogMask = $('#nlogMask'), nlogClear = $('#nlogClear');
+  if (nlogClose) nlogClose.onclick = () => closeNotifyLog();
+  if (nlogMask) nlogMask.onclick = () => closeNotifyLog();
+  if (nlogClear) nlogClear.onclick = () => {
+    const d = Store.load(); d.notifyLog = []; Store.save({ silent: true });
+    openNotifyLog(); toast('已清空提醒记录', 1600);
+  };
+  renderNotifyDot();
+
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => hardReloadApp();
 
@@ -4225,7 +4292,7 @@ function init() {
   if (synced) {
     setTimeout(() => updToast('热量数据', synced, WATCH_NAME, 3000), 700);
   }
-  setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
+  setTimeout(() => { try { runNotifyChecks(); } catch (e) {} renderNotifyDot(); }, 1200);
 
   // 打开时拉一次云端数据（不阻塞界面）
   pullCloudData().then(date => {

@@ -352,6 +352,22 @@ html.kb .sc-body {
 .bstats .v { font-size: 23px; font-weight: 600; margin: 0; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
 .bstats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
 
+/* 顶栏小铃铛 */
+.bellbtn { position: relative; }
+.bellbtn .dot {
+  position: absolute; top: 8px; right: 9px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ff5b5b; box-shadow: 0 0 0 2px var(--bg, #0e1113);
+}
+
+/* 提醒记录 */
+#nlogList { max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.nrow { padding: 12px 0; border-top: 1px solid var(--line); }
+.nrow:first-child { border-top: none; padding-top: 2px; }
+.nrow .nt { font-size: 14px; font-weight: 600; }
+.nrow .nb { font-size: 12.5px; color: var(--muted2); margin-top: 3px; line-height: 1.45; }
+.nrow .nw { font-size: 11px; color: var(--muted2); margin-top: 5px; font-variant-numeric: tabular-nums; }
+
 /* 饮食目标 · 建议模式卡片 */
 .rec-card {
   margin: 0 18px 14px;
