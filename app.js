@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.60', d: '10-22', items: [
+    '改：提醒记录里每条内容往下靠一点，更贴近下面那条分隔线',
+  ]},
   { v: 'v4.59', d: '10-22', items: [
     '改：提醒记录不再用一个个小卡片，改成和「历史记录」一样用细线分隔；文字直接落在弹层上，不再发灰',
   ]},
@@ -1137,7 +1140,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.59';
+const APP_VERSION = 'v4.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
