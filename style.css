@@ -363,17 +363,20 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  /* 和首页卡片同一套：同样的玻璃描边 + 同样的合成后颜色（做成不透明版，避免透出背景） */
+  /* 直接套用 .card 的全部参数，这里只改位置和尺寸 */
+  position: fixed;
   left: var(--dock-inset); right: var(--dock-inset);
   bottom: calc(var(--dock-bottom) + var(--safe-b));
+  top: auto;
+  margin: 0 auto;
   max-width: 470px;
   min-height: 64dvh;
   max-height: 92dvh;
   border-radius: var(--dock-r, 26px);
-  border: 1px solid transparent;
-  background-image: linear-gradient(#121517, #121517), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 24px 56px rgba(0,0,0,.55);
 }
 #nlogSheet .sh-foot {

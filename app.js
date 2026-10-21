@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.28', d: '10-21', items: [
+    '改：提醒记录弹层直接套用 .card 的类（和 AI 识别、今日那些卡片同一份样式），只改位置和尺寸，不再单独写一套质感',
+  ]},
   { v: 'v4.27', d: '10-21', items: [
     '改：提醒记录卡片直接复用首页卡片的那套样式（同样的 --edge-gloss 玻璃描边），底色取玻璃卡片合成后的不透明色，所以不透、观感一致',
   ]},
@@ -1023,7 +1026,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.27';
+const APP_VERSION = 'v4.28';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
