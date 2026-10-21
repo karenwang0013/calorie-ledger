@@ -514,11 +514,14 @@ html.kb .sc-body {
 .modes button {
   display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
   padding: 10px 10px; border-radius: 12px; text-align: left;
-  background: var(--card2); border: 1px solid transparent; color: var(--muted);
+  /* 没选中的也要看得出是个框：底色比卡片稍亮一点 + 一条细边 */
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: var(--muted);
 }
 .modes button b { font-size: 13px; font-weight: 600; color: var(--text); }
 .modes button i { font-style: normal; font-size: 10px; color: var(--muted2); line-height: 1.3; }
-.modes button.on { border-color: rgba(214,255,75,.45); background: rgba(214,255,75,.10); }
+.modes button.on { border-color: rgba(214, 255, 75, 0.55); background: rgba(214, 255, 75, 0.12); }
 .modes button.on b { color: var(--lime); }
 
 /* 关于页的更新日志 */
