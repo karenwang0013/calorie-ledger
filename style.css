@@ -336,13 +336,18 @@ html.kb .sc-body {
 .stats .at { font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; white-space: nowrap; }
 
 /* 身体数据 · 最近一次（不套小框） */
-.bstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 2px; }
-.bstats > div { text-align: center; position: relative; }
-.bstats > div + div::before {
-  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--line);
+.bstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0 4px; }
+.bstats > div {
+  position: relative; text-align: center;
+  display: flex; flex-direction: column-reverse;   /* 数字在上、文字在下 */
+  align-items: center; justify-content: center;
+  min-height: 56px;
 }
-.bstats .k { font-size: 10.5px; color: var(--muted2); letter-spacing: .4px; }
-.bstats .v { font-size: 19px; font-weight: 600; margin-top: 7px; font-variant-numeric: tabular-nums; }
+.bstats > div + div::before {
+  content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 1px; background: var(--line);
+}
+.bstats .k { font-size: 11px; color: var(--muted2); letter-spacing: .4px; margin-top: 5px; line-height: 1; }
+.bstats .v { font-size: 21px; font-weight: 600; margin: 0; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .bstats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
 
 /* 身体数据 · 趋势摘要 */

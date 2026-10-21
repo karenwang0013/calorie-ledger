@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.03', d: '10-21', items: [
+    '改：「最近一次」四个格子改成数字在上、文字在下，数字更大，横竖都居中',
+  ]},
   { v: 'v4.02', d: '10-21', items: [
     '改：「身体数据 · 最近一次」去掉里面那层小框，四个数字直接排在卡片里',
     '改：「体重趋势」加了摘要（最新 / 较上次 / 区间），图表加大',
@@ -928,7 +931,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.02';
+const APP_VERSION = 'v4.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
