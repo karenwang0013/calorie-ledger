@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.88', d: '10-21', items: [
+    '改：同步提示不再显示手表图标，改成显示你的设备名字（设置 → 身体数据 里可改，默认 Apple Watch）',
+    '删：身体数据页的「手动记一次」卡片（不需要手动兜底了）',
+  ]},
   { v: 'v3.87', d: '10-21', items: [
     '加：「身体数据」页最下面多了「手动记一次」—— 体重 + 体脂率，填完一键保存，BMI 自动算。秤的数据自动同步不过来时，先用这个兜底',
   ]},
@@ -871,7 +875,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.87';
+const APP_VERSION = 'v3.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -896,6 +900,10 @@ function esc(s) {
 function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
+function watchName() {
+  try { return (Store.load().settings.watch_name || 'Apple Watch'); } catch (e) { return 'Apple Watch'; }
+}
+
 function toast(msg, ms = 2200) {
   const t = $('#toast');
   t.textContent = msg;
@@ -2206,7 +2214,7 @@ function runNotifyChecks() {
   const exp = Math.round(d.expenditure || 0);
 
   if (d.watch && d.watch.source === 'cloud' && hit('watch')) {
-    toast(`⌚ 数据已更新：消耗 ${exp} 千卡 · 还可以吃 ${left} 千卡`, 4200);
+    toast(`数据已更新：消耗 ${exp} 千卡 · 还可以吃 ${left} 千卡`, 4200);
     return true;
   }
   if (intake > 0 && left < 0 && hit('goal')) {
@@ -2519,19 +2527,13 @@ function renderMe() {
       </div>` : ''}
       ${rows ? `<div class="card"><h3>历史记录</h3>${rows}</div>` : ''}
       <div class="card">
-        <h3>手动记一次</h3>
-        <div class="split" style="margin-top:4px">
-          <div class="field">
-            <label>体重（kg）</label>
-            <input id="bdW" type="number" inputmode="decimal" step="0.1" placeholder="65.9">
-          </div>
-          <div class="field">
-            <label>体脂率（%）</label>
-            <input id="bdF" type="number" inputmode="decimal" step="0.1" placeholder="16.9">
-          </div>
+        <h3>设备名字</h3>
+        <div class="field" style="margin-top:6px">
+          <label>同步提示里显示的名字</label>
+          <input id="watchName" type="text" placeholder="Apple Watch" value="${(st.settings.watch_name || 'Apple Watch').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
         </div>
-        <button class="btn primary" id="bdSave" style="margin-top:10px">保存到账本</button>
-        <div class="hint" style="margin-top:8px">秤上的数据自动同步不过来时，先在这里填一次；BMI 会按你的身高自动算。</div>
+        <button class="btn" id="watchNameSave" style="margin-top:10px">保存名字</button>
+        <div class="hint" style="margin-top:8px">改完，同步提示会显示「已同步 10-21 的 xxx 数据」。</div>
       </div>
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
@@ -2701,17 +2703,14 @@ function wireMe() {
     }
   });
 
-  const bdSave = $('#bdSave');
-  if (bdSave) bdSave.onclick = async () => {
-    const kg = Number(($('#bdW') || {}).value);
-    const bf = Number(($('#bdF') || {}).value);
-    if (!kg && !bf) { toast('至少填一项'); return; }
-    try {
-      await api('/api/weight', { date: S.today, kg: kg || Store.load().weights[S.today] || Store.load().profile.weight_kg, bf, date2: S.today });
-      await loadDay();
-      renderMe();
-      toast('已保存', 2000);
-    } catch (e) { toast(e.message); }
+  const wnIn = $('#watchName');
+  const wnSave = $('#watchNameSave');
+  if (wnSave) wnSave.onclick = () => {
+    const v = (wnIn.value || '').trim() || 'Apple Watch';
+    const st = Store.load().settings;
+    st.watch_name = v;
+    Store.save();
+    toast('设备名字已改为：' + v, 2200);
   };
 
   const spIn = $('#swInApp');
@@ -3929,7 +3928,7 @@ function init() {
   if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
-    setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);
+    setTimeout(() => toast('已自动同步 ' + synced.slice(5) + ' 的' + watchName() + '数据', 3200), 700);
   }
 
   // 打开时拉一次云端数据（不阻塞界面）
@@ -3937,7 +3936,7 @@ function init() {
     if (!date) return;
     loadDay();
     if (Store.load().settings.sync_toast !== false) {
-      toast('⌚ 已同步 ' + date.slice(5) + ' 的手表数据', 2600);
+      toast('已同步 ' + date.slice(5) + ' 的' + watchName() + '数据', 2600);
     }
   });
 
@@ -3965,7 +3964,7 @@ function init() {
       if (d) {
         autoN = 0;
         loadDay();
-        toast('⌚ 已自动同步最新手表数据', 2600);
+        toast('已自动同步最新' + watchName() + '数据', 2600);
       } else {
         autoCatchUp();
       }
@@ -3975,7 +3974,7 @@ function init() {
     if (document.visibilityState !== 'visible') return;
     lastPull = Date.now();
     pullCloudData().then(date => {
-      if (date) { loadDay(); toast('⌚ 已读取手表数据', 2200); }
+      if (date) { loadDay(); toast('已读取' + watchName() + '数据', 2200); }
       else autoCatchUp();
     });
   });
