@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.40', d: '10-22', items: [
+    '改：× 移到原来右上角圆的圆心位置，删掉左右两个装饰圆',
+    '改：标题和 × 保持同一中心线，跟着 × 走',
+  ]},
   { v: 'v4.39', d: '10-22', items: [
     '改：提醒记录左右两个角圆缩小一点（1.62 → 1.26 倍半径）',
     '加：卡片玻璃质感「锁死」—— 全站只允许一处定义，提醒记录必须复用 .card，guard-check 每次都检查',
@@ -1065,7 +1069,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.39';
+const APP_VERSION = 'v4.40';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

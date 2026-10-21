@@ -379,18 +379,6 @@ html.kb .sc-body {
   overflow: hidden;
   box-shadow: 0 24px 56px rgba(0,0,0,.55);
 }
-/* 左上/右上两个圆：更大、更贴角（圆心就在圆角弧心上，几乎贴着边） */
-#nlogSheet::before, #nlogSheet::after {
-  content: ""; position: absolute; pointer-events: none;
-  width: calc(var(--dock-r, 28px) * 1.26);
-  height: calc(var(--dock-r, 28px) * 1.26);
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.10);
-  top: calc(var(--dock-r, 28px) * 0.28);
-}
-#nlogSheet::before { left: calc(var(--dock-r, 28px) * 0.28); }
-#nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.28); }
-
 #nlogSheet .sh-foot {
   background: transparent;
   border-top: 0;
@@ -403,15 +391,19 @@ body.nlog-open .sheet-mask.on {
 }
 /* 标题行：× 距右边一个半径；文字和它同一中心线，跟着它走 */
 #nlogSheet .sh-hd {
+  position: relative;
   display: flex; align-items: center;
-  padding: max(0px, calc(var(--dock-r, 28px) - 50px)) calc(var(--dock-r, 28px) - 21px) 2px calc(var(--dock-r, 28px) * 0.62);
+  /* 标题中心对到 × 的中心（0.91 个圆角半径处） */
+  padding: calc(var(--dock-r, 28px) * 0.91 - 11px) 12px 2px calc(var(--dock-r, 28px) * 0.62);
   min-height: 42px;
 }
 #nlogSheet .sh-hd .x {
+  position: absolute;
+  top: calc(var(--dock-r, 28px) * 0.91 - 21px);
+  right: calc(var(--dock-r, 28px) * 0.91 - 21px);
   width: 42px; height: 42px; margin: 0; padding: 0;
   display: grid; place-items: center;
   font-size: 28px; line-height: 1; color: var(--muted);
-  flex: 0 0 auto;
 }
 #nlogSheet .sh-hd h2 { margin: 0; }
 /* 下滑关闭时不要有过渡延迟 */
