@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.20', d: '10-21', items: [
+    '改：提醒记录真正浮起来 —— 左右各留 18px、底部离屏幕 38px，卡片更小更居中，阴影加深',
+  ]},
   { v: 'v4.19', d: '10-21', items: [
     '改：铃铛挪到最右边、紧挨着设置',
     '改：提醒记录改成悬浮卡片样式（左右留边、圆角跟随手机屏幕圆角）',
@@ -990,7 +993,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.19';
+const APP_VERSION = 'v4.20';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

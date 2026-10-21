@@ -363,13 +363,14 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  left: 12px; right: 12px;
-  bottom: calc(14px + var(--safe-b));
-  max-width: 460px;
+  left: 18px; right: 18px;
+  bottom: calc(38px + var(--safe-b));
+  max-width: 440px;
   min-height: 0;
-  max-height: 70dvh;
+  max-height: 64dvh;
   border-radius: var(--dock-r, 26px);
   background: var(--bg2);
+  box-shadow: 0 30px 70px rgba(0,0,0,.72);
 }
 #nlogSheet .sh-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom) / 2); }
 #nlogList {
