@@ -382,10 +382,15 @@ html.kb .sc-body {
 #nlogSheet .sh-foot {
   background: transparent;
   border-top: 0;
-  padding: 8px 16px 44px;
+  padding: 8px 16px 30px;
 }
 /* 提醒记录打开时，遮罩浅一点，别把页面压得死黑 */
-body.nlog-open .sheet-mask.on { background: rgba(0,0,0,.28); }
+body.nlog-open .sheet-mask.on {
+  background: rgba(0,0,0,.28);
+  top: var(--topbar-h, 64px);   /* 不盖住顶栏，顶栏一点都不变色 */
+}
+#nlogSheet .sh-hd { padding: 15px 24px 8px; }   /* 标题和 × 对到圆角中心 */
+#nlogSheet .sh-hd .x { font-size: 24px; padding: 0 2px; }
 #nlogList {
   max-height: 54dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 2px 0 4px; display: flex; flex-direction: column; flex: 1 1 auto;
