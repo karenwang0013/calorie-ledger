@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.62', d: '10-22', items: [
+    '加：离线排队 —— 上传失败时把改动记在本地，下次打开 App / 切回前台自动补传，不会丢',
+    '改：设置里的同步区域会显示「有改动还没传上去」，成功后就消失',
+  ]},
   { v: 'v4.61', d: '10-22', items: [
     '改：提醒记录内容再往下靠一点（上 24 / 下 6）',
   ]},
@@ -1143,7 +1147,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.61';
+const APP_VERSION = 'v4.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2840,6 +2844,7 @@ function renderMe() {
           <button class="btn sm" id="cloudForcePush">用本机覆盖云端</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
+        ${localStorage.getItem('pending_push') ? '<div class="hint" style="margin-top:6px;color:#ffab3d">有改动还没传上去（网络问题）· 会自动重试，不会丢</div>' : ''}
       </div>
       <div class="card">
         <h3>手动备份 / 回滚（iCloud / AirDrop）</h3>
@@ -4583,6 +4588,10 @@ function init() {
   loadDay();
   // 打开 App 时先拉一次；如果「打开账本自动采集」的快捷指令正在后台写数据，
   // 再补拉两次，保证它写完之后能立刻显示出来
+  // 有待上传的改动（上次网络失败）→ 打开就补传一次
+  if (cloudToken() && localStorage.getItem('pending_push')) {
+    setTimeout(() => { try { cloudPush(); } catch (e) {} }, 2500);
+  }
   pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
@@ -4654,6 +4663,7 @@ function init() {
     // 切回前台也刷一次身体数据（历史 + 当天）
     pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
     pullBodyJson().then(j => { if (j) { try { loadDay(); } catch (e) {} } });
+    if (cloudToken() && localStorage.getItem('pending_push')) { try { cloudPush(); } catch (e) {} }
     pullCloudData().then(date => {
       if (date) { loadDay(); updToast('热量数据', date, WATCH_NAME, 2200); }
       else autoCatchUp();

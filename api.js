@@ -788,11 +788,13 @@ async function cloudPush() {
     cloudSha = out.content && out.content.sha;
     cloudLast = String(h);
     cloudErr = '';
+    try { localStorage.removeItem('pending_push'); } catch (e) {}
     setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
     return true;
   } catch (e) {
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
     cloudFailUntil = Date.now() + 30000;
+    try { localStorage.setItem('pending_push', '1'); } catch (e) {}
     if (typeof logError === 'function') logError('err-push', '同步失败（上传）', cloudErr);
     return false;
   } finally {
