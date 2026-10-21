@@ -1205,6 +1205,7 @@ body.nlog-open .sheet-mask.on {
   transition: all .25s;
   max-width: 86vw;
   text-align: center;
+  white-space: pre-line;
   box-shadow: 0 10px 30px rgba(0,0,0,.4);
 }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }

@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.58', d: '10-22', items: [
+    '改：提示条放不下时，设备名（米家体脂秤 / Karen\'s Apple Watch）整体换到下一行，不会在词中间断开成「米 / 家体脂秤」',
+  ]},
   { v: 'v4.57', d: '10-22', items: [
     '修：底部提示条的「·」还是会出现 —— 改成先用一个隐藏元素量出这行字的真实宽度，超过可用宽度才去掉点号（同排保留、换行去掉）',
   ]},
@@ -1131,7 +1134,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.57';
+const APP_VERSION = 'v4.58';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1172,7 +1175,8 @@ const SCALE_NAME = "米家体脂秤";
 function updToast(what, date, device, ms = 2600) {
   const d = date ? ' ' + String(date).slice(5) : '';
   const main = `✅ 已更新：${what}${d}${device ? ' · ' + device : ''}`;
-  const alt = `✅ 已更新：${what}${d}${device ? ' ' + device : ''}`;
+  // 放不下时：设备名整体换到下一行，不在词中间断开
+  const alt = `✅ 已更新：${what}${d}${device ? '\n' + device : ''}`;
   toast(main, ms, alt);
 }
 
@@ -3955,7 +3959,7 @@ function init() {
       if (!runNotifyChecks()) {
         let msg = `✅ 已更新：热量数据 ${c.at.slice(5)} · ${WATCH_NAME}`;
         if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
-        toast(msg, 3200, msg.replace(/ · /g, ' '));
+        toast(msg, 3200, msg.replace(/ · /g, '\n').replace(/\n\n/g, '\n'));
       }
     }
     else if (c && c.at) {
