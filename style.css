@@ -363,32 +363,21 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  /* 位置/圆角跟 Dock 对齐；底色和质感跟首页卡片一致 */
+  /* 位置/圆角跟 Dock 对齐；底色用不透明的卡片色，和首页卡片看起来一致 */
   left: var(--dock-inset); right: var(--dock-inset);
   bottom: calc(var(--dock-bottom) + var(--safe-b));
   max-width: 470px;
   min-height: 64dvh;
   max-height: 92dvh;
   border-radius: var(--dock-r, 26px);
-  /* 和首页卡片完全同一套玻璃质感 */
-  border: 1px solid transparent;
-  background-color: transparent;
-  background-image: linear-gradient(var(--glass-card), var(--glass-card)), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: 0 24px 56px rgba(0,0,0,.5);
+  background: #15181b;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 56px rgba(0,0,0,.55);
 }
 #nlogSheet .sh-foot {
   background: transparent;
   border-top: 0;
-  padding: 6px 16px 24px;
-}
-#nlogSheet .sh-foot {
-  background: transparent;
-  border-top: 0;
-  padding: 8px 16px 14px;
+  padding: 8px 16px 44px;
 }
 /* 提醒记录打开时，遮罩浅一点，别把页面压得死黑 */
 body.nlog-open .sheet-mask.on { background: rgba(0,0,0,.28); }
