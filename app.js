@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.73', d: '10-21', items: [
+    '修：锁屏通知开关会被弹回去 —— 现在开关记住你的选择（打开就一直显示打开），下面那行单独显示真实状态：「已订阅…」或「已打开，正在登记…（权限已允许）」，登记没成功时下次打开 App 会自动重试',
+  ]},
   { v: 'v3.72', d: '10-21', items: [
     '加：推送诊断 —— App 打开时把「通知权限 / 是否已订阅 / 报错信息」上报给推送服务，我这边能远程看到到底是哪一步没成，不用你反复描述',
     '不改任何界面和外观',
@@ -824,7 +827,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.72';
+const APP_VERSION = 'v3.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2008,7 +2011,8 @@ function notifyCfg() {
   return out;
 }
 const PUSH_WORKER_DEFAULT = 'https://ledger-push.karenwang228.workers.dev';   // 已部署好的推送服务
-let pushOn = false;                       // 这台设备是否已经订阅锁屏推送
+let pushOn = false;                       // 是否真的订阅成功（真实状态）
+const pushWanted = () => setting('push_wanted', false) === true;   // 用户是否打开过这个开关
 const pushSupported = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 const b64uToBytes = (b64) => {
   const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
@@ -2022,7 +2026,7 @@ async function refreshPushState() {
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     // 权限已经允许、但还没订阅（以前登记失败的情况）→ 打开 App 时自动补订阅，不需要再点什么
-    if (!sub && (typeof Notification !== 'undefined') && Notification.permission === 'granted') {
+    if (!sub && pushWanted() && (typeof Notification !== 'undefined') && Notification.permission === 'granted') {
       try {
         const u0 = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
         const cfg = await (await fetch(u0 + '/config', { cache: 'no-store' })).json();
@@ -2152,7 +2156,7 @@ function pushNote() {
   const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unknown';
   const permTxt = perm === 'granted' ? '已允许' : perm === 'denied' ? '被拒绝' : '还没允许';
   if (pushOn) return `已订阅 · 通知权限${permTxt} · 锁屏、App 关闭时也能收到`;
-  if (perm === 'granted') return `通知权限已允许，但还没订阅成功 —— 把右边开关关掉再打开一次`;
+  if (pushWanted()) return `已打开，正在登记…（通知权限：${permTxt}）下次打开 App 会自动重试`;
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
@@ -2382,7 +2386,7 @@ function renderMe() {
             <div class="stitle">锁屏通知</div>
             <div class="hint" style="margin:4px 0 0">${pushNote()}</div>
           </div>
-          <label class="sw"><input type="checkbox" id="swPush" ${pushOn ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
+          <label class="sw"><input type="checkbox" id="swPush" ${pushWanted() ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
         ${pushOn ? `<button class="btn sm" id="pushTest" style="margin-top:14px">发一条测试通知</button>` : `<div class="hint" style="margin-top:12px;line-height:1.85">
           点右边的开关就会订阅；系统弹「是否允许通知」时点<b>允许</b>。<br>
@@ -2587,8 +2591,13 @@ function wireMe() {
 
   const spPush = $('#swPush');
   if (spPush) spPush.onchange = async () => {
-    if (spPush.checked) { const ok = await enablePush(); if (!ok) spPush.checked = false; }
-    else await disablePush();
+    if (spPush.checked) {
+      setSetting('push_wanted', true);
+      await enablePush();          // 失败也不把开关弹回去，只在下面那行写“正在登记”
+    } else {
+      setSetting('push_wanted', false);
+      await disablePush();
+    }
     renderMe();
   };
 
