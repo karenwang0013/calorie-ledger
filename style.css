@@ -335,6 +335,10 @@ html.kb .sc-body {
 .stats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
 .stats .at { font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; white-space: nowrap; }
 
+/* 四宫格：体重 / 体脂率 / BMI / 去脂体重 */
+.stats.stats4 { grid-template-columns: 1fr 1fr; row-gap: 16px; padding: 16px 6px; }
+.stats.stats4 > div:nth-child(odd)::before { display: none; }
+
 /* ---------- 营养素 ---------- */
 .macros {
   margin: 12px 18px 0;

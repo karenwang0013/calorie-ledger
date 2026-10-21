@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.93', d: '10-21', items: [
+    '改：「身体数据」的「最近一次」改成四宫格 —— 体重 / 体脂率 / BMI / 去脂体重，四项一样大，不再把去脂体重塞在下面一行小字里',
+  ]},
   { v: 'v3.92', d: '10-21', items: [
     '加：体脂秤数据支持四项 —— 体重、体脂率、身高体重指数（BMI）、去脂体重，秤上给什么就显示什么（不再只用身高反算 BMI）',
   ]},
@@ -890,7 +893,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.92';
+const APP_VERSION = 'v3.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2531,12 +2534,12 @@ function renderMe() {
       <div class="card">
         <h3>最近一次</h3>
         ${last ? `
-          <div class="stats" style="margin:0">
+          <div class="stats stats4" style="margin:0">
             <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div><div class="at">${last.slice(5)}</div></div>
             <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div><div class="at">${b.bf ? '秤上读的' : '没有这项'}</div></div>
-            <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div><div class="at">按身高算</div></div>
+            <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div><div class="at">${b.bmi ? '秤上读的' : '按身高算'}</div></div>
+            <div><div class="k">去脂体重</div><div class="v">${b.ffm || '—'}<small>kg</small></div><div class="at">${b.ffm ? '秤上读的' : '没有这项'}</div></div>
           </div>
-          ${b.ffm ? `<div class="hint" style="margin-top:12px">去脂体重 ${b.ffm} kg</div>` : ''}
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
       ${wtPts.length >= 2 ? `<div class="card">
