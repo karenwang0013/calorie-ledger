@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.53', d: '10-22', items: [
+    '改：提醒记录弹层加宽（左右各留 6px，最大 520px），内容尽量一排显示完整；太长会自动省略',
+    '加：guard-check 新增「提示条永远在 Dock 上方」检查 —— 以后谁把它压到 Dock 上，发不出版本',
+  ]},
   { v: 'v4.52', d: '10-22', items: [
     '修：底部提示条压住 Dock —— 改回 Dock 上方 24px，任何提示都不再压 Dock',
     '改：提醒记录里的卡片整体往下挪一点（列表顶部留 18px）',
@@ -1114,7 +1118,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.52';
+const APP_VERSION = 'v4.53';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

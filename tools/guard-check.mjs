@@ -32,6 +32,7 @@ const checks = [
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
+  ['底部提示条永远在 Dock 上方（不许压住）', /\.toast \{[\s\S]*?bottom: calc\(var\(--dock-bottom\) \+ var\(--dock-h\) \+ \d+px/.test(css)],
   ['卡片玻璃质感只有一处定义（--glass-card + --edge-gloss + --glass-blur）', (css.match(/linear-gradient\(var\(--glass-card\)/g) || []).length === 1],
   ['提醒记录弹层复用 .card 质感，不许自带背景/模糊', !/#nlogSheet\s*\{[^}]*?(backdrop-filter|background-image|background-color)/.test(css)],
   ['名字和铅笔在同一行（放不下时省略名字，不把铅笔挤到下一行）', /\.nameline \{[^}]*display: flex/.test(css) && /\.nameline \.nmtxt \{[^}]*text-overflow: ellipsis/.test(css)],
