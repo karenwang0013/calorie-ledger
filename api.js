@@ -793,6 +793,7 @@ async function cloudPush() {
   } catch (e) {
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
     cloudFailUntil = Date.now() + 30000;
+    if (typeof logError === 'function') logError('err-push', '同步失败（上传）', cloudErr);
     return false;
   } finally {
     cloudBusy = false;
@@ -845,6 +846,7 @@ async function cloudPull(force) {
     cloudPulling = false;
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
     cloudFailUntil = Date.now() + 30000;
+    if (typeof logError === 'function') logError('err-pull', '同步失败（读取）', cloudErr);
     return false;
   }
 }

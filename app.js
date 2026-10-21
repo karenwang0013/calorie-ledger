@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.47', d: '10-22', items: [
+    '加：出错也会记提醒 —— 上传/读取云端失败、体脂数据拉不到、热量数据解析失败，都会进铃铛，带红色 ✕',
+    '改：提醒记录每条前面有图标 —— 正常是绿色 ✓，出错是红色 ✕',
+    '说明：错误提醒不受「App 内提醒」开关影响，一定记',
+  ]},
   { v: 'v4.46', d: '10-22', items: [
     '改：提醒记录去掉「提醒记录」四个字，只剩顶部小横杠',
     '记：以后要恢复 ×，按 v4.41 的样子一起恢复标题（左上、和 × 同一中心线、16px），横杠宽度和玻璃质感保持现状 —— 开关在 NLOG_UI',
@@ -1091,7 +1096,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.46';
+const APP_VERSION = 'v4.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2438,17 +2443,22 @@ function notifyLogGet() {
   const d = Store.load();
   return Array.isArray(d.notifyLog) ? d.notifyLog : [];
 }
-function logNotify(kind, title, body) {
+function logNotify(kind, title, body, ok = true) {
   const d = Store.load();
   const list = Array.isArray(d.notifyLog) ? d.notifyLog : (d.notifyLog = []);
   const today = todayISO();
   // 同一类同一天只记一条
   if (list.some(x => x.k === kind && String(x.d) === today)) return false;
-  list.push({ ts: Date.now(), d: today, k: kind, t: title, b: body });
+  list.push({ ts: Date.now(), d: today, k: kind, t: title, b: body, ok: ok !== false });
   if (list.length > 60) list.splice(0, list.length - 60);
   Store.save({ silent: true });
   return true;
 }
+/* 任何同步/读取错误都记一条（红色 ✗），不受「App 内提醒」开关影响 */
+function logError(kind, title, body) {
+  return logNotify(kind, title, body, false);
+}
+
 function renderNotifyDot() {
   const dot = $('#notifyDot');
   if (!dot) return;
@@ -2475,7 +2485,7 @@ function openNotifyLog() {
   if (box) {
     box.innerHTML = list.length ? list.map(x => `
       <div class="ncard">
-        <div class="nt">${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="nt"><i class="nicon ${x.ok === false ? 'bad' : 'ok'}">${x.ok === false ? '✕' : '✓'}</i>${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="nb">${esc(x.b || '')}</div>
       </div>`).join('')
       : `<div class="ncard nempty">还没有提醒记录<br><span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div>`;
@@ -3580,7 +3590,7 @@ async function pullBodyHistory() {
     if (!r.ok) return 0;
     const j = await r.json();
     const items = Array.isArray(j && j.items) ? j.items : [];
-    if (!items.length) return 0;
+    if (!items.length) { logError('err-history', '身体历史读取失败', 'body-history.json 是空的或格式不对'); return 0; }
     const d = Store.load();
     d.body = d.body || {}; d.weights = d.weights || {};
     let n = 0;
@@ -3605,7 +3615,7 @@ async function pullBodyHistory() {
 async function pullBodyJson() {
   try {
     const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) return false;
+    if (!r.ok) { logError('err-body', '体脂数据读取失败', 'body.json 拉不到（HTTP ' + r.status + '）'); return false; }
     let j;
     try { j = await r.json(); } catch (e) {
       // 快捷指令可能写成 {"w":"66\n65.9"} 这种换行没转义的非法 JSON，先修一下
@@ -3710,7 +3720,7 @@ async function pullCloudData() {
     const tail = String(txt.slice(i + 1)).replace(/(\d),(\d)/g, '$1$2');
     const nums = tail.match(/\d+(?:\.\d+)?/g) || [];
     const active = Math.round(nums.reduce((s, n) => s + Number(n), 0));
-    if (!active || active <= 0) return null;
+    if (!active || active <= 0) { logError('err-health', '热量数据读取失败', 'health.json 里没有有效的活动消耗'); return null; }
     const date = parseLooseDate(head) || todayISO();
     // 快捷指令写进去的时刻，用来告诉用户「这份数据是什么时候的」
     const tm = head.match(/(\d{1,2}):(\d{2})/);
