@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.70', d: '10-21', items: [
+    '加：通知页「锁屏通知」那行现在会直接写出状态 —— 通知权限：已允许 / 还没允许 / 被拒绝，以及有没有订阅成功，方便一眼看出卡在哪一步',
+    '只动了 Dock 的透明度和这条提示文字，其他卡片、圆角、磨砂一律没动',
+  ]},
   { v: 'v3.69', d: '10-21', items: [
     '改：已经允许过通知的设备，打开 App 时会自动把订阅重新登记一次（幂等）—— 之前登记失败的设备，这次打开 App 就自己修好了，不用再关开关',
   ]},
@@ -813,7 +817,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.69';
+const APP_VERSION = 'v3.70';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2110,14 +2114,12 @@ function runNotifyChecks() {
 }
 
 function pushNote() {
-  if (!pushSupported()) return '这台设备不支持网页推送';
-  if (pushOn) {
-    const u = setting('push_worker', '');
-    let host = '';
-    try { host = new URL(u).host; } catch (e) {}
-    return '已开启' + (host ? ' · ' + host : '') + ' · 锁屏、App 关闭时也能收到';
-  }
-  return '网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始';
+  if (!pushSupported()) return '这台设备不支持网页推送（要从主屏幕图标打开）';
+  const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unknown';
+  const permTxt = perm === 'granted' ? '已允许' : perm === 'denied' ? '被拒绝' : '还没允许';
+  if (pushOn) return `已订阅 · 通知权限${permTxt} · 锁屏、App 关闭时也能收到`;
+  if (perm === 'granted') return `通知权限已允许，但还没订阅成功 —— 把右边开关关掉再打开一次`;
+  return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
 function renderMe() {
