@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.21', d: '10-21', items: [
+    '改：提醒记录的位置和圆角改成以 Dock 为基准（同内边距、同底距、同圆角），底边不动',
+    '改：卡片加高加大（48–78vh），底色提亮一档 + 细描边，能看清边界和圆角',
+    '改：打开提醒记录时遮罩变浅（66% → 38%），背景不再死黑',
+  ]},
   { v: 'v4.20', d: '10-21', items: [
     '改：提醒记录真正浮起来 —— 左右各留 18px、底部离屏幕 38px，卡片更小更居中，阴影加深',
   ]},
@@ -993,7 +998,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.20';
+const APP_VERSION = 'v4.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2377,10 +2382,12 @@ function openNotifyLog() {
   localStorage.setItem('notify_seen_ts', String(Date.now()));
   renderNotifyDot();
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  document.body.classList.add('nlog-open');
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
 }
 function closeNotifyLog() {
+  document.body.classList.remove('nlog-open');
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
   if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.remove('on');

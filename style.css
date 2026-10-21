@@ -363,15 +363,21 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  left: 18px; right: 18px;
-  bottom: calc(38px + var(--safe-b));
-  max-width: 440px;
-  min-height: 0;
-  max-height: 64dvh;
+  /* 位置和圆角都以 Dock 为基准：左右同 Dock 内边距、底部同 Dock 底距、圆角同 Dock */
+  left: var(--dock-inset); right: var(--dock-inset);
+  bottom: calc(var(--dock-bottom) + var(--safe-b));
+  max-width: 470px;
+  min-height: 48dvh;
+  max-height: 78dvh;
   border-radius: var(--dock-r, 26px);
-  background: var(--bg2);
-  box-shadow: 0 30px 70px rgba(0,0,0,.72);
+  background: #1c2124;                      /* 比页面底色亮一档，能看清边界 */
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 26px 60px rgba(0,0,0,.55),
+    inset 0 1px 0 rgba(255,255,255,.07);
 }
+/* 提醒记录打开时，遮罩浅一点，别把页面压得死黑 */
+body.nlog-open .sheet-mask.on { background: rgba(0,0,0,.38); }
 #nlogSheet .sh-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom) / 2); }
 #nlogList {
   max-height: 54dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
