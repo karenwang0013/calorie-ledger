@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.83', d: '10-21', items: [
+    '加：设置里多了一页「身体数据」—— 最近一次的体重 / 体脂率 / BMI / 去脂体重，加上体重趋势和最近 20 条历史，不用再去趋势页翻',
+    '改：「该称体重了」的提醒从 7 天改成 3 天（体重趋势断 7 天就看不准了）',
+  ]},
   { v: 'v3.82', d: '10-21', items: [
     '改：体脂秤数据改成「无感」写入 —— 快捷指令直接把数据写进仓库的 body.json，App 打开时自动读取，不再跳转 Safari 页面',
   ]},
@@ -855,7 +859,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.82';
+const APP_VERSION = 'v3.83';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2247,6 +2251,18 @@ function renderMe() {
           <span>饮食目标</span>
           <em>${d.targets.kcal_budget} 千卡 / 天</em><i>›</i>
         </button>
+        <button class="srow" data-page="bodydata">
+          <span>身体数据</span>
+          <em>${(() => {
+            const st = Store.load();
+            const ds = Object.keys(st.body || {}).sort();
+            const last = ds[ds.length - 1];
+            const b = last ? st.body[last] : null;
+            const w = last ? st.weights[last] : null;
+            if (!last) return '还没有秤的数据';
+            return (w ? w + ' kg' : '') + (b && b.bf ? ' · 体脂 ' + b.bf + '%' : '');
+          })()}</em><i>›</i>
+        </button>
       </div>
       <div class="seclabel">功能</div>
       <div class="setgroup">
@@ -2453,6 +2469,43 @@ function renderMe() {
             ${swOne(k)}
           </div>`).join('')}
       </div>
+      <div style="height:26px"></div>`;
+  } else if (mePage === 'bodydata') {
+    const st = Store.load();
+    const body = st.body || {}, wts = st.weights || {};
+    const dates = Array.from(new Set([...Object.keys(body), ...Object.keys(wts)])).sort().reverse();
+    const last = dates[0];
+    const b = last ? (body[last] || {}) : {};
+    const w = last ? wts[last] : null;
+    const bmi = b.bmi || (w && st.profile.height_cm ? Math.round((w / Math.pow(st.profile.height_cm / 100, 2)) * 10) / 10 : null);
+    const rows = dates.slice(0, 20).map(dt => {
+      const bb = body[dt] || {}, ww = wts[dt];
+      return `<div class="gitem">
+        <div class="n">${dt.slice(5)}
+          <span class="sub">${ww ? ww + ' kg' : ''}${bb.bf ? ' · 体脂 ' + bb.bf + '%' : ''}${bb.bmi ? ' · BMI ' + bb.bmi : ''}${bb.ffm ? ' · 去脂 ' + bb.ffm + 'kg' : ''}</span>
+        </div>
+      </div>`;
+    }).join('');
+    const wtPts = dates.filter(dt => wts[dt]).sort().map(dt => ({ date: dt, kg: wts[dt] }));
+    h = meBackBar('身体数据') + `
+      <div class="card">
+        <h3>最近一次</h3>
+        ${last ? `
+          <div class="stats" style="margin:0">
+            <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div><div class="at">${last.slice(5)}</div></div>
+            <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div><div class="at">${b.bf ? '秤上读的' : '没有这项'}</div></div>
+            <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div><div class="at">按身高算</div></div>
+          </div>
+          ${b.ffm ? `<div class="hint" style="margin-top:12px">去脂体重 ${b.ffm} kg</div>` : ''}
+        ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
+      </div>
+      ${wtPts.length >= 2 ? `<div class="card">
+        <h3>体重趋势</h3>
+        ${lineChart(wtPts, wtPts[0].date, wtPts[wtPts.length - 1].date)}
+        <div class="legend"><span><i style="background:var(--blue)"></i>体重 kg</span>
+          <span style="margin-left:auto">${wtPts.length} 次</span></div>
+      </div>` : ''}
+      ${rows ? `<div class="card"><h3>历史记录</h3>${rows}</div>` : ''}
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
