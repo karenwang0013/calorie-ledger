@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.92', d: '10-21', items: [
+    '加：体脂秤数据支持四项 —— 体重、体脂率、身高体重指数（BMI）、去脂体重，秤上给什么就显示什么（不再只用身高反算 BMI）',
+  ]},
   { v: 'v3.91', d: '10-21', items: [
     '改：所有同步提示统一成「✅ 已更新：更新了什么 日期 · 哪台设备」，例如「✅ 已更新：热量数据 10-21 · Karen\'s Apple Watch」「✅ 已更新：体重数据 10-21 · 米家体脂秤」',
     '改：不再出现「已同步」这个说法，全部统一成「已更新」，前面带绿色勾',
@@ -887,7 +890,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.91';
+const APP_VERSION = 'v3.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3108,18 +3111,19 @@ async function pullBodyJson() {
     if (!j || !j.d) return null;
     const date = String(j.d).slice(0, 10);
     const w = Number(j.w) || 0, bf = Number(j.bf) || 0;
-    if (!w && !bf) return null;
+    if (!w && !bf && !Number(j.bmi) && !Number(j.ffm)) return null;
     const d = Store.load();
     const cur = (d.body && d.body[date]) || {};
     if (d.weights[date] === w && cur.bf === bf) return j;
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
-    let bmi = cur.bmi || null;
+    let bmi = Number(j.bmi) || cur.bmi || null;
     if (!bmi && w) {
       const h = Number(d.profile.height_cm) || 0;
       if (h > 0) bmi = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
     }
+    const ffm = Number(j.ffm) || cur.ffm || null;   // 去脂体重（秤上给的）
     d.body = d.body || {};
-    d.body[date] = { bf: bf || cur.bf || null, bmi, ffm: cur.ffm || null };
+    d.body[date] = { bf: bf || cur.bf || null, bmi, ffm };
     Store.save();
     return j;
   } catch (e) { return null; }
