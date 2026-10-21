@@ -23,6 +23,14 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.68', d: '10-21', items: [
+    '修：点了「允许通知」也显示已开启，但服务端一直收不到这台设备 —— PushSubscription 直接转 JSON 会变成空对象，必须用 toJSON()；现在能真正登记了',
+    '改：登记失败会明确提示「订阅没存上（服务端没收到）」，不再假装成功',
+  ]},
+  { v: 'v3.67', d: '10-21', items: [
+    '改：Dock 再淡一档、再透一档（不透明度 44% / 54%，颜色也提亮），模糊仍是 20px —— 内容从下面滑过时透得更明显',
+    '只动了 Dock，其他卡片、输入框、弹层一律没碰',
+  ]},
   { v: 'v3.66', d: '10-21', items: [
     '改：底部 Dock 的磨砂更透、颜色更淡 —— 底色从 78%/84% 降到 56%/66%，并稍微提亮；模糊从 16px 加到 20px、提饱和到 150%，内容从下面滑过时能隐约透出来',
   ]},
@@ -802,7 +810,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.66';
+const APP_VERSION = 'v3.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2023,8 +2031,11 @@ async function enablePush() {
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
-    const r = await fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) });
-    if (!r.ok) throw new Error('订阅没存上');
+    // PushSubscription 直接 JSON.stringify 会得到 {}（它的字段不可枚举），必须 toJSON()
+    const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint, keys: { p256dh: '', auth: '' } };
+    const r = await fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+    const jr = await r.json().catch(() => ({}));
+    if (!r.ok || !jr.ok) throw new Error(jr.error || '订阅没存上（服务端没收到）');
     setSetting('push_worker', url);
     pushOn = true;
     toast('锁屏通知已开启', 2600);
@@ -2040,7 +2051,8 @@ async function disablePush() {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
-      if (url) { try { await fetch(url + '/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sub) }); } catch (e) {} }
+      const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint };
+      if (url) { try { await fetch(url + '/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }); } catch (e) {} }
       await sub.unsubscribe();
     }
     pushOn = false;
