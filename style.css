@@ -1307,6 +1307,14 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
     rgba(255, 255, 255, 0.016) 60%,
     rgba(255, 255, 255, 0.020) 87%,
     rgba(255, 255, 255, 0.034) 100%);
+  /* 输入框专用：底色比卡片亮一档，描边也比卡片更明显一点，但仍是渐变（不失质感） */
+  --field: #23282c;
+  --edge-gloss-strong: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(255, 255, 255, 0.12) 22%,
+    rgba(255, 255, 255, 0.06) 58%,
+    rgba(255, 255, 255, 0.10) 88%,
+    rgba(255, 255, 255, 0.15) 100%);
   --edge-gloss-lime: linear-gradient(180deg,
     rgba(214, 255, 75, 0.45) 0%,
     rgba(214, 255, 75, 0.16) 55%,
@@ -1331,8 +1339,16 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   background-clip: padding-box, border-box;
 }
 
-/* 底色是 --card2 的框（输入框 / 按钮 / 小方块） */
-input, textarea, select, .topbtn, .arrow, .btn, .pickbtn, .urlbox, .swatch, .kbd {
+/* 输入框：底色更亮、边更清楚，保证一眼看出“这里能填” */
+input, textarea, select {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--field), var(--field)), var(--edge-gloss-strong);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* 按钮 / 小方块：仍用柔和的那套 */
+.topbtn, .arrow, .btn, .pickbtn, .urlbox, .swatch, .kbd {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--card2), var(--card2)), var(--edge-gloss);
   background-origin: border-box;
@@ -1349,7 +1365,7 @@ input, textarea, select, .topbtn, .arrow, .btn, .pickbtn, .urlbox, .swatch, .kbd
 
 /* 输入框聚焦：绿色也是渐变，不是一条硬线 */
 input:focus, textarea:focus, select:focus {
-  background-image: linear-gradient(var(--card2), var(--card2)), var(--edge-gloss-lime);
+  background-image: linear-gradient(var(--field), var(--field)), var(--edge-gloss-lime);
 }
 
 /* 弹层 / 卡片详情 */
