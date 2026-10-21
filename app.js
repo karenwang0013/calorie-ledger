@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.55', d: '10-22', items: [
+    '改：同步提示里的「日期 · 设备」改成「日期（设备）」—— 换行时不会留下一个悬空的点',
+  ]},
   { v: 'v4.54', d: '10-22', items: [
     '改：提醒记录弹层材质改成和 Dock 一样的半透磨砂玻璃（blur 20 + 半透底）',
     '加：铃铛灯三色 —— 全成功绿、成功+失败橙、全失败红；没有未读就不亮',
@@ -1122,7 +1125,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.54';
+const APP_VERSION = 'v4.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1162,7 +1165,7 @@ const SCALE_NAME = "米家体脂秤";
 // 统一提示：✅ 已更新：<更新了什么> <日期> · <哪台设备>
 function updToast(what, date, device, ms = 2600) {
   const d = date ? ' ' + String(date).slice(5) : '';
-  toast(`✅ 已更新：${what}${d}${device ? ' · ' + device : ''}`, ms);
+  toast(`✅ 已更新：${what}${d}${device ? '（' + device + '）' : ''}`, ms);
 }
 
 function toast(msg, ms = 2200) {
@@ -3927,8 +3930,8 @@ function init() {
     if (date) {
       retryLeft = 0;
       if (!runNotifyChecks()) {
-        let msg = `✅ 已更新：热量数据 ${c.at.slice(5)} · ${WATCH_NAME}`;
-        if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
+        let msg = `✅ 已更新：热量数据 ${c.at.slice(5)}（${WATCH_NAME}）`;
+        if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)}（${SCALE_NAME}）`;
         toast(msg, 3200);
       }
     }
