@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.51', d: '10-22', items: [
+    '改：体脂数据也能看到采集时间 —— 用 body.json 的「最后修改时间」，同步提示里显示成 10-22 01:20 这种',
+    '加：体脂数据同步成功后，铃铛里也记一条（体重 / 体脂 / 采集时间）',
+  ]},
   { v: 'v4.50', d: '10-22', items: [
     '加：错误提示带错误码（E01 网络 / E02 超时 / E03 Token / E04 权限 / E05 文件不存在 / E06 冲突 / E07 格式 / E08 存储 / E99 未知），截图给我就能直接定位',
     '改：提示条往下移一点，更贴近 Dock',
@@ -1106,7 +1110,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.50';
+const APP_VERSION = 'v4.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3642,6 +3646,16 @@ async function pullBodyJson() {
   try {
     const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) { logError('err-body', '体脂数据读取失败', 'body.json 拉不到（HTTP ' + r.status + '）'); return false; }
+    // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
+    let bodyAt = '';
+    try {
+      const lm = r.headers.get('last-modified');
+      if (lm) {
+        const dt = new Date(lm);
+        const p2 = n => String(n).padStart(2, '0');
+        bodyAt = `${dt.getMonth() + 1}-${p2(dt.getDate())} ${p2(dt.getHours())}:${p2(dt.getMinutes())}`;
+      }
+    } catch (e) {}
     let j;
     try { j = await r.json(); } catch (e) {
       // 快捷指令可能写成 {"w":"66\n65.9"} 这种换行没转义的非法 JSON，先修一下
@@ -3649,6 +3663,7 @@ async function pullBodyJson() {
       try { j = JSON.parse(txt.replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
     }
     if (!j) return null;
+    if (bodyAt) j._at = bodyAt;   // 这份数据写上去的时间
     // 支持历史批量导入：{"items":[{"d","w","bf","bmi","ffm"}, ...]}
     if (Array.isArray(j.items)) {
       const d0 = Store.load();
@@ -3896,7 +3911,7 @@ function init() {
       retryLeft = 0;
       if (!runNotifyChecks()) {
         let msg = `✅ 已更新：热量数据 ${c.at.slice(5)} · ${WATCH_NAME}`;
-        if (gotBody) msg += `  ｜  体重数据 ${String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
+        if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
         toast(msg, 3200);
       }
     }
@@ -4518,6 +4533,13 @@ function init() {
       try { loadDay(); } catch (e) {}
       const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
       updToast(what, j.d, SCALE_NAME, 2600);
+      try {
+        const lb = Store.load().body[String(j.d || '').slice(0, 10)] || {};
+        const bits = [];
+        if (j.w) bits.push('体重 ' + j.w + ' kg');
+        if (lb.bf) bits.push('体脂 ' + lb.bf + '%');
+        logNotify('body', '体重数据已更新', bits.join(' · ') + (j._at ? ' · 采集 ' + j._at : ''));
+      } catch (e) {}
     }
     // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
     const today = new Date();
