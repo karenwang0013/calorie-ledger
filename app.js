@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.84', d: '10-21', items: [
+    '改：账本打开时会连拉三次体脂秤数据（0 秒 / 2.5 秒 / 7 秒），配合「打开账本自动采集」的快捷指令 —— 打开即最新',
+  ]},
   { v: 'v3.83', d: '10-21', items: [
     '加：设置里多了一页「身体数据」—— 最近一次的体重 / 体脂率 / BMI / 去脂体重，加上体重趋势和最近 20 条历史，不用再去趋势页翻',
     '改：「该称体重了」的提醒从 7 天改成 3 天（体重趋势断 7 天就看不准了）',
@@ -859,7 +862,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.83';
+const APP_VERSION = 'v3.84';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3869,11 +3872,16 @@ function init() {
 
   const bodyDate = consumeBodyLink();
   loadDay();
-  pullBodyJson().then(hit => {
+  // 打开 App 时先拉一次；如果「打开账本自动采集」的快捷指令正在后台写数据，
+  // 再补拉两次，保证它写完之后能立刻显示出来
+  const grabBody = () => pullBodyJson().then(hit => {
     if (!hit) return;
     try { loadDay(); } catch (e) {}
-    toast('⚖️ 已同步体脂秤数据', 2600);
+    toast('⚖️ 已同步体脂秤数据', 2400);
   });
+  grabBody();
+  setTimeout(grabBody, 2500);
+  setTimeout(grabBody, 7000);
   if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
