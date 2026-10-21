@@ -178,3 +178,9 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 2. 四处版本号 + `RELEASES` 顶部条目
 3. push 后 `curl version.txt` 确认；Pages 偶尔要等 1–2 分钟，`gh run list` 看部署是否失败
 4. 让用户在两台设备各点一次「设置 → 关于与更新 → 强制更新」，标题旁版本号对上才算更新
+
+## 里程碑存档
+
+- **v3.65（2026-10-21）**：用户确认「完美存档」的版本。此版本包含：容器滚动的键盘方案、真机手感通过、悬浮 Dock（按设备屏幕圆角计算）、磨砂玻璃卡片 + 渐变描边、圆环细边光、改名入口（三个点）、通知页（App 内总开关 + 五类提醒 + 锁屏真推送）、拍照两张图并排、跨设备记录同步、右上角强制更新按钮。
+- 锁屏推送已落地：Cloudflare Worker `ledger-push`（详见 `push/README.md` 顶部「当前状态」）。
+- 回退方式：`git revert <该提交>` 或 `git checkout v3.65-ok`（tag）。

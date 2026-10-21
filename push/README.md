@@ -1,5 +1,17 @@
 # 锁屏推送（Cloudflare Worker）· 一次性设置
 
+> **当前状态（已部署完成，2026-10-21）**
+>
+> - 服务地址：`https://ledger-push.karenwang228.workers.dev`
+> - 账号：Cloudflare「Karenwang228@icloud.com's Account」（account id `fcbd9fa5…`）
+> - KV：`SUBS` → `3cb937691f9d4d148c7ce1d147c49c52`
+> - 定时：`30 13 * * *`（= 北京时间 21:30）
+> - 部署方式：`cd push && npx wrangler deploy`（配置见 `wrangler.toml`；已登录过，token 存在 `~/Library/Preferences/.wrangler`）
+> - 验证：浏览器打开 `/config`（看 devices 数）、`/test`（立刻给所有设备发一条）
+> - App 端内置了这个地址，用户只需在「设置 → 通知 → 锁屏通知」打开开关并允许通知
+
+
+
 做完以后：**手机 / iPad 锁屏、App 没打开，也能收到「热量账本」的通知。**
 不需要服务器运维、不需要信用卡，免费额度足够个人用。
 
