@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.00', d: '10-21', items: [
+    '加：身体历史单独存一份 body-history.json，App 打开自动合并 —— 快捷指令每次只写当天那条，再也不会把历史覆盖掉',
+    '修：body.json 被写成换行未转义的非法 JSON 时，App 也能容错解析',
+  ]},
   { v: 'v3.99', d: '10-21', items: [
     '修：云端同步改成「按日期合并」身体数据和体重 —— 之前拉云端时会把本机导入的历史整份覆盖掉（所以 App 里只剩一条）',
   ]},
@@ -913,7 +917,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.99';
+const APP_VERSION = 'v4.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3147,11 +3151,44 @@ function consumeBodyLink() {
 }
 
 /* ---- 体脂秤：快捷指令把 {d,w,bf} 写进仓库的 body.json，这里拉下来 ---- */
+async function pullBodyHistory() {
+  try {
+    const r = await fetch('body-history.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
+    if (!r.ok) return 0;
+    const j = await r.json();
+    const items = Array.isArray(j && j.items) ? j.items : [];
+    if (!items.length) return 0;
+    const d = Store.load();
+    d.body = d.body || {}; d.weights = d.weights || {};
+    let n = 0;
+    for (const it of items) {
+      const dd = String(it.d || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
+      const w = Number(it.w) || 0, bf = Number(it.bf) || 0;
+      const bmi = Number(it.bmi) || null, ffm = Number(it.ffm) || null;
+      if (!w && !bf && !bmi && !ffm) continue;
+      if (w) d.weights[dd] = w;
+      d.body[dd] = { bf: bf || null, bmi, ffm };
+      n++;
+    }
+    if (!n) return 0;
+    const lastD = Object.keys(d.body).sort().pop();
+    if (lastD && d.weights[lastD]) d.profile.weight_kg = d.weights[lastD];
+    Store.save({ silent: true });
+    return n;
+  } catch (e) { return 0; }
+}
+
 async function pullBodyJson() {
   try {
     const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return false;
-    const j = await r.json();
+    let j;
+    try { j = await r.json(); } catch (e) {
+      // 快捷指令可能写成 {"w":"66\n65.9"} 这种换行没转义的非法 JSON，先修一下
+      const txt = (await (await fetch('body.json?t=' + Date.now(), { cache: 'no-store' })).text());
+      try { j = JSON.parse(txt.replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
+    }
     if (!j) return null;
     // 支持历史批量导入：{"items":[{"d","w","bf","bmi","ffm"}, ...]}
     if (Array.isArray(j.items)) {
@@ -3991,6 +4028,7 @@ function init() {
   loadDay();
   // 打开 App 时先拉一次；如果「打开账本自动采集」的快捷指令正在后台写数据，
   // 再补拉两次，保证它写完之后能立刻显示出来
+  pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
       try { loadDay(); } catch (e) {}
