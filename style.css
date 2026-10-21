@@ -389,8 +389,15 @@ body.nlog-open .sheet-mask.on {
   background: rgba(0,0,0,.28);
   top: var(--topbar-h, 64px);   /* 不盖住顶栏，顶栏一点都不变色 */
 }
-#nlogSheet .sh-hd { padding: 15px 24px 8px; }   /* 标题和 × 对到圆角中心 */
-#nlogSheet .sh-hd .x { font-size: 24px; padding: 0 2px; }
+/* 标题行：内边距 = 圆角半径的一半，× 正好落在圆角 45° 的中点上 */
+#nlogSheet .sh-hd {
+  padding: calc(var(--dock-r, 28px) * 0.5) calc(var(--dock-r, 28px) * 0.5) 10px;
+  align-items: center;
+}
+#nlogSheet .sh-hd .x {
+  width: 34px; height: 34px; margin: -8px -8px -8px 0; padding: 0;
+  display: grid; place-items: center; font-size: 22px; line-height: 1;
+}
 #nlogList {
   max-height: 54dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 2px 0 4px; display: flex; flex-direction: column; flex: 1 1 auto;

@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.30', d: '10-22', items: [
+    '改：提醒记录标题行的内边距改成「圆角半径的一半」，× 正好落在圆角 45° 中点上，标题和它垂直对齐',
+  ]},
   { v: 'v4.29', d: '10-22', items: [
     '修：打开提醒记录时顶栏出现一块变黑 —— 遮罩不再盖住顶栏',
     '改：「提醒记录」标题和 × 往内收，对齐到圆角中心',
@@ -1031,7 +1034,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.29';
+const APP_VERSION = 'v4.30';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
