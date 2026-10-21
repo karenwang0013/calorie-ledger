@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.56', d: '10-22', items: [
+    '改：底部提示条「日期 · 设备」的点号按换行自适应 —— 同一排就带「·」，换行了就自动去掉（只影响底部提示条，提醒记录里的格式不变）',
+  ]},
   { v: 'v4.55', d: '10-22', items: [
     '改：同步提示里的「日期 · 设备」改成「日期（设备）」—— 换行时不会留下一个悬空的点',
   ]},
@@ -1125,7 +1128,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.55';
+const APP_VERSION = 'v4.56';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1165,13 +1168,23 @@ const SCALE_NAME = "米家体脂秤";
 // 统一提示：✅ 已更新：<更新了什么> <日期> · <哪台设备>
 function updToast(what, date, device, ms = 2600) {
   const d = date ? ' ' + String(date).slice(5) : '';
-  toast(`✅ 已更新：${what}${d}${device ? '（' + device + '）' : ''}`, ms);
+  const main = `✅ 已更新：${what}${d}${device ? ' · ' + device : ''}`;
+  const alt = `✅ 已更新：${what}${d}${device ? ' ' + device : ''}`;
+  toast(main, ms, alt);
 }
 
-function toast(msg, ms = 2200) {
+function toast(msg, ms = 2200, alt) {
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('on');
+  // 如果这行字换行了，就把分隔用的「·」去掉（同排时保留）
+  if (alt) {
+    requestAnimationFrame(() => {
+      const cs = getComputedStyle(t);
+      const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5 || 18;
+      if (t.getBoundingClientRect().height > lh * 1.55) t.textContent = alt;
+    });
+  }
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('on'), ms);
 }
@@ -3930,9 +3943,9 @@ function init() {
     if (date) {
       retryLeft = 0;
       if (!runNotifyChecks()) {
-        let msg = `✅ 已更新：热量数据 ${c.at.slice(5)}（${WATCH_NAME}）`;
-        if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)}（${SCALE_NAME}）`;
-        toast(msg, 3200);
+        let msg = `✅ 已更新：热量数据 ${c.at.slice(5)} · ${WATCH_NAME}`;
+        if (gotBody) msg += `  ｜  体重数据 ${gotBody._at || String(gotBody.d || c.at).slice(5)} · ${SCALE_NAME}`;
+        toast(msg, 3200, msg.replace(/ · /g, ' '));
       }
     }
     else if (c && c.at) {
