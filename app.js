@@ -23,6 +23,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.02', d: '10-21', items: [
+    '改：「身体数据 · 最近一次」去掉里面那层小框，四个数字直接排在卡片里',
+    '改：「体重趋势」加了摘要（最新 / 较上次 / 区间），图表加大',
+    '改：「历史记录」改成一行一天 —— 左边日期、中间体重、右边体脂/BMI/去脂小标签，最多 30 天',
+    '修：手机/iPad 记录不同步 —— 同步时改成就地合并，两边新加的记录都保留，不再互相覆盖',
+    '加：从后台切回 App 时也会自动刷新身体数据（不用点按钮）',
+  ]},
   { v: 'v4.01', d: '10-21', items: [
     '修：体重/去脂体重单位统一（快捷指令返回克时自动 ÷1000，例如 66000 → 66.0），体脂率小数自动转百分比（0.169 → 16.9%）',
     '修：顺带修好「消耗 571832 千卡」—— 那是体重被当成 66 吨算出来的基础代谢',
@@ -921,7 +928,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.01';
+const APP_VERSION = 'v4.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2551,20 +2558,35 @@ function renderMe() {
     const b = last ? (body[last] || {}) : {};
     const w = last ? wts[last] : null;
     const bmi = b.bmi || (w && st.profile.height_cm ? Math.round((w / Math.pow(st.profile.height_cm / 100, 2)) * 10) / 10 : null);
-    const rows = dates.slice(0, 20).map(dt => {
+
+    // 历史：一行一天，日期 + 体重 + 小标签
+    const rows = dates.slice(0, 30).map(dt => {
       const bb = body[dt] || {}, ww = wts[dt];
-      return `<div class="gitem">
-        <div class="n">${dt.slice(5)}
-          <span class="sub">${ww ? ww + ' kg' : ''}${bb.bf ? ' · 体脂 ' + bb.bf + '%' : ''}${bb.bmi ? ' · BMI ' + bb.bmi : ''}${bb.ffm ? ' · 去脂 ' + bb.ffm + 'kg' : ''}</span>
-        </div>
+      const tags = [];
+      if (bb.bf) tags.push(`${bb.bf}%`);
+      if (bb.bmi) tags.push(`BMI ${bb.bmi}`);
+      if (bb.ffm) tags.push(`去脂 ${bb.ffm}`);
+      return `<div class="hrow">
+        <div class="d">${dt.slice(5)}</div>
+        <div class="w">${ww ? ww : '—'}<small>${ww ? ' kg' : ''}</small></div>
+        <div class="tags">${tags.map(t => `<span>${t}</span>`).join('')}</div>
       </div>`;
     }).join('');
+
     const wtPts = dates.filter(dt => wts[dt]).sort().map(dt => ({ date: dt, kg: wts[dt] }));
+    const nPt = wtPts.length;
+    const latestKg = nPt ? wtPts[nPt - 1].kg : null;
+    const prevKg = nPt >= 2 ? wtPts[nPt - 2].kg : null;
+    const deltaKg = latestKg != null && prevKg != null ? Math.round((latestKg - prevKg) * 10) / 10 : null;
+    const kgs = wtPts.map(p => p.kg);
+    const minKg = kgs.length ? Math.min(...kgs) : null;
+    const maxKg = kgs.length ? Math.max(...kgs) : null;
+
     h = meBackBar('身体数据') + `
       <div class="card">
         <h3>最近一次${last ? ` <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${last.slice(5)}</span>` : ''}</h3>
         ${last ? `
-          <div class="stats stats4" style="margin:0">
+          <div class="bstats">
             <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div></div>
             <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div></div>
             <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div></div>
@@ -2572,13 +2594,16 @@ function renderMe() {
           </div>
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
-      ${wtPts.length >= 2 ? `<div class="card">
-        <h3>体重趋势</h3>
-        ${lineChart(wtPts, wtPts[0].date, wtPts[wtPts.length - 1].date)}
-        <div class="legend"><span><i style="background:var(--blue)"></i>体重 kg</span>
-          <span style="margin-left:auto">${wtPts.length} 次</span></div>
+      ${nPt >= 2 ? `<div class="card">
+        <h3>体重趋势 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${nPt} 次</span></h3>
+        <div class="trendsum">
+          <div><span>最新</span><b>${latestKg != null ? latestKg : '—'}<small>kg</small></b></div>
+          <div><span>较上次</span><b class="${deltaKg > 0 ? 'up' : (deltaKg < 0 ? 'down' : '')}">${deltaKg == null ? '—' : (deltaKg > 0 ? '+' : '') + deltaKg}<small>kg</small></b></div>
+          <div><span>区间</span><b>${minKg}–${maxKg}<small>kg</small></b></div>
+        </div>
+        ${lineChart(wtPts, wtPts[0].date, wtPts[nPt - 1].date)}
       </div>` : ''}
-      ${rows ? `<div class="card"><h3>历史记录</h3>${rows}</div>` : ''}
+      ${rows ? `<div class="card"><h3>历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
@@ -4105,6 +4130,9 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     lastPull = Date.now();
+    // 切回前台也刷一次身体数据（历史 + 当天）
+    pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
+    pullBodyJson().then(j => { if (j) { try { loadDay(); } catch (e) {} } });
     pullCloudData().then(date => {
       if (date) { loadDay(); updToast('热量数据', date, WATCH_NAME, 2200); }
       else autoCatchUp();

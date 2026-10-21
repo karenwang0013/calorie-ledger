@@ -821,6 +821,18 @@ async function cloudPull(force) {
       // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
       local.body = Object.assign({}, lBody, rd.body || {});
       local.weights = Object.assign({}, lWts, rd.weights || {});
+      // 记录按 id 合并（两边各自加的都保留，不再互相覆盖）
+      const byId = new Map();
+      for (const l of (rd.logs || [])) if (l && l.id) byId.set(l.id, l);
+      for (const l of (local.logs || [])) if (l && l.id && !byId.has(l.id)) byId.set(l.id, l);
+      if (byId.size) local.logs = [...byId.values()].sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      // 每日活动数据：同一天取「更新时间较晚」的那份
+      const daily = Object.assign({}, rd.daily || {});
+      for (const [k, v] of Object.entries(local.daily || {})) {
+        const rv = daily[k];
+        if (!rv || String(v.cloudAt || '') >= String(rv.cloudAt || '')) daily[k] = v;
+      }
+      if (Object.keys(daily).length) local.daily = daily;
       local.settings.updatedAt = rAt;
       localStorage.setItem(Store.KEY, JSON.stringify(local));
       setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));

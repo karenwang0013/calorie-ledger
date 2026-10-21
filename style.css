@@ -335,6 +335,38 @@ html.kb .sc-body {
 .stats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
 .stats .at { font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; white-space: nowrap; }
 
+/* 身体数据 · 最近一次（不套小框） */
+.bstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 2px; }
+.bstats > div { text-align: center; position: relative; }
+.bstats > div + div::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--line);
+}
+.bstats .k { font-size: 10.5px; color: var(--muted2); letter-spacing: .4px; }
+.bstats .v { font-size: 19px; font-weight: 600; margin-top: 7px; font-variant-numeric: tabular-nums; }
+.bstats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
+
+/* 身体数据 · 趋势摘要 */
+.trendsum { display: flex; gap: 10px; margin: 2px 0 6px; }
+.trendsum > div { flex: 1; }
+.trendsum span { font-size: 10.5px; color: var(--muted2); display: block; }
+.trendsum b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.trendsum b small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
+.trendsum b.up { color: #ff8a7a; }
+.trendsum b.down { color: #7fe3a1; }
+
+/* 身体数据 · 历史列表 */
+.hlist { margin-top: 4px; }
+.hrow { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
+.hrow:first-child { border-top: none; padding-top: 2px; }
+.hrow .d { font-size: 12.5px; color: var(--muted); width: 52px; font-variant-numeric: tabular-nums; }
+.hrow .w { font-size: 15.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hrow .w small { font-size: 10px; color: var(--muted2); font-weight: 400; }
+.hrow .tags { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.hrow .tags span {
+  font-size: 10.5px; color: var(--muted2);
+  background: rgba(255,255,255,.05); padding: 2px 7px; border-radius: 20px;
+}
+
 /* 四项横排：体重 / 体脂率 / BMI / 去脂体重 */
 .stats.stats4 { grid-template-columns: repeat(4, 1fr); padding: 14px 2px; }
 .stats.stats4 .k { font-size: 10.5px; letter-spacing: .4px; }
