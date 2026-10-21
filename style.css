@@ -395,7 +395,14 @@ html.kb .sc-body {
   border: 1px solid rgba(255,255,255,.07);
   top: calc(var(--dock-r, 28px) * 0.49);
 }
-#nlogSheet::before { left: calc(var(--dock-r, 28px) * 0.49); }
+#nlogSheet::before {
+  /* 左边那个稍大一点，圆心仍在圆角弧心上，和右上角呼应 */
+  left: calc(var(--dock-r, 28px) * 0.39);
+  top: calc(var(--dock-r, 28px) * 0.39);
+  width: calc(var(--dock-r, 28px) * 1.22);
+  height: calc(var(--dock-r, 28px) * 1.22);
+  border-color: rgba(255,255,255,.085);
+}
 #nlogSheet::after { right: calc(var(--dock-r, 28px) * 0.49); }
 
 #nlogSheet .sh-foot {
