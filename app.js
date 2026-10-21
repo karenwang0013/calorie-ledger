@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.46', d: '10-22', items: [
+    '改：提醒记录去掉「提醒记录」四个字，只剩顶部小横杠',
+    '记：以后要恢复 ×，按 v4.41 的样子一起恢复标题（左上、和 × 同一中心线、16px），横杠宽度和玻璃质感保持现状 —— 开关在 NLOG_UI',
+  ]},
   { v: 'v4.45', d: '10-22', items: [
     '改：提醒记录横杠再宽一点（54 → 66px）',
     '改：标题字号 20 → 18px，并往下移一点',
@@ -1087,7 +1091,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.45';
+const APP_VERSION = 'v4.46';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1113,8 +1117,13 @@ function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
 
-/* 提醒记录弹层的界面开关：以后要恢复 × 或顶部小横杠，把 true/false 改掉就行 */
-const NLOG_UI = { closeX: false, grab: true, titleCenter: true };
+/* 提醒记录弹层的界面开关
+   ── 现在的状态：只有顶部小横杠（66px），没有 ×，也没有标题
+   ── 用户要求「恢复叉叉」时，按 v4.41 的样子恢复：
+        closeX: true, showTitle: true, titleCenter: false
+      这样标题会回到左上、和 ×（距顶 0.52 个圆角半径）同一条中心线、16px。
+      注意：横杠宽度（66px）和卡片玻璃质感【不要】跟着回退，保持现状。 */
+const NLOG_UI = { closeX: false, grab: true, titleCenter: false, showTitle: false };
 let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
@@ -2478,6 +2487,7 @@ function openNotifyLog() {
     sheet.classList.toggle('hide-x', !NLOG_UI.closeX);
     sheet.classList.toggle('hide-grab', !NLOG_UI.grab);
     sheet.classList.toggle('title-center', !!NLOG_UI.titleCenter);
+    sheet.classList.toggle('hide-title', !NLOG_UI.showTitle);
   }
   document.body.classList.add('nlog-open');
   if (mask) mask.classList.add('on');

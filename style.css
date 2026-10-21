@@ -408,6 +408,7 @@ body.nlog-open .sheet-mask.on {
 #nlogSheet .sh-hd h2 { margin: 0; }
 /* 弹层界面开关（NLOG_UI 控制） */
 #nlogSheet.hide-x .sh-hd .x { display: none; }
+#nlogSheet.hide-title .sh-hd { display: none; }
 #nlogSheet.hide-grab .grab { display: none; }
 /* 标题居中，并对齐到顶部小横杠的高度 */
 #nlogSheet.title-center .sh-hd {
