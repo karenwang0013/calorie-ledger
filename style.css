@@ -363,16 +363,24 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  /* 位置和圆角以 Dock 为基准；颜色沿用全站卡片，不加额外描边 */
+  /* 位置/圆角跟 Dock 对齐；底色和质感跟首页卡片一致 */
   left: var(--dock-inset); right: var(--dock-inset);
   bottom: calc(var(--dock-bottom) + var(--safe-b));
   max-width: 470px;
-  min-height: 58dvh;
-  max-height: 86dvh;
+  min-height: 64dvh;
+  max-height: 92dvh;
   border-radius: var(--dock-r, 26px);
-  background: var(--bg2);
-  border: 1px solid var(--line2);
-  box-shadow: 0 26px 60px rgba(0,0,0,.5);
+  /* 和首页卡片同一套质感：实底 + 玻璃描边 */
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 24px 56px rgba(0,0,0,.5);
+}
+#nlogSheet .sh-foot {
+  background: transparent;
+  border-top: 0;
+  padding: 6px 16px 10px;
 }
 #nlogSheet .sh-foot {
   background: transparent;
