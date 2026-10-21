@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.76', d: '10-21', items: [
+    '改：锁屏推送改成走 GitHub（不再依赖 Cloudflare）—— 订阅信息存进你的仓库，由 GitHub Actions 每天北京时间 21:30 发一条。这条链路你的手机能访问（数据同步一直在用）',
+    '前提：设置 → 数据备份 → 自动同步 里填好 Token，用的是同一个',
+    '修：开关会记住你的选择、不再自己弹回；真实状态写在那行小字里',
+  ]},
   { v: 'v3.73', d: '10-21', items: [
     '修：锁屏通知开关会被弹回去 —— 现在开关记住你的选择（打开就一直显示打开），下面那行单独显示真实状态：「已订阅…」或「已打开，正在登记…（权限已允许）」，登记没成功时下次打开 App 会自动重试',
   ]},
@@ -827,7 +832,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.75';
+const APP_VERSION = 'v3.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2010,75 +2015,71 @@ function notifyCfg() {
   Object.keys(def).forEach(k => { if (typeof v[k] === 'boolean') out[k] = v[k]; });
   return out;
 }
-const PUSH_WORKER_DEFAULT = 'https://ledger-push.karenwang228.workers.dev';   // 已部署好的推送服务
-let pushOn = false;                       // 是否真的订阅成功（真实状态）
-const pushWanted = () => setting('push_wanted', false) === true;   // 用户是否打开过这个开关
-let pushErr = '';                         // 最后一次失败原因（显示在页面上，也上报服务端）
+const PUSH_VAPID_PUBLIC = 'BPNsn4aHy2PzwVg0f5jUWtuKuNmhIpAeIl-yicP74Wzyas8pv4eY-x36YhKP7XuxK6v0ktNWjm6Tkb2Aitbxrz8';   // 推送公钥（私钥在仓库 Secrets，由 GitHub Actions 发）
+const PUSH_SUBS_PATH = 'push-subs.json';
+const GH_REPO = 'karenwang0013/calorie-ledger';
+let pushOn = false;
+const pushWanted = () => setting('push_wanted', false) === true;
+let pushErr = '';
+
 const pushSupported = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 const b64uToBytes = (b64) => {
   const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
   const raw = atob(pad.replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from(raw, c => c.charCodeAt(0));
 };
+
+/* 订阅存进仓库的 push-subs.json（用自动同步那个 Token） */
+async function saveSubToRepo(sub, remove) {
+  const token = (typeof cloudToken === 'function' && cloudToken()) || '';
+  if (!token) throw new Error('先在「数据备份 → 自动同步」里填好 Token');
+  const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint };
+  const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + PUSH_SUBS_PATH;
+  const h = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
+  let list = [], sha = null;
+  const r = await fetch(api, { headers: h, cache: 'no-store' });
+  if (r.ok) {
+    const j = await r.json();
+    sha = j.sha;
+    try { list = JSON.parse(decodeURIComponent(escape(atob((j.content || '').replace(/\n/g, ''))))) || []; } catch (e) { list = []; }
+  } else if (r.status !== 404) {
+    throw new Error('读不到订阅文件（HTTP ' + r.status + '）');
+  }
+  list = (Array.isArray(list) ? list : []).filter(x => x && x.endpoint && x.endpoint !== payload.endpoint);
+  if (!remove) list.push(payload);
+  const body = {
+    message: remove ? '推送：移除一台设备' : '推送：登记一台设备',
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2)))),
+  };
+  if (sha) body.sha = sha;
+  const w = await fetch(api, { method: 'PUT', headers: Object.assign({}, h, { 'content-type': 'application/json' }), body: JSON.stringify(body) });
+  if (!w.ok) throw new Error('订阅没存上（HTTP ' + w.status + '）');
+}
+
 async function refreshPushState() {
   pushOn = false;
   if (!pushSupported()) return;
   try {
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
-    // 权限已经允许、但还没订阅（以前登记失败的情况）→ 打开 App 时自动补订阅，不需要再点什么
-    if (!sub && pushWanted() && (typeof Notification !== 'undefined') && Notification.permission === 'granted') {
-      try {
-        const u0 = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
-        const cfg = await (await fetch(u0 + '/config', { cache: 'no-store' })).json();
-        if (cfg && cfg.publicKey) {
-          sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
-        }
-      } catch (e) {
-        pushErr = (e && (e.name ? e.name + ': ' : '') + (e.message || e)) || '订阅失败';
-        postPushDiag(pushErr);
-      }
+    // 权限已允许、但还没订阅 → 打开 App 自动补订阅，不需要再点什么
+    if (!sub && pushWanted() && Notification.permission === 'granted') {
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(PUSH_VAPID_PUBLIC) });
     }
     pushOn = !!sub;
-    // 已有订阅就顺手再登记一次（幂等）：万一服务端数据丢了 / 换了服务，打开 App 自己修好
-    if (sub) {
-      const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
-      try { postPushDiag(''); } catch (e) {}
-      const payload = sub.toJSON ? sub.toJSON() : null;
-      if (url && payload && payload.endpoint) {
-        fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
-      }
-    }
-  } catch (e) { pushOn = false; pushErr = String((e && e.message) || e); postPushDiag(pushErr); }
-  if (!pushErr) postPushDiag('');
+    // 有订阅就顺手再登记一次（幂等）：换过服务、丢过文件都能自愈
+    if (sub) await saveSubToRepo(sub, false);
+  } catch (e) {
+    pushOn = false;
+    pushErr = (e && (e.name ? e.name + ': ' : '') + (e.message || e)) || '订阅失败';
+  }
 }
 
-// 把「权限 / 有没有订阅 / 报错」报给服务端，方便远程定位（不涉及任何私人数据）
-function postPushDiag(err) {
-  try {
-    const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
-    const body = {
-      ver: APP_VERSION,
-      perm: (typeof Notification !== 'undefined') ? Notification.permission : 'none',
-      sub: pushOn ? 1 : 0,
-      standalone: window.navigator.standalone === true ? 1 : 0,
-      dm: (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ? 1 : 0,
-      ctrl: navigator.serviceWorker && navigator.serviceWorker.controller ? 1 : 0,
-      secure: window.isSecureContext ? 1 : 0,
-      ua: /iPad/.test(navigator.userAgent) ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : 'other',
-      err: err || '',
-    };
-    fetch(url + '/diag', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
-  } catch (e) {}
-}
 async function enablePush() {
   if (!pushSupported()) { toast('这台设备不支持网页推送', 3600); return false; }
   const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if (!standalone) { toast('先把 App「添加到主屏幕」，从主屏幕图标打开再来开这个', 5200); return false; }
-  const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).trim().replace(/\/+$/, '');
-  if (!url) return false;
-  // 关键：iOS 要求「请求通知权限」必须发生在用户手势当下。
-  // 之前先 await 了一次网络请求，手势就被消耗掉了，所以不会弹窗、也不会报错。
+  if (!standalone) { toast('请从主屏幕的「热量账本」图标打开，再来开这个', 5200); return false; }
+  // 请求权限必须在手势当下（不能先 await 网络）
   let perm = Notification.permission;
   if (perm !== 'granted') perm = await Notification.requestPermission();
   if (perm !== 'granted') {
@@ -2088,36 +2089,27 @@ async function enablePush() {
     return false;
   }
   try {
-    const cfg = await (await fetch(url + '/config', { cache: 'no-store' })).json();
-    if (!cfg.publicKey) throw new Error('Worker 没返回公钥，确认地址正确');
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
-    // PushSubscription 直接 JSON.stringify 会得到 {}（它的字段不可枚举），必须 toJSON()
-    const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint, keys: { p256dh: '', auth: '' } };
-    const r = await fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-    const jr = await r.json().catch(() => ({}));
-    if (!r.ok || !jr.ok) throw new Error(jr.error || '订阅没存上（服务端没收到）');
-    setSetting('push_worker', url);
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(PUSH_VAPID_PUBLIC) });
+    await saveSubToRepo(sub, false);
     pushOn = true;
     pushErr = '';
     toast('锁屏通知已开启', 2600);
     return true;
   } catch (e) {
     pushErr = (e && (e.name ? e.name + ': ' : '') + (e.message || e)) || '开启失败';
-    postPushDiag(pushErr);
     toast('开启失败：' + pushErr, 5200);
     return false;
   }
 }
+
 async function disablePush() {
   try {
-    const url = setting('push_worker', '') || '';
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
-      const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint };
-      if (url) { try { await fetch(url + '/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }); } catch (e) {} }
+      try { await saveSubToRepo(sub, true); } catch (e) {}
       await sub.unsubscribe();
     }
     pushOn = false;
@@ -2400,7 +2392,7 @@ function renderMe() {
           </div>
           <label class="sw"><input type="checkbox" id="swPush" ${pushWanted() ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
-        ${pushOn ? `<button class="btn sm" id="pushTest" style="margin-top:14px">发一条测试通知</button>` : `<div class="hint" style="margin-top:12px;line-height:1.85">
+        ${pushOn ? '' : `<div class="hint" style="margin-top:12px;line-height:1.85">
           点右边的开关就会订阅；系统弹「是否允许通知」时点<b>允许</b>。<br>
           每台设备各点一次（iPhone、iPad 都是）。<br>
           <span style="color:var(--muted2)">推送服务已经部署好，不用再填地址。</span>
@@ -2589,16 +2581,6 @@ function wireMe() {
   if (spIn) spIn.onchange = () => {
     setSetting('notify_inapp', spIn.checked);
     toast(spIn.checked ? 'App 内提醒已打开' : 'App 内提醒已静音', 1600);
-  };
-
-  const pt = $('#pushTest');
-  if (pt) pt.onclick = async () => {
-    const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
-    try {
-      const r = await fetch(url + '/test');
-      const j = await r.json();
-      toast(j.ok ? '已发，注意锁屏' : '发送失败', 2600);
-    } catch (e) { toast('发送失败：' + e.message, 4000); }
   };
 
   const spPush = $('#swPush');

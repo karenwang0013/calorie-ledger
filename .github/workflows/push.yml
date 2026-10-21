@@ -1,0 +1,24 @@
+name: 每天锁屏推送
+
+on:
+  schedule:
+    - cron: '30 13 * * *'      # UTC 13:30 = 北京时间 21:30
+  workflow_dispatch:            # 也可以在 Actions 页面手动点一下测试
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i web-push@3 --no-save
+      - name: 发推送
+        run: node push/send.mjs
+        env:
+          VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}

@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v413';
+const CACHE = 'ledger-v414';
 const ASSETS = [
   './',
   './index.html',
@@ -75,6 +75,18 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', (e) => {
   e.waitUntil((async () => {
     let body = '点开看看今天的记录';
+    // 服务端（GitHub Actions）会带正文过来，优先用它
+    try {
+      if (e.data) {
+        const p = e.data.json();
+        if (p && p.body) {
+          await self.registration.showNotification(p.title || '热量账本', {
+            body: p.body, icon: './icon-192.png', badge: './icon-192.png', tag: 'ledger-daily',
+          });
+          return;
+        }
+      }
+    } catch (err) {}
     try {
       const r = await fetch('./data.json?t=' + Date.now(), { cache: 'no-store' });
       if (r.ok) {
