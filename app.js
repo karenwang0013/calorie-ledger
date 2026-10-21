@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.96', d: '10-21', items: [
+    '加：同步区多了「用本机覆盖云端」—— 哪台设备的记录是完整的，就在那台上点它，把云端刷成这台的样子',
+  ]},
   { v: 'v3.95', d: '10-21', items: [
     '修：手机和 iPad 记录不同步 —— 打开 App 自动拉体脂数据时，会把「本机最后修改时间」刷成现在，导致这台设备永远觉得自己比云端新，不再拉云端、还会把旧记录推上去覆盖另一台',
     '加：设置里的同步区多了「从云端覆盖本机」，两边不一致时一键拉齐',
@@ -901,7 +904,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.95';
+const APP_VERSION = 'v3.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2421,6 +2424,7 @@ function renderMe() {
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
           <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
+          <button class="btn sm" id="cloudForcePush">用本机覆盖云端</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
@@ -2861,6 +2865,16 @@ function wireMe() {
     const r = await busyBtn(cfp, '拉取中…', async () => await cloudPull(true));
     if (r === 'pulled') { await loadDay(); renderMe(); toast('✅ 已用云端覆盖本机', 2600); }
     else toast('❌ 拉取失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/token'), 4000);
+  };
+
+  const cfpush = $('#cloudForcePush');
+  if (cfpush) cfpush.onclick = async () => {
+    if (!cloudToken()) return toast('先填 token 并保存');
+    if (!confirm('用这台设备的记录覆盖云端？另一台设备上独有的记录会被清掉。')) return;
+    cloudLast = '';
+    const r = await busyBtn(cfpush, '上传中…', async () => await cloudPush());
+    if (r) { setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚')); toast('✅ 已用本机覆盖云端', 2600); }
+    else toast('❌ 上传失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/token'), 4000);
   };
 
   if (ghNow) ghNow.onclick = async () => {
