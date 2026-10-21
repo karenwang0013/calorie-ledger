@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.85', d: '10-21', items: [
+    '改：右上角「数据同步」现在一次拉两份 —— 手表的热量数据 + 体脂秤的体重/体脂率，不用分两次',
+  ]},
   { v: 'v3.84', d: '10-21', items: [
     '改：账本打开时会连拉三次体脂秤数据（0 秒 / 2.5 秒 / 7 秒），配合「打开账本自动采集」的快捷指令 —— 打开即最新',
   ]},
@@ -862,7 +865,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.84';
+const APP_VERSION = 'v3.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3270,10 +3273,11 @@ function init() {
     let date = null;
     try { date = await pullCloudData(); } catch (e) {}
     refreshBtn.classList.remove('spin');
+    const gotBody = await pullBodyJson();   // 体脂秤那份也一起拉
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
-    if (date) { retryLeft = 0; if (!runNotifyChecks()) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡`, 2800); }
+    if (date) { retryLeft = 0; if (!runNotifyChecks()) toast(`✅ 已更新：${c.at.slice(5)} 云端数据 · 活动 ${c.active} 千卡` + (gotBody ? ' · 体脂秤' : ''), 2800); }
     else if (c && c.at) {
       retryLeft = 3;
       retryPullCloud();
