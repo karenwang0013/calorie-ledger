@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.98', d: '10-21', items: [
+    '加：身体数据支持「批量导入历史」—— body.json 里一次给很多条（{"items":[...]}），账本会把每条都写进对应日期，不再只认最后一条',
+  ]},
   { v: 'v3.97', d: '10-21', items: [
     '修：体脂数据兼容「一次返回多条样本」（取最新一条）和「日期为空」（用今天兜底）—— 快捷指令现在读回来是 66\n65.9 这种也能正确显示',
   ]},
@@ -907,7 +910,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.97';
+const APP_VERSION = 'v3.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3147,6 +3150,27 @@ async function pullBodyJson() {
     if (!r.ok) return false;
     const j = await r.json();
     if (!j) return null;
+    // 支持历史批量导入：{"items":[{"d","w","bf","bmi","ffm"}, ...]}
+    if (Array.isArray(j.items)) {
+      const d0 = Store.load();
+      d0.body = d0.body || {}; d0.weights = d0.weights || {};
+      let n = 0;
+      for (const it of j.items) {
+        const dd = String(it.d || '').slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
+        const w = Number(it.w) || 0, bf = Number(it.bf) || 0;
+        const bmi = Number(it.bmi) || null, ffm = Number(it.ffm) || null;
+        if (!w && !bf && !bmi && !ffm) continue;
+        if (w) d0.weights[dd] = w;
+        d0.body[dd] = { bf: bf || null, bmi, ffm };
+        n++;
+      }
+      if (!n) return null;
+      const lastD = Object.keys(d0.body).sort().pop();
+      if (lastD && d0.weights[lastD]) d0.profile.weight_kg = d0.weights[lastD];
+      Store.save({ silent: true });
+      return { d: lastD, n };
+    }
     // 快捷指令可能一次返回多条样本（"66\n65.9"），取最后一条（最新）
     const pick = v => {
       const lines = String(v == null ? '' : v).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
