@@ -1328,6 +1328,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   background-image: linear-gradient(var(--glass-card), var(--glass-card)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  /* 模糊再强一点，透出来才像磨砂玻璃（不是一块半透明塑料） */
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
@@ -1406,9 +1407,11 @@ input:focus, textarea:focus, select:focus {
 .tabbar .inner {
   border: 1px solid transparent;
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(21, 25, 28, 0.78) 0%, rgba(13, 16, 18, 0.84) 100%), var(--edge-gloss);
+  /* 更透一点、颜色也淡一档：让底下的内容隐约透出来，磨砂才显得高级 */
+  background-image: linear-gradient(180deg, rgba(34, 40, 45, 0.56) 0%, rgba(20, 25, 29, 0.66) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  /* 模糊再强一点，透出来才像磨砂玻璃（不是一块半透明塑料） */
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
 }
