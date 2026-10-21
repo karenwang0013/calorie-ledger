@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.34', d: '10-22', items: [
+    '改：提醒记录下滑时只轻微变淡（最低保留 82% 不透明），不再透到能看见底下的按钮',
+    '改：× 再往上移一点，标题自动跟随',
+  ]},
   { v: 'v4.33', d: '10-22', items: [
     '改：提醒记录初始状态改成不透明实底（只有往下拖时才渐隐）',
     '改：× 再往上移一截，标题跟着走',
@@ -1045,7 +1049,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.33';
+const APP_VERSION = 'v4.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2468,7 +2472,7 @@ function wireNotifyDrag() {
       dragging = true;
       sheet.classList.add('dragging');
       sheet.style.transform = 'translateY(' + dy + 'px)';
-      sheet.style.opacity = String(Math.max(0.55, 1 - dy / 520));
+      sheet.style.opacity = String(Math.max(0.82, 1 - dy / 1600));
       e.preventDefault();
     }
   }, { passive: false });

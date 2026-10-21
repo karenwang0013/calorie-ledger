@@ -399,7 +399,7 @@ body.nlog-open .sheet-mask.on {
 /* 标题行：× 距右边一个半径；文字和它同一中心线，跟着它走 */
 #nlogSheet .sh-hd {
   display: flex; align-items: center;
-  padding: max(2px, calc(var(--dock-r, 28px) - 40px)) calc(var(--dock-r, 28px) - 21px) 4px calc(var(--dock-r, 28px) * 0.62);
+  padding: max(0px, calc(var(--dock-r, 28px) - 50px)) calc(var(--dock-r, 28px) - 21px) 2px calc(var(--dock-r, 28px) * 0.62);
   min-height: 42px;
 }
 #nlogSheet .sh-hd .x {
