@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.25', d: '10-21', items: [
+    '改：提醒记录里的「清空记录」按钮再往上移（底部留白 10px → 24px）',
+  ]},
   { v: 'v4.24', d: '10-21', items: [
     '改：提醒记录弹层的质感改成和首页卡片完全一致（同样的玻璃底 + 玻璃描边 + 背景模糊）',
   ]},
@@ -1012,7 +1015,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.24';
+const APP_VERSION = 'v4.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
