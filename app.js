@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.82', d: '10-21', items: [
+    '改：体脂秤数据改成「无感」写入 —— 快捷指令直接把数据写进仓库的 body.json，App 打开时自动读取，不再跳转 Safari 页面',
+  ]},
   { v: 'v3.81', d: '10-21', items: [
     '改：体脂秤链接只需要传「体重」和「体脂率」，BMI 由 App 按你的身高自己算 —— 快捷指令少做一半的步骤',
   ]},
@@ -852,7 +855,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.81';
+const APP_VERSION = 'v3.82';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3006,6 +3009,32 @@ function consumeBodyLink() {
   } catch (e) { return null; }
 }
 
+/* ---- 体脂秤：快捷指令把 {d,w,bf} 写进仓库的 body.json，这里拉下来 ---- */
+async function pullBodyJson() {
+  try {
+    const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return false;
+    const j = await r.json();
+    if (!j || !j.d) return false;
+    const date = String(j.d).slice(0, 10);
+    const w = Number(j.w) || 0, bf = Number(j.bf) || 0;
+    if (!w && !bf) return false;
+    const d = Store.load();
+    const cur = (d.body && d.body[date]) || {};
+    if (d.weights[date] === w && cur.bf === bf) return false;
+    if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
+    let bmi = cur.bmi || null;
+    if (!bmi && w) {
+      const h = Number(d.profile.height_cm) || 0;
+      if (h > 0) bmi = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
+    }
+    d.body = d.body || {};
+    d.body[date] = { bf: bf || cur.bf || null, bmi, ffm: cur.ffm || null };
+    Store.save();
+    return true;
+  } catch (e) { return false; }
+}
+
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
 
 /**
@@ -3787,6 +3816,11 @@ function init() {
 
   const bodyDate = consumeBodyLink();
   loadDay();
+  pullBodyJson().then(hit => {
+    if (!hit) return;
+    try { loadDay(); } catch (e) {}
+    toast('⚖️ 已同步体脂秤数据', 2600);
+  });
   if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
