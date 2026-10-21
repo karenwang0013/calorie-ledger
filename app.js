@@ -827,7 +827,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.74';
+const APP_VERSION = 'v3.75';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2167,7 +2167,7 @@ function pushNote() {
   const perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unknown';
   const permTxt = perm === 'granted' ? '已允许' : perm === 'denied' ? '被拒绝' : '还没允许';
   if (pushOn) return `已订阅 · 通知权限${permTxt} · 锁屏、App 关闭时也能收到`;
-  if (pushWanted() && pushErr) return `已打开，但没登记上：${pushErr}`;
+  if (pushWanted() && pushErr) return `⚠️ 没登记上：${pushErr}`;
   if (pushWanted()) return `已打开，正在登记…（通知权限：${permTxt}）下次打开 App 会自动重试`;
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
@@ -3721,7 +3721,9 @@ function init() {
     });
   }
 
-  refreshPushState().catch(() => {});
+  refreshPushState().then(() => {
+    if (mePage === 'notify') { try { renderMe(); } catch (e) {} }
+  }).catch(() => {});
 
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => hardReloadApp();
