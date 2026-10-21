@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.37', d: '10-22', items: [
+    '改：提醒记录完全套用 .card（AI 识别那张卡）的效果 —— 同样的玻璃底色 + 同样的背景模糊，只改尺寸和位置',
+  ]},
   { v: 'v4.36', d: '10-22', items: [
     '改：提醒记录左上角的小圆放大一点（1.22 倍半径），圆心仍落在圆角弧心上，和右上角呼应',
   ]},
@@ -1055,7 +1058,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.36';
+const APP_VERSION = 'v4.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

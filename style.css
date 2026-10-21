@@ -363,13 +363,6 @@ html.kb .sc-body {
 /* 提醒记录 */
 /* 提醒记录：悬浮卡片式弹层 */
 #nlogSheet {
-  /* 实底：不透明，只有下滑时才渐隐 */
-  background-color: #15181b;
-  background-image: linear-gradient(#15181b, #15181b), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
   /* 直接套用 .card 的全部参数，这里只改位置和尺寸 */
   position: fixed;
   left: var(--dock-inset); right: var(--dock-inset);
