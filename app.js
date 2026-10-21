@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.79', d: '10-21', items: [
+    '改：通知页彻底瘦身 —— 「App 内提醒」「锁屏通知」下面的说明小字也去掉了，现在整页只有标题 + 开关',
+  ]},
   { v: 'v3.78', d: '10-21', items: [
     '改：通知页六项开关去掉了下面的说明小字，只留标题（不再有括号里的补充）',
     '改：每天小结时间从 21:30 改为 22:00',
@@ -841,7 +844,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.78';
+const APP_VERSION = 'v3.79';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2413,30 +2416,19 @@ function renderMe() {
       <div class="card">
         <h3>通知渠道</h3>
         <div class="switchrow">
-          <div>
-            <div class="stitle">App 内提醒</div>
-            <div class="hint" style="margin:4px 0 0">总开关。关掉下面所有提醒都不弹</div>
-          </div>
+          <div class="stitle">App 内提醒</div>
           <label class="sw"><input type="checkbox" id="swInApp" ${setting('notify_inapp', true) === false ? '' : 'checked'}><i></i></label>
         </div>
         <div class="switchrow" style="margin-top:16px">
-          <div>
-            <div class="stitle">锁屏通知</div>
-            <div class="hint" style="margin:4px 0 0">${pushNote()}</div>
-          </div>
+          <div class="stitle">锁屏通知</div>
           <label class="sw"><input type="checkbox" id="swPush" ${pushWanted() ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
-        ${pushOn ? '' : `<div class="hint" style="margin-top:12px;line-height:1.85">
-          点右边的开关就会订阅；系统弹「是否允许通知」时点<b>允许</b>。<br>
-          每台设备各点一次（iPhone、iPad 都是）。<br>
-          <span style="color:var(--muted2)">推送服务已经部署好，不用再填地址。</span>
-        </div>`}
       </div>
       <div class="card">
         <h3>通知我当…</h3>
         ${Object.entries(NOTIFY_ITEMS).map(([k, v], i) => `
           <div class="switchrow" style="margin-top:${i === 0 ? 6 : 16}px">
-            <div><div class="stitle">${v.t}</div></div>
+            <div class="stitle">${v.t}</div>
             ${swOne(k)}
           </div>`).join('')}
       </div>
