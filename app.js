@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.09', d: '10-21', items: [
+    '改：饮食目标的「建议模式」卡去掉渐变底色和绿框，改成普通卡片',
+    '改：身体数据三个板块（最近一次 / 体重趋势 / 历史记录）标题字号统一 13px，标题和右侧日期/翻页器对齐在同一条中心线',
+  ]},
   { v: 'v4.08', d: '10-21', items: [
     '加：饮食目标页顶部多了「建议模式」卡 —— 按你最近一次的身体数据判断该减脂 / 维持 / 增肌，并写明原因和趋势',
     '修：设置首页内容装得下时禁止上下滑动（手机上也一样），子页面不受影响',
@@ -950,7 +954,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.08';
+const APP_VERSION = 'v4.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2658,7 +2662,7 @@ function renderMe() {
 
     h = meBackBar('身体数据') + `
       <div class="card">
-        <h3>最近一次${last ? ` <span class="datechip">${last.slice(5)}</span>` : ''}</h3>
+        <h3 class="bh">最近一次${last ? ` <span class="datechip">${last.slice(5)}</span>` : ''}</h3>
         ${last ? `
           <div class="bstats">
             <div><div class="k">体重 <em>kg</em></div><div class="v">${w || '—'}</div></div>
@@ -2682,7 +2686,7 @@ function renderMe() {
         const pvMin = pagePts.length ? Math.min(...pagePts.map(p => p.kg)) : null;
         const pvMax = pagePts.length ? Math.max(...pagePts.map(p => p.kg)) : null;
         return `<div class="card">
-          <h3>体重趋势
+          <h3 class="bh">体重趋势
             <span class="pager">
               <button class="pgbtn" id="btPrev" ${canPrev ? '' : 'disabled'} aria-label="上一页"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
@@ -2697,7 +2701,7 @@ function renderMe() {
           ${pagePts.length >= 2 ? lineChart(pagePts, pageStart, pageEnd) : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
         </div>`;
       })() : ''}
-      ${rows ? `<div class="card"><h3>历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
+      ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
 `;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
