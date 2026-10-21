@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.78', d: '10-21', items: [
+    '改：通知页六项开关去掉了下面的说明小字，只留标题（不再有括号里的补充）',
+    '改：每天小结时间从 21:30 改为 22:00',
+  ]},
   { v: 'v3.77', d: '10-21', items: [
     '加：「每天 21:30 小结」也变成开关（第六个），关掉就不再每天发摘要',
     '改：21:30 不再固定发一条 —— 按开关和条件来：该称体重 → 没记录 → 小结，命中哪条发哪条，都没命中就不发',
@@ -837,7 +841,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.77';
+const APP_VERSION = 'v3.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2006,12 +2010,12 @@ function meBackBar(title) {
 
 /* ---------------- 通知 ---------------- */
 const NOTIFY_ITEMS = {
-  watch:  { t: '手表数据更新了', d: '拉到手表的消耗数据时，告诉你今天消耗多少、还能吃多少' },
-  goal:   { t: '今天吃超了',     d: '超出每日目标时提醒一句' },
-  day:    { t: '今天还没记录',   d: '晚上 8 点后还没记录就提醒' },
-  weight: { t: '该称体重了',     d: '超过 7 天没记体重时提醒' },
-  fail:   { t: '同步失败',       d: '读不到云端数据时告诉你' },
-  daily:  { t: '每天 21:30 小结', d: '到点告诉你今天记了多少、还差多少（和你有没有记录无关）' },
+  watch:  { t: '手表数据更新了' },
+  goal:   { t: '今天吃超了' },
+  day:    { t: '今天还没记录' },
+  weight: { t: '该称体重了' },
+  fail:   { t: '同步失败' },
+  daily:  { t: '每天 22:00 小结' },
 };
 function notifyCfg() {
   const v = setting('notify_flags', null);
@@ -2432,10 +2436,7 @@ function renderMe() {
         <h3>通知我当…</h3>
         ${Object.entries(NOTIFY_ITEMS).map(([k, v], i) => `
           <div class="switchrow" style="margin-top:${i === 0 ? 6 : 16}px">
-            <div>
-              <div class="stitle">${v.t}</div>
-              <div class="hint" style="margin:4px 0 0">${v.d}</div>
-            </div>
+            <div><div class="stitle">${v.t}</div></div>
             ${swOne(k)}
           </div>`).join('')}
       </div>

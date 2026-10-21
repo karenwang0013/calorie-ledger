@@ -1,6 +1,6 @@
 /**
  * 推送（GitHub Actions 调用）
- *  - 定时（21:30 北京）：按 push-config.json 里的开关，决定发哪一条
+ *  - 定时（22:00 北京）：按 push-config.json 里的开关，决定发哪一条
  *  - 事件（repository_dispatch）：watch / goal / fail，立刻发
  */
 import fs from 'node:fs';
