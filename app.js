@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.41', d: '10-22', items: [
+    '改：提醒记录的 × 再往上移（中心从 0.91 个圆角半径抬到 0.52），标题同步跟着上移',
+  ]},
   { v: 'v4.40', d: '10-22', items: [
     '改：× 移到原来右上角圆的圆心位置，删掉左右两个装饰圆',
     '改：标题和 × 保持同一中心线，跟着 × 走',
@@ -1069,7 +1072,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.40';
+const APP_VERSION = 'v4.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

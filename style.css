@@ -394,12 +394,12 @@ body.nlog-open .sheet-mask.on {
   position: relative;
   display: flex; align-items: center;
   /* 标题中心对到 × 的中心（0.91 个圆角半径处） */
-  padding: calc(var(--dock-r, 28px) * 0.91 - 11px) 12px 2px calc(var(--dock-r, 28px) * 0.62);
+  padding: calc(var(--dock-r, 28px) * 0.52 - 11px) 12px 2px calc(var(--dock-r, 28px) * 0.62);
   min-height: 42px;
 }
 #nlogSheet .sh-hd .x {
   position: absolute;
-  top: calc(var(--dock-r, 28px) * 0.91 - 21px);
+  top: calc(var(--dock-r, 28px) * 0.52 - 21px);
   right: calc(var(--dock-r, 28px) * 0.91 - 21px);
   width: 42px; height: 42px; margin: 0; padding: 0;
   display: grid; place-items: center;
