@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.64', d: '10-22', items: [
+    '改：出错提醒的图标从红色 ✕ 换成 ⚠️',
+  ]},
   { v: 'v4.63', d: '10-22', items: [
     '改：云端写入从 GitHub 换成 Gitee（国内直连稳定）—— data.json 设备同步 + body.json 体脂数据都走 Gitee',
     '说明：网页仍托管在 GitHub Pages，读取不受影响；设置里的 Token 改成填 Gitee 私人令牌（只需 projects 权限）',
@@ -1151,7 +1154,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.63';
+const APP_VERSION = 'v4.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2582,7 +2585,7 @@ function openNotifyLog() {
   if (box) {
     box.innerHTML = list.length ? list.map(x => `
       <div class="ncard">
-        <div class="nt"><i class="nicon ${x.ok === false ? 'bad' : 'ok'}">${x.ok === false ? '✕' : '✓'}</i>${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class="nt"><i class="nicon ${x.ok === false ? 'bad' : 'ok'}">${x.ok === false ? '⚠️' : '✓'}</i>${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="nb">${esc(x.b || '')}</div>
       </div>`).join('')
       : `<div class="ncard nempty">还没有提醒记录<br><span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div>`;
