@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.44', d: '10-22', items: [
+    '改：提醒记录顶部的小横杠加回来，宽度 38 → 54px',
+    '改：标题放在横杠下面（居中），不再和横杠重叠',
+  ]},
   { v: 'v4.43', d: '10-22', items: [
     '改：提醒记录标题放大到 20px（居中后更好看）',
   ]},
@@ -1079,7 +1083,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.43';
+const APP_VERSION = 'v4.44';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1106,7 +1110,7 @@ function round(n) { return Math.round(Number(n) || 0); }
 let toastTimer = null;
 
 /* 提醒记录弹层的界面开关：以后要恢复 × 或顶部小横杠，把 true/false 改掉就行 */
-const NLOG_UI = { closeX: false, grab: false, titleCenter: true };
+const NLOG_UI = { closeX: false, grab: true, titleCenter: true };
 let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
