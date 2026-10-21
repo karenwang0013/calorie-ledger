@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.71', d: '10-21', items: [
+    '改：通知权限已经允许过的设备，打开 App 会自动补订阅并登记到推送服务 —— 不用再关开关、不用再点任何东西',
+  ]},
   { v: 'v3.70', d: '10-21', items: [
     '加：通知页「锁屏通知」那行现在会直接写出状态 —— 通知权限：已允许 / 还没允许 / 被拒绝，以及有没有订阅成功，方便一眼看出卡在哪一步',
     '只动了 Dock 的透明度和这条提示文字，其他卡片、圆角、磨砂一律没动',
@@ -817,7 +820,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.70';
+const APP_VERSION = 'v3.71';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2013,7 +2016,17 @@ async function refreshPushState() {
   if (!pushSupported()) return;
   try {
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
+    let sub = await reg.pushManager.getSubscription();
+    // 权限已经允许、但还没订阅（以前登记失败的情况）→ 打开 App 时自动补订阅，不需要再点什么
+    if (!sub && (typeof Notification !== 'undefined') && Notification.permission === 'granted') {
+      try {
+        const u0 = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
+        const cfg = await (await fetch(u0 + '/config', { cache: 'no-store' })).json();
+        if (cfg && cfg.publicKey) {
+          sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
+        }
+      } catch (e) { /* 订阅失败就维持关闭状态 */ }
+    }
     pushOn = !!sub;
     // 已有订阅就顺手再登记一次（幂等）：万一服务端数据丢了 / 换了服务，打开 App 自己修好
     if (sub) {
