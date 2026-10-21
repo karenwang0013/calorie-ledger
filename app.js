@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.08', d: '10-21', items: [
+    '加：饮食目标页顶部多了「建议模式」卡 —— 按你最近一次的身体数据判断该减脂 / 维持 / 增肌，并写明原因和趋势',
+    '修：设置首页内容装得下时禁止上下滑动（手机上也一样），子页面不受影响',
+  ]},
   { v: 'v4.07', d: '10-21', items: [
     '改：滑到底时最后一张卡更贴近 Dock（底部留白从 150px 收到「Dock 高 + 16px」），页面短的时候也不会再空出一大截',
     '改：各页末尾多余的空行删掉（原来额外加了 26px）',
@@ -946,7 +950,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.07';
+const APP_VERSION = 'v4.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2492,7 +2496,55 @@ function renderMe() {
 `;
   } else if (mePage === 'nutri') {
     const a = (d.targets.auto) || {};
+    // 根据最近的身体数据给一个模式建议
+    const rec = (() => {
+      const st = Store.load();
+      const ds = Object.keys(st.body || {}).filter(dt => st.weights[dt]).sort();
+      const last = ds[ds.length - 1];
+      if (!last) return null;
+      const w = st.weights[last];
+      const b = st.body[last] || {};
+      const hcm = Number(st.profile.height_cm) || 0;
+      const bmi = b.bmi || (hcm ? Math.round((w / Math.pow(hcm / 100, 2)) * 10) / 10 : null);
+      const bf = b.bf || null;
+      const male = (st.profile.sex !== 'female');
+      const cutBf = male ? 20 : 28, bulkBf = male ? 10 : 18;
+      let mode = 'maintain', why = '';
+      if ((bmi && bmi >= 24) || (bf && bf > cutBf)) {
+        mode = 'cut';
+        why = bmi && bmi >= 24 ? `BMI ${bmi}，已经超过 24` : `体脂 ${bf}%，偏高`;
+      } else if ((bmi && bmi < 18.5) || (bf && bf < bulkBf)) {
+        mode = 'bulk';
+        why = bmi && bmi < 18.5 ? `BMI ${bmi}，偏轻` : `体脂 ${bf}%，偏低`;
+      } else {
+        mode = 'maintain';
+        why = bmi ? `BMI ${bmi}、体脂 ${bf ? bf + '%' : '正常'}，都在健康区间` : '身体数据在健康区间';
+      }
+      // 近 14 天趋势补一句
+      let trendTxt = '';
+      const recent = ds.slice(-14);
+      if (recent.length >= 2) {
+        const dw = Math.round((st.weights[recent[recent.length - 1]] - st.weights[recent[0]]) * 10) / 10;
+        if (Math.abs(dw) >= 0.3) trendTxt = `近 ${recent.length} 次称重 ${dw > 0 ? '涨' : '降'}了 ${Math.abs(dw)} kg`;
+      }
+      return { mode, why, trendTxt, w, bmi, bf, date: last };
+    })();
+    const recName = rec ? DIET_MODES[rec.mode].n : '';
     h = meBackBar('饮食目标') + `
+      ${rec ? `
+      <div class="rec-card">
+        <div class="rec-top">
+          <span class="rec-label">建议模式</span>
+          <span class="rec-pill rec-${rec.mode}">${recName}</span>
+        </div>
+        <div class="rec-why">${rec.why}${rec.trendTxt ? ' · ' + rec.trendTxt : ''}</div>
+        <div class="rec-nums">
+          <span>${rec.w} <em>kg</em></span>
+          <span>BMI ${rec.bmi || '—'}</span>
+          <span>体脂 ${rec.bf ? rec.bf + '%' : '—'}</span>
+          <span class="rec-date">${rec.date.slice(5)}</span>
+        </div>
+      </div>` : ''}
       <div class="card">
         <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">目标模式</label>
         <div class="modes" id="dietModes">
@@ -2674,10 +2726,26 @@ function renderMe() {
 
   $('#meBody').innerHTML = h;
   fitAboutFill();
+  fitMeScroll();
   wireMe();
 }
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
+/* 设置首页：内容装得下就不要上下滑动（手机屏幕也一样） */
+function fitMeScroll() {
+  const sc = $('#scroller'), body = $('#meBody');
+  if (!sc || !body) return;
+  if (mePage) { sc.style.overflowY = ''; return; }   // 子页面保持正常滚动（里面有输入框，不能锁）
+  const tab = document.querySelector('.tabbar');
+  const tabTop = tab ? tab.getBoundingClientRect().top : window.innerHeight - 60;
+  let bottom = 0;
+  for (const el of body.children) {
+    const r = el.getBoundingClientRect();
+    if (r.height) bottom = Math.max(bottom, r.bottom);
+  }
+  sc.style.overflowY = (bottom > 0 && bottom <= tabTop - 8) ? 'hidden' : '';
+}
+
 function fitAboutFill() {
   const doc = document.documentElement;
   const fill = document.querySelector('.about-fill');
@@ -3112,6 +3180,7 @@ function refreshTodayIfNeeded() {
 function switchView(v) {
   refreshTodayIfNeeded();
   if (v !== 'me') document.documentElement.classList.remove('noscroll');
+  if (v !== 'me') { const sc0 = $('#scroller'); if (sc0) sc0.style.overflowY = ''; }
   if (window.scTop) window.scTop();
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
