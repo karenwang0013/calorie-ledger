@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.81', d: '10-21', items: [
+    '改：体脂秤链接只需要传「体重」和「体脂率」，BMI 由 App 按你的身高自己算 —— 快捷指令少做一半的步骤',
+  ]},
   { v: 'v3.80', d: '10-21', items: [
     '加：体脂秤数据接入 —— 用快捷指令从「健康」读出体重/体脂率/BMI，打开一个链接就能写进账本（?body=1&w=65.9&bf=16.9&bmi=21.8）',
     '加：趋势页「体重趋势」下面会显示最近一次的体脂率 / BMI',
@@ -849,7 +852,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.80';
+const APP_VERSION = 'v3.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2989,8 +2992,14 @@ function consumeBodyLink() {
     const date = u.searchParams.get('d') || todayISO();
     const d = Store.load();
     if (w !== null) { d.weights[date] = w; d.profile.weight_kg = w; }
+    // BMI 没传就自己算（身高在「身体与目标」里）
+    let bmiVal = bmi;
+    if (!bmiVal && w) {
+      const h = Number(d.profile.height_cm) || 0;
+      if (h > 0) bmiVal = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
+    }
     d.body = d.body || {};
-    d.body[date] = { bf, bmi, ffm };
+    d.body[date] = { bf, bmi: bmiVal, ffm };
     Store.save();
     history.replaceState(null, '', u.pathname + u.hash);
     return date;
