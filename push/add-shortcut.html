@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>添加「同步体脂」快捷指令</title>
+<style>
+ body{margin:0;padding:28px 20px;background:#0a0b0c;color:#f2f4f2;
+   font-family:-apple-system,"PingFang SC",sans-serif;text-align:center}
+ h1{font-size:20px;margin:8px 0 6px}
+ p{color:#8b938c;font-size:14px;line-height:1.7;margin:0 0 26px}
+ a.btn{display:block;padding:18px;border-radius:16px;background:#d6ff4b;color:#0a0b0c;
+   font-size:17px;font-weight:700;text-decoration:none;margin:14px 0}
+ a.alt{display:block;padding:14px;border-radius:14px;border:1px dashed rgba(255,255,255,.25);
+   color:#8b938c;font-size:14px;text-decoration:none}
+ small{display:block;color:#626963;font-size:12px;margin-top:22px;line-height:1.8}
+</style></head><body>
+<h1>「同步体脂」快捷指令</h1>
+<p>点下面的按钮把快捷指令装进「快捷指令」App。<br>装好后每次点一下，它会把体脂秤的最新体重和体脂率写进热量账本。</p>
+
+<a class="btn" id="imp" href="#">① 直接安装（推荐）</a>
+<a class="alt" href="sync-body.shortcut" download>② 下载文件（如果上面没反应）</a>
+
+<small>装好后：快捷指令 App → 找到「同步体脂」→ 点右下角 ▶️ 运行<br>
+第一次运行会问是否允许访问健康数据，选「允许」。</small>
+
+<script>
+  const file = location.href.replace(/[^/]*$/, '') + 'sync-body.shortcut';
+  document.getElementById('imp').href =
+    'shortcuts://import-shortcut?url=' + encodeURIComponent(file) + '&name=' + encodeURIComponent('同步体脂');
+</script>
+</body></html>
