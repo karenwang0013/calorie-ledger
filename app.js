@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.45', d: '10-22', items: [
+    '改：提醒记录横杠再宽一点（54 → 66px）',
+    '改：标题字号 20 → 18px，并往下移一点',
+  ]},
   { v: 'v4.44', d: '10-22', items: [
     '改：提醒记录顶部的小横杠加回来，宽度 38 → 54px',
     '改：标题放在横杠下面（居中），不再和横杠重叠',
@@ -1083,7 +1087,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.44';
+const APP_VERSION = 'v4.45';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

@@ -412,11 +412,11 @@ body.nlog-open .sheet-mask.on {
 /* 标题居中，并对齐到顶部小横杠的高度 */
 #nlogSheet.title-center .sh-hd {
   justify-content: center;
-  padding: 8px 0 6px;      /* 横杠在上，文字在它下面 */
+  padding: 16px 0 10px;    /* 横杠在上，文字在它下面，再往下压一点 */
   min-height: 0;
 }
-#nlogSheet .grab { width: 54px; }   /* 横杠加宽一点 */
-#nlogSheet.title-center .sh-hd h2 { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+#nlogSheet .grab { width: 66px; height: 4px; }   /* 横杠再宽一点 */
+#nlogSheet.title-center .sh-hd h2 { text-align: center; font-size: 18px; font-weight: 700; letter-spacing: .3px; }
 
 /* 下滑关闭时不要有过渡延迟 */
 #nlogSheet.dragging { transition: none; }
