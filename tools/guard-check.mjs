@@ -34,7 +34,7 @@ const checks = [
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
   ['底部提示条永远在 Dock 上方（不许压住）', /\.toast \{[\s\S]*?bottom: calc\(var\(--dock-bottom\) \+ var\(--dock-h\) \+ \d+px/.test(css)],
   ['卡片玻璃质感只有一处定义（--glass-card + --edge-gloss + --glass-blur）', (css.match(/linear-gradient\(var\(--glass-card\)/g) || []).length === 1],
-  ['提醒记录弹层复用 .card 质感，不许自带背景/模糊', !/#nlogSheet\s*\{[^}]*?(backdrop-filter|background-image|background-color)/.test(css)],
+  ['提醒记录弹层用的是 Dock 那套磨砂玻璃（blur 20 + 半透底）', /#nlogSheet\s*\{[^}]*backdrop-filter: blur\(20px\) saturate\(150%\)/.test(css)],
   ['名字和铅笔在同一行（放不下时省略名字，不把铅笔挤到下一行）', /\.nameline \{[^}]*display: flex/.test(css) && /\.nameline \.nmtxt \{[^}]*text-overflow: ellipsis/.test(css)],
 ];
 

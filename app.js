@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.54', d: '10-22', items: [
+    '改：提醒记录弹层材质改成和 Dock 一样的半透磨砂玻璃（blur 20 + 半透底）',
+    '加：铃铛灯三色 —— 全成功绿、成功+失败橙、全失败红；没有未读就不亮',
+  ]},
   { v: 'v4.53', d: '10-22', items: [
     '改：提醒记录弹层加宽（左右各留 6px，最大 520px），内容尽量一排显示完整；太长会自动省略',
     '加：guard-check 新增「提示条永远在 Dock 上方」检查 —— 以后谁把它压到 Dock 上，发不出版本',
@@ -1118,7 +1122,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.53';
+const APP_VERSION = 'v4.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2500,10 +2504,15 @@ function logError(kind, title, body) {
 function renderNotifyDot() {
   const dot = $('#notifyDot');
   if (!dot) return;
-  const list = notifyLogGet();
   const seen = Number(localStorage.getItem('notify_seen_ts') || 0);
-  const unread = list.some(x => Number(x.ts) > seen);
-  dot.hidden = !unread;
+  const unread = notifyLogGet().filter(x => Number(x.ts) > seen);
+  if (!unread.length) { dot.hidden = true; dot.className = 'dot'; return; }
+  const bad = unread.filter(x => x.ok === false).length;
+  const good = unread.length - bad;
+  // 全成功=绿，成功+失败=橙，全失败=红
+  const kind = bad === 0 ? 'ok' : (good === 0 ? 'bad' : 'mix');
+  dot.hidden = false;
+  dot.className = 'dot ' + kind;
 }
 function openNotifyLog() {
   // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
