@@ -61,14 +61,20 @@ const Store = {
     return this.data;
   },
 
-  save() {
+  /**
+   * opts.silent = true：只写本机，不动 updatedAt、不触发上传。
+   * 用于「打开 App 自动拉体脂数据」这类不该影响「谁更新」判定的写入，
+   * 否则会让本机永远比云端新，两台设备就不再互相拉取（历史 bug）。
+   */
+  save(opts) {
+    const silent = !!(opts && opts.silent);
     try {
-      if (this.data && this.data.settings) this.data.settings.updatedAt = new Date().toISOString();
+      if (!silent && this.data && this.data.settings) this.data.settings.updatedAt = new Date().toISOString();
       localStorage.setItem(this.KEY, JSON.stringify(this.data));
     } catch (e) {
       throw new Error('浏览器存储写不进去了（可能空间满了）。先导出备份。');
     }
-    if (typeof scheduleCloudSync === 'function') scheduleCloudSync();
+    if (!silent && typeof scheduleCloudSync === 'function') scheduleCloudSync();
   },
 };
 

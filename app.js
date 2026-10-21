@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.95', d: '10-21', items: [
+    '修：手机和 iPad 记录不同步 —— 打开 App 自动拉体脂数据时，会把「本机最后修改时间」刷成现在，导致这台设备永远觉得自己比云端新，不再拉云端、还会把旧记录推上去覆盖另一台',
+    '加：设置里的同步区多了「从云端覆盖本机」，两边不一致时一键拉齐',
+  ]},
   { v: 'v3.94', d: '10-21', items: [
     '改：「最近一次」四项横着排成一行（体重 / 体脂率 / BMI / 去脂体重），去掉每个下面的小字说明',
     '改：称重日期挪到标题右边「最近一次 10-18」',
@@ -897,7 +901,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.94';
+const APP_VERSION = 'v3.95';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2416,6 +2420,7 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
+          <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
       </div>
@@ -2849,6 +2854,15 @@ function wireMe() {
     renderMe();
   };
 
+  const cfp = $('#cloudForcePull');
+  if (cfp) cfp.onclick = async () => {
+    if (!cloudToken()) return toast('先填 token 并保存');
+    if (!confirm('用云端那份数据覆盖这台设备？本机还没上传的改动会丢。')) return;
+    const r = await busyBtn(cfp, '拉取中…', async () => await cloudPull(true));
+    if (r === 'pulled') { await loadDay(); renderMe(); toast('✅ 已用云端覆盖本机', 2600); }
+    else toast('❌ 拉取失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/token'), 4000);
+  };
+
   if (ghNow) ghNow.onclick = async () => {
     if (!cloudToken()) return toast('先在下面填 token 并保存');
     setCloudState('正在同步…');
@@ -3131,7 +3145,7 @@ async function pullBodyJson() {
     const ffm = Number(j.ffm) || cur.ffm || null;   // 去脂体重（秤上给的）
     d.body = d.body || {};
     d.body[date] = { bf: bf || cur.bf || null, bmi, ffm };
-    Store.save();
+    Store.save({ silent: true });   // 不参与「谁更新」判定，避免两台设备互相盖掉记录
     return j;
   } catch (e) { return null; }
 }
