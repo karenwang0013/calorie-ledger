@@ -815,7 +815,12 @@ async function cloudPull(force) {
     const rAt = String(remote.updatedAt || '');
     const lAt = String((local.settings && local.settings.updatedAt) || '');
     if (force || (rAt && rAt > lAt)) {
-      Object.assign(local, remote.data, { settings: Object.assign({}, local.settings, remote.data.settings) });
+      const rd = remote.data || {};
+      const lBody = local.body || {}, lWts = local.weights || {};
+      Object.assign(local, rd, { settings: Object.assign({}, local.settings, rd.settings) });
+      // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
+      local.body = Object.assign({}, lBody, rd.body || {});
+      local.weights = Object.assign({}, lWts, rd.weights || {});
       local.settings.updatedAt = rAt;
       localStorage.setItem(Store.KEY, JSON.stringify(local));
       setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));

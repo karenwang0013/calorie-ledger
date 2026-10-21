@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.99', d: '10-21', items: [
+    '修：云端同步改成「按日期合并」身体数据和体重 —— 之前拉云端时会把本机导入的历史整份覆盖掉（所以 App 里只剩一条）',
+  ]},
   { v: 'v3.98', d: '10-21', items: [
     '加：身体数据支持「批量导入历史」—— body.json 里一次给很多条（{"items":[...]}），账本会把每条都写进对应日期，不再只认最后一条',
   ]},
@@ -910,7 +913,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.98';
+const APP_VERSION = 'v3.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
