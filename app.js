@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.68', d: '10-22', items: [
+    '修：E01 的真正原因 —— Gitee 的 raw 链接会跳到没有跨域头的域名，浏览器直接拒绝；改成用 Gitee API 读（带 CORS）',
+  ]},
   { v: 'v4.67', d: '10-22', items: [
     '改：热量数据（health.json）也改从 Gitee 读 —— 现在热量 + 体脂 + 同步全部走国内通道',
     '改：E01 错误里带上原始报错，方便定位是哪一步断的',
@@ -1167,7 +1170,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.67';
+const APP_VERSION = 'v4.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2527,8 +2530,17 @@ async function disablePush() {
 }
 
 // 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
-/* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages */
-const GITEE_RAW = 'https://gitee.com/karen228/calorie-ledger-data/raw/master';
+/* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages。
+   注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
+const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
+async function giteeGetText(path) {
+  const r = await fetch(GITEE_API + '/' + path + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  const b64 = String(j && j.content || '').replace(/\s/g, '');
+  if (!b64) throw new Error('内容为空');
+  return decodeURIComponent(escape(atob(b64)));
+}
 
 /* ---------------- 提醒记录（锁屏推送的内容，App 里也能查） ---------------- */
 function notifyLogGet() {
@@ -3730,8 +3742,9 @@ async function pullBodyHistory() {
 
 async function pullBodyJson() {
   try {
-    const r = await fetch(GITEE_RAW + '/body.json?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) { logError('err-body', '体脂数据读取失败', 'body.json 拉不到（HTTP ' + r.status + '）'); return false; }
+    let bodyText = '';
+    try { bodyText = await giteeGetText('body.json'); }
+    catch (e) { logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e)); return false; }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
     try {
@@ -3743,10 +3756,9 @@ async function pullBodyJson() {
       }
     } catch (e) {}
     let j;
-    try { j = await r.json(); } catch (e) {
+    try { j = JSON.parse(bodyText); } catch (e) {
       // 快捷指令可能写成 {"w":"66\n65.9"} 这种换行没转义的非法 JSON，先修一下
-      const txt = (await (await fetch('body.json?t=' + Date.now(), { cache: 'no-store' })).text());
-      try { j = JSON.parse(txt.replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
+      try { j = JSON.parse(bodyText.replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
     }
     if (!j) return null;
     if (bodyAt) j._at = bodyAt;   // 这份数据写上去的时间
@@ -3833,8 +3845,11 @@ let lastCloud = null;
 
 /* 优先从 raw.githubusercontent 取（提交后几秒就有），失败再回落到 Pages 上的副本 */
 async function fetchHealthText() {
+  try {
+    const t = (await giteeGetText('health.json')).trim();
+    if (t) return t;
+  } catch (e) { /* 换下一个源 */ }
   const urls = [
-    GITEE_RAW + '/health.json',
     'https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/health.json',
     'health.json',
   ];
