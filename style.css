@@ -389,13 +389,18 @@ body.nlog-open .sheet-mask.on {
   background: rgba(0,0,0,.28);
   top: var(--topbar-h, 64px);   /* 不盖住顶栏，顶栏一点都不变色 */
 }
-/* 标题行：内边距 = 圆角半径的一半，× 正好落在圆角 45° 的中点上 */
+/* 标题行：把圆角当成一个圆，× 放在这个圆的圆心（距右边/上边各一个半径） */
 #nlogSheet .sh-hd {
-  padding: calc(var(--dock-r, 28px) * 0.5) calc(var(--dock-r, 28px) * 0.5) 10px;
+  position: relative;
+  padding: calc(var(--dock-r, 28px) - 10px) calc(var(--dock-r, 28px) * 0.62) 8px;
   align-items: center;
+  min-height: calc(var(--dock-r, 28px) * 1.5);
 }
 #nlogSheet .sh-hd .x {
-  width: 34px; height: 34px; margin: -8px -8px -8px 0; padding: 0;
+  position: absolute;
+  top: calc(var(--dock-r, 28px) - 17px);
+  right: calc(var(--dock-r, 28px) - 17px);
+  width: 34px; height: 34px; margin: 0; padding: 0;
   display: grid; place-items: center; font-size: 22px; line-height: 1;
 }
 #nlogList {

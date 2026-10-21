@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.31', d: '10-22', items: [
+    '改：× 改成绝对定位，位置 = 距右边一个圆角半径、距上边一个圆角半径 —— 正好是那个圆角的圆心；标题在它的水平线上',
+  ]},
   { v: 'v4.30', d: '10-22', items: [
     '改：提醒记录标题行的内边距改成「圆角半径的一半」，× 正好落在圆角 45° 中点上，标题和它垂直对齐',
   ]},
@@ -1034,7 +1037,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.30';
+const APP_VERSION = 'v4.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
