@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.01', d: '10-21', items: [
+    '修：体重/去脂体重单位统一（快捷指令返回克时自动 ÷1000，例如 66000 → 66.0），体脂率小数自动转百分比（0.169 → 16.9%）',
+    '修：顺带修好「消耗 571832 千卡」—— 那是体重被当成 66 吨算出来的基础代谢',
+  ]},
   { v: 'v4.00', d: '10-21', items: [
     '加：身体历史单独存一份 body-history.json，App 打开自动合并 —— 快捷指令每次只写当天那条，再也不会把历史覆盖掉',
     '修：body.json 被写成换行未转义的非法 JSON 时，App 也能容错解析',
@@ -917,7 +921,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.00';
+const APP_VERSION = 'v4.01';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3151,6 +3155,18 @@ function consumeBodyLink() {
 }
 
 /* ---- 体脂秤：快捷指令把 {d,w,bf} 写进仓库的 body.json，这里拉下来 ---- */
+// 单位归一：快捷指令可能返回「克」(66000) 或「小数」(0.169)，统一成 kg / %
+function normKg(v) {
+  const n = Number(v) || 0;
+  if (!n) return 0;
+  return n >= 300 ? Math.round(n / 100) / 10 : Math.round(n * 10) / 10;
+}
+function normPct(v) {
+  const n = Number(v) || 0;
+  if (!n) return 0;
+  return n > 0 && n <= 1 ? Math.round(n * 1000) / 10 : Math.round(n * 10) / 10;
+}
+
 async function pullBodyHistory() {
   try {
     const r = await fetch('body-history.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
@@ -3164,8 +3180,8 @@ async function pullBodyHistory() {
     for (const it of items) {
       const dd = String(it.d || '').slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
-      const w = Number(it.w) || 0, bf = Number(it.bf) || 0;
-      const bmi = Number(it.bmi) || null, ffm = Number(it.ffm) || null;
+      const w = normKg(it.w), bf = normPct(it.bf);
+      const bmi = Number(it.bmi) || null, ffm = normKg(it.ffm) || null;
       if (!w && !bf && !bmi && !ffm) continue;
       if (w) d.weights[dd] = w;
       d.body[dd] = { bf: bf || null, bmi, ffm };
@@ -3216,7 +3232,7 @@ async function pullBodyJson() {
       const lines = String(v == null ? '' : v).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
       return lines.length ? Number(lines[lines.length - 1]) || 0 : 0;
     };
-    const w = pick(j.w), bf = pick(j.bf), jbmi = pick(j.bmi), jffm = pick(j.ffm);
+    const w = normKg(pick(j.w)), bf = normPct(pick(j.bf)), jbmi = pick(j.bmi), jffm = normKg(pick(j.ffm));
     // 日期可能为空（快捷指令的日期步骤没取到），那就用今天
     const date = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [todayISO()])[0];
     if (!w && !bf && !jbmi && !jffm) return null;
