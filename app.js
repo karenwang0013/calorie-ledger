@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.59', d: '10-22', items: [
+    '改：提醒记录不再用一个个小卡片，改成和「历史记录」一样用细线分隔；文字直接落在弹层上，不再发灰',
+  ]},
   { v: 'v4.58', d: '10-22', items: [
     '改：提示条放不下时，设备名（米家体脂秤 / Karen\'s Apple Watch）整体换到下一行，不会在词中间断开成「米 / 家体脂秤」',
   ]},
@@ -1134,7 +1137,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.58';
+const APP_VERSION = 'v4.59';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
