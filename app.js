@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.24', d: '10-21', items: [
+    '改：提醒记录弹层的质感改成和首页卡片完全一致（同样的玻璃底 + 玻璃描边 + 背景模糊）',
+  ]},
   { v: 'v4.23', d: '10-21', items: [
     '改：提醒记录再高一点（64–92vh，底边位置不动）',
     '改：卡片质感跟首页卡片完全一致（同样的玻璃描边 + 实底）',
@@ -1009,7 +1012,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.23';
+const APP_VERSION = 'v4.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

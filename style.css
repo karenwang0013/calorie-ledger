@@ -370,11 +370,14 @@ html.kb .sc-body {
   min-height: 64dvh;
   max-height: 92dvh;
   border-radius: var(--dock-r, 26px);
-  /* 和首页卡片同一套质感：实底 + 玻璃描边 */
+  /* 和首页卡片完全同一套玻璃质感 */
   border: 1px solid transparent;
-  background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
+  background-color: transparent;
+  background-image: linear-gradient(var(--glass-card), var(--glass-card)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   box-shadow: 0 24px 56px rgba(0,0,0,.5);
 }
 #nlogSheet .sh-foot {
