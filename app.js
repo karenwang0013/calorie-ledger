@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.63', d: '10-22', items: [
+    '改：云端写入从 GitHub 换成 Gitee（国内直连稳定）—— data.json 设备同步 + body.json 体脂数据都走 Gitee',
+    '说明：网页仍托管在 GitHub Pages，读取不受影响；设置里的 Token 改成填 Gitee 私人令牌（只需 projects 权限）',
+  ]},
   { v: 'v4.62', d: '10-22', items: [
     '加：离线排队 —— 上传失败时把改动记在本地，下次打开 App / 切回前台自动补传，不会丢',
     '改：设置里的同步区域会显示「有改动还没传上去」，成功后就消失',
@@ -1147,7 +1151,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.62';
+const APP_VERSION = 'v4.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2507,6 +2511,9 @@ async function disablePush() {
 }
 
 // 打开 App / 拉到数据后跑一次：每条一天只提醒一次，显示一条就停
+/* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages */
+const GITEE_RAW = 'https://gitee.com/karen228/calorie-ledger-data/raw/master';
+
 /* ---------------- 提醒记录（锁屏推送的内容，App 里也能查） ---------------- */
 function notifyLogGet() {
   const d = Store.load();
@@ -2829,13 +2836,13 @@ function renderMe() {
       <div class="card">
         <div class="cardhd"><h3>自动同步</h3><button class="linkbtn" id="stopGh">关闭同步</button></div>
         <div class="hint" style="margin:0 0 12px">
-          填一个 GitHub token，之后每次记账都会自动传到仓库里的 <code>data.json</code>。<br>
+          填一个 Gitee 私人令牌，之后每次记账都会自动传到 <code>calorie-ledger-data</code> 仓库的 <code>data.json</code>（国内直连，稳定）。<br>
           换设备时在那边填同一个 Token，点「开启同步」：会先读云端，有云端数据就用云端覆盖这台设备，云端没有才上传本机。
         </div>
         <div class="field">
-          <label>GitHub Token</label>
-          <input id="fGhToken" type="password" placeholder="${setting('gh_token') ? '已填写，需要更换再输入' : 'github_pat_...'}" autocomplete="off">
-          <div class="hint">只勾这一个仓库的 Contents: Read and write</div>
+          <label>Gitee 私人令牌</label>
+          <input id="fGhToken" type="password" placeholder="${(setting('gitee_token') || setting('gh_token')) ? '已填写，需要更换再输入' : '4c25...'}" autocomplete="off">
+          <div class="hint">只勾 <b>projects</b> 权限即可（gitee.com → 设置 → 私人令牌）</div>
         </div>
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
@@ -3705,7 +3712,7 @@ async function pullBodyHistory() {
 
 async function pullBodyJson() {
   try {
-    const r = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
+    const r = await fetch(GITEE_RAW + '/body.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) { logError('err-body', '体脂数据读取失败', 'body.json 拉不到（HTTP ' + r.status + '）'); return false; }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';

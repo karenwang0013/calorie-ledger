@@ -24,7 +24,7 @@ const checks = [
   ['没有多套键盘定位定时器互相打架', !/\[260, 700\]\.forEach/.test(app)],
   ['iPad 保持手机单列（首页不许左右分栏）', !/today-grid|today-sum|today-log/.test(html + css) && /#view-today, #view-trends, #view-me \{[\s\S]*?max-width: 720px/.test(css)],
   ['数据备份只保留「自动同步 + 文件备份」，不再有重复的云端备份卡', !/id="cloudBackup"|id="cloudRestore"/.test(app)],
-  ['自动同步不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
+  ['自动同步不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.gitee_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
   ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
   ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],

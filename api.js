@@ -693,19 +693,21 @@ function downloadCsv() {
 }
 
 /* ---------------- 云端同步（GitHub 仓库里的 data.json） ---------------- */
-const CLOUD = { owner: 'karenwang0013', repo: 'calorie-ledger', path: 'data.json' };
+/* 云端数据放在 Gitee（国内直连稳定）；网页本身仍在 GitHub Pages */
+const CLOUD = { owner: 'karen228', repo: 'calorie-ledger-data', path: 'data.json', branch: 'master' };
+const CLOUD_RAW = `https://gitee.com/${CLOUD.owner}/${CLOUD.repo}/raw/${CLOUD.branch}`;
 let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null, cloudLast = '';
 let cloudErr = '', cloudFailUntil = 0;
 function cloudLastError() { return cloudErr; }
 
 function cloudToken() {
-  return (setting('gh_token', '') || '').trim();
+  return (setting('gitee_token', '') || setting('gh_token', '') || '').trim();
 }
 /* 只把 Token 写进本机，不触发自动上传、不动 updatedAt。
    用于"开启同步"：先比较云端，再决定拉还是推。 */
 function setCloudTokenSilently(token) {
   const d = Store.load();
-  d.settings.gh_token = token;
+  d.settings.gitee_token = token;
   try { localStorage.setItem(Store.KEY, JSON.stringify(d)); } catch (e) { /* 存储满时忽略 */ }
 }
 function b64encode(str) {
@@ -721,14 +723,10 @@ function fetchT(url, opt, ms = 15000) {
     .finally(() => clearTimeout(t));
 }
 function cloudHeaders() {
-  return {
-    'Authorization': 'Bearer ' + cloudToken(),
-    'Accept': 'application/vnd.github+json',
-    'Content-Type': 'application/json',
-  };
+  return { 'Content-Type': 'application/json' };
 }
 function cloudUrl() {
-  return `https://api.github.com/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}`;
+  return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?access_token=${encodeURIComponent(cloudToken())}`;
 }
 
 /* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
@@ -737,6 +735,7 @@ function cloudPayload() {
   // 密钥绝不进仓库：GitHub 的 secret scanning 会直接拒绝，而且本来就不该上传
   if (data.settings) {
     delete data.settings.gh_token;
+    delete data.settings.gitee_token;
     delete data.settings.dashscope_key;
   }
   const limit = 400 * 1024;
@@ -767,15 +766,16 @@ async function cloudPush() {
     let h = 0;
     for (let i = 0; i < payload.length; i += 1) h = (h * 31 + payload.charCodeAt(i)) | 0;
     if (String(h) === cloudLast && cloudSha) return true;
-    const body = { message: 'data sync', content: b64encode(payload), branch: 'main' };
+    const body = { access_token: cloudToken(), message: 'data sync', content: b64encode(payload), branch: CLOUD.branch };
     if (cloudSha) body.sha = cloudSha;
-    let res = await fetchT(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+    let method = cloudSha ? 'PUT' : 'POST';
+    let res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
     if (res.status === 409 || res.status === 422) {
       // sha 过期：重新取一次再传
       const cur = await fetchT(cloudUrl(), { headers: cloudHeaders() });
-      if (cur.ok) { const j = await cur.json(); cloudSha = j.sha; body.sha = j.sha; }
-      else delete body.sha;
-      res = await fetchT(cloudUrl(), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) });
+      if (cur.ok) { const j = await cur.json(); cloudSha = j.sha; body.sha = j.sha; method = 'PUT'; }
+      else { cloudSha = null; method = 'POST'; delete body.sha; }
+      res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
     }
     if (!res.ok) {
       let detail = '';
