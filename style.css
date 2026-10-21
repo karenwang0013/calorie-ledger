@@ -438,7 +438,7 @@ body.nlog-open .sheet-mask.on {
 }
 .ncard {
   background: none; border: 0; border-radius: 0;
-  padding: 19px 0 9px; margin: 0;   /* 内容往下靠，贴近下面的分隔线 */
+  padding: 24px 0 6px; margin: 0;   /* 内容往下靠，贴近下面的分隔线 */
   border-top: 1px solid var(--line);
 }
 .ncard:first-child { border-top: 0; padding-top: 3px; }
