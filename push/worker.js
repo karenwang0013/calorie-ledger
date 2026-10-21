@@ -132,6 +132,24 @@ export default {
       return json({ ok: 1 }, CORS);
     }
 
+    // 诊断：App 打开时把「权限 / 有没有订阅 / 报错」传上来，方便远程定位
+    if (url.pathname === '/diag' && request.method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const rec = Object.assign({ t: new Date().toISOString() }, b);
+      const id = (b.ua || 'dev') + '|' + (b.ver || '');
+      await SUB(env).put('d:' + b64uFromStr(id).slice(0, 40), JSON.stringify(rec));
+      return json({ ok: 1 }, CORS);
+    }
+    if (url.pathname === '/diag') {
+      const l = await SUB(env).list({ prefix: 'd:' });
+      const items = [];
+      for (const k of l.keys.slice(0, 6)) {
+        const v = await SUB(env).get(k.name);
+        if (v) items.push(JSON.parse(v));
+      }
+      return json({ ok: 1, items }, CORS);
+    }
+
     if (url.pathname === '/test') {
       const r = await pushAll(env);
       return json({ ok: 1, ...r }, CORS);

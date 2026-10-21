@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.72', d: '10-21', items: [
+    '加：推送诊断 —— App 打开时把「通知权限 / 是否已订阅 / 报错信息」上报给推送服务，我这边能远程看到到底是哪一步没成，不用你反复描述',
+    '不改任何界面和外观',
+  ]},
   { v: 'v3.71', d: '10-21', items: [
     '改：通知权限已经允许过的设备，打开 App 会自动补订阅并登记到推送服务 —— 不用再关开关、不用再点任何东西',
   ]},
@@ -820,7 +824,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.71';
+const APP_VERSION = 'v3.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2031,12 +2035,29 @@ async function refreshPushState() {
     // 已有订阅就顺手再登记一次（幂等）：万一服务端数据丢了 / 换了服务，打开 App 自己修好
     if (sub) {
       const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
+      try { postPushDiag(''); } catch (e) {}
       const payload = sub.toJSON ? sub.toJSON() : null;
       if (url && payload && payload.endpoint) {
         fetch(url + '/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
       }
     }
-  } catch (e) { pushOn = false; }
+  } catch (e) { pushOn = false; postPushDiag(String(e && e.message || e)); }
+}
+
+// 把「权限 / 有没有订阅 / 报错」报给服务端，方便远程定位（不涉及任何私人数据）
+function postPushDiag(err) {
+  try {
+    const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
+    const body = {
+      ver: APP_VERSION,
+      perm: (typeof Notification !== 'undefined') ? Notification.permission : 'none',
+      sub: pushOn ? 1 : 0,
+      standalone: window.navigator.standalone === true ? 1 : 0,
+      ua: /iPad/.test(navigator.userAgent) ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : 'other',
+      err: err || '',
+    };
+    fetch(url + '/diag', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
+  } catch (e) {}
 }
 async function enablePush() {
   if (!pushSupported()) { toast('这台设备不支持网页推送', 3600); return false; }
