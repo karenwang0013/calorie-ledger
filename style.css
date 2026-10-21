@@ -397,7 +397,7 @@ html.kb .sc-body {
 .pgbtn svg { display: block; }
 .pgbtn:active { background: rgba(255,255,255,.12); }
 .pgbtn:disabled { opacity: .28; cursor: default; }
-.pgdate { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); font-variant-numeric: tabular-nums; letter-spacing: .4px; }
+.pgdate { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; letter-spacing: .4px; }
 
 /* 身体数据 · 趋势摘要 */
 .trendsum { display: flex; gap: 10px; margin: 2px 0 6px; }
