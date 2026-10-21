@@ -353,19 +353,20 @@ html.kb .sc-body {
 
 /* 身体数据 · 日期胶囊 */
 .datechip {
-  float: right; font-size: 12px; font-weight: 600; letter-spacing: .4px;
+  margin-left: auto; font-size: 12px; font-weight: 600; letter-spacing: .4px;
   color: rgba(255,255,255,.88); background: rgba(255,255,255,.09);
   padding: 3px 10px; border-radius: 20px; line-height: 1.4;
 }
 
 /* 身体数据 · 趋势翻页 */
-.pager { float: right; display: inline-flex; align-items: center; gap: 6px; }
+.pager { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
 .pgbtn {
   width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line);
   background: rgba(255,255,255,.05); color: var(--fg);
-  font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center;
-  padding: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; cursor: pointer; flex: none;
 }
+.pgbtn svg { display: block; }
 .pgbtn:active { background: rgba(255,255,255,.12); }
 .pgbtn:disabled { opacity: .28; cursor: default; }
 .pgdate { font-size: 11.5px; color: var(--muted2); font-variant-numeric: tabular-nums; letter-spacing: .3px; }

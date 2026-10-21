@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.06', d: '10-21', items: [
+    '修：「最近一次」的日期胶囊、体重趋势的翻页器，都挪到卡片右上角，和标题同一行',
+    '修：翻页箭头改用图标，圆圈里真正居中',
+  ]},
   { v: 'v4.05', d: '10-21', items: [
     '加：体重趋势可以左右翻页，7 天一页 —— 标题右边有 ‹ › 和当前区间，摘要也跟着本页算（本页最新 / 较上次 / 本页区间）',
   ]},
@@ -938,7 +942,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.05';
+const APP_VERSION = 'v4.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2624,9 +2628,9 @@ function renderMe() {
         return `<div class="card">
           <h3>体重趋势
             <span class="pager">
-              <button class="pgbtn" id="btPrev" ${canPrev ? '' : 'disabled'}>‹</button>
+              <button class="pgbtn" id="btPrev" ${canPrev ? '' : 'disabled'} aria-label="上一页"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
-              <button class="pgbtn" id="btNext" ${canNext ? '' : 'disabled'}>›</button>
+              <button class="pgbtn" id="btNext" ${canNext ? '' : 'disabled'} aria-label="下一页"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
             </span>
           </h3>
           <div class="trendsum">
