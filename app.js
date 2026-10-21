@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.69', d: '10-22', items: [
+    '加：数据自动校验 —— 体重不在 25–300kg、体脂不在 1–70%、热量不在 5–5000 千卡，直接判为异常（E10）并拒收，不会写进身体数据',
+  ]},
   { v: 'v4.68', d: '10-22', items: [
     '修：E01 的真正原因 —— Gitee 的 raw 链接会跳到没有跨域头的域名，浏览器直接拒绝；改成用 Gitee API 读（带 CORS）',
   ]},
@@ -1170,7 +1173,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.68';
+const APP_VERSION = 'v4.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2571,6 +2574,7 @@ function friendlyErr(m) {
   if (/409|422/.test(t)) return 'E06 云端版本冲突 · 稍后会自动重试';
   if (/JSON|Unexpected token|parse/i.test(t)) return 'E07 数据格式不对 · 文件内容被改坏了';
   if (/quota|storage|space/i.test(t)) return 'E08 手机存储写不进去了 · 先导出备份';
+  if (/E10/.test(t)) return t;   // 数值异常，原样显示
   return 'E99 ' + (t || '未知错误');
 }
 
@@ -3790,6 +3794,15 @@ async function pullBodyJson() {
     };
     const w = normKg(pick(j.w)), bf = normPct(pick(j.bf)), jbmi = pick(j.bmi), jffm = normKg(pick(j.ffm));
     if (!w && !bf && !jbmi && !jffm) return null;
+    // 数值校验：明显不合理的数据不写进来
+    if (w && (w < 25 || w > 300)) {
+      logError('err-body', '体重数值异常', `E10 读到 ${w} kg，不合常理，已忽略`);
+      return null;
+    }
+    if (bf && (bf <= 1 || bf >= 70)) {
+      logError('err-body', '体脂数值异常', `E10 读到 ${bf}%，不合常理，已忽略`);
+      return null;
+    }
     const d = Store.load();
     d.body = d.body || {}; d.weights = d.weights || {};
     const explicit = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [])[0];
@@ -3877,6 +3890,10 @@ async function pullCloudData() {
     const nums = tail.match(/\d+(?:\.\d+)?/g) || [];
     const active = Math.round(nums.reduce((s, n) => s + Number(n), 0));
     if (!active || active <= 0) { logError('err-health', '热量数据读取失败', 'health.json 里没有有效的活动消耗'); return null; }
+    if (active < 5 || active > 5000) {
+      logError('err-health', '热量数值异常', `E10 读到 ${active} 千卡，不合常理，已忽略`);
+      return null;
+    }
     const date = parseLooseDate(head) || todayISO();
     // 快捷指令写进去的时刻，用来告诉用户「这份数据是什么时候的」
     const tm = head.match(/(\d{1,2}):(\d{2})/);
