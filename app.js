@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.65', d: '10-21', items: [
+    '修：打开「锁屏通知」开关时不弹「是否允许通知」—— 原因是先发了一次网络请求、把用户手势用掉了，iOS 就不弹窗了；现在改成一点开关就先请求权限，弹窗会正常出现',
+    '加：开启后多一个「发一条测试通知」按钮，点一下立刻验证，不用等到 21:30',
+  ]},
   { v: 'v3.64', d: '10-21', items: [
     '改：锁屏通知不用再填任何地址了 —— 推送服务已经在 Cloudflare 部署好（ledger-push），通知页点开关就会订阅，系统问「是否允许通知」点允许即可',
     'iPhone 和 iPad 各点一次开关，两台都能在锁屏收到；每天北京时间 21:30 自动推一条（今天记了多少 / 还没记录）',
@@ -795,7 +799,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.64';
+const APP_VERSION = 'v3.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2000,11 +2004,19 @@ async function enablePush() {
   if (!standalone) { toast('先把 App「添加到主屏幕」，从主屏幕图标打开再来开这个', 5200); return false; }
   const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).trim().replace(/\/+$/, '');
   if (!url) return false;
+  // 关键：iOS 要求「请求通知权限」必须发生在用户手势当下。
+  // 之前先 await 了一次网络请求，手势就被消耗掉了，所以不会弹窗、也不会报错。
+  let perm = Notification.permission;
+  if (perm !== 'granted') perm = await Notification.requestPermission();
+  if (perm !== 'granted') {
+    toast(perm === 'denied'
+      ? '系统里拒绝了通知：去 设置 → 通知 → 热量账本 → 允许通知'
+      : '没拿到通知权限，再点一次开关试试', 5600);
+    return false;
+  }
   try {
     const cfg = await (await fetch(url + '/config', { cache: 'no-store' })).json();
     if (!cfg.publicKey) throw new Error('Worker 没返回公钥，确认地址正确');
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { toast('系统里没有允许通知，去 设置 → 通知 → 热量账本 打开', 5200); return false; }
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.publicKey) });
@@ -2309,7 +2321,7 @@ function renderMe() {
           </div>
           <label class="sw"><input type="checkbox" id="swPush" ${pushOn ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
-        ${pushOn ? '' : `<div class="hint" style="margin-top:12px;line-height:1.85">
+        ${pushOn ? `<button class="btn sm" id="pushTest" style="margin-top:14px">发一条测试通知</button>` : `<div class="hint" style="margin-top:12px;line-height:1.85">
           点右边的开关就会订阅；系统弹「是否允许通知」时点<b>允许</b>。<br>
           每台设备各点一次（iPhone、iPad 都是）。<br>
           <span style="color:var(--muted2)">推送服务已经部署好，不用再填地址。</span>
@@ -2498,6 +2510,16 @@ function wireMe() {
   if (spIn) spIn.onchange = () => {
     setSetting('notify_inapp', spIn.checked);
     toast(spIn.checked ? 'App 内提醒已打开' : 'App 内提醒已静音', 1600);
+  };
+
+  const pt = $('#pushTest');
+  if (pt) pt.onclick = async () => {
+    const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).replace(/\/+$/, '');
+    try {
+      const r = await fetch(url + '/test');
+      const j = await r.json();
+      toast(j.ok ? '已发，注意锁屏' : '发送失败', 2600);
+    } catch (e) { toast('发送失败：' + e.message, 4000); }
   };
 
   const spPush = $('#swPush');
