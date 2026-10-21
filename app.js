@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.57', d: '10-22', items: [
+    '修：底部提示条的「·」还是会出现 —— 改成先用一个隐藏元素量出这行字的真实宽度，超过可用宽度才去掉点号（同排保留、换行去掉）',
+  ]},
   { v: 'v4.56', d: '10-22', items: [
     '改：底部提示条「日期 · 设备」的点号按换行自适应 —— 同一排就带「·」，换行了就自动去掉（只影响底部提示条，提醒记录里的格式不变）',
   ]},
@@ -1128,7 +1131,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.56';
+const APP_VERSION = 'v4.57';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1177,13 +1180,20 @@ function toast(msg, ms = 2200, alt) {
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('on');
-  // 如果这行字换行了，就把分隔用的「·」去掉（同排时保留）
+  // 精确判断这行字会不会折行：量一遍不换行时有多宽，超过可用宽度就把「·」去掉
   if (alt) {
-    requestAnimationFrame(() => {
+    try {
+      const probe = document.createElement('span');
+      probe.textContent = msg;
+      probe.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;';
+      probe.style.font = getComputedStyle(t).font;
+      t.appendChild(probe);
+      const full = probe.getBoundingClientRect().width;
+      probe.remove();
       const cs = getComputedStyle(t);
-      const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.5 || 18;
-      if (t.getBoundingClientRect().height > lh * 1.55) t.textContent = alt;
-    });
+      const avail = t.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+      if (full > avail + 1) t.textContent = alt;
+    } catch (e) {}
   }
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('on'), ms);
