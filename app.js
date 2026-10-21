@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.04', d: '10-21', items: [
+    '改：「最近一次」数字再放大到 23px，单位挪到标题文字后面（数字纯数字，横向真正居中）',
+    '改：右上角日期胶囊放大加粗，更显眼',
+  ]},
   { v: 'v4.03', d: '10-21', items: [
     '改：「最近一次」四个格子改成数字在上、文字在下，数字更大，横竖都居中',
   ]},
@@ -931,7 +935,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.03';
+const APP_VERSION = 'v4.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2587,13 +2591,13 @@ function renderMe() {
 
     h = meBackBar('身体数据') + `
       <div class="card">
-        <h3>最近一次${last ? ` <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${last.slice(5)}</span>` : ''}</h3>
+        <h3>最近一次${last ? ` <span class="datechip">${last.slice(5)}</span>` : ''}</h3>
         ${last ? `
           <div class="bstats">
-            <div><div class="k">体重</div><div class="v">${w || '—'}<small>kg</small></div></div>
-            <div><div class="k">体脂率</div><div class="v">${b.bf || '—'}<small>%</small></div></div>
+            <div><div class="k">体重 <em>kg</em></div><div class="v">${w || '—'}</div></div>
+            <div><div class="k">体脂率 <em>%</em></div><div class="v">${b.bf || '—'}</div></div>
             <div><div class="k">BMI</div><div class="v">${bmi || '—'}</div></div>
-            <div><div class="k">去脂体重</div><div class="v">${b.ffm || '—'}<small>kg</small></div></div>
+            <div><div class="k">去脂体重 <em>kg</em></div><div class="v">${b.ffm || '—'}</div></div>
           </div>
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>

@@ -346,9 +346,17 @@ html.kb .sc-body {
 .bstats > div + div::before {
   content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 1px; background: var(--line);
 }
-.bstats .k { font-size: 11px; color: var(--muted2); letter-spacing: .4px; margin-top: 5px; line-height: 1; }
-.bstats .v { font-size: 21px; font-weight: 600; margin: 0; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.bstats .k { font-size: 11px; color: var(--muted2); letter-spacing: .4px; margin-top: 6px; line-height: 1; }
+.bstats .k em { font-style: normal; font-size: 10px; opacity: .75; margin-left: 2px; }
+.bstats .v { font-size: 23px; font-weight: 600; margin: 0; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
 .bstats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
+
+/* 身体数据 · 日期胶囊 */
+.datechip {
+  float: right; font-size: 12px; font-weight: 600; letter-spacing: .4px;
+  color: rgba(255,255,255,.88); background: rgba(255,255,255,.09);
+  padding: 3px 10px; border-radius: 20px; line-height: 1.4;
+}
 
 /* 身体数据 · 趋势摘要 */
 .trendsum { display: flex; gap: 10px; margin: 2px 0 6px; }
