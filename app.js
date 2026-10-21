@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.52', d: '10-22', items: [
+    '修：底部提示条压住 Dock —— 改回 Dock 上方 24px，任何提示都不再压 Dock',
+    '改：提醒记录里的卡片整体往下挪一点（列表顶部留 18px）',
+  ]},
   { v: 'v4.51', d: '10-22', items: [
     '改：体脂数据也能看到采集时间 —— 用 body.json 的「最后修改时间」，同步提示里显示成 10-22 01:20 这种',
     '加：体脂数据同步成功后，铃铛里也记一条（体重 / 体脂 / 采集时间）',
@@ -1110,7 +1114,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.51';
+const APP_VERSION = 'v4.52';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

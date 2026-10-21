@@ -423,7 +423,7 @@ body.nlog-open .sheet-mask.on {
 #nlogSheet.dragging { transition: none; }
 #nlogList {
   max-height: 54dvh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 2px 0 4px; display: flex; flex-direction: column; flex: 1 1 auto;
+  padding: 18px 0 4px; display: flex; flex-direction: column; flex: 1 1 auto;
 }
 .ncard {
   background: var(--card); border: 1px solid var(--line);
@@ -1181,7 +1181,7 @@ body.nlog-open .sheet-mask.on {
 .toast {
   position: fixed; left: 50%;
   /* 提示条要落在 Dock 上方，不能压上去 */
-  bottom: calc(var(--dock-bottom) + var(--dock-h) - 26px + var(--safe-b));
+  bottom: calc(var(--dock-bottom) + var(--dock-h) + 24px + var(--safe-b));
   transform: translate(-50%, 12px);
   z-index: 90;
   background: #24292e;
