@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.64', d: '10-21', items: [
+    '改：锁屏通知不用再填任何地址了 —— 推送服务已经在 Cloudflare 部署好（ledger-push），通知页点开关就会订阅，系统问「是否允许通知」点允许即可',
+    'iPhone 和 iPad 各点一次开关，两台都能在锁屏收到；每天北京时间 21:30 自动推一条（今天记了多少 / 还没记录）',
+  ]},
   { v: 'v3.63', d: '10-21', items: [
     '修：输入框 / 下拉框右边露出一条暗块、下拉框的小箭头不见了 —— 是底色渐变被旧的「靠右 14px」位置带偏了；现在每层背景单独定位，暗块消失、箭头也回来了',
   ]},
@@ -791,7 +795,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.63';
+const APP_VERSION = 'v3.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1974,6 +1978,7 @@ function notifyCfg() {
   Object.keys(def).forEach(k => { if (typeof v[k] === 'boolean') out[k] = v[k]; });
   return out;
 }
+const PUSH_WORKER_DEFAULT = 'https://ledger-push.karenwang228.workers.dev';   // 已部署好的推送服务
 let pushOn = false;                       // 这台设备是否已经订阅锁屏推送
 const pushSupported = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 const b64uToBytes = (b64) => {
@@ -1993,8 +1998,7 @@ async function enablePush() {
   if (!pushSupported()) { toast('这台设备不支持网页推送', 3600); return false; }
   const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
   if (!standalone) { toast('先把 App「添加到主屏幕」，从主屏幕图标打开再来开这个', 5200); return false; }
-  const old = setting('push_worker', '') || '';
-  const url = (prompt('粘贴 Cloudflare Worker 地址（形如 https://xxx.workers.dev）', old) || '').trim().replace(/\/+$/, '');
+  const url = (setting('push_worker', '') || PUSH_WORKER_DEFAULT).trim().replace(/\/+$/, '');
   if (!url) return false;
   try {
     const cfg = await (await fetch(url + '/config', { cache: 'no-store' })).json();
@@ -2306,12 +2310,9 @@ function renderMe() {
           <label class="sw"><input type="checkbox" id="swPush" ${pushOn ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
         ${pushOn ? '' : `<div class="hint" style="margin-top:12px;line-height:1.85">
-          开启需要一台免费的推送服务（Cloudflare Worker），一次性设置约 10 分钟：<br>
-          1. 注册 Cloudflare → 新建 Worker → 粘贴仓库里 <b>push/worker.js</b> → Deploy<br>
-          2. 建一个 KV，变量名填 <b>SUBS</b>，绑到这个 Worker<br>
-          3. Triggers 里加定时 <b>30 13 * * *</b>（= 北京时间 21:30）<br>
-          4. 回到这里点开启，粘贴 <b>https://你的子域.workers.dev</b><br>
-          <span style="color:var(--muted2)">详细步骤见仓库 push/README.md</span>
+          点右边的开关就会订阅；系统弹「是否允许通知」时点<b>允许</b>。<br>
+          每台设备各点一次（iPhone、iPad 都是）。<br>
+          <span style="color:var(--muted2)">推送服务已经部署好，不用再填地址。</span>
         </div>`}
       </div>
       <div class="card">

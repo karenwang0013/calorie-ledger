@@ -1,0 +1,12 @@
+name = "ledger-push"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# 设备订阅存这里（KV 命名空间 SUBS）
+[[kv_namespaces]]
+binding = "SUBS"
+id = "3cb937691f9d4d148c7ce1d147c49c52"
+
+# 每天推送时间（UTC）：30 13 * * * = 北京时间 21:30
+[triggers]
+crons = ["30 13 * * *"]
