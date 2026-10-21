@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.67', d: '10-22', items: [
+    '改：热量数据（health.json）也改从 Gitee 读 —— 现在热量 + 体脂 + 同步全部走国内通道',
+    '改：E01 错误里带上原始报错，方便定位是哪一步断的',
+  ]},
   { v: 'v4.66', d: '10-22', items: [
     '删：旧的 GitHub 同步通道彻底移除（不再拿 GitHub token 去请求 Gitee，避免 E03）',
     '改：令牌只认「Gitee 私人令牌」一个字段；保存时会顺手清掉旧的 GitHub token',
@@ -1163,7 +1167,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.66';
+const APP_VERSION = 'v4.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2546,7 +2550,7 @@ function logNotify(kind, title, body, ok = true) {
 function friendlyErr(m) {
   const t = String(m || '');
   if (/Load failed|Failed to fetch|NetworkError|offline|The Internet connection appears to be offline/i.test(t)) {
-    return 'E01 连不上云端（网络/VPN/被墙）· 30 秒后自动重试';
+    return 'E01 连不上云端（' + (t.length > 40 ? t.slice(0, 40) : t) + '）· 30 秒后自动重试';
   }
   if (/AbortError|timeout|超时/i.test(t)) return 'E02 云端响应超时 · 网络太慢';
   if (/401|Bad credentials|Requires authentication|access_token/i.test(t)) return 'E03 令牌无效或没填 · 去 设置 → 数据同步 填 Gitee 令牌';
@@ -3830,6 +3834,7 @@ let lastCloud = null;
 /* 优先从 raw.githubusercontent 取（提交后几秒就有），失败再回落到 Pages 上的副本 */
 async function fetchHealthText() {
   const urls = [
+    GITEE_RAW + '/health.json',
     'https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/health.json',
     'health.json',
   ];
