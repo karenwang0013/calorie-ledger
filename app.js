@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.80', d: '10-21', items: [
+    '加：体脂秤数据接入 —— 用快捷指令从「健康」读出体重/体脂率/BMI，打开一个链接就能写进账本（?body=1&w=65.9&bf=16.9&bmi=21.8）',
+    '加：趋势页「体重趋势」下面会显示最近一次的体脂率 / BMI',
+    '说明：米家 S400 只能写进苹果健康，没有开放接口；所以走「健康 → 快捷指令 → 账本」这条路',
+  ]},
   { v: 'v3.79', d: '10-21', items: [
     '改：通知页彻底瘦身 —— 「App 内提醒」「锁屏通知」下面的说明小字也去掉了，现在整页只有标题 + 开关',
   ]},
@@ -844,7 +849,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.79';
+const APP_VERSION = 'v3.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1823,6 +1828,16 @@ function renderTrends() {
         <span><i style="background:var(--blue)"></i>体重 kg</span>
         <span style="margin-left:auto">${weights.length} 次记录</span>
       </div>
+      ${(() => {
+        const body = (S.trend && S.trend.body) || {};
+        const last = Object.keys(body).sort().pop();
+        const b = last ? body[last] : null;
+        if (!b || (!b.bf && !b.bmi)) return '';
+        const bits = [];
+        if (b.bf) bits.push('体脂率 ' + b.bf + '%');
+        if (b.bmi) bits.push('BMI ' + b.bmi);
+        return `<div class="hint" style="margin-top:8px">${last.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
+      })()}
     </div>`;
   } else {
     wChart = `<div class="card">
@@ -2956,6 +2971,32 @@ function consumeHealthLink() {
   }
 }
 
+/**
+ * 体脂秤链接：快捷指令从「健康」读出体重/体脂率/BMI 后打开
+ *   ?body=1&w=65.9&bf=16.9&bmi=21.8&ffm=51.9&d=2026-10-18
+ * 写进当天体重 + 身体成分，再把参数抹掉
+ */
+function consumeBodyLink() {
+  try {
+    const u = new URL(location.href);
+    if (!u.searchParams.has('body')) return null;
+    const g = k => {
+      const v = u.searchParams.get(k);
+      return (v === null || v === '') ? null : Number(v);
+    };
+    const w = g('w'), bf = g('bf'), bmi = g('bmi'), ffm = g('ffm');
+    if (w === null && bf === null) return null;
+    const date = u.searchParams.get('d') || todayISO();
+    const d = Store.load();
+    if (w !== null) { d.weights[date] = w; d.profile.weight_kg = w; }
+    d.body = d.body || {};
+    d.body[date] = { bf, bmi, ffm };
+    Store.save();
+    history.replaceState(null, '', u.pathname + u.hash);
+    return date;
+  } catch (e) { return null; }
+}
+
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
 
 /**
@@ -3735,7 +3776,9 @@ function init() {
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => hardReloadApp();
 
+  const bodyDate = consumeBodyLink();
   loadDay();
+  if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
   if (synced) {
     setTimeout(() => toast('⌚ 已自动同步 ' + synced.slice(5) + ' 的手表数据', 3200), 700);

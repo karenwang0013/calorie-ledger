@@ -32,6 +32,7 @@ const Store = {
       },
       logs: [],
       weights: {},
+      body: {},
       daily: {},
       shots: {},
       settings: {},
@@ -52,6 +53,7 @@ const Store = {
       profile: Object.assign({}, d.profile, parsed.profile || {}),
       logs: Array.isArray(parsed.logs) ? parsed.logs : [],
       weights: parsed.weights || {},
+      body: parsed.body || {},
       daily: parsed.daily || {},
       shots: parsed.shots || {},
       settings: parsed.settings || {},
@@ -298,6 +300,7 @@ function computeTrends(days) {
     logged_days: logged.length,
     real_tdee: real,
     weights,
+    body: d.body || {},
   };
 }
 
@@ -578,6 +581,15 @@ async function api(path, body, method) {
     const date = body.date || today;
     d.weights[date] = Number(body.kg);
     d.profile.weight_kg = Number(body.kg);
+    const bf = Number(body.bf), bmi = Number(body.bmi), ffm = Number(body.ffm);
+    if (isFinite(bf) || isFinite(bmi) || isFinite(ffm)) {
+      d.body = d.body || {};
+      d.body[date] = {
+        bf: isFinite(bf) && bf ? bf : null,
+        bmi: isFinite(bmi) && bmi ? bmi : null,
+        ffm: isFinite(ffm) && ffm ? ffm : null,
+      };
+    }
     Store.save();
     return { ok: true, day: daySummary(date) };
   }
