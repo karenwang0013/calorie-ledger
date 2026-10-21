@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.89', d: '10-21', items: [
+    '改：后台自动同步全部静默 —— 不再弹「已同步…数据」这类提示（也不再显示手表图标/设备名字）',
+    '改：只有你主动点右上角「数据同步」时才弹一条结果提示',
+  ]},
   { v: 'v3.88', d: '10-21', items: [
     '改：同步提示不再显示手表图标，改成显示你的设备名字（设置 → 身体数据 里可改，默认 Apple Watch）',
     '删：身体数据页的「手动记一次」卡片（不需要手动兜底了）',
@@ -875,7 +879,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.88';
+const APP_VERSION = 'v3.89';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -900,10 +904,6 @@ function esc(s) {
 function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
-function watchName() {
-  try { return (Store.load().settings.watch_name || 'Apple Watch'); } catch (e) { return 'Apple Watch'; }
-}
-
 function toast(msg, ms = 2200) {
   const t = $('#toast');
   t.textContent = msg;
@@ -2526,15 +2526,6 @@ function renderMe() {
           <span style="margin-left:auto">${wtPts.length} 次</span></div>
       </div>` : ''}
       ${rows ? `<div class="card"><h3>历史记录</h3>${rows}</div>` : ''}
-      <div class="card">
-        <h3>设备名字</h3>
-        <div class="field" style="margin-top:6px">
-          <label>同步提示里显示的名字</label>
-          <input id="watchName" type="text" placeholder="Apple Watch" value="${(st.settings.watch_name || 'Apple Watch').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
-        </div>
-        <button class="btn" id="watchNameSave" style="margin-top:10px">保存名字</button>
-        <div class="hint" style="margin-top:8px">改完，同步提示会显示「已同步 10-21 的 xxx 数据」。</div>
-      </div>
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
@@ -2702,16 +2693,6 @@ function wireMe() {
       ta.remove();
     }
   });
-
-  const wnIn = $('#watchName');
-  const wnSave = $('#watchNameSave');
-  if (wnSave) wnSave.onclick = () => {
-    const v = (wnIn.value || '').trim() || 'Apple Watch';
-    const st = Store.load().settings;
-    st.watch_name = v;
-    Store.save();
-    toast('设备名字已改为：' + v, 2200);
-  };
 
   const spIn = $('#swInApp');
   if (spIn) spIn.onchange = () => {
@@ -3914,7 +3895,6 @@ function init() {
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
       try { loadDay(); } catch (e) {}
-      toast('⚖️ 已同步体脂秤数据', 2400);
     }
     // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
     const today = new Date();
@@ -3925,19 +3905,12 @@ function init() {
     }
   });
   grabBody(2);
-  if (bodyDate) setTimeout(() => toast('⚖️ 已同步体脂秤数据（' + bodyDate.slice(5) + '）', 2600), 500);
   setTimeout(() => { try { runNotifyChecks(); } catch (e) {} }, 1200);
-  if (synced) {
-    setTimeout(() => toast('已自动同步 ' + synced.slice(5) + ' 的' + watchName() + '数据', 3200), 700);
-  }
 
   // 打开时拉一次云端数据（不阻塞界面）
   pullCloudData().then(date => {
     if (!date) return;
     loadDay();
-    if (Store.load().settings.sync_toast !== false) {
-      toast('已同步 ' + date.slice(5) + ' 的' + watchName() + '数据', 2600);
-    }
   });
 
   // 跨天检测：放在后台过夜，第二天打开要自动切到今天
@@ -3964,7 +3937,6 @@ function init() {
       if (d) {
         autoN = 0;
         loadDay();
-        toast('已自动同步最新' + watchName() + '数据', 2600);
       } else {
         autoCatchUp();
       }
@@ -3974,7 +3946,7 @@ function init() {
     if (document.visibilityState !== 'visible') return;
     lastPull = Date.now();
     pullCloudData().then(date => {
-      if (date) { loadDay(); toast('已读取' + watchName() + '数据', 2200); }
+      if (date) { loadDay(); }
       else autoCatchUp();
     });
   });
