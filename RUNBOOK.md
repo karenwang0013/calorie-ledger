@@ -158,6 +158,14 @@
 - **修**：`hardReloadApp()` 放模块级，在 `init()` 里给 `#hardReloadTop` 绑，设置页的 `#hardReload` 共用同一个函数。
 - **验证**：停在首页点右上角按钮，出现"正在更新…"并重开。修好于 v3.49。
 
+### 18.5 锁屏推送收不到 / 登记不上
+
+- **现状**：推送给 **GitHub Actions** 发（`.github/workflows/push.yml`，每天 UTC 13:30 = 北京 21:30），订阅存在仓库 `push-subs.json`，密钥在仓库 Secrets（`VAPID_PUBLIC` / `VAPID_PRIVATE`）。
+- **为什么不用 Cloudflare Worker**：`*.workers.dev` 在国内网络经常不通（实测：设备一条请求都到不了）。github.com 可达，所以改走 Actions。
+- **App 端**：设置 → 通知 → 锁屏通知；开关只记「你的选择」，真实状态写在下行小字。开启需要「自动同步」的 Token（订阅是通过它写进仓库的）。
+- **验证**：`gh workflow run "每天锁屏推送" --repo karenwang0013/calorie-ledger`，然后 `gh run view <id> --log | grep 发送完成`，应看到「成功 N，失效 0，共 N」。
+- **注意**：`pushManager.subscribe` 必须用 `subscription.toJSON()`，直接 `JSON.stringify(subscription)` 会变成 `{}`（踩过）。
+
 ### 19. 两台设备记录不同步
 
 - **机制**：保存后约 4 秒自动上传 GitHub `data.json`；切回前台拉一次 + 打开时每 90 秒拉一次。
