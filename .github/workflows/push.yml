@@ -3,7 +3,13 @@ name: 每天锁屏推送
 on:
   schedule:
     - cron: '30 13 * * *'      # UTC 13:30 = 北京时间 21:30
-  workflow_dispatch:            # 也可以在 Actions 页面手动点一下测试
+  workflow_dispatch:
+    inputs:
+      event:
+        description: '留空=定时检查；也可填 watch / goal / fail 模拟事件'
+        required: false
+  repository_dispatch:
+    types: [watch, goal, fail]   # App 发生事件时立刻触发
 
 permissions:
   contents: read
@@ -22,3 +28,4 @@ jobs:
         env:
           VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          EVENT: ${{ github.event.client_payload.type || github.event.inputs.event || '' }}

@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v3.77', d: '10-21', items: [
+    '加：「每天 21:30 小结」也变成开关（第六个），关掉就不再每天发摘要',
+    '改：21:30 不再固定发一条 —— 按开关和条件来：该称体重 → 没记录 → 小结，命中哪条发哪条，都没命中就不发',
+    '改：六个开关会同步到仓库，锁屏推送按你的开关决定发不发',
+  ]},
   { v: 'v3.76', d: '10-21', items: [
     '改：锁屏推送改成走 GitHub（不再依赖 Cloudflare）—— 订阅信息存进你的仓库，由 GitHub Actions 每天北京时间 21:30 发一条。这条链路你的手机能访问（数据同步一直在用）',
     '前提：设置 → 数据备份 → 自动同步 里填好 Token，用的是同一个',
@@ -832,7 +837,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v3.76';
+const APP_VERSION = 'v3.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2006,10 +2011,11 @@ const NOTIFY_ITEMS = {
   day:    { t: '今天还没记录',   d: '晚上 8 点后还没记录就提醒' },
   weight: { t: '该称体重了',     d: '超过 7 天没记体重时提醒' },
   fail:   { t: '同步失败',       d: '读不到云端数据时告诉你' },
+  daily:  { t: '每天 21:30 小结', d: '到点告诉你今天记了多少、还差多少（和你有没有记录无关）' },
 };
 function notifyCfg() {
   const v = setting('notify_flags', null);
-  const def = { watch: true, goal: true, day: true, weight: true, fail: true };
+  const def = { watch: true, goal: true, day: true, weight: true, fail: true, daily: true };
   if (!v || typeof v !== 'object') return def;
   const out = Object.assign({}, def);
   Object.keys(def).forEach(k => { if (typeof v[k] === 'boolean') out[k] = v[k]; });
@@ -2075,6 +2081,29 @@ async function refreshPushState() {
   }
 }
 
+/* 把六个开关的状态写进仓库的 push-config.json，推送时按它决定发不发 */
+async function syncPushConfig() {
+  const token = (typeof cloudToken === 'function' && cloudToken()) || '';
+  if (!token) return;
+  const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/push-config.json';
+  const h = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
+  try {
+    let sha = null;
+    const r = await fetch(api, { headers: h, cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); sha = j.sha; }
+    const body = {
+      message: '推送：更新通知开关',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify({
+        flags: notifyCfg(),
+        inapp: setting('notify_inapp', true) !== false,
+        updatedAt: new Date().toISOString(),
+      }, null, 2)))),
+    };
+    if (sha) body.sha = sha;
+    await fetch(api, { method: 'PUT', headers: Object.assign({}, h, { 'content-type': 'application/json' }), body: JSON.stringify(body) });
+  } catch (e) {}
+}
+
 async function enablePush() {
   if (!pushSupported()) { toast('这台设备不支持网页推送', 3600); return false; }
   const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
@@ -2094,6 +2123,7 @@ async function enablePush() {
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(PUSH_VAPID_PUBLIC) });
     await saveSubToRepo(sub, false);
     pushOn = true;
+    syncPushConfig();
     pushErr = '';
     toast('锁屏通知已开启', 2600);
     return true;
@@ -2580,6 +2610,7 @@ function wireMe() {
   const spIn = $('#swInApp');
   if (spIn) spIn.onchange = () => {
     setSetting('notify_inapp', spIn.checked);
+    syncPushConfig();
     toast(spIn.checked ? 'App 内提醒已打开' : 'App 内提醒已静音', 1600);
   };
 
@@ -2599,6 +2630,7 @@ function wireMe() {
     const cfg = notifyCfg();
     cfg[b.dataset.nfy] = b.checked;
     setSetting('notify_flags', cfg);
+    syncPushConfig();
     toast(b.checked ? '已打开' : '已关闭', 1400);
   });
 
