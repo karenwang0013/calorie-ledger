@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.32', d: '10-22', items: [
+    '改：提醒记录的 × 放大到 42px 并再上移一点，标题永远跟着它的中心线',
+    '加：提醒记录支持向下滑关闭（列表在顶部时生效），跟手移动 + 松手回弹，超过 96px 直接关掉',
+  ]},
   { v: 'v4.31', d: '10-22', items: [
     '改：× 改成绝对定位，位置 = 距右边一个圆角半径、距上边一个圆角半径 —— 正好是那个圆角的圆心；标题在它的水平线上',
   ]},
@@ -1037,7 +1041,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.31';
+const APP_VERSION = 'v4.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2428,8 +2432,56 @@ function openNotifyLog() {
 function closeNotifyLog() {
   document.body.classList.remove('nlog-open');
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; }
   if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.remove('on');
+}
+
+/* 提醒记录：手指下滑关闭（列表在顶部时生效），松手回弹或关闭 */
+function wireNotifyDrag() {
+  const sheet = $('#nlogSheet');
+  if (!sheet || sheet.dataset.dragWired) return;
+  sheet.dataset.dragWired = '1';
+  const list = $('#nlogList');
+  let y0 = 0, dy = 0, dragging = false, armed = false;
+  sheet.addEventListener('touchstart', (e) => {
+    if (!sheet.classList.contains('on')) return;
+    y0 = e.touches[0].clientY; dy = 0; dragging = false;
+    armed = !list || list.scrollTop <= 0;
+  }, { passive: true });
+  sheet.addEventListener('touchmove', (e) => {
+    if (!armed || !sheet.classList.contains('on')) return;
+    const d = e.touches[0].clientY - y0;
+    if (d <= 0) {
+      if (!dragging) return;
+      dy = 0;
+      sheet.style.transform = '';
+      sheet.style.opacity = '';
+      return;
+    }
+    dy = d;
+    if (dy > 4) {
+      dragging = true;
+      sheet.classList.add('dragging');
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+      sheet.style.opacity = String(Math.max(0.55, 1 - dy / 520));
+      e.preventDefault();
+    }
+  }, { passive: false });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    if (dy > 96) {
+      closeNotifyLog();               // 走 CSS 的滑出动画
+    } else {
+      sheet.style.transform = '';
+      sheet.style.opacity = '';
+    }
+    dy = 0;
+  };
+  sheet.addEventListener('touchend', end);
+  sheet.addEventListener('touchcancel', end);
 }
 
 function runNotifyChecks() {
@@ -4338,6 +4390,7 @@ function init() {
     openNotifyLog(); toast('已清空提醒记录', 1600);
   };
   renderNotifyDot();
+  wireNotifyDrag();
 
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => hardReloadApp();
