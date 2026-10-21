@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.17', d: '10-21', items: [
+    '改：小铃铛挪到「数据同步」右边，换成和设置一样的实心图标',
+    '改：提醒记录页面加高，每条提醒改成卡片式（时间在右上角），空状态也做成卡片',
+  ]},
   { v: 'v4.16', d: '10-21', items: [
     '改：App 内不再弹「该称体重了 / 超出目标 / 今天没记录」这些提示，统一走锁屏推送；称重提醒统一按 3 天',
     '加：首页右上角多了一个小铃铛 —— 所有提醒（手表数据、超目标、今天没记录、该称体重）都记在里面，有未读会亮红点',
@@ -977,7 +981,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.16';
+const APP_VERSION = 'v4.17';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2340,12 +2344,11 @@ function openNotifyLog() {
   const box = $('#nlogList');
   if (box) {
     box.innerHTML = list.length ? list.map(x => `
-      <div class="nrow">
-        <div class="nt">${esc(x.t || '提醒')}</div>
+      <div class="ncard">
+        <div class="nt">${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
         <div class="nb">${esc(x.b || '')}</div>
-        <div class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
       </div>`).join('')
-      : `<div class="hint" style="margin:6px 0 2px">还没有提醒记录。称重、热量、记录这类提醒，都会记在这里。</div>`;
+      : `<div class="ncard nempty">还没有提醒记录<br><span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div>`;
   }
   localStorage.setItem('notify_seen_ts', String(Date.now()));
   renderNotifyDot();
