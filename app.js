@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.65', d: '10-22', items: [
+    '改：错误文案不再写死 GitHub（现在云端是 Gitee），并在错误信息里带 @gitee 标记',
+    '改：没填 Gitee 令牌时给出明确提示（E03 去设置里填），不再报含糊的网络错误',
+  ]},
   { v: 'v4.64', d: '10-22', items: [
     '改：出错提醒的图标从红色 ✕ 换成 ⚠️',
   ]},
@@ -1154,7 +1158,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.64';
+const APP_VERSION = 'v4.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2537,11 +2541,11 @@ function logNotify(kind, title, body, ok = true) {
 function friendlyErr(m) {
   const t = String(m || '');
   if (/Load failed|Failed to fetch|NetworkError|offline|The Internet connection appears to be offline/i.test(t)) {
-    return 'E01 连不上 GitHub（网络/VPN/被墙）· 30 秒后自动重试';
+    return 'E01 连不上云端（网络/VPN/被墙）· 30 秒后自动重试';
   }
-  if (/AbortError|timeout|超时/i.test(t)) return 'E02 GitHub 响应超时 · 网络太慢';
-  if (/401|Bad credentials|Requires authentication/i.test(t)) return 'E03 Token 失效 · 去 设置 → 数据同步 重填';
-  if (/403/.test(t)) return 'E04 权限不足或被限流 · 换 fine-grained token 试试';
+  if (/AbortError|timeout|超时/i.test(t)) return 'E02 云端响应超时 · 网络太慢';
+  if (/401|Bad credentials|Requires authentication|access_token/i.test(t)) return 'E03 令牌无效或没填 · 去 设置 → 数据同步 填 Gitee 令牌';
+  if (/403/.test(t)) return 'E04 权限不足或被限流 · 检查令牌的 projects 权限';
   if (/404/.test(t)) return 'E05 云端文件不存在 · 可能被删了';
   if (/409|422/.test(t)) return 'E06 云端版本冲突 · 稍后会自动重试';
   if (/JSON|Unexpected token|parse/i.test(t)) return 'E07 数据格式不对 · 文件内容被改坏了';

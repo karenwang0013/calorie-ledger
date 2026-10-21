@@ -795,7 +795,7 @@ async function cloudPush() {
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
     cloudFailUntil = Date.now() + 30000;
     try { localStorage.setItem('pending_push', '1'); } catch (e) {}
-    if (typeof logError === 'function') logError('err-push', '同步失败（上传）', cloudErr);
+    if (typeof logError === 'function') logError('err-push', '同步失败（上传）', cloudErr + ' @gitee');
     return false;
   } finally {
     cloudBusy = false;
@@ -805,7 +805,7 @@ async function cloudPush() {
 /* 启动时拉一次：云端更新就覆盖本地 */
 async function cloudPull(force) {
   cloudErr = '';
-  if (!cloudToken()) return false;
+  if (!cloudToken()) { if (typeof logError === 'function') logError('err-notoken', '还没配置同步令牌', 'E03 去 设置 → 数据同步 填 Gitee 令牌'); return false; }
   cloudPulling = true;
   try {
     const res = await fetchT(cloudUrl(), { headers: cloudHeaders() });
@@ -848,7 +848,7 @@ async function cloudPull(force) {
     cloudPulling = false;
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
     cloudFailUntil = Date.now() + 30000;
-    if (typeof logError === 'function') logError('err-pull', '同步失败（读取）', cloudErr);
+    if (typeof logError === 'function') logError('err-pull', '同步失败（读取）', cloudErr + ' @gitee');
     return false;
   }
 }
