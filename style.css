@@ -1343,8 +1343,24 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 input, textarea, select {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--field), var(--field)), var(--edge-gloss-strong);
-  background-origin: border-box;
+  background-position: 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-origin: border-box, border-box;
   background-clip: padding-box, border-box;
+}
+
+/* 下拉框：要保留右边的小箭头，所以是三层（箭头 + 底色 + 边光）。
+   注意每层都要写 position/size，否则底纹会被箭头的 old 位置带偏，右边露出一条暗条 */
+select {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b938c' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"),
+    linear-gradient(var(--field), var(--field)),
+    var(--edge-gloss-strong);
+  background-position: right 14px center, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 12px 8px, auto, auto;
+  background-origin: border-box, border-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
 }
 
 /* 按钮 / 小方块：仍用柔和的那套 */
