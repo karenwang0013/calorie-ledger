@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.14', d: '10-21', items: [
+    '改：体重趋势右上角日期放大到 16px',
+  ]},
   { v: 'v4.13', d: '10-21', items: [
     '改：滑到底时卡片离 Dock 再下移一点（留白 6px → 2px，iPad 8px → 4px）',
   ]},
@@ -966,7 +969,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.13';
+const APP_VERSION = 'v4.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
