@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.15', d: '10-21', items: [
+    '改：「最近一次」右上角的日期也放大到 16px，和体重趋势那边一致',
+  ]},
   { v: 'v4.14', d: '10-21', items: [
     '改：体重趋势右上角日期放大到 16px',
   ]},
@@ -969,7 +972,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.14';
+const APP_VERSION = 'v4.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

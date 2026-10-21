@@ -381,7 +381,7 @@ html.kb .sc-body {
 
 /* 身体数据 · 日期胶囊 */
 .datechip {
-  margin-left: auto; font-size: 12px; font-weight: 600; letter-spacing: .4px;
+  margin-left: auto; font-size: 16px; font-weight: 600; letter-spacing: .3px;
   color: rgba(255,255,255,.88); background: rgba(255,255,255,.09);
   padding: 3px 10px; border-radius: 20px; line-height: 1.4;
 }
