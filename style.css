@@ -358,6 +358,18 @@ html.kb .sc-body {
   padding: 3px 10px; border-radius: 20px; line-height: 1.4;
 }
 
+/* 身体数据 · 趋势翻页 */
+.pager { float: right; display: inline-flex; align-items: center; gap: 6px; }
+.pgbtn {
+  width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line);
+  background: rgba(255,255,255,.05); color: var(--fg);
+  font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center;
+  padding: 0; cursor: pointer;
+}
+.pgbtn:active { background: rgba(255,255,255,.12); }
+.pgbtn:disabled { opacity: .28; cursor: default; }
+.pgdate { font-size: 11.5px; color: var(--muted2); font-variant-numeric: tabular-nums; letter-spacing: .3px; }
+
 /* 身体数据 · 趋势摘要 */
 .trendsum { display: flex; gap: 10px; margin: 2px 0 6px; }
 .trendsum > div { flex: 1; }

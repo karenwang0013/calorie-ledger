@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.05', d: '10-21', items: [
+    '加：体重趋势可以左右翻页，7 天一页 —— 标题右边有 ‹ › 和当前区间，摘要也跟着本页算（本页最新 / 较上次 / 本页区间）',
+  ]},
   { v: 'v4.04', d: '10-21', items: [
     '改：「最近一次」数字再放大到 23px，单位挪到标题文字后面（数字纯数字，横向真正居中）',
     '改：右上角日期胶囊放大加粗，更显眼',
@@ -935,7 +938,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.04';
+const APP_VERSION = 'v4.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -960,6 +963,7 @@ function esc(s) {
 function round(n) { return Math.round(Number(n) || 0); }
 
 let toastTimer = null;
+let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
 
@@ -2012,7 +2016,10 @@ function lineChart(points, start, end) {
   if (max - min < 1.2) { const m = (max + min) / 2; min = m - 0.6; max = m + 0.6; }
   const padY = (max - min) * 0.18;
   min -= padY; max += padY;
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  // 横轴按传入的 start/end 铺满（这样 7 天窗口里只有 2 个点也不会挤在边上）
+  const sd = parseISO(start), ed = parseISO(end);
+  const x0 = Number.isFinite(sd) ? sd : Math.min(...xs);
+  const x1 = Number.isFinite(ed) ? ed : Math.max(...xs);
   const X = v => pl + (W - pl - pr) * (x1 === x0 ? 0.5 : (v - x0) / (x1 - x0));
   const Y = v => pt + (H - pt - pb) * (1 - (v - min) / (max - min));
 
@@ -2601,15 +2608,35 @@ function renderMe() {
           </div>
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
-      ${nPt >= 2 ? `<div class="card">
-        <h3>体重趋势 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${nPt} 次</span></h3>
-        <div class="trendsum">
-          <div><span>最新</span><b>${latestKg != null ? latestKg : '—'}<small>kg</small></b></div>
-          <div><span>较上次</span><b class="${deltaKg > 0 ? 'up' : (deltaKg < 0 ? 'down' : '')}">${deltaKg == null ? '—' : (deltaKg > 0 ? '+' : '') + deltaKg}<small>kg</small></b></div>
-          <div><span>区间</span><b>${minKg}–${maxKg}<small>kg</small></b></div>
-        </div>
-        ${lineChart(wtPts, wtPts[0].date, wtPts[nPt - 1].date)}
-      </div>` : ''}
+      ${nPt >= 1 ? (() => {
+        const firstD = wtPts[0].date, lastD = wtPts[nPt - 1].date;
+        if (!bodyTrendEnd || bodyTrendEnd > lastD) bodyTrendEnd = lastD;
+        const pageEnd = bodyTrendEnd < firstD ? firstD : bodyTrendEnd;
+        const pageStart = addDays(pageEnd, -6);
+        const pagePts = wtPts.filter(p => p.date >= pageStart && p.date <= pageEnd);
+        const canPrev = pageStart > firstD;
+        const canNext = pageEnd < lastD;
+        const pv = pagePts.length ? pagePts[pagePts.length - 1].kg : null;
+        const pvPrev = pagePts.length >= 2 ? pagePts[pagePts.length - 2].kg : null;
+        const pvDelta = pv != null && pvPrev != null ? Math.round((pv - pvPrev) * 10) / 10 : null;
+        const pvMin = pagePts.length ? Math.min(...pagePts.map(p => p.kg)) : null;
+        const pvMax = pagePts.length ? Math.max(...pagePts.map(p => p.kg)) : null;
+        return `<div class="card">
+          <h3>体重趋势
+            <span class="pager">
+              <button class="pgbtn" id="btPrev" ${canPrev ? '' : 'disabled'}>‹</button>
+              <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
+              <button class="pgbtn" id="btNext" ${canNext ? '' : 'disabled'}>›</button>
+            </span>
+          </h3>
+          <div class="trendsum">
+            <div><span>本页最新</span><b>${pv != null ? pv : '—'}<small>kg</small></b></div>
+            <div><span>较上次</span><b class="${pvDelta > 0 ? 'up' : (pvDelta < 0 ? 'down' : '')}">${pvDelta == null ? '—' : (pvDelta > 0 ? '+' : '') + pvDelta}<small>kg</small></b></div>
+            <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
+          </div>
+          ${pagePts.length >= 2 ? lineChart(pagePts, pageStart, pageEnd) : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
+        </div>`;
+      })() : ''}
       ${rows ? `<div class="card"><h3>历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
       <div style="height:26px"></div>`;
   } else if (mePage === 'about') {
@@ -2906,6 +2933,10 @@ function wireMe() {
     toast('已关闭云端同步，数据仍在本机', 2600);
     renderMe();
   };
+
+  const btPrev = $('#btPrev'), btNext = $('#btNext');
+  if (btPrev) btPrev.onclick = () => { bodyTrendEnd = addDays(bodyTrendEnd, -7); renderMe(); };
+  if (btNext) btNext.onclick = () => { bodyTrendEnd = addDays(bodyTrendEnd, 7); renderMe(); };
 
   const cfp = $('#cloudForcePull');
   if (cfp) cfp.onclick = async () => {
