@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.07', d: '10-21', items: [
+    '改：滑到底时最后一张卡更贴近 Dock（底部留白从 150px 收到「Dock 高 + 16px」），页面短的时候也不会再空出一大截',
+    '改：各页末尾多余的空行删掉（原来额外加了 26px）',
+  ]},
   { v: 'v4.06', d: '10-21', items: [
     '修：「最近一次」的日期胶囊、体重趋势的翻页器，都挪到卡片右上角，和标题同一行',
     '修：翻页箭头改用图标，圆圈里真正居中',
@@ -942,7 +946,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.06';
+const APP_VERSION = 'v4.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2389,7 +2393,7 @@ function renderMe() {
         <div class="hint" style="margin:0 0 14px">iPhone / iPad 会缓存网页。看到旧界面就点下面的按钮强制刷新，不动数据。</div>
         <button class="btn primary" id="hardReload">强制更新</button>
       </div>
-      <div style="height:26px"></div>`;
+`;
   } else if (mePage === 'body') {
     h = meBackBar('身体与目标') + `
       <div class="card">
@@ -2567,7 +2571,7 @@ function renderMe() {
             ${swOne(k)}
           </div>`).join('')}
       </div>
-      <div style="height:26px"></div>`;
+`;
   } else if (mePage === 'bodydata') {
     const st = Store.load();
     const body = st.body || {}, wts = st.weights || {};
@@ -2642,7 +2646,7 @@ function renderMe() {
         </div>`;
       })() : ''}
       ${rows ? `<div class="card"><h3>历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
-      <div style="height:26px"></div>`;
+`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="about-fill">
