@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.48', d: '10-22', items: [
+    '修：没称重却被记成「今天」—— 当快捷指令没带日期、且数值和最近一次完全一样时，不再新增日期（最近一次仍显示上次称重那天）',
+  ]},
   { v: 'v4.47', d: '10-22', items: [
     '加：出错也会记提醒 —— 上传/读取云端失败、体脂数据拉不到、热量数据解析失败，都会进铃铛，带红色 ✕',
     '改：提醒记录每条前面有图标 —— 正常是绿色 ✓，出错是红色 ✕',
@@ -1096,7 +1099,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.47';
+const APP_VERSION = 'v4.48';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3650,10 +3653,23 @@ async function pullBodyJson() {
       return lines.length ? Number(lines[lines.length - 1]) || 0 : 0;
     };
     const w = normKg(pick(j.w)), bf = normPct(pick(j.bf)), jbmi = pick(j.bmi), jffm = normKg(pick(j.ffm));
-    // 日期可能为空（快捷指令的日期步骤没取到），那就用今天
-    const date = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [todayISO()])[0];
     if (!w && !bf && !jbmi && !jffm) return null;
     const d = Store.load();
+    d.body = d.body || {}; d.weights = d.weights || {};
+    const explicit = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [])[0];
+    let date = explicit;
+    if (!date) {
+      // 快捷指令没给日期：如果这次的数值和「最近一次」完全一样，说明没有新称重 —— 不新增日期
+      const latestD = Object.keys(d.body).concat(Object.keys(d.weights)).sort().pop();
+      const lb = latestD ? (d.body[latestD] || {}) : {};
+      const same = latestD
+        && Number(d.weights[latestD] || 0) === Number(w || 0)
+        && Number(lb.bf || 0) === Number(bf || 0)
+        && Number(lb.bmi || 0) === Number(jbmi || 0)
+        && Number(lb.ffm || 0) === Number(jffm || 0);
+      if (same) return { d: latestD, n: 0, same: true };
+      date = todayISO();
+    }
     const cur = (d.body && d.body[date]) || {};
     if (d.weights[date] === w && cur.bf === bf) return j;
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
