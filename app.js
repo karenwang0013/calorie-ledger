@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.18', d: '10-21', items: [
+    '加：提醒记录第一次打开会放两条「示例」，方便看卡片效果（点清空就没了）',
+    '改：提醒卡片排版收紧 —— 标题一行、右上角时间、下面一行说明，不再挤在一起',
+  ]},
   { v: 'v4.17', d: '10-21', items: [
     '改：小铃铛挪到「数据同步」右边，换成和设置一样的实心图标',
     '改：提醒记录页面加高，每条提醒改成卡片式（时间在右上角），空状态也做成卡片',
@@ -981,7 +985,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.17';
+const APP_VERSION = 'v4.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2340,7 +2344,19 @@ function renderNotifyDot() {
   dot.hidden = !unread;
 }
 function openNotifyLog() {
-  const list = notifyLogGet().slice().sort((a, b) => b.ts - a.ts);
+  // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
+  let all = notifyLogGet();
+  if (!all.length && !localStorage.getItem('notify_demo_seeded')) {
+    const d = Store.load();
+    d.notifyLog = [
+      { ts: Date.now() - 3600 * 1000, d: todayISO(), k: 'demo-weight', t: '该称体重了', b: '上次记是 3 天前，今晚站上秤称一次吧' },
+      { ts: Date.now() - 26 * 3600 * 1000, d: todayISO(), k: 'demo-goal', t: '今天已超出目标', b: '超出 120 千卡 · 今天可吃 1207 千卡' },
+    ];
+    Store.save({ silent: true });
+    localStorage.setItem('notify_demo_seeded', '1');
+    all = d.notifyLog;
+  }
+  const list = all.slice().sort((a, b) => b.ts - a.ts);
   const box = $('#nlogList');
   if (box) {
     box.innerHTML = list.length ? list.map(x => `
