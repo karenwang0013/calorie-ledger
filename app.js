@@ -24,6 +24,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.22', d: '10-23', items: [
+    '修：营养数据不再"瞎算"——打开一条已经被算坏的记录（三大项加起来比 100 克还多，如蛋白25+碳水172）时，会自动改用历史/食物库里正确的值，并提示你核对',
+    '修：保存时拦住不可能的数据（蛋白+碳水+脂肪 超过 100 克、或和热量差太多），不写进账本',
+    '修：克数显示 12.5g 不再被抹成 13g',
+    '按你照片那张标签实测：12.5 克 / 266 千焦 / 蛋白1 / 脂肪3.7 / 碳水6.6 → 保存后每 100 克 = 509 千卡 / 蛋白8 / 碳水52.8 / 脂肪29.6（和标签一致）',
+  ]},
   { v: 'v7.21', d: '10-23', items: [
     '修：营养编辑里改「参考量（克）」时，下面的热量/蛋白/碳水/脂肪**全部跟着按比例变**（12.5 克 ↔ 25 克 数值自动翻倍/减半）；你手填过的那一格会保持你填的，不会被覆盖',
     '说明：以前只改了热量、不动蛋白碳水脂肪，所以会出现"25 克蛋白比 16 克还少"这种对不上的数',
@@ -1845,7 +1851,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.21';
+const APP_VERSION = 'v7.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2130,7 +2136,8 @@ function renderToday() {
 /* 营养克数的显示：小于 10 保留一位小数，别把 0.3g 显示成 0 */
 function g1(v) {
   const n = Number(v) || 0;
-  return n >= 10 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
+  if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));   // 整数就显示整数
+  return String(Math.round(n * 10) / 10);                                  // 12.5 不能被抹成 13
 }
 
 function renderMeals() {
@@ -3008,9 +3015,29 @@ function openNutEdit(i, fake) {
   $('#nutF').value = +(((Number(it.fat_per_100g) || 0) * share).toFixed(1));
   const nq0 = $('#nutNameQ'); if (nq0) nq0.value = it.name || '';
   const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
-  nutBase = { k: Number(it.kcal_per_100g) || 0, p: Number(it.protein_per_100g) || 0,
-              c: Number(it.carb_per_100g) || 0, f: Number(it.fat_per_100g) || 0 };
+  let base = {
+    k: Number(it.kcal_per_100g) || 0, p: Number(it.protein_per_100g) || 0,
+    c: Number(it.carb_per_100g) || 0, f: Number(it.fat_per_100g) || 0,
+  };
+  // 已经记坏的数据（三大项加起来比 100g 还多）：别拿它当基准，改用历史/食物库里的正确值
+  let fixedFrom = '';
+  if (!nutSane(base.k, base.p, base.c, base.f)) {
+    const known = nutKnownFood(it.name);
+    if (known && nutSane(known.kcal, known.p, known.c, known.f)) {
+      base = { k: Number(known.kcal) || 0, p: Number(known.p) || 0, c: Number(known.c) || 0, f: Number(known.f) || 0 };
+      fixedFrom = known.from;
+    }
+  }
+  nutBase = base;
   nutDirty = { k: false, p: false, c: false, f: false };
+  if (fixedFrom) {
+    const sh2 = Number(it.grams) || 100, share2 = sh2 / 100;
+    $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? base.k * share2 * KJ_PER_KCAL : base.k * share2);
+    $('#nutP').value = +(base.p * share2).toFixed(1);
+    $('#nutC').value = +(base.c * share2).toFixed(1);
+    $('#nutF').value = +(base.f * share2).toFixed(1);
+    setTimeout(() => toast(`这条原来的营养数据对不上（三大项超过 100 克），已按${fixedFrom}里的正确值改好，保存前请核对`, 4200), 350);
+  }
   paintNutPreview();
   // 位置：弹在记录卡片的垂直正中间（等它显示出来量到真实高度后再定位，误差 0）
   const sh = $('#nutSheet');
@@ -3101,6 +3128,26 @@ function setNutUnit(u, convert) {
 }
 
 /* 边填边算：让用户当场看到「这一份 = 每 100 克多少」 */
+/* 这组"每 100 克"数据是否讲得通：三大项不超过 100g，且热量和 4p+4c+9f 差得不太远 */
+function nutSane(kcal, p, c, f) {
+  const mass = (Number(p) || 0) + (Number(c) || 0) + (Number(f) || 0);
+  if (mass > 105) return false;                       // 蛋白+碳水+脂肪 加起来比 100 克还多 → 不可能
+  const calc = 4 * (Number(p) || 0) + 4 * (Number(c) || 0) + 9 * (Number(f) || 0);
+  const k = Number(kcal) || 0;
+  if (k <= 0) return true;                            // 没热量就不判
+  return Math.abs(calc - k) <= Math.max(70, k * 0.4); // 允许 40% 误差（膳食纤维/糖醇等）
+}
+
+/* 找这个食物在"历史/食物库"里的可信数据（用来纠正已经记坏的那条） */
+function nutKnownFood(name) {
+  const key = String(name || '').trim();
+  if (!key) return null;
+  const all = []
+    .concat(historyFoods().map(f => ({ ...f, from: '历史' })))
+    .concat((S.foods || []).map(f => ({ name: f.name, kcal: f.kcal, p: f.p, c: f.c, f: f.f, from: '食物库' })));
+  return all.find(x => x.name === key) || null;
+}
+
 /* 面板里按食物名找库/历史，找到就把"这一份"的营养填进来（用户只知道克数、不知道千焦时用） */
 function nutFindFoods(q) {
   const key = String(q || '').trim();
@@ -3157,6 +3204,10 @@ function saveNutEdit() {
   rememberGrams(it.name, ref);                     // 记住这个食物的克数，下次直接用
   const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
+  if (!nutSane(kcalIn * k, num('#nutP') * k, num('#nutC') * k, num('#nutF') * k)) {
+    toast(`这组数据对不上：蛋白+碳水+脂肪 加起来比 100 克还多（或和热量差太多），请照包装核对`, 4200);
+    return;
+  }
   it.kcal_per_100g = +(kcalIn * k).toFixed(1);
   it.protein_per_100g = +(num('#nutP') * k).toFixed(1);
   it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
