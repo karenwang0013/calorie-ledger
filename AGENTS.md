@@ -184,9 +184,10 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - **v3.65（2026-10-21）**：用户确认「完美存档」的版本。此版本包含：容器滚动的键盘方案、真机手感通过、悬浮 Dock（按设备屏幕圆角计算）、磨砂玻璃卡片 + 渐变描边、圆环细边光、改名入口（三个点）、通知页（App 内总开关 + 五类提醒 + 锁屏真推送）、拍照两张图并排、跨设备记录同步、右上角强制更新按钮。
 - 锁屏推送已落地：Cloudflare Worker `ledger-push`（详见 `push/README.md` 顶部「当前状态」）。
 - 回退方式：`git revert <该提交>` 或 `git checkout v3.65-ok`（tag）。
+- **v5.15（2026-10-22）**：液态玻璃改造前的存档（tag `v5.15-ok`，另有 21MB 全量快照在 `热量账本/备份/`）。要退回「没有 Dock 液态滑块」的样子：`git checkout v5.15-ok -- index.html style.css app.js`。
+- **v6.00（2026-10-22）**：Dock 液态滑块（`.dock-lens`，`initDockLens()`）+ 全局按钮按压回弹。规则：滑块只做变形和高光、不做折射（iPhone WebKit 不支持 `backdrop-filter: url()`）；`.tab` / `.fab` 必须保持 `position: relative; z-index: 1` 在滑块之上，自检脚本已锁。
 
 ### 体重趋势两行小字 · 尺寸存档（tag `v5.07-ok`）
-
 用户要求「先把现在的尺寸备份一份，免得改完退不回去」。改之前的原始值锁在 tag `v5.07-ok`，具体是：
 
 | 元素 | 选择器 | 存档值（v5.07） |

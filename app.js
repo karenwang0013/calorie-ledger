@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.00', d: '10-22', items: [
+    '加：底部 Dock 有了「液态滑块」—— 一层玻璃药丸跟着当前页面停靠；按任何一个按钮，它会滑过去、横向撑开纵向压扁一下再弹回来，按下的位置还会亮一团光',
+    '改：图标和中间那个加号永远压在玻璃滑块上面，滑块只负责背后的玻璃，不挡字也不挡点按',
+    '改：各类按钮（记录/保存、7 天 30 天 90 天、设置里的每一行、标签、翻页按钮）按下去都有轻微「软一下」的回弹，不再只是变暗一下',
+  ]},
   { v: 'v5.15', d: '10-22', items: [
     '改：身体数据里的「回到最新」按钮挪到「体重趋势」标题右边，不再挤着右边的日期区间',
     '改：「最新那天 / 所选那天」改成「最新 / 所选」两个字',
@@ -1334,7 +1339,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.15';
+const APP_VERSION = 'v6.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4011,6 +4016,7 @@ function switchView(v) {
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  if (window.__dockLens) window.__dockLens.sync();   // 液态滑块跟到新选中的 Tab
   document.body.classList.toggle('view-me', v === 'me');
   document.body.classList.toggle('view-trends', v === 'trends');
   if (window.scTop) window.scTop();
@@ -4346,8 +4352,64 @@ window.addEventListener('error', (e) => showBootError(e.message));
 window.addEventListener('unhandledrejection', (e) => showBootError((e.reason && e.reason.message) || e.reason));
 
 /* ---------------- 初始化 ---------------- */
+/* ---------------- Dock 液态滑块 ---------------- */
+/* 平时停在当前 Tab 上；按下任意按钮，滑块会滑过去并在按下的位置亮一团光，松手弹回 */
+function initDockLens() {
+  const inner = document.querySelector('.tabbar .inner');
+  const lens = inner && inner.querySelector('.dock-lens');
+  if (!inner || !lens) return;
+
+  const activeTab = () => inner.querySelector('.tab.on');
+  let evX = 0, evY = 0;
+
+  const place = (el, opt = {}) => {
+    if (!el) return;
+    const ir = inner.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const padX = 6, padY = 7;
+    lens.style.setProperty('--lens-w', Math.round(r.width + padX * 2) + 'px');
+    lens.style.setProperty('--lens-h', Math.round(r.height + padY * 2) + 'px');
+    lens.style.setProperty('--lens-x', Math.round(r.left - ir.left - padX) + 'px');
+    lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - padY) + 'px');
+    lens.classList.toggle('on-fab', !!opt.fab);
+    if (opt.press) {
+      const hx = (evX - r.left + padX) / (r.width + padX * 2) * 100;
+      const hy = (evY - r.top + padY) / (r.height + padY * 2) * 100;
+      lens.style.setProperty('--hx', Math.max(0, Math.min(100, hx)).toFixed(1) + '%');
+      lens.style.setProperty('--hy', Math.max(0, Math.min(100, hy)).toFixed(1) + '%');
+    }
+    lens.classList.add('on');
+  };
+
+  const sync = () => { lens.classList.remove('press'); place(activeTab()); };
+  window.__dockLens = { sync };
+
+  inner.addEventListener('pointerdown', ev => {
+    const el = ev.target.closest('.tab, .fab');
+    if (!el) return;
+    evX = ev.clientX; evY = ev.clientY;
+    place(el, { press: true, fab: el.classList.contains('fab') });
+    lens.classList.add('press');
+  }, { passive: true });
+
+  const release = () => {
+    if (!lens.classList.contains('press')) return;
+    lens.classList.remove('press');
+    // 松手后滑回当前选中的 Tab（点 Tab 的话此时已经切过去了，看起来就是原地弹一下）
+    setTimeout(() => { if (!lens.classList.contains('press')) sync(); }, 10);
+  };
+  window.addEventListener('pointerup', release, { passive: true });
+  window.addEventListener('pointercancel', release, { passive: true });
+
+  // 首帧、切页、转屏都重新贴一次（尺寸和位置会变）
+  requestAnimationFrame(() => requestAnimationFrame(sync));
+  window.addEventListener('resize', () => setTimeout(sync, 120));
+  window.addEventListener('orientationchange', () => setTimeout(sync, 260));
+}
+
 function init() {
   const synced = consumeHealthLink();
+  initDockLens();
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
