@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.88', d: '10-23', items: [
+    '修：搜索里选中食物 → 直接看到记录界面（搜索列表先收起来，不再把它挤到下面）；在记录界面删掉这项 → 回到搜索界面，原来那些食物全部还在',
+    '（列表内容一直保留，只是按"有没有结果"收放，所以不会像之前那样删完变空白）',
+  ]},
   { v: 'v6.87', d: '10-23', items: [
     '修：搜索里点一条食物（跳到结果区）后，搜索列表会被清空 —— 再切回「搜索」就是一页空白；现在列表会保留',
     '改：历史行右边的删除改成纯叉号（去掉圆圈），叉号用 SVG 画（字符「×」字形自带偏位，永远差一点），实测到按钮四边都是 6.5px，误差 0',
@@ -1709,7 +1713,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.87';
+const APP_VERSION = 'v6.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2140,6 +2144,7 @@ function openAdd(meal) {
   $('#searchInput').value = '';
   $('#textInput').value = '';
   $('#searchList').innerHTML = '';
+  $('#searchList').hidden = false;
   $('#addTabs').hidden = false;
   $('#searchInput').value = '';
   setAddMode('photo');
@@ -2617,6 +2622,13 @@ function historyFoods() {
     .map(x => ({ name: x.n, kcal: x.k, p: x.p, c: x.c, f: x.f, grams: x.g, cat: x.cat || '以前记过' }));
 }
 
+/* 有结果在下面时先把搜索列表收起来（选完直接看到记录区）；结果清空后再放出来 */
+function syncSearchList() {
+  const box = $('#searchList');
+  if (!box) return;
+  box.hidden = (S.items || []).length > 0;
+}
+
 function runSearch(q) {
   const box = $('#searchList');
   const key = q.trim().toLowerCase();
@@ -2668,8 +2680,9 @@ function runSearch(q) {
     pushFood(list[Number(el.dataset.i)].f);
     $('#searchInput').value = '';
     $('#searchInput').blur();
-    // 不能把列表清空 —— 清空后从"结果"切回「搜索」就是一页空白（用户反馈的 bug）
-    runSearch('');
+    // 列表内容要留着（清空会导致切回搜索是一片空白），但有结果时先收起来，
+    // 让"已添加"的结果区直接出现在搜索框下面 —— 选完就进记录界面，不用往下滚
+    syncSearchList();
   });
 }
 
@@ -2703,6 +2716,7 @@ function showResult(title, note) {
 }
 
 function renderResult() {
+  syncSearchList();
   const box = $('#resultItems');
   let shot = '';
   // 拍的是什么就显示什么：拍实物 →「食物照片」，拍营养成分表 →「营养成分表照片」；
