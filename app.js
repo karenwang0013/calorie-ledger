@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.01', d: '10-22', items: [
+    '修：只要这次读到了云端（哪怕本机更新/只做了合并），就先清掉旧的读取错误提醒 —— 不让 ⚠️ 赖着不走',
+    '改：超时提示里残留的「api.github.com」改成「Gitee」',
+  ]},
   { v: 'v5.00', d: '10-22', items: [
     '改：错误提醒加「宽限期」—— 2 分半内前 2 次失败不打扰，连续 3 次失败才记 ⚠️；一旦后来成功，自动把错误记录删掉',
   ]},
@@ -1280,7 +1284,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.00';
+const APP_VERSION = 'v5.01';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

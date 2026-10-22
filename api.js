@@ -920,15 +920,18 @@ async function cloudPull(force) {
         local2.body = Object.assign({}, rd.body || {}, local2.body || {});
         local2.weights = Object.assign({}, rd.weights || {}, local2.weights || {});
         localStorage.setItem(Store.KEY, JSON.stringify(local2));
+        if (typeof clearErr === 'function') clearErr('err-pull');
         cloudPulling = false;
         return 'merged';
       }
     } catch (e) {}
+    // 能读到云端（哪怕本机更新）就算读取成功，清掉旧的读取错误
+    if (typeof clearErr === 'function') clearErr('err-pull');
     cloudPulling = false;
     return 'behind';
   } catch (e) {
     cloudPulling = false;
-    cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '读取失败');
+    cloudErr = (e && e.name === 'AbortError') ? '连不上 Gitee（网络超时）' : (e.message || '读取失败');
     cloudFailUntil = Date.now() + 30000;
     if (typeof logError === 'function') logError('err-pull', '同步失败（读取）', cloudErr + ' @gitee');
     return false;
