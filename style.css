@@ -371,13 +371,12 @@ html.kb .sc-body {
 #addSheet {
   /* 材质跟 Dock 一样：半透磨砂玻璃 */
   background-color: transparent;
-  /* 原来是 46%～58% 的半透玻璃：滑到顶部时，背景页面的顶栏/卡片会从弹层顶上透出来，
-     看着像"顶上盖了一块东西"。改成实底（保留边缘那圈玻璃高光），页面一点都不透 */
-  background-color: #12161a;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
   /* 位置和尺寸 */
   position: fixed;
   left: var(--dock-inset); right: var(--dock-inset);
@@ -385,8 +384,10 @@ html.kb .sc-body {
   top: auto;
   margin: 0 auto;
   max-width: var(--dock-max);
+  /* 高度上限必须避让顶栏：原来 92dvh 会让弹层顶边钻到顶栏后面，
+     一往上滑，几格按钮就被顶栏盖住 —— 这就是"还没滑到顶就被遮挡" */
   min-height: 64dvh;
-  max-height: 92dvh;
+  max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
   border-radius: var(--dock-r, 26px);
   padding: 0;
   display: flex;
@@ -959,6 +960,14 @@ body.add-open .sheet-mask.on {
 @media (prefers-reduced-motion: reduce) {
   .dock-lens, .dock-lens.press, .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch { transition-duration: .01ms; }
 }
+
+/* 改营养数据的小面板 */
+.nutgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nutgrid.three { grid-template-columns: 1fr 1fr 1fr; margin-top: 10px; }
+.nutgrid .field { margin: 0; }
+.nutgrid input { width: 100%; }
+/* 必填标记：所有表单里统一用这个（用户要求"哪些必须填要能看见"） */
+.req { color: var(--lime); font-weight: 700; }
 
 /* 加载不完整时的那条兜底提示（可以一键重试，不用杀 App） */
 .boot-retry {

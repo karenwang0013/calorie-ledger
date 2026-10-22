@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.91', d: '10-23', items: [
+    '回退：记录弹层的颜色/磨砂原样恢复（v6.90 我把底色改成实底是错的，这次一个数值都没留）',
+    '修：搜索页上滑时按钮被遮住的真正原因 —— 弹层高度上限是 92dvh，顶边钻到了顶栏后面，一滑动就被顶栏盖住；现在高度上限会避让顶栏（实测弹层顶边离顶栏 20px，滑动时按钮是正常滚出去，不再被切）',
+    '新：记录界面每一项的营养行末尾加了「…」，可以改这一项的营养数据 —— 按「参考量多少克 + 那份的营养」填，保存自动换算成每 100 克并重算热量/合计；必填项用亮色 * 标出（参考量、热量）',
+  ]},
   { v: 'v6.90', d: '10-23', items: [
     '修：搜索里选食材 → 点「重来」→ 回到搜索是一片空白。现在会重新渲染，原来的食物全都在',
     '修：搜索页往上滑时"顶上像盖了一块东西" —— 原因是记录弹层是 46%～58% 的半透玻璃，滑到顶部时背景页面的顶栏/卡片从弹层顶上透出来了；现在改成实底（保留边缘玻璃高光、横杠照旧）',
@@ -1720,7 +1725,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.90';
+const APP_VERSION = 'v6.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2761,7 +2766,7 @@ function renderResult() {
         <div class="top">
           <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
         </div>
-        <div class="meta">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</div>
+        <div class="meta"><span class="mtxt">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</span><button class="pen" data-nut="${i}" aria-label="改营养数据">${PEN_ICON}</button></div>
         <div class="gr">
           <input type="number" inputmode="decimal" value="${it.grams}" data-g="${i}">
           <span class="u">克</span>
@@ -2794,6 +2799,10 @@ function renderResult() {
     it.name = v;
     renderResult();
   });
+  $$('[data-nut]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    openNutEdit(Number(b.dataset.nut));
+  });
   $$('[data-u]', box).forEach(b => b.onclick = () => {
     S.items[Number(b.dataset.u)].grams = Number(b.dataset.g);
     renderResult();
@@ -2808,6 +2817,47 @@ function renderResult() {
       $('#resultTotal').textContent = Math.round(total);
     };
   });
+}
+
+/* ---------------- 改某一项的营养数据 ----------------
+   场景：包装上写的是「每份 12.5 克 · 60 千卡」，早先被当成「每 100 克」记了。
+   这里按"参考量多少克 + 那份的营养"来填，保存时换算成每 100 克。 */
+let nutEditIdx = -1;
+function openNutEdit(i) {
+  const it = S.items[i];
+  if (!it) return;
+  nutEditIdx = i;
+  $('#nutTitle').textContent = (it.name || '这一项') + ' · 营养数据';
+  $('#nutRef').value = 100;                       // 默认按每 100 克显示当前值
+  $('#nutKcal').value = Math.round(Number(it.kcal_per_100g) || 0);
+  $('#nutP').value = Number(it.protein_per_100g) || 0;
+  $('#nutC').value = Number(it.carb_per_100g) || 0;
+  $('#nutF').value = Number(it.fat_per_100g) || 0;
+  $('#nutMask').classList.add('on');
+  $('#nutSheet').classList.add('on');
+  setTimeout(() => $('#nutRef').focus(), 260);
+}
+function closeNutEdit() {
+  $('#nutMask').classList.remove('on');
+  $('#nutSheet').classList.remove('on');
+  nutEditIdx = -1;
+}
+function saveNutEdit() {
+  const it = S.items[nutEditIdx];
+  if (!it) return closeNutEdit();
+  const ref = Number($('#nutRef').value);
+  const kcalRaw = $('#nutKcal').value.trim();
+  if (!(ref > 0)) return toast('参考量必须填（这份多少克）', 2600);
+  if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
+  const k = 100 / ref;                            // 换算到每 100 克
+  const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
+  it.kcal_per_100g = +(Number(kcalRaw) * k).toFixed(1);
+  it.protein_per_100g = +(num('#nutP') * k).toFixed(1);
+  it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
+  it.fat_per_100g = +(num('#nutF') * k).toFixed(1);
+  closeNutEdit();
+  renderResult();                                 // 热量、合计当场重算
+  toast('已更新，按新数据重新算了', 2200);
 }
 
 async function saveItems() {
@@ -5248,6 +5298,9 @@ function init() {
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;
   $('#saveItems').onclick = saveItems;
+  $('#nutMask').onclick = closeNutEdit;
+  $('#nutClose').onclick = closeNutEdit;
+  $('#nutSave').onclick = saveNutEdit;
   $('#resultReset').onclick = () => {
     S.items = [];
     resetPhotoUI();
