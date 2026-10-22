@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.27', d: '10-23', items: [
+    '修：补回历史时不再因为"那条账的数字看着不对"就跳过 —— 只要记过就补回来（食物消失比数字不准严重，数字可以点「…」按包装改）',
+    '新增诊断：设置 → 关于与更新 里会显示「历史 N 条 · 记账 M 条 · 已删 K 条」，万一还找不到，一眼就能看出是数据没了还是界面没刷新',
+  ]},
   { v: 'v7.26', d: '10-23', items: [
     '修：搜索的默认列表里没有那个食物（不是要搜才找得到）—— 现在只要账本里有这条记录，就会自动补回历史列表，即使那条账当时记歪了也会按 100 克归一后补回来，先让你能找到，再点「…」按包装改一次',
   ]},
@@ -1866,7 +1870,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.26';
+const APP_VERSION = 'v7.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3218,7 +3222,7 @@ function refillHistFromLogs() {
       const k2 = 100 / mass;
       cand = { k: cand.k, p: +(cand.p * k2).toFixed(1), c: +(cand.c * k2).toFixed(1), f: +(cand.f * k2).toFixed(1) };
     }
-    if (!nutSane(cand.k, cand.p, cand.c, cand.f)) return;
+    // 不再因"数据看着不对"跳过：食物消失比数字不准严重
     has.add(name);
     st.foodHist.push({ n: name, k: cand.k, p: cand.p, c: cand.c, f: cand.f, g, cat: '以前记过', at: Number(l.ts) || 0 });
     added++;
@@ -4701,7 +4705,11 @@ function wireMe() {
     const tb = document.querySelector('.topbar');
     const tbH = tb ? Math.round(tb.getBoundingClientRect().height) : 0;
     const tbPad = tb ? getComputedStyle(tb).paddingTop : '';
-    dbg.textContent = `视口 ${Math.round(window.innerWidth)}×${Math.round(window.innerHeight)} · 顶栏 ${tbH}px（上边距 ${tbPad}）· ${APP_VERSION}`;
+    const st0 = Store.load();
+    const histN = (st0.foodHist || []).length, logN = (st0.logs || []).length, delN = (st0.foodHistDel || []).length;
+    const delList = (st0.foodHistDel || []).slice(0, 3).join('、');
+    dbg.textContent = `视口 ${Math.round(window.innerWidth)}×${Math.round(window.innerHeight)} · 顶栏 ${tbH}px（上边距 ${tbPad}）· ${APP_VERSION}`
+      + `\n历史 ${histN} 条 · 记账 ${logN} 条 · 已删 ${delN} 条${delList ? '（' + delList + '…）' : ''}`;
   }
   const back = $('#meBack');
   if (back) back.onclick = () => { mePage = null; renderMe(); };
