@@ -1186,7 +1186,13 @@ body.add-open .sheet-mask.on {
 #addSheet { --blk-gap: 12px; }
 #addSheet .sh-body { padding: calc(var(--blk-gap) - 4px) var(--blk-gap) var(--blk-gap); }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
-#addSheet .grab { width: 66px; height: 4px; }
+/* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
+   滚动内容到那里就被切掉，看着像有一层东西盖住（横杠下沿就是切边）。
+   现在横杠不占位，内容可以一直滚到弹层顶边，横杠浮在最上面 */
+#addSheet .grab {
+  position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 66px; height: 4px; margin: 0; z-index: 3;
+}
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;

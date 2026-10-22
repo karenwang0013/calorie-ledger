@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.93', d: '10-23', items: [
+    '新：记录区右上角加了「继续选」—— 点它直接回到搜索（列表放出、滚回顶部），选第 2、第 3 样时**不会再跳走**，可以连着多选',
+    '修：搜索页上滑时"横杠下面像有一层东西盖住" —— 那层其实是横杠占了 9px 布局，滚动内容在横杠下沿被切掉；现在横杠改成浮在最上层、不占位，内容可以一直滚到弹层顶边',
+  ]},
   { v: 'v6.92', d: '10-23', items: [
     '修：搜索里选了一个食材后，就再也选不了第二个 —— 点「搜索」页签会重新把列表放出来；而且已经在记录里加过东西时，再选新的会**留在搜索里**（不跳走），可以连着多选几样',
   ]},
@@ -1728,7 +1732,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.92';
+const APP_VERSION = 'v6.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5313,6 +5317,14 @@ function init() {
   $('#nutMask').onclick = closeNutEdit;
   $('#nutClose').onclick = closeNutEdit;
   $('#nutSave').onclick = saveNutEdit;
+  // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
+  const rm = $('#resultMore');
+  if (rm) rm.onclick = () => {
+    setAddMode('search');
+    $('#searchList').hidden = false;
+    runSearch($('#searchInput').value || '');
+    setTimeout(() => { const b = document.querySelector('#addSheet .sh-body'); if (b) b.scrollTop = 0; }, 30);
+  };
   $('#resultReset').onclick = () => {
     S.items = [];
     resetPhotoUI();
