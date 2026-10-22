@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=624">
+<link rel="stylesheet" href="style.css?v=625">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -360,8 +360,54 @@
   </div>
 </div>
 
-<script src="foods.js?v=624"></script>
-<script src="api.js?v=624"></script>
-<script src="app.js?v=624"></script>
+<script src="foods.js?v=625"></script>
+<script src="api.js?v=625"></script>
+<script src="app.js?v=625"></script>
+<script>
+/* 兜底：万一这次加载没完整（更新正好赶在部署中间，某个 js 没下下来），
+   不要停在"全是破折号"的死界面：
+   ① 第一次先自己自动重载一次（15 秒内只试一次，避免死循环）；
+   ② 还不行就弹一条可点重试的提示。
+   这段是内联的，所以就算 app.js 本身没下载下来也照样有效。 */
+(function () {
+  var K = 'boot-auto-retry';
+  function broken() {
+    var el = document.getElementById('dateLabel');
+    var t = el && el.textContent ? el.textContent.trim() : '';
+    return !t || t === '—';
+  }
+  function autoRetry() {
+    if (window.__booted) return false;
+    var last = 0;
+    try { last = +sessionStorage.getItem(K) || 0; } catch (e) {}
+    if (last && Date.now() - last < 15000) return false;
+    try { sessionStorage.setItem(K, Date.now()); } catch (e) {}
+    setTimeout(function () { location.reload(); }, 900);
+    return true;
+  }
+  function show(msg) {
+    if (window.__booted || document.getElementById('bootRetry')) return;
+    var box = document.querySelector('.app') || document.body;
+    var bar = document.createElement('div');
+    bar.id = 'bootRetry';
+    bar.className = 'boot-retry';
+    bar.innerHTML = '<span>' + msg + '</span><button>重新加载</button>';
+    bar.querySelector('button').onclick = function () { location.reload(); };
+    box.insertBefore(bar, box.firstChild);
+  }
+  window.__showBootRetry = show;
+  window.__bootT = setTimeout(function () {
+    if (!broken()) return;
+    if (autoRetry()) return;
+    show('页面没加载完整');
+  }, 4500);
+  window.addEventListener('error', function (e) {
+    if (e && e.target && e.target.tagName === 'SCRIPT') {
+      if (autoRetry()) return;
+      show('有个脚本没加载下来');
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>

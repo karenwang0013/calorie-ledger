@@ -954,6 +954,21 @@ body.add-open .sheet-mask.on {
   .dock-lens, .dock-lens.press, .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch { transition-duration: .01ms; }
 }
 
+/* 加载不完整时的那条兜底提示（可以一键重试，不用杀 App） */
+.boot-retry {
+  position: fixed; left: 12px; right: 12px; top: calc(var(--topbar-h, 64px) + 8px);
+  z-index: 60; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 14px;
+  background: rgba(255,138,76,.14); border: 1px solid rgba(255,138,76,.35);
+  color: var(--orange); font-size: 12.5px;
+  backdrop-filter: blur(12px);
+}
+.boot-retry span { flex: 1; }
+.boot-retry button {
+  flex: 0 0 auto; padding: 6px 12px; border-radius: 10px;
+  background: rgba(255,255,255,.10); color: var(--text); font-size: 12px; font-weight: 600;
+}
+
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
 #view-trends { padding-top: 12px; }   /* 第一张卡和顶栏之间，留出与卡片之间一样的距离 */

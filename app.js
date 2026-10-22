@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.73', d: '10-23', items: [
+    '修：卡在"全是破折号"的界面出不来（不关掉重开就一直那样）—— 这是更新正好赶在部署中间，某个 js 没下载完整',
+    '现在会自动重载一次；还不行就弹一条「页面没加载完整 + 重新加载」的提示条，不用再杀 App',
+  ]},
   { v: 'v6.72', d: '10-22', items: [
     '修：点「强制更新」后会连刷两遍（先是加载出来、几秒后又刷一次，参数还消失一下）—— 原因是新 Service Worker 接管时又触发了一次整页刷新',
     '现在接管时不再刷新页面；真要更新由版本号比对负责（一次就够）',
@@ -1645,7 +1649,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.72';
+const APP_VERSION = 'v6.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1755,8 +1759,18 @@ async function loadDay() {
     S.day = d;
     S.foods = d.foods || [];
     renderToday();
+    window.__booted = true;
+    if (window.__bootT) clearTimeout(window.__bootT);
   } catch (e) {
+    // 读失败时别把界面留在"全是破折号"：先自己再试一次，仍失败就给一条可点重试的提示
+    console.warn('loadDay', e);
+    if (!window.__dayRetried) {
+      window.__dayRetried = true;
+      setTimeout(loadDay, 800);
+      return;
+    }
     toast('加载失败：' + e.message, 4000);
+    if (window.__showBootRetry) window.__showBootRetry('数据没读出来');
   }
 }
 
