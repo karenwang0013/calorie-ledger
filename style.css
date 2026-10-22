@@ -979,22 +979,9 @@ body.add-open .sheet-mask.on {
   position: absolute; top: 3.5px; left: 50%; transform: translateX(-50%);
   width: 66px; height: 4px; margin: 0; z-index: 3;
 }
-/* 右上角的关闭叉号：中心点正好落在圆角的圆心（距上/右各一个半径），
-   所以不高不低、正好卡在弧线的中心上；用 SVG 画，天生居中 */
-#nutSheet .nut-x {
-  position: absolute; z-index: 4;
-  width: 28px; height: 28px; padding: 0;
-  top: 16px; right: 30px;                        /* 落在圆角弧里，又不压住下面的输入框 */
-  display: grid; place-items: center;
-  background: none; border: 0; color: var(--muted2);
-  -webkit-tap-highlight-color: transparent;
-}
-#nutSheet .nut-x svg { width: 14px; height: 14px; display: block; }
-#nutSheet .nut-x:active { color: var(--text); }
-
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
-#nutSheet .sh-body { padding: 44px 26px 12px; }
+#nutSheet .sh-body { padding: 24px 26px 12px; }
 #nutSheet .hint { line-height: 1.5; }             /* 这张卡的说明文字收紧一点，整体更短 */
 /* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉；
    padding 和记录卡片完全一致（8/16/30）→ 按钮离卡片底边的距离同样是 31px */

@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.03', d: '10-23', items: [
+    '改：营养成分编辑面板弹在记录卡片的**垂直正中**（实测两个中心差 0.3px）',
+    '新：热量支持「千卡 / 千焦」切换 —— 点热量标签旁的「换成千焦」，输入包装上的千焦数即可，按 1 千卡 = 4.184 千焦换算（实测 每份 12.5g / 890 千焦 → 每 100g 1701.7 千卡，和手算一致）',
+    '改：去掉这张卡右上角的叉号，内容整体再上移（离卡片顶 44 → 24px）',
+  ]},
   { v: 'v7.02', d: '10-23', items: [
     '改（只营养编辑卡）：内容上移（离卡片顶 61 → 45px），右上角叉号上移更多（30 → 16px），卡片随之更短（424.8 → 408.8）',
     '修（只营养编辑卡）：下滑关闭卡住 —— 原因找到了：记录卡片关闭时会当场清掉拖拽写进去的 transform/opacity，营养卡片没清（只在 420ms 后才清），所以下次打开停在半路。现在和记录卡片完全一样的做法',
@@ -1769,7 +1774,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.02';
+const APP_VERSION = 'v7.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2886,8 +2891,23 @@ function openNutEdit(i) {
   $('#nutP').value = Number(it.protein_per_100g) || 0;
   $('#nutC').value = Number(it.carb_per_100g) || 0;
   $('#nutF').value = Number(it.fat_per_100g) || 0;
+  // 位置：弹在记录卡片的垂直正中间（等它显示出来量到真实高度后再定位，误差 0）
+  const sh = $('#nutSheet');
+  sh.style.top = '';
+  sh.style.bottom = '';
+  setNutUnit('kcal', false);                     // 每次打开都从千卡开始
   $('#nutMask').classList.add('on');
-  $('#nutSheet').classList.add('on');
+  sh.classList.add('on');
+  const centerOnBig = () => {
+    const big = $('#addSheet').getBoundingClientRect();
+    const h = sh.getBoundingClientRect().height || 0;
+    const top = Math.max(8, Math.min(big.top + big.height / 2 - h / 2, window.innerHeight - h - 8));
+    sh.style.top = Math.round(top) + 'px';
+    sh.style.bottom = 'auto';
+  };
+  centerOnBig();
+  requestAnimationFrame(centerOnBig);
+  setTimeout(centerOnBig, 460);          // 进场动画结束后再校一次，保证正中
   setTimeout(() => $('#nutRef').focus(), 260);
 }
 function closeNutEdit() {
@@ -2901,6 +2921,21 @@ function closeNutEdit() {
   sh.classList.remove('on');
   nutEditIdx = -1;
 }
+let nutUnit = 'kcal';
+const KJ_PER_KCAL = 4.184;
+function setNutUnit(u, convert) {
+  const inp = $('#nutKcal');
+  const v = Number(inp.value) || 0;
+  if (convert && v > 0) {
+    inp.value = u === 'kJ' ? Math.round(v * KJ_PER_KCAL) : Math.round(v / KJ_PER_KCAL);
+  }
+  nutUnit = u;
+  const now = $('#nutUnitNow'), tog = $('#nutUnitTog');
+  if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
+  if (tog) tog.textContent = u === 'kJ' ? '换成千卡' : '换成千焦';
+  if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
+}
+
 function saveNutEdit() {
   const it = S.items[nutEditIdx];
   if (!it) return closeNutEdit();
@@ -2909,8 +2944,9 @@ function saveNutEdit() {
   if (!(ref > 0)) return toast('参考量必须填（这份多少克）', 2600);
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
   const k = 100 / ref;                            // 换算到每 100 克
+  const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
-  it.kcal_per_100g = +(Number(kcalRaw) * k).toFixed(1);
+  it.kcal_per_100g = +(kcalIn * k).toFixed(1);
   it.protein_per_100g = +(num('#nutP') * k).toFixed(1);
   it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
   it.fat_per_100g = +(num('#nutF') * k).toFixed(1);
@@ -5364,8 +5400,8 @@ function init() {
   $('#nutMask').onclick = closeNutEdit;
   // 下滑关闭（拖拽结束时一定会复位，touchcancel 也复位）；叉号和点遮罩也都能关
   wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
-  const nx = $('#nutClose');
-  if (nx) nx.onclick = closeNutEdit;
+  const ut = $('#nutUnitTog');
+  if (ut) ut.onclick = ev => { ev.preventDefault(); setNutUnit(nutUnit === 'kJ' ? 'kcal' : 'kJ', true); };
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');
