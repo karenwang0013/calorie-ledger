@@ -1127,7 +1127,7 @@ body.add-open .sheet-mask.on {
   border-top: 0;
   padding: 8px 16px 30px;
 }
-#addSheet .sh-body { padding-top: 14px; }
+#addSheet .sh-body { padding-top: 8px; }
 
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
@@ -1183,7 +1183,7 @@ body.add-open .sheet-mask.on {
 .tabs3 {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
-  padding: 6px; margin: 10px -6px 18px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
+  padding: 6px; margin: 4px -6px 12px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
   /* 和卡片的圆角同心：卡片圆角 − 这一条到卡片边的距离（12px），再往里 6px 是按钮 */
@@ -1233,17 +1233,13 @@ body.add-open .sheet-mask.on {
    多余的高度留在框里（照片位不会被拉变形），两个按钮沉在框底 */
 #pane-photo:not([hidden]) .drop.photobox {
   flex: 1 1 auto; min-height: 0;
-  align-items: start; grid-template-rows: auto 1fr;
+  align-items: stretch; grid-template-rows: 1fr auto;   /* 两个照片框撑满上方，和按钮之间只留 12px */
 }
 #pane-photo .prow-pick { align-self: end; }
 #pane-photo .pslot { min-height: 0; }
-#pane-photo .pslot-body { min-height: 0; }
-#pane-photo .pslot-empty {
-  aspect-ratio: 1 / 1.05; height: auto; min-height: 0; max-height: 100%;
-}
-#pane-photo .pslot-body .preview {
-  aspect-ratio: 1 / 1.05; height: auto; min-height: 0; max-height: 100%; object-fit: cover;
-}
+#pane-photo .pslot-body { height: 100%; min-height: 0; }
+#pane-photo .pslot-empty { aspect-ratio: auto; height: 100%; min-height: 0; }
+#pane-photo .pslot-body .preview { aspect-ratio: auto; height: 100%; object-fit: cover; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }
