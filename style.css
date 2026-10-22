@@ -1271,6 +1271,23 @@ body.add-open .sheet-mask.on {
 }
 #nutSheet.on { transform: none; opacity: 1; }
 
+/* 记录卡片顶部那三格（拍照/搜索/描述）：滚动时固定在顶上，只让下面内容滚。
+   它本身是半透明的，所以加一层磨砂，免得下面内容透上来糊成一片（不改它的颜色值） */
+#addTabs {
+  position: sticky; top: 0; z-index: 3;
+  /* 固定在上面的这条要盖住滚过去的列表，所以垫一层与弹层材质同色的薄底 + 磨砂；
+     不垫的话下面文字会直接透上来（试过只加 blur，截图里仍然能看清） */
+  background-color: #171c20;   /* 固定条要有实底，否则列表文字会透上来 */
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
+}
+/* 固定条下沿再向下渐隐一点，食物滚上去不会"硬切"在一条线上 */
+#addTabs::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 14px;
+  background: linear-gradient(to bottom, #171c20, rgba(23, 28, 32, 0.55) 45%, rgba(23, 28, 32, 0));
+  pointer-events: none;
+}
+
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
 .sheet.noanim { transition: none !important; }
 
