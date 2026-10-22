@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.56', d: '10-23', items: [
+    '死规则已实现：食物的营养参数**一旦改过，以后一律以最后一次改的为准** —— 搜索选中、拍照识别、文字描述三个入口都先查历史，查到就用它覆盖库里/AI 的原始值',
+    '实测：历史改成 500/9 → 搜索选中得到 500/9、拍照识别也被覆盖成 500/9；再改成 480/10 → 立刻以 480/10 为准',
+  ]},
   { v: 'v7.55', d: '10-23', items: [
     '改（克重逻辑统一）：拍照识别后，凡是**没带克数**的条目，App 会自己再问一次 AI「这个食物一份多少克」并自动填上 —— 不需要你手动点按钮',
     '认不出名字的，你在名字里写上它是什么，点「AI 估克数」或直接保存前它也会自动再试一次',
@@ -2805,7 +2809,7 @@ async function runPhoto() {
       image2: hasFood ? (S.photo2Data || null) : null,
       hint,
     });
-    S.items = r.items.map(x => ({ ...x, _src: 'photo' }));
+    S.items = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
     // 填了克数就以它为准（包装营养表通常只有一条）
     if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
     // 识别完就把大图收起，结果区（左小图 + 右数值）直接露出来
@@ -2872,7 +2876,7 @@ async function runText() {
     const r = await api('/api/ai/text', { text });
     // 累加：描述好几次的结果要叠加（第一次鸡蛋 + 第二次鸡蛋 = 两个鸡蛋）
     const prevN = (S.items || []).length;
-    S.items = (S.items || []).concat(r.items.map(x => ({ ...x, _src: 'ai' })));
+    S.items = (S.items || []).concat(r.items.map(x => applyKnownFood({ ...x, _src: 'ai' })));
     if (!prevN) S.batchName = r.dish || '';
     $('#batchName').value = S.batchName || '';
     showResult((prevN ? '已累加：' : '估算：') + (r.dish || ''), r.note);
@@ -3050,6 +3054,9 @@ function pushFood(f) {
   // 上次这个食物记了多少克，这次就用多少克（不再用它自带的推荐值）
   const remembered = (setting('food_grams', {}) || {})[f.name];
   const def = Number(remembered) || Number(f.grams) || 0;   // 没有记忆就空着，由用户填
+  // 改过的参数优先：以 foodHist 里最后一次的值为准
+  const known = (Store.load().foodHist || []).find(x => x.n === String(f.name || '').trim());
+  if (known) f = Object.assign({}, f, { kcal: known.k, p: known.p, c: known.c, f: known.f });
   S.items.push({
     name: f.name,
     grams: def,
@@ -3338,6 +3345,20 @@ function nutSane(kcal, p, c, f) {
   const k = Number(kcal) || 0;
   if (k <= 0) return true;                            // 没热量就不判
   return Math.abs(calc - k) <= Math.max(70, k * 0.4); // 允许 40% 误差（膳食纤维/糖醇等）
+}
+
+/* 死规则：某个食物的营养参数一旦被改过，以后一律以"最后一次改的"为准。
+   这里把一条待记录的食物按 foodHist 里的值覆盖（有记录才覆盖）。 */
+function applyKnownFood(it) {
+  if (!it) return it;
+  const known = (Store.load().foodHist || []).find(x => x.n === String(it.name || '').trim());
+  if (!known) return it;
+  it.kcal_per_100g = Number(known.k);
+  it.protein_per_100g = Number(known.p);
+  it.carb_per_100g = Number(known.c);
+  it.fat_per_100g = Number(known.f);
+  it._fromHist = true;
+  return it;
 }
 
 /* 找这个食物在"历史/食物库"里的可信数据（用来纠正已经记坏的那条） */
