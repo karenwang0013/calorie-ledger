@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.85', d: '10-22', items: [
+    '改：体重趋势改成原生横向分页（前/当前/后三页），左右滑是系统惯性滚动 + 自动吸附，和上下翻页同样丝滑，且不会拖出卡片',
+  ]},
   { v: 'v4.84', d: '10-22', items: [
     '修：体重趋势拖动时会画出卡片外 —— 图表区裁切，位移限制在卡片宽度的 38% 内',
     '改：拖动带回弹缓动，手感更接近上下翻页',
@@ -1223,7 +1226,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.84';
+const APP_VERSION = 'v4.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3194,7 +3197,21 @@ function renderMe() {
             <div><span>较上次</span><b class="${pvDelta > 0 ? 'up' : (pvDelta < 0 ? 'down' : '')}">${pvDelta == null ? '—' : (pvDelta > 0 ? '+' : '') + pvDelta}<small>kg</small></b></div>
             <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
           </div>
-          ${pagePts.length >= 2 ? `<div class="chartwrap" id="btWrap" data-start="${pageStart}" data-end="${pageEnd}">${lineChart(pagePts, pageStart, pageEnd, bodySelDate)}</div>` : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
+          ${(() => {
+            const mk = (st, en) => {
+              const pts = wtPts.filter(p => p.date >= st && p.date <= en);
+              return pts.length >= 2
+                ? lineChart(pts, st, en, (bodySelDate && pts.some(p => p.date === bodySelDate)) ? bodySelDate : null)
+                : `<div class="hint" style="margin:24px 0">这段时间没有记录</div>`;
+            };
+            const s0 = addDays(pageStart, -7), e0 = addDays(pageEnd, -7);
+            const s2 = addDays(pageStart, 7),  e2 = addDays(pageEnd, 7);
+            return `<div class="chartpager" id="btPager">
+              <div class="cpslide">${mk(s0, e0)}</div>
+              <div class="cpslide">${mk(pageStart, pageEnd)}</div>
+              <div class="cpslide">${mk(s2, e2)}</div>
+            </div>`;
+          })()}
         </div>`;
       })() : ''}
       ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
@@ -3531,8 +3548,38 @@ function wireMe() {
     renderMe();
   };
 
-  // 体重趋势：点某个点 = 查看那天的数据；在图上左右滑 = 翻 7 天
-  const btWrap = $('#btWrap');
+  // 体重趋势：原生横向分页（左/当前/右三页），松手自动吸附
+  const pager = $('#btPager');
+  if (pager) {
+    const slides = pager.querySelectorAll('.cpslide');
+    const mid = () => Math.round(pager.clientWidth * 1);
+    requestAnimationFrame(() => { pager.scrollLeft = mid(); });
+    let ticking = false;
+    pager.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const w = pager.clientWidth || 1;
+        const idx = Math.round(pager.scrollLeft / w);
+        if (idx === 1) return;
+        bodyTrendEnd = addDays(bodyTrendEnd, idx < 1 ? -7 : 7);
+        bodySelDate = null;
+        renderMe();
+      });
+    });
+    slides.forEach(sl => {
+      sl.querySelectorAll('circle[data-d]').forEach(c => {
+        c.style.cursor = 'pointer';
+        c.onclick = (ev) => {
+          ev.stopPropagation();
+          bodySelDate = c.getAttribute('data-d');
+          renderMe();
+        };
+      });
+    });
+  }
+  const btWrap = null;
   if (btWrap) {
     $$('#btWrap circle[data-d]').forEach(c => {
       c.style.cursor = 'pointer';

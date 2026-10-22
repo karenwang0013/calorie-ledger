@@ -501,6 +501,23 @@ body.nlog-open .sheet-mask.on {
 }
 
 /* 身体数据 · 趋势交互区 */
+.chartpager {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: 12px;
+}
+.chartpager::-webkit-scrollbar { display: none; }
+.chartpager .cpslide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
 .chartwrap {
   touch-action: pan-y;
   overflow: hidden;            /* 拖动时绝不越出卡片 */
