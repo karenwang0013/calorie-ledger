@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.98', d: '10-22', items: [
+    '改：「网络自检」独立成一张卡片，放在「数据备份」最下面；结果显示在卡片里（不再弹窗）',
+    '改：覆盖按钮顺序对调 —— 先「用本机覆盖云端」，再「从云端覆盖本机」',
+  ]},
   { v: 'v4.97', d: '10-22', items: [
     '修：铃铛里还留着迁移前的旧提醒（文案写着「连不上 GitHub」）—— 启动时自动清理一次',
   ]},
@@ -1270,7 +1274,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.97';
+const APP_VERSION = 'v4.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3035,9 +3039,8 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
-          <button class="btn sm" id="netCheck">网络自检</button>
-          <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
           <button class="btn sm" id="cloudForcePush">用本机覆盖云端</button>
+          <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
         ${localStorage.getItem('pending_push') ? '<div class="hint" style="margin-top:6px;color:#ffab3d">有改动还没传上去（网络问题）· 会自动重试，不会丢</div>' : ''}
@@ -3056,6 +3059,12 @@ function renderMe() {
         <div class="btnrow" style="margin-top:14px">
           <button class="btn ghost sm" id="exportCsv">导出 CSV</button>
         </div>
+      </div>
+      <div class="card">
+        <h3>网络自检</h3>
+        <div class="hint" style="margin:0 0 12px">检查令牌、Gitee 连通性和真实读写。出问题时先点这里。</div>
+        <button class="btn sm" id="netCheck" style="width:100%">开始自检</button>
+        <pre id="netCheckOut" style="display:none;margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);color:var(--muted);font-size:11.5px;line-height:1.7;white-space:pre-wrap;word-break:break-all"></pre>
       </div>
 `;
   } else if (mePage === 'nutri') {
@@ -3599,7 +3608,9 @@ function wireMe() {
       const txt = await r.text();
       out.push('带令牌读：HTTP ' + r.status + (r.ok ? '（' + txt.length + ' 字节）' : '（' + txt.slice(0, 40) + '）'));
     } catch (e) { out.push('带令牌读：❌ ' + (e.message || e)); }
-    alert('网络自检\n' + out.join('\n'));
+    const box2 = $('#netCheckOut');
+    if (box2) { box2.style.display = 'block'; box2.textContent = out.join('\n'); }
+    else alert('网络自检\n' + out.join('\n'));
   };
 
   const ghStop = $('#stopGh');
