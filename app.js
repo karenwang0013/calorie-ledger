@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.31', d: '10-23', items: [
+    '修：描述页算完跳到拍照后，再切回描述，成分表/合计/记到哪一餐/记入按钮又挂在那里（那几块是公共区域，原来不分页）→ 现在记录区**只在拍照页显示**，描述和搜索页只有输入框',
+  ]},
   { v: 'v7.30', d: '10-23', items: [
     '改：顶部三格只保留"固定"，把上一版加的渐隐/模糊/底色全部撤掉（你说得对，那等于改了我的颜色）',
     '改（重要）：拍营养成分表时，模型只负责把标签上的数字**原样照抄**（每份多少克、单位是千焦还是千卡、那一份的能量/蛋白/碳水/脂肪），换算成每 100 克的工作由 App 自己做 —— 之前是让模型自己算，算错就会出现"标签 266 千焦、面板里变 116"这种',
@@ -1881,7 +1884,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.30';
+const APP_VERSION = 'v7.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2496,9 +2499,21 @@ function initSegLens(wrap) {
 function initAddTabsLens() { initSegLens($('#addTabs')); }
 function initTrendSegLens() { initSegLens($('#trendSeg')); }
 
+let addMode = 'photo';
+/* 记录区（识别结果 + 合计 + 记到哪一餐 + 记入按钮）只在「拍照」页显示。
+   描述页/搜索页只负责输入，不要把结果挂在那两页下面 —— 用户明确要求过 */
+function syncResultVisibility() {
+  const on = addMode === 'photo';
+  const area = $('#resultArea'), foot = $('#addFoot');
+  if (area) area.hidden = !on || !(S.items || []).length;
+  if (foot) foot.hidden = !on || !(S.items || []).length;
+}
+
 function setAddMode(m) {
   S.addMode = m;
+  addMode = m;
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  syncResultVisibility();
   ['photo', 'search', 'text'].forEach(k => {
     $('#pane-' + k).hidden = k !== m;
   });
@@ -2943,6 +2958,7 @@ function showResult(title, note) {
 
 function renderResult() {
   syncSearchList();
+  syncResultVisibility();
   const box = $('#resultItems');
   let shot = '';
   // 拍的是什么就显示什么：拍实物 →「食物照片」，拍营养成分表 →「营养成分表照片」；
