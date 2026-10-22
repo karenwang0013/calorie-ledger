@@ -402,7 +402,9 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 4. 如果图里有包装食品的营养成分表，按标签精确读数：
    - **优先**把标签原样抄到 label 字段（不要自己换算）：label.basis_grams = 标签上「每 X 克」的 X（如每份 12.5 克就填 12.5），label.unit = "kJ" 或 "kcal"，label.energy / protein / carb / fat = 那一份对应的数字。App 会用这些数字自己换算，不用你算
    - 同时仍按你的理解填 *_per_100g（每 100 克），但 **label 字段必须原样照抄，不许改写单位**
-   - grams 用用户在补充说明里说的克数；没说就填 100（中性默认值，用户会自己改成实际吃的克数或包装上的净含量）
+   - 如果包装上能看到克数：净含量（如「净含量 125 克」）填到 items[].net_grams；标签写「每份 12.5 克」就填到 label.basis_grams。两者都能看到时 net_grams 优先
+   - 如果包装上**任何克数都没有**：grams 填 0（App 会把这一项标成必填，让用户自己补）
+   - 用户明确说了吃多少克，就以用户说的为准
    - 如果用户说「整包 / 一包 / 全吃完」，就找包装上的「净含量 / 规格 / 内容量」，把 grams 设成那个数；找不到净含量再按 100
    - name 用包装上的产品名，不要自己编
 5. 拿不准时，宁可估高不要估低，并在 note 里说明不确定的地方。
@@ -502,7 +504,10 @@ function cleanItems(obj, opt) {
     const name = String(it.name || '').trim();
     let grams = num(it.grams, 0);
     if (!name) return;
-    if (it.label) grams = 0;                 // 拍到营养成分表：克数留空，用户自己填（不默认 100）
+    // 拍到营养成分表：包装上写了克数就自动填（净含量优先，其次"每份 X 克"）；没写就留空，由用户必填
+    if (it.label || it.net_grams) {
+      grams = num(it.net_grams, 0) || num(it.label && it.label.basis_grams, 0) || 0;
+    }
     // 0 千卡是合法值（无糖饮料、白水），只有「根本没给数字」才去拿总热量倒推
     let k100 = num(it.kcal_per_100g, NaN);
     if (isNaN(k100)) {
