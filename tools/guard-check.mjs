@@ -42,6 +42,20 @@ const checks = [
   ['和 Dock 重叠的卡牌宽度取自 --dock-max（不许写死）', /max-width: var\(--dock-max\)/.test(css) && !/max-width: 470px/.test(css)],
   ['记录卡片选项框的圆角由 --dock-r 推算（与卡片同心）', /\.tabs3 \{[\s\S]*?border-radius: calc\(var\(--dock-r/.test(css)],
   ['记录卡片大虚线框贴住卡片底边（底部对齐）', /#pane-photo:not\(\[hidden\]\) \.drop\.photobox \{[\s\S]*?flex: 1 1 auto/.test(css)],
+  ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
+    const i = css.indexOf('.seg-lens {');
+    if (i < 0) return false;
+    const blk = css.slice(i, css.indexOf('}', i));
+    const tr = (blk.match(/transition:[^;]*/) || [''])[0];
+    return tr.includes('transform') && !/\bwidth\b|\bheight\b/.test(tr);
+  })()],
+  ['Dock 液态滑块不许带 backdrop-filter（iOS 每帧重算模糊 → 卡）', (() => {
+    const i = css.indexOf('.dock-lens {');
+    if (i < 0) return false;
+    const blk = css.slice(i, css.indexOf('\n}', i));
+    return !/^[ \t]*(-webkit-)?backdrop-filter\s*:/m.test(blk);   // 只看真声明，不看注释里提到的
+  })()],
+  ['分段滑块首次定位不播入场动画（不许从顶部落下）', /primed/.test(app) && /transition = 'none'/.test(app)],
   ['切目标模式只做局部刷新，不许整页重绘（否则滑块会跳）', (() => {
     const i = app.indexOf("$$('#dietModes button').forEach(b => b.onclick");
     if (i < 0) return false;
