@@ -880,6 +880,7 @@ body.add-open .sheet-mask.on {
    分成两层是因为：轻触时"位置"和"缩放"如果写在同一个 transform 上，
    第二次写会把还没走完的滑动过渡打断 → 看起来抖一下。 */
 .dock-lens {
+  --lens-solid: rgba(255, 255, 255, 0.085);   /* 停稳后的实色：比 Dock 底色亮一档，深色底上才看得见 */
   position: absolute; left: 0; top: 0;
   width: var(--lens-w, 84px); height: var(--lens-h, 46px);
   border-radius: var(--lens-r, 36px);
@@ -906,6 +907,13 @@ body.add-open .sheet-mask.on {
   transform: scale(1.055, .925);
   border-radius: calc(var(--lens-r, 36px) + 2px);
 }
+/* 停稳（不再移动/按住）→ 变成实色块，和参考图一样是"选中块"而不是玻璃 */
+.dock-lens.settled .lens-body {
+  background: var(--lens-solid);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px rgba(0,0,0,.22);
+}
+.dock-lens.settled .lens-body::before { opacity: .05; }
+.dock-lens.settled .hl { opacity: 0; }
 /* 玻璃边缘：一圈亮边 + 很淡的彩虹色散 */
 .lens-body::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
@@ -1029,12 +1037,12 @@ body.add-open .sheet-mask.on {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
   background: var(--card); border: 1px solid var(--line);
   /* 左右两端做成整个圆（像 Dock 的胶囊），整体扁一点 */
-  border-radius: 999px; margin: 0 18px 12px; padding: 4px;
+  border-radius: 999px; margin: 0 18px 12px; padding: 3px;
   --seg-btn-r: 999px;
 }
 .seg button {
   position: relative; z-index: 1;
-  padding: 8px 6px; border-radius: var(--seg-btn-r);
+  padding: 7px 6px; border-radius: var(--seg-btn-r);
   font-size: 15.5px; font-weight: 700; color: var(--muted2); background: transparent;
   transition: color .3s ease;
 }
@@ -1249,6 +1257,14 @@ body.add-open .sheet-mask.on {
   backface-visibility: hidden;
 }
 .seg-lens.on { opacity: 1; }
+/* 停稳后同样是实色（不是玻璃）——比所在卡片亮一档，保证深色卡上也看得见 */
+.seg-lens {
+  --lens-solid: rgba(255, 255, 255, 0.10);
+}
+.seg-lens.settled {
+  background: var(--lens-solid);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px rgba(0,0,0,.22);
+}
 
 .drop {
   border: 1px dashed var(--line2);

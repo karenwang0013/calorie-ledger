@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.61', d: '10-22', items: [
+    '改：7 天 / 30 天 / 90 天 再扁一点（47 → 43px），还是胶囊形',
+    '改：选中的滑块「停稳以后」变成实色块（不再一直是玻璃）；按住、滑动过程中仍然是玻璃',
+    '适配：实色用"比所在卡片亮一档"的半透明白（卡片越深就越亮），所以深色卡片上也看得见，不会和背景糊在一起',
+  ]},
   { v: 'v6.60', d: '10-22', items: [
     '修：版本号一直显示 6.41 —— 原因是发版脚本里只改了 version.txt 和缓存号，app.js 里的 APP_VERSION 从 6.41 起就没再变过（所以界面永远写着 6.41）',
     '这个版本四处版本号终于对齐了；以后每次发版由 tools/bump.mjs 一次改齐，自检脚本也会卡住不一致的情况',
@@ -1593,7 +1598,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.60';
+const APP_VERSION = 'v6.61';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2085,6 +2090,12 @@ function initSegLens(wrap) {
     if (!g) return;
     if (remember) segLensMem[key] = g;
     apply(g);
+    settleSeg(420);
+  };
+  const settleSeg = (delay) => {
+    lens.classList.remove('settled');
+    clearTimeout(lens.__settleT);
+    lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
   };
   const sync = () => {
     lens.classList.remove('press');
@@ -2117,7 +2128,8 @@ function initSegLens(wrap) {
     const b = ev.target.closest('button');
     if (!b) return;
     pressedEl = b;
-    place(b, false);                // 按下去就直接滑到手指这一格（不记账）
+    lens.classList.remove('settled');   // 按住/滑动中是玻璃
+    place(b, false);                    // 按下去就直接滑到手指这一格（不记账）
   }, { passive: true });
 
   // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下。
@@ -4879,7 +4891,13 @@ function initDockLens() {
     inner.querySelectorAll('.lit').forEach(x => x.classList.remove('lit'));
     if (el) el.classList.add('lit');      // 停在哪，哪个就亮
   };
-  const go = el => { if (!el) return; target = el; place(el); lit(el); };
+  // 停稳（不再滑动、不是按住）→ 换成实色块；一开始就是实色，不要闪一下玻璃
+  const settle = (delay) => {
+    lens.classList.remove('settled');
+    clearTimeout(lens.__settleT);
+    lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
+  };
+  const go = el => { if (!el) return; target = el; place(el); lit(el); settle(620); };
   const reflow = () => { lens.classList.remove('press'); place(target || fabEl); };
   window.__dockLens = { go, reflow };
 
@@ -4888,6 +4906,7 @@ function initDockLens() {
     if (!el) return;
     evX = ev.clientX; evY = ev.clientY;
     target = el;                  // 按下去就认这一格，松手不会跳回原来那格
+    lens.classList.remove('settled');   // 按住时是玻璃，不是实色
     place(el, { press: true });
     lit(el);
     lens.classList.add('press');
@@ -4908,6 +4927,7 @@ function initDockLens() {
   lens.classList.add('noanim');
   requestAnimationFrame(() => requestAnimationFrame(() => {
     go(fabEl);
+    lens.classList.add('settled');       // 首帧就是实色，不播玻璃→实色的闪变
     requestAnimationFrame(() => lens.classList.remove('noanim'));
   }));
   // 转屏 / 尺寸变化时重新贴一次（尺寸和位置会变）
