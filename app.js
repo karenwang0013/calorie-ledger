@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.36', d: '10-22', items: [
+    '修：会出现"数据卡在几小时前"—— 原因是 App 只读 GitHub 那份镜像，而镜像任务会被 GitHub 限流漏跑；Gitee 的 API 有时也 403',
+    '现在：每次拉数据都三路同时取（Gitee 源、GitHub 原始文件、页面镜像），按内容里的时间挑最新的那一份，任何一路挂了都不会再把数据卡住',
+    '加：看今天时，如果数据超过 90 分钟没更新，消耗那行会标「数据偏旧」（橙色）—— 一眼能看出是没同步上，而不是数字不对',
+  ]},
   { v: 'v6.35', d: '10-22', items: [
     '改：日期下面那行措辞改成「今天 · 19:17 更新」，这个时间就是「热量采集」写进去的那一刻（不是手机本地时间、也不是云端同步时间）',
   ]},
@@ -1490,7 +1495,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.35';
+const APP_VERSION = 'v6.36';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1734,7 +1739,14 @@ function renderToday() {
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
-  $('#stExpAt').textContent = at ? '同步时间 ' + at : '';
+  // 看今天、但数据已经超过 90 分钟没更新 → 标一句「偏旧」，不用等发现数字不对
+  let stale = false;
+  if (at && isToday) {
+    const hm = at.match(/(\d{1,2}):(\d{2})/);
+    if (hm) { const t0 = parseISO(d.date); t0.setHours(+hm[1], +hm[2], 0, 0); stale = (Date.now() - t0.getTime()) > 90 * 60000; }
+  }
+  $('#stExpAt').textContent = at ? ('同步时间 ' + at + (stale ? ' · 数据偏旧' : '')) : '';
+  $('#stExpAt').style.color = stale ? 'var(--orange)' : '';
   leftEl.innerHTML = (left >= 0 ? left : left) + ' <small>kcal</small>';
   leftEl.style.color = left < 0 ? 'var(--orange)' : '';
 
@@ -3017,7 +3029,8 @@ async function disablePush() {
 /* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages。
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
-let freshAt = { health: 0, body: 0 };   // 上次直接读 Gitee 源的时间（5 分钟内不重复读）
+let freshAt = { health: 0, body: 0 };
+let lastHealthFrom = '';   // 最近一次热量数据是从哪一路读到的（镜像/GitHub/Gitee），排查用   // 上次直接读 Gitee 源的时间（5 分钟内不重复读）
 const _gtCache = {};
 let giteeBlockedUntil = 0;
 async function giteeGetText(path, force) {
@@ -4468,26 +4481,20 @@ async function pullBodyHistory() {
 
 async function pullBodyJson(forceFresh) {
   try {
-    let bodyText = '';
-    // 先读同源镜像（Action 每 15 分钟从 Gitee 同步一次）
-    try {
-      const r0 = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
-      if (r0.ok) bodyText = await r0.text();
-    } catch (e) {}
-    // 打开 App 的头一次 / 手动刷新：直接读 Gitee 源，不等镜像（不然刚称完要等十几分钟）
     const needFresh = !!forceFresh || Date.now() - freshAt.body > 300000;
     if (needFresh) freshAt.body = Date.now();
-    if (needFresh) {
-      const g = await giteeFresh('body.json');
-      if (g) bodyText = g;
-    }
-    if (!bodyText) {
-      try { bodyText = await giteeGetText('body.json'); }
-      catch (e) {
-        logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e));
-        return false;
-      }
-    }
+    const stamp = Date.now();
+    const jobs = [getText('body.json?t=' + stamp), getText(GH_RAW + 'body.json?t=' + stamp)];
+    jobs.push((needFresh || giteeBlockedUntil < Date.now()) ? giteeFresh('body.json') : Promise.resolve(''));
+    const got = await Promise.all(jobs);
+    const dOf = t => { try { const j = JSON.parse(t); return String((j && j.d) || '').slice(0, 10); } catch (e) { return ''; } };
+    let bodyText = '', bestD = '';
+    got.forEach(t => {
+      if (!t) return;
+      const dd = dOf(t);
+      if (dd >= bestD) { bestD = dd; bodyText = t; }   // 日期更新的那份优先
+    });
+    if (!bodyText) { logError('err-body', '体脂数据读取失败', 'body.json 三路都没读到'); return false; }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
     try {
@@ -4601,20 +4608,33 @@ async function giteeFresh(path) {
   try { const t = await giteeGetText(path, true); return String(t || '').trim(); } catch (e) { return ''; }
 }
 
+/* 三路同时取：Gitee 源 / GitHub raw / 同源镜像，谁的内容时间最新就用谁。
+   这样任何一路挂了（Gitee 限流、镜像任务漏跑、Pages 缓存）都不会把数据卡住。 */
+const GH_RAW = 'https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/';
+function healthStamp(t) {
+  const m = String(t || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}):(\d{2})/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
+}
+async function getText(url) {
+  try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) return (await r.text()).trim(); } catch (e) {}
+  return '';
+}
 async function fetchHealthText(forceFresh) {
-  let mirror = '';
-  try {
-    const r0 = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
-    if (r0.ok) mirror = (await r0.text()).trim();
-  } catch (e) {}
   const needFresh = !!forceFresh || Date.now() - freshAt.health > 300000;
   if (needFresh) freshAt.health = Date.now();
-  if (needFresh || !mirror) {
-    const g = await giteeFresh('health.json');
-    if (g) return g;
-  }
-  if (mirror) return mirror;
-  logError('err-health', '热量数据读取失败', 'health.json 读取失败');
+  const stamp = Date.now();
+  const jobs = [getText('health.json?t=' + stamp), getText(GH_RAW + 'health.json?t=' + stamp)];
+  if (needFresh || giteeBlockedUntil < Date.now()) jobs.push(giteeFresh('health.json'));
+  else jobs.push(Promise.resolve(''));
+  const got = await Promise.all(jobs);
+  let best = '', bestTs = -1, from = '';
+  got.forEach((t, i) => {
+    if (!t) return;
+    const ts = healthStamp(t);
+    if (ts > bestTs) { bestTs = ts; best = t; from = ['镜像', 'GitHub', 'Gitee'][i] || ''; }
+  });
+  if (best) { lastHealthFrom = from; return best; }
+  logError('err-health', '热量数据读取失败', '三路都没读到 health.json');
   return '';
 }
 

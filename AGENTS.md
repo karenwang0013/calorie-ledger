@@ -210,6 +210,9 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - **v6.10（2026-10-22）**：Dock 加宽，并统一了「和 Dock 重叠的卡牌」的适配规则 ——
   Dock 用 `--dock-inset`（左右离边）+ `--dock-max`（最大宽度），`#nlogSheet` / `#addSheet` 也用这两个变量，
   所以 Dock 一改宽，这两张卡自动同宽、圆角同源（`var(--dock-r)`）。**以后凡是浮在 Dock 上方、要求圆角/底边与 Dock 对齐的卡，都套这两个变量，不要写死 max-width。**
+- **数据卡在旧时间（v6.36 定下）**：App 拉 health.json / body.json 时**三路并发**（同源镜像、`raw.githubusercontent.com`、Gitee 源），
+  按内容里的时间戳取最新那份；不要退回成"只用镜像"。镜像任务（`.github/workflows/mirror.yml`）会被 GitHub 定时限流漏跑，
+  Gitee 匿名 API 也会 403，任何单路都不可靠。今天的数据超 90 分钟没更新时，消耗那行会显示「数据偏旧」。
 - **记录卡片的高度联动规则（v6.11 定下）**：加号卡片里「拍照 / 搜索 / 描述」三格的高度和下面那条大虚线框是**反比联动** ——
   三格调高 → 虚线框变矮；三格调矮 → 虚线框变高。**大虚线框的底边必须始终贴住卡片底边（平行对齐），这条是定死的**；
   两个照片小框保持固定比例、只做适配不被拉长。三格高度手感：padding 16px ≈ 66px 高（22px 那一版被用户否掉，太高）。

@@ -56,6 +56,7 @@ const checks = [
     return !/^[ \t]*(-webkit-)?backdrop-filter\s*:/m.test(blk);   // 只看真声明，不看注释里提到的
   })()],
   ['分段滑块首次定位不播入场动画（不许从顶部落下）', /primed/.test(app) && /transition = 'none'/.test(app)],
+  ['数据拉取必须三路并发取最新（镜像/GitHub/Gitee），不许退回单路', /GH_RAW/.test(app) && /healthStamp/.test(app) && /giteeFresh\('health\.json'\)/.test(app)],
   ['记录卡片所有间距由 --blk-gap 派生（改一处全跟着动）', /#addSheet \{ --blk-gap:/.test(css) && /#addSheet \.sh-body \{[\s\S]*?var\(--blk-gap\)/.test(css) && /#addSheet \.tabs3 \{[\s\S]*?var\(--blk-gap\)/.test(css)],
   ['切目标模式只做局部刷新，不许整页重绘（否则滑块会跳）', (() => {
     const i = app.indexOf("$$('#dietModes button').forEach(b => b.onclick");
