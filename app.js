@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.76', d: '10-22', items: [
+    '加：启动兜底 —— 万一启动报错，不再白屏/卡住，直接显示错误原因 + 「强制重新加载」按钮',
+  ]},
   { v: 'v4.75', d: '10-22', items: [
     '修：E04 被 Gitee 限流 —— 读取加 90 秒缓存，4xx 不再重试（点「数据同步」时会强制刷新）',
   ]},
@@ -1191,7 +1194,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.75';
+const APP_VERSION = 'v4.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3950,6 +3953,18 @@ async function pullCloudData() {
     return null;
   }
 }
+
+/* ---------------- 启动兜底：出错不白屏 ---------------- */
+function showBootError(msg) {
+  try {
+    const el = document.getElementById('bootErr');
+    if (!el) return;
+    el.style.display = 'block';
+    el.querySelector('.be-msg').textContent = String(msg || '未知错误').slice(0, 200);
+  } catch (e) {}
+}
+window.addEventListener('error', (e) => showBootError(e.message));
+window.addEventListener('unhandledrejection', (e) => showBootError((e.reason && e.reason.message) || e.reason));
 
 /* ---------------- 初始化 ---------------- */
 function init() {

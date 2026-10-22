@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=513">
+<link rel="stylesheet" href="style.css?v=514">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -16,6 +16,11 @@
 
 <div class="statusbg" aria-hidden="true"></div>
 
+<div id="bootErr" style="display:none;position:fixed;left:12px;right:12px;top:80px;z-index:999;background:#1c2124;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 16px;color:#fff;font-size:13px">
+  <div style="font-weight:600;margin-bottom:6px">启动出错了</div>
+  <div class="be-msg" style="color:#bbb;line-height:1.5"></div>
+  <button onclick="location.href=location.pathname+'?v='+Date.now()" style="margin-top:12px;width:100%;padding:10px;border:0;border-radius:12px;background:#d6ff4b;color:#111;font-weight:600">强制重新加载</button>
+</div>
 <div class="app">
   <div class="topbar">
     <div class="brand">热量<span>账本</span><i class="btag" id="brandTag"></i></div>
@@ -354,8 +359,8 @@
   </div>
 </div>
 
-<script src="foods.js?v=513"></script>
-<script src="api.js?v=513"></script>
-<script src="app.js?v=513"></script>
+<script src="foods.js?v=514"></script>
+<script src="api.js?v=514"></script>
+<script src="app.js?v=514"></script>
 </body>
 </html>
