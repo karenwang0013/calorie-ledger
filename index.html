@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=686">
+<link rel="stylesheet" href="style.css?v=687">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -251,7 +251,7 @@
     <!-- 描述 -->
     <div class="pane" id="pane-text" hidden>
       <textarea id="textInput" rows="4" placeholder="比如：一碗牛肉面，加了两个卤蛋，一杯冰美式"></textarea>
-      <button class="btn primary sm" id="textGo" style="margin-top:10px">估算热量</button>
+      <button class="btn primary" id="textGo" style="margin-top:10px">估算热量</button>
       <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.5;text-align:center">
         用「碗 / 个 / 份」就行，自动换算成克。
       </div>
@@ -409,9 +409,9 @@
   </div>
 </div>
 
-<script src="foods.js?v=686"></script>
-<script src="api.js?v=686"></script>
-<script src="app.js?v=686"></script>
+<script src="foods.js?v=687"></script>
+<script src="api.js?v=687"></script>
+<script src="app.js?v=687"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
