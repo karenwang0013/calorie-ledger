@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.99', d: '10-22', items: [
+    '改：按钮文案去掉「用 / 从」—— 「本机覆盖云端」「云端覆盖本机」',
+  ]},
   { v: 'v4.98', d: '10-22', items: [
     '改：「网络自检」独立成一张卡片，放在「数据备份」最下面；结果显示在卡片里（不再弹窗）',
     '改：覆盖按钮顺序对调 —— 先「用本机覆盖云端」，再「从云端覆盖本机」',
@@ -1274,7 +1277,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.98';
+const APP_VERSION = 'v4.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3039,8 +3042,8 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
-          <button class="btn sm" id="cloudForcePush">用本机覆盖云端</button>
-          <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
+          <button class="btn sm" id="cloudForcePush">本机覆盖云端</button>
+          <button class="btn sm" id="cloudForcePull">云端覆盖本机</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
         ${localStorage.getItem('pending_push') ? '<div class="hint" style="margin-top:6px;color:#ffab3d">有改动还没传上去（网络问题）· 会自动重试，不会丢</div>' : ''}
