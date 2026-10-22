@@ -21,7 +21,7 @@
   --dock-inset: 14px;      /* 左右离屏幕边（收窄一点，和屏幕圆角更呼应） */
   --dock-bottom: 14px;     /* 下边离屏幕底（贴近屏幕圆角那一圈） */
   /* Dock 高度（固定，圆角上限要看它） */
-  --dock-h: 88px;
+  --dock-h: 94px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
   --dock-r: 44px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
@@ -820,12 +820,12 @@ body.nlog-open .sheet-mask.on {
   position: relative; z-index: 1;   /* 图标永远在液态滑块上面 */
   justify-self: center;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  color: var(--muted2); font-size: 12px; font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
   padding: 6px 16px; border-radius: 16px;
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { width: 30px; height: 30px; stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
@@ -838,7 +838,7 @@ body.nlog-open .sheet-mask.on {
   justify-self: center;
   /* 和左右两个一样：上面图标、下面文字 */
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  color: var(--muted2); font-size: 12px; font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
   padding: 6px 16px; border-radius: 16px;
   background: transparent;        /* 不套色块框 */
   box-shadow: none;
@@ -847,7 +847,7 @@ body.nlog-open .sheet-mask.on {
 .fab:active { color: var(--lime); }
 .fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号也用矢量画：和左右两个图标同一尺寸（30px）、同样的视觉粗细 */
-.fab svg { width: 30px; height: 30px; display: block; }
+.fab svg { width: 32px; height: 32px; display: block; }
 
 /* ==================================================================
    液态滑块（Dock 里的玻璃药丸）
@@ -911,13 +911,16 @@ body.nlog-open .sheet-mask.on {
 
 
 /* 其它可点的东西：按下时轻微"软一下"，不是死板的透明度变化 */
-.btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch {
-  transition: transform .16s cubic-bezier(.2, 1.3, .4, 1), filter .16s ease, background .16s ease;
+.btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch, .topbtn, .arrow, .x, #addTabs button, .pg {
+  transition: transform .18s cubic-bezier(.2, 1.3, .4, 1), filter .18s ease, background .18s ease;
 }
-.btn:active, .seg button:active, .chip:active, .srow:active, .modes button:active, .pgbtn:active {
-  transform: scale(.978);
+.btn:active, .seg button:active, .chip:active, .srow:active, .modes button:active, .pgbtn:active,
+.swatch:active, .topbtn:active, .x:active, #addTabs button:active, .pg:active {
+  transform: scale(.96);
   filter: brightness(1.10) saturate(1.06);
 }
+.srow:active { transform: scale(.99); }   /* 整行只轻微陷一下，别晃 */
+.arrow:active { transform: scale(.92); filter: brightness(1.10); }
 @media (prefers-reduced-motion: reduce) {
   .dock-lens, .dock-lens.press, .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch { transition-duration: .01ms; }
 }
@@ -1463,7 +1466,13 @@ body.nlog-open .sheet-mask.on {
 .switchrow { display: flex; align-items: center; gap: 14px; }
 .switchrow > div:first-child { flex: 1; }
 .stitle { font-size: 14.5px; }
-.sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; }
+.sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; touch-action: manipulation; }
+/* 按下去的液态感：底盘轻微压扁提亮，白色圆钮被"拉长"一点再弹回 */
+.sw i { transition: background .2s ease, transform .2s cubic-bezier(.2,1.3,.4,1), filter .2s ease; }
+.sw:active i { transform: scale(.96); filter: brightness(1.14); }
+.sw i:after { transition: transform .2s cubic-bezier(.2,1.3,.4,1), width .2s cubic-bezier(.2,1.3,.4,1), border-radius .2s ease; }
+.sw:active i:after { width: 28px; border-radius: 12px; }
+.sw input:checked:active + i:after { transform: translateX(16px); width: 28px; border-radius: 12px; }
 .sw input { position: absolute; opacity: 0; width: 0; height: 0; }
 .sw i { position: absolute; inset: 0; background: #2c3236; border-radius: 15px; transition: .18s; }
 .sw i:after {
@@ -1488,7 +1497,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   :root {
     --dock-inset: 14px;
     --dock-bottom: 26px;
-    --dock-h: 96px;
+    --dock-h: 104px;
     --dock-r: 16px;
   }
   /* 顶栏两端与内容列对齐 */
@@ -1587,10 +1596,11 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   /* 底部 Dock：iPad 屏幕圆角比 iPhone "紧"，半径和间距都换成 iPad 的一档；
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
   .tabbar .inner { padding: 0 18px; max-width: 700px; }
-  .tab svg { width: 32px; height: 32px; }
-  .tab { font-size: 13px; }
-  .fab { font-size: 13px; }
-  .fab svg { width: 32px; height: 32px; }
+  .tab svg { width: 34px; height: 34px; }
+  .tab { font-size: 13.5px; }
+  .fab { font-size: 13.5px; }
+  .fab { font-size: 13.5px; }
+  .fab svg { width: 34px; height: 34px; }
   .sc-body { padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 4px + var(--safe-b)); }
 
   /* 弹层：同一套结构，整体加大 */

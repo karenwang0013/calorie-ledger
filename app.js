@@ -23,6 +23,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.05', d: '10-22', items: [
+    '改：Dock 整体变大一号（手机 88→94、iPad 96→104），图标和文字也跟着放大，两台设备各自一档',
+    '改：液态滑块上下只留 7px，更贴着 Dock 的上下边，看起来更饱满（高度也按 Dock 算，iPad 跟着变）',
+    '加：通知里那些开关按下去有液态感 —— 底盘轻轻压扁提亮，白色圆钮被拉长一点再弹回',
+    '加：顶栏按钮、左右翻页箭头、关闭的 ×、7/30/90 天、主题色块、标签 chip，按下去都有同样的回弹',
+  ]},
   { v: 'v6.04', d: '10-22', items: [
     '改：Dock 三格等宽，液态滑块就是一整格 —— 中间那格也点得中，滑块会停在正中间',
     '改：滑块形状按每台设备的 Dock 自己算（圆角 ÷ 高度 同比例），iPhone 和 iPad 各自都是 Dock 的缩小版，不再是正方形',
@@ -1360,7 +1366,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.04';
+const APP_VERSION = 'v6.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4396,14 +4402,15 @@ function initDockLens() {
     const padL = parseFloat(cs.paddingLeft) || 0;
     const before = cols.slice(0, idx).reduce((a, b) => a + b, 0) + gap * idx;
     const cellW = cols[idx] || r.width;
-    const insetX = 4, top = 3;
+    const insetX = 4;
+    // 高度跟着 Dock 走（上下各留 7px），Dock 变高滑块就跟着变高，两台设备各自适配
     const w = Math.max(70, Math.round(cellW - insetX * 2));
-    const h = Math.round(r.height + 6);
+    const h = Math.max(40, Math.round(ir.height - 14));
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
     lens.style.setProperty('--lens-x', Math.round(cellLeft + (cellW - w) / 2) + 'px');
-    lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - top) + 'px');
+    lens.style.setProperty('--lens-y', Math.round((ir.height - h) / 2) + 'px');
     // 圆角按 Dock 自己的比例缩（Dock 圆角 ÷ Dock 高度），iPhone 和 iPad 的 Dock 圆角不一样，
     // 滑块就跟着那台设备的 Dock 走 —— 形状永远是 Dock 的缩小版，而不是换成另一种圆
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
