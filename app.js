@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.23', d: '10-22', items: [
+    '修：三处滑块来回切换时会左右晃一下 —— 原因是松手瞬间先弹回原来的格子，等切换生效后再滑过去，看起来就是"去—回—去"',
+    '现在：松手不弹回，等切换真正生效再落位；一遍滑到位，和 Dock 那颗一样',
+    '修：饮食目标那三格点完会整块重画，新滑块现在从上次停的位置接着滑，不会闪现在新位置',
+  ]},
   { v: 'v6.22', d: '10-22', items: [
     '修：趋势页 7/30/90、记录卡片三个选项、饮食目标三格，点的时候滑块会"跳一下" —— 原因是点完那一块会整块重画，新滑块直接出现在新位置，没有滑的过程',
     '现在：记住滑块上一次停在哪，重画时先瞬移到老位置再滑过去，和 Dock 那颗一样是滑动而不是闪现',
@@ -1438,7 +1443,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.22';
+const APP_VERSION = 'v6.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1904,10 +1909,12 @@ function initSegLens(wrap) {
     void lens.offsetWidth;
     lens.style.transition = '';
   }
-  const place = (el, press) => {
+  // remember=false 用在"按住"的时候：那只是预览位置，不能当成最终落点记下来，
+  // 否则重画时新滑块会直接从按住的位置出现，看不到滑过去的过程
+  const place = (el, press, remember = true) => {
     const g = el && geoOf(el);
     if (!g) return;
-    segLensMem[key] = g;
+    if (remember) segLensMem[key] = g;
     apply(g, press);
   };
   const sync = () => { lens.classList.remove('press'); place(wrap.querySelector('button.on')); };
@@ -1920,17 +1927,30 @@ function initSegLens(wrap) {
     raf = requestAnimationFrame(() => { raf = 0; sync(); });
   };
 
+  let pressedEl = null;
   wrap.addEventListener('pointerdown', ev => {
     const b = ev.target.closest('button');
     if (!b) return;
+    pressedEl = b;
     lens.classList.add('press');
-    place(b, true);
+    place(b, true, false);          // 按下去先滑到手指这一格（不记账）
   }, { passive: true });
-  window.addEventListener('pointerup', () => {
-    if (!lens.classList.contains('press')) return;
+
+  // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下。
+  // 等点击结果落地（或在 900ms 后确认没生效）才决定要不要回位。
+  const settle = () => {
+    const el = pressedEl;
+    pressedEl = null;
     lens.classList.remove('press');
-    syncSoon();
-  }, { passive: true });
+    if (!el) return;
+    setTimeout(() => {
+      if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
+      const on = wrap.querySelector('button.on');
+      if (on && on !== el) sync();                // 按了但没切过去 → 回位
+    }, 900);
+  };
+  window.addEventListener('pointerup', settle, { passive: true });
+  window.addEventListener('pointercancel', settle, { passive: true });
 
   // 只要哪一格变成选中就跟着走（不依赖各页自己的点击处理）
   const mo = new MutationObserver(syncSoon);
