@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.06', d: '10-23', items: [
+    '改：千卡/千焦切换按钮挪回「热量」标签这一行（一个小亮色 ⇄），不再放输入框里',
+    '改：「热量」后面直接写明当前单位是千卡还是千焦，点 ⇄ 会跟着变',
+    '改：⇄ 按钮整体再往上挪 2px',
+  ]},
   { v: 'v7.05', d: '10-23', items: [
     '修：营养面板第一行两格错位 —— 「热量」标签里塞了按钮，把右边那格压低了；现在两格标签同高（实测两个输入框顶完全对齐，差 0）',
     '改：千卡/千焦切换做成输入框右侧的亮色小胶囊「千卡 ⇄」（点一下切到千焦，数值自动按 4.184 换算），不再挤在标签里',
@@ -1781,7 +1786,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.05';
+const APP_VERSION = 'v7.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2937,8 +2942,8 @@ function setNutUnit(u, convert) {
     inp.value = u === 'kJ' ? Math.round(v * KJ_PER_KCAL) : Math.round(v / KJ_PER_KCAL);
   }
   nutUnit = u;
-  const tog = $('#nutUnitTog');
-  if (tog) tog.textContent = (u === 'kJ' ? '千焦' : '千卡') + ' ⇄';
+  const now = $('#nutUnitNow');
+  if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
   if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
 }
 
