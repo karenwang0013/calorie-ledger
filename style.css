@@ -1279,21 +1279,13 @@ body.add-open .sheet-mask.on {
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
   position: sticky; top: 0; z-index: 3;
-  /* 外圈：照 Dock 的画法（透明边框 + 只画在边框上的高光渐变），
-     但亮度按实测调低 —— Dock 那圈压在深色玻璃上约 52/255，这里底更浅，
-     直接用原斜度会到 67（就是你看到的"太亮"），所以把高光压到约一半 */
-  border: 1px solid transparent;
-  background-image:
-    linear-gradient(180deg, #2b3035 0%, #23282c 100%),
-    linear-gradient(180deg,
-      rgba(255, 255, 255, 0.05) 0%,
-      rgba(255, 255, 255, 0.020) 26%,
-      rgba(255, 255, 255, 0.008) 60%,
-      rgba(255, 255, 255, 0.010) 87%,
-      rgba(255, 255, 255, 0.017) 100%);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
+     做出渐变过渡（越往下越接近底色），不再是一条亮线 */
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  background-image: linear-gradient(180deg, #2b3035 0%, #23282c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 14px 20px -14px rgba(255, 255, 255, 0.10);
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */

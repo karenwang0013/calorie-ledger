@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.51', d: '10-23', items: [
+    '改：顶部三格那一圈不再是"一条亮线"——边框压到 0.035，另加一层从顶边往下 14px 的柔和内发光。实测顶边往下每 1px 的亮度：60 → 52 → 51 → 50 → 49 → 47（渐隐），改之前是 67 之后立刻掉到 43（硬切）',
+    '新：营养编辑里输入食物名，最后一条候选是「AI 查「X」一份多少克」——点它让 AI 按常见份量估克数，自动填进参考量；估不出来会提示你手动填',
+    '改：克数没填过时，面板里的参考量也是空的（不再默认 100）',
+  ]},
   { v: 'v7.50', d: '10-23', items: [
     '改：顶部三格外面那一圈的亮度按实测压到和 Dock 一致 —— 原来圈上像素 67~69，Dock 是 52~53，现在压到 55~56（画法仍是 Dock 那套"透明边框 + 边框上的高光渐变"）',
   ]},
@@ -1952,7 +1957,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.50';
+const APP_VERSION = 'v7.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3131,15 +3136,15 @@ function openNutEdit(i, fake) {
   nutEditIdx = fake ? -1 : i;
   if (!fake) nutLogId = null;
   // 预填成"这一份"的实际数值（参考量 = 当前克数），保存时再换算回每 100 克
-  const g = Number(it.grams) || 100;
+  const g = Number(it.grams) || 0;
   const share = g / 100;
   setNutUnit('kJ', false);                        // 默认按千焦（包装上绝大多数写的是千焦）
   const kcalOfPortion = (Number(it.kcal_per_100g) || 0) * share;
-  $('#nutRef').value = +g.toFixed(1);
-  $('#nutKcal').value = nutUnit === 'kJ' ? Math.round(kcalOfPortion * KJ_PER_KCAL) : Math.round(kcalOfPortion);
-  $('#nutP').value = +(((Number(it.protein_per_100g) || 0) * share).toFixed(1));
-  $('#nutC').value = +(((Number(it.carb_per_100g) || 0) * share).toFixed(1));
-  $('#nutF').value = +(((Number(it.fat_per_100g) || 0) * share).toFixed(1));
+  $('#nutRef').value = g ? +g.toFixed(1) : '';     // 没填过克数就留空，不默认 100
+  $('#nutKcal').value = g ? (nutUnit === 'kJ' ? Math.round(kcalOfPortion * KJ_PER_KCAL) : Math.round(kcalOfPortion)) : '';
+  $('#nutP').value = g ? +(((Number(it.protein_per_100g) || 0) * share).toFixed(1)) : '';
+  $('#nutC').value = g ? +(((Number(it.carb_per_100g) || 0) * share).toFixed(1)) : '';
+  $('#nutF').value = g ? +(((Number(it.fat_per_100g) || 0) * share).toFixed(1)) : '';
   const nq0 = $('#nutNameQ'); if (nq0) nq0.value = it.name || '';
   const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
   let base = {
@@ -5954,11 +5959,29 @@ function init() {
       clearTimeout(t);
       t = setTimeout(() => {
         const list = nutFindFoods(nq.value);
-        if (!list.length) { sug.hidden = true; sug.innerHTML = ''; return; }
+        const q = nq.value.trim();
         sug.innerHTML = list.map((f, i) =>
-          `<button data-food="${i}">${esc(f.name)} · ${f.kcal} 千卡/100g</button>`).join('');
-        sug.hidden = false;
+          `<button data-food="${i}">${esc(f.name)} · ${f.kcal} 千卡/100g</button>`).join('')
+          + (q ? `<button data-ai="1">AI 查「${esc(q)}」一份多少克</button>` : '');
+        sug.hidden = !(list.length || q);
         $$('[data-food]', sug).forEach(b => b.onclick = ev => { ev.preventDefault(); applyNutFood(list[Number(b.dataset.food)]); });
+        const ab = $('[data-ai]', sug);
+        if (ab) ab.onclick = async ev => {
+          ev.preventDefault();
+          ab.textContent = 'AI 正在估…';
+          try {
+            const r = await api('/api/ai/text', { text: `「${q}」一份（一人份/一份/一碗，按最常见的一份）通常多少克？只估克数` });
+            const g = Number(r && r.items && r.items[0] && r.items[0].grams) || 0;
+            if (!(g > 0)) throw new Error('没估出来');
+            const refEl = $('#nutRef');
+            refEl.value = Math.round(g);
+            refEl.dispatchEvent(new Event('input'));
+            ab.textContent = `AI 估：一份约 ${Math.round(g)} 克`;
+            toast(`AI 估「${q}」一份约 ${Math.round(g)} 克，看着不对可以改`, 3200);
+          } catch (e) {
+            ab.textContent = 'AI 没估出来，手动填克数';
+          }
+        };
       }, 140);
     };
   }
