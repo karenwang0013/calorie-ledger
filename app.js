@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.13', d: '10-23', items: [
+    '修：提醒记录卡片打开时"往上跳一下"的顿挫 —— 它原来是从屏幕底部一路滑到中间（滑 500px），最后一段看着像跳。现在改成原地浮起 24px + 淡入（实测 top 只从 294 → 269，26px 平滑到位）',
+    '修：营养编辑卡片同样处理；两张居中卡片都改成"先无过渡落位、再淡入"，不会先出现在底部再跳上来',
+  ]},
   { v: 'v7.12', d: '10-23', items: [
     '修：改「参考量」时**不再**自动改热量那几格 —— 之前它会按旧的每 100 克反算，把包装上的千焦数覆盖成"千卡数"（填 25 克就冒出 532 千卡），这是错的。现在只更新换算预览，你按包装填什么就是什么',
     '实测：12.5 克/266 千卡 → 切千焦 1113 → 改 25 克（热量保持不动）→ 填 532 千焦 → 预览「这 25 克 = 532 千焦 → 每 100 克 = 509 千卡」→ 保存后外面 25 克 / 127 千卡',
@@ -1807,7 +1811,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.12';
+const APP_VERSION = 'v7.13';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2947,18 +2951,19 @@ function openNutEdit(i) {
   sh.style.bottom = '';
   setNutUnit('kcal', false);                     // 每次打开都从千卡开始
   raiseSheet(sh);                                // 后打开的叠在记录卡片之上
-  $('#nutMask').classList.add('on');
-  sh.classList.add('on');
-  const centerOnBig = () => {
+  // 同样：先落位（关过渡）→ 再显示，避免"先出现在底部再跳到中间"
+  sh.classList.add('noanim');
+  {
     const big = $('#addSheet').getBoundingClientRect();
     const h = sh.getBoundingClientRect().height || 0;
     const top = Math.max(8, Math.min(big.top + big.height / 2 - h / 2, window.innerHeight - h - 8));
     sh.style.top = Math.round(top) + 'px';
     sh.style.bottom = 'auto';
-  };
-  centerOnBig();
-  requestAnimationFrame(centerOnBig);
-  setTimeout(centerOnBig, 460);          // 进场动画结束后再校一次，保证正中
+    void sh.offsetHeight;
+  }
+  sh.classList.remove('noanim');
+  $('#nutMask').classList.add('on');
+  sh.classList.add('on');
   setTimeout(() => $('#nutRef').focus(), 260);
 }
 function closeNutEdit() {
@@ -3762,19 +3767,18 @@ function openNotifyLog() {
   }
   document.body.classList.add('nlog-open');
   raiseSheet(sheet);                         // 最后打开的放在最上面
+  // 位置：屏幕正中。**先落位、再显示**（落位那一帧关掉过渡），
+  // 否则会看到它从底部先冒出来再跳到中间 —— 就是那种"往上跳一下"的顿挫
+  if (sheet) {
+    sheet.classList.add('noanim');
+    const h = sheet.getBoundingClientRect().height || 0;
+    sheet.style.top = Math.max(8, Math.round((window.innerHeight - h) / 2)) + 'px';
+    sheet.style.bottom = 'auto';
+    void sheet.offsetHeight;                 // 强制先应用这个位置
+    sheet.classList.remove('noanim');
+  }
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
-  // 位置：弹在屏幕正中（高度是显示出来之后才量的，所以进场后再校一次）
-  const centerOnScreen = () => {
-    if (!sheet) return;
-    const h = sheet.getBoundingClientRect().height || 0;
-    const top = Math.max(8, Math.round((window.innerHeight - h) / 2));
-    sheet.style.top = top + 'px';
-    sheet.style.bottom = 'auto';
-  };
-  centerOnScreen();
-  requestAnimationFrame(centerOnScreen);
-  setTimeout(centerOnScreen, 460);
 }
 function closeNotifyLog() {
   document.body.classList.remove('nlog-open');

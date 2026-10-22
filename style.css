@@ -1226,6 +1226,17 @@ body.add-open .sheet-mask.on {
 }
 /* 其它卡片的横杠：和记录弹层同一个位置（距卡片顶 4.5px），
    补回它原来占的流程高度，标题等内容位置保持不变 */
+/* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
+   那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
+#nlogSheet, #nutSheet {
+  transform: translateY(24px) scale(.97);
+  transition: transform .30s cubic-bezier(.22,.8,.3,1), opacity .22s ease-out;
+}
+#nlogSheet.on, #nutSheet.on { transform: none; opacity: 1; }
+
+/* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
+.sheet.noanim { transition: none !important; }
+
 .sheet > .grab { position: absolute; top: 3.5px; left: 50%; transform: translateX(-50%); width: 66px; height: 4px; margin: 0; z-index: 3; }
 #nlogSheet > .sh-hd, #weightSheet > .sh-body, #helpSheet > .sh-body { padding-top: 14px; }
 
