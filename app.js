@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.14', d: '10-22', items: [
+    '改：身体数据里的「最高 / 最低」移到三组数字那一行最右边，和「最新那天 / 较上次 / 距上次」中心线对齐；图上不再压着折线',
+  ]},
   { v: 'v5.13', d: '10-22', items: [
     '改：设置 → 身体数据里的体重趋势也照趋势页的规矩来 —— 进去就自动是最后一个点的状态（「最新那天 64.3 kg · 较上次 -1.7 · 距上次 1 天」，图上那个点直接高亮带竖线），不用先点一下才有数字',
     '改：没点过点时那一格写「最新那天」，点过别的点才写「所选那天」；「回到最新」按钮只在点过点或翻过页时才出现',
@@ -1327,7 +1330,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.13';
+const APP_VERSION = 'v5.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3373,16 +3376,19 @@ function renderMe() {
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
             </span>
           </h3>
-          <div class="trendsum">
-            <div><span>${s1.l}</span><b class="${selPt ? 'sel' : ''}">${(s1.v != null && s1.v !== '—') ? `${s1.v}<small>${s1.u}</small>` : '—'}</b></div>
-            <div><span>较上次</span><b class="${s2v > 0 ? 'up' : (s2v < 0 ? 'down' : '')}">${s2v == null ? '—' : `${(s2v > 0 ? '+' : '') + s2v}<small>kg</small>`}</b></div>
-            <div><span>${s3.l}</span><b>${s3.v !== '—' ? `${s3.v}<small>${s3.u}</small>` : '—'}</b></div>
+          <div class="tsumrow">
+            <div class="trendsum">
+              <div><span>${s1.l}</span><b class="${selPt ? 'sel' : ''}">${(s1.v != null && s1.v !== '—') ? `${s1.v}<small>${s1.u}</small>` : '—'}</b></div>
+              <div><span>较上次</span><b class="${s2v > 0 ? 'up' : (s2v < 0 ? 'down' : '')}">${s2v == null ? '—' : `${(s2v > 0 ? '+' : '') + s2v}<small>kg</small>`}</b></div>
+              <div><span>${s3.l}</span><b>${s3.v !== '—' ? `${s3.v}<small>${s3.u}</small>` : '—'}</b></div>
+            </div>
+            <div class="bminmax"><span>最高 ${pvMax != null ? pvMax : '—'}</span><span>最低 ${pvMin != null ? pvMin : '—'}</span></div>
           </div>
           ${(() => {
             const mk = (pts) => {
               if (pts.length >= 2) {
                 return lineChart(pts, pts[0].date, pts[pts.length - 1].date,
-                  (effDate && pts.some(p => p.date === effDate)) ? effDate : null);
+                  (effDate && pts.some(p => p.date === effDate)) ? effDate : null, { range: false });
               }
               return `<div class="hint" style="margin:24px 0">这边没有更多记录</div>`;
             };
