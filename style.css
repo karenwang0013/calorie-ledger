@@ -1125,10 +1125,7 @@ body.add-open .sheet-mask.on {
   border-top: 0;
   padding: 8px 16px 30px;
 }
-#addSheet .sh-hd {
-  padding: calc(var(--dock-r, 26px) * 0.52 - 11px) 18px 2px calc(var(--dock-r, 26px) * 0.62);
-  min-height: 42px;
-}
+#addSheet .sh-body { padding-top: 14px; }
 
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
@@ -1181,15 +1178,37 @@ body.add-open .sheet-mask.on {
 }
 .photomode button.on { color: var(--lime); border-color: rgba(214,255,75,.35); background: rgba(214,255,75,.08); }
 
-.tabs3 { display: flex; gap: 6px; margin: 4px 0 16px; flex: 0 0 auto; }
-.tabs3 button {
-  flex: 1; padding: 9px 4px; border-radius: 11px;
-  font-size: 12.5px; color: var(--muted);
-  background: var(--card);
-  display: flex; align-items: center; justify-content: center; gap: 5px;
+.tabs3 {
+  position: relative;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  padding: 5px; margin: 0 0 16px; flex: 0 0 auto;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 18px;
 }
-.tabs3 button svg { width: 15px; height: 15px; opacity: .9; }
-.tabs3 button.on { background: rgba(214,255,75,.12); color: var(--lime); }
+.tabs3 button {
+  position: relative; z-index: 1;
+  padding: 10px 4px; border-radius: 14px;
+  font-size: 12.5px; font-weight: 600; color: var(--muted2);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: color .3s ease;
+}
+.tabs3 button svg { width: 16px; height: 16px; opacity: .95; }
+.tabs3 button.on { color: var(--lime); }
+/* 选项后面的玻璃滑块：和 Dock 那颗一个做法（滑动 + 按下压扁 + 柔和边光） */
+.tabs3 .seg-lens {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  border-radius: 14px; z-index: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.24), rgba(255,255,255,.07) 55%, rgba(255,255,255,.02) 100%);
+  box-shadow:
+    inset 0 1px 6px rgba(255,255,255,.20),
+    inset 0 -2px 8px rgba(0,0,0,.16),
+    0 2px 8px rgba(0,0,0,.18);
+  transition: transform .55s cubic-bezier(.33,1.06,.32,1), width .5s cubic-bezier(.33,1.06,.32,1), height .5s cubic-bezier(.33,1.06,.32,1), opacity .25s ease;
+  will-change: transform;
+}
+.tabs3 .seg-lens.on { opacity: 1; }
 
 .drop {
   border: 1px dashed var(--line2);
@@ -1205,7 +1224,15 @@ body.add-open .sheet-mask.on {
 }
 /* 拍照 / 描述这一格：撑满卡片剩下的高度，别在下面留一截空 */
 #pane-photo, #pane-text { display: flex; flex-direction: column; }
-#pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; }
+#pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; min-height: 0; }
+#pane-photo:not([hidden]) .drop.photobox {
+  flex: 1 1 auto; min-height: 0;
+  align-items: stretch; grid-template-rows: 1fr auto;
+}
+#pane-photo .pslot { min-height: 0; }
+#pane-photo .pslot-body { height: 100%; }
+#pane-photo .pslot-empty { aspect-ratio: auto; height: 100%; min-height: 130px; }
+#pane-photo .pslot-body .preview { aspect-ratio: auto; height: 100%; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }

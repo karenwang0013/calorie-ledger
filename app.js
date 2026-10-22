@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.09', d: '10-22', items: [
+    '改：记录卡片去掉左上角那四个字 —— 和提醒记录那张一样，只有一条横杠，没有标题',
+    '改：卡片里「拍照 / 搜索 / 描述」三个选项换成 Dock 那一套 —— 等宽三格、玻璃滑块滑过去、选中的变绿，按下去也会软一下',
+    '改：卡片内容撑满 —— 两个照片位跟着卡片长高，下面不再空出一大片',
+  ]},
   { v: 'v6.08', d: '10-22', items: [
     '改：开关的阴影改成落在开关"下面"（之前是压在开关里面，看着像凹下去一块）；玻璃珠自己的投影也是落在管子里，不往开关外面溢',
   ]},
@@ -1380,7 +1385,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.08';
+const APP_VERSION = 'v6.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1796,6 +1801,8 @@ function openAdd(meal) {
   renderRecent();
 
   document.body.classList.add('add-open');   // 用和提醒记录一样的浅遮罩，玻璃才透得出来
+  initAddTabsLens();
+  setTimeout(() => { if (window.__addTabsLens) window.__addTabsLens.sync(); }, 60);
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
 }
@@ -1810,6 +1817,45 @@ function closeAdd() {
   sh.classList.remove('on');
 }
 
+/* 记录卡片里那三个选项（拍照/搜索/描述）：和 Dock 一样的玻璃滑块 */
+function initAddTabsLens() {
+  const wrap = $('#addTabs');
+  if (!wrap || wrap.dataset.lens) return;
+  wrap.dataset.lens = '1';
+  const lens = document.createElement('span');
+  lens.className = 'seg-lens';
+  wrap.prepend(lens);
+
+  const place = (el, press) => {
+    if (!el) return;
+    const wr = wrap.getBoundingClientRect(), r = el.getBoundingClientRect();
+    if (!r.width) return;
+    lens.style.width = Math.round(r.width - 2) + 'px';
+    lens.style.height = Math.round(r.height - 2) + 'px';
+    lens.style.transform =
+      'translate3d(' + Math.round(r.left - wr.left + 1) + 'px,' + Math.round(r.top - wr.top + 1) + 'px,0)' +
+      (press ? ' scale(1.03,.94)' : '');
+    lens.classList.add('on');
+  };
+  const sync = () => { const b = wrap.querySelector('button.on'); place(b); lens.classList.remove('press'); };
+  window.__addTabsLens = { sync };
+
+  wrap.addEventListener('pointerdown', ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    lens.classList.add('press');
+    place(b, true);
+  }, { passive: true });
+  window.addEventListener('pointerup', () => {
+    if (!lens.classList.contains('press')) return;
+    lens.classList.remove('press');
+    setTimeout(sync, 10);
+  }, { passive: true });
+
+  requestAnimationFrame(() => requestAnimationFrame(sync));
+  window.addEventListener('resize', () => setTimeout(sync, 120));
+}
+
 function setAddMode(m) {
   S.addMode = m;
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
@@ -1817,6 +1863,7 @@ function setAddMode(m) {
     $('#pane-' + k).hidden = k !== m;
   });
   if (m === 'search') runSearch($('#searchInput').value || '');
+  if (window.__addTabsLens) requestAnimationFrame(() => window.__addTabsLens.sync());
 }
 
 function renderMealPick() {
