@@ -402,7 +402,7 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 4. 如果图里有包装食品的营养成分表，按标签精确读数：
    - **优先**把标签原样抄到 label 字段（不要自己换算）：label.basis_grams = 标签上「每 X 克」的 X（如每份 12.5 克就填 12.5），label.unit = "kJ" 或 "kcal"，label.energy / protein / carb / fat = 那一份对应的数字。App 会用这些数字自己换算，不用你算
    - 同时仍按你的理解填 *_per_100g（每 100 克），但 **label 字段必须原样照抄，不许改写单位**
-   - grams 用用户在补充说明里说的克数；没说就填 100
+   - grams 用用户在补充说明里说的克数；没说就填 label.basis_grams（标签上"每份 X 克"的那个 X），**不要填 100** —— 这样记下来的数字和标签完全一致
    - 如果用户说「整包 / 一包 / 全吃完」，就找包装上的「净含量 / 规格 / 内容量」，把 grams 设成那个数；找不到净含量再按 100
    - name 用包装上的产品名，不要自己编
 5. 拿不准时，宁可估高不要估低，并在 note 里说明不确定的地方。
@@ -495,11 +495,16 @@ function num(v, def = 0) {
   return isNaN(n) ? def : n;
 }
 
-function cleanItems(obj) {
+function cleanItems(obj, opt) {
   const items = [];
+  const hint = String((opt && opt.hint) || '');
   (obj.items || []).slice(0, 15).forEach(it => {
     const name = String(it.name || '').trim();
-    const grams = num(it.grams, 0);
+    let grams = num(it.grams, 0);
+    // 有营养成分表、用户又没说份量：克数直接用标签那一份的重量，保证记录值 = 标签值
+    const lb0 = it.label;
+    const basis0 = lb0 ? num(lb0.basis_grams, 0) : 0;
+    if (basis0 > 0 && !/整包|整袋|一包|一袋|全吃|净含量|规格/.test(hint)) grams = basis0;
     if (!name || grams <= 0) return;
     // 0 千卡是合法值（无糖饮料、白水），只有「根本没给数字」才去拿总热量倒推
     let k100 = num(it.kcal_per_100g, NaN);
@@ -539,7 +544,7 @@ async function analyzeFood(image, hint, image2) {
   const content = [{ type: 'image_url', image_url: { url: image } }];
   if (image2) content.push({ type: 'image_url', image_url: { url: image2 } });
   content.push({ type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') });
-  return cleanItems(extractJson(await callModel(content)));
+  return cleanItems(extractJson(await callModel(content)), { hint });
 }
 
 async function analyzeText(text) {
