@@ -1279,13 +1279,14 @@ body.add-open .sheet-mask.on {
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
   position: sticky; top: 0; z-index: 3;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  /* 用你认可的那版观感色（中灰玻璃）做实底：
-     Dock 那片是 46% 玻璃叠在"深色页面"上 → 看着是中灰；这里背后是滚动的白字，
-     同样的 46% 就会白花花透上来。所以取 Dock 的**合成后颜色**做实色，两者看起来才一致 */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.012) 45%, rgba(0, 0, 0, 0.10) 100%),
-    linear-gradient(180deg, #2b3035 0%, #23282c 100%);
+  /* 一圈的颜色照 Dock 的做法：不是均匀描边，而是那圈"玻璃高光边"（上亮下暗的渐变），
+     所以要先透明边框，再让 edge-gloss 只画在边框上 */
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(180deg, #2b3035 0%, #23282c 100%),
+    var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
