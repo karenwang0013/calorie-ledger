@@ -831,9 +831,30 @@ async function cloudPull(force) {
   cloudPulling = true;
   try {
     let res = null;
+    // 先看同源镜像（快，但可能落后几分钟）；只有它确实更新才采用，否则继续问 Gitee
     try {
       const r0 = await fetchT('data.json?t=' + Date.now(), { cache: 'no-store' }, 8000);
-      if (r0 && r0.ok) { const j0 = await r0.json(); if (j0 && j0.data) { const remote0 = j0; const local0 = Store.load(); const rAt0 = String(remote0.updatedAt || ''); const lAt0 = String((local0.settings && local0.settings.updatedAt) || ''); if (force || (rAt0 && rAt0 > lAt0)) { const rd0 = remote0.data || {}; const lb0 = local0.body || {}, lw0 = local0.weights || {}; Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) }); local0.body = Object.assign({}, lb0, rd0.body || {}); local0.weights = Object.assign({}, lw0, rd0.weights || {}); local0.settings.updatedAt = rAt0; localStorage.setItem(Store.KEY, JSON.stringify(local0)); setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })); cloudPulling = false; return 'pulled'; } cloudPulling = false; return 'behind'; } }
+      if (r0 && r0.ok) {
+        const remote0 = await r0.json();
+        if (remote0 && remote0.data) {
+          const local0 = Store.load();
+          const rAt0 = String(remote0.updatedAt || '');
+          const lAt0 = String((local0.settings && local0.settings.updatedAt) || '');
+          if (force || (rAt0 && rAt0 > lAt0)) {
+            const rd0 = remote0.data || {};
+            const lb0 = local0.body || {}, lw0 = local0.weights || {};
+            Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) });
+            local0.body = Object.assign({}, lb0, rd0.body || {});
+            local0.weights = Object.assign({}, lw0, rd0.weights || {});
+            local0.settings.updatedAt = rAt0;
+            localStorage.setItem(Store.KEY, JSON.stringify(local0));
+            setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
+            cloudPulling = false;
+            return 'pulled';
+          }
+          // 镜像不是最新 → 继续走下面的 Gitee 实时读取
+        }
+      }
     } catch (e) {}
     res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } });
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }

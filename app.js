@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.93', d: '10-22', items: [
+    '修：iPad 记录延迟 —— 同源镜像如果不是最新的，会继续去 Gitee 拉实时数据（之前直接放弃）',
+    '改：镜像任务从每 15 分钟改为每 5 分钟',
+  ]},
   { v: 'v4.92', d: '10-22', items: [
     '改：所有卡片标题统一往上收（上内边距 16 → 12，标题行高收到 22），以「体重趋势」为基准对齐',
   ]},
@@ -1253,7 +1257,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.92';
+const APP_VERSION = 'v4.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

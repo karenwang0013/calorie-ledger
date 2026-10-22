@@ -2,7 +2,7 @@ name: Mirror data from Gitee
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # 每 15 分钟
+    - cron: '*/5 * * * *'   # 每 5 分钟
   workflow_dispatch: {}
 
 permissions:
