@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.71', d: '10-22', items: [
+    '改：设置 → 饮食目标的「减脂 / 维持 / 增肌」做成和趋势页 7/30/90 完全一样的卡片 —— 胶囊形、同样高度（39px）、同样大小的按钮（33px）、同一颗滑块',
+    '改：去掉每格下面那行小字（缺口 300 / 平衡 / 盈余 250）',
+    '改：原来那行长长的说明换成一句「建议：缺口 300」（跟着当前模式变）',
+  ]},
   { v: 'v6.70', d: '10-22', items: [
     '改：玻璃→实色再慢一点（1.8 秒 → 2.2 秒），按住时淡回玻璃仍然是 0.3 秒（跟手）',
   ]},
@@ -1636,7 +1641,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.70';
+const APP_VERSION = 'v6.71';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3699,10 +3704,14 @@ function renderMe() {
         <div class="modes" id="dietModes">
           ${Object.entries(DIET_MODES).map(([k, m]) => `
             <button data-mode="${k}" class="${(setting('diet_mode', 'maintain') === k) ? 'on' : ''}">
-              <b>${m.n}</b><i>${m.deficit > 0 ? '缺口 ' + m.deficit : (m.deficit < 0 ? '盈余 ' + (-m.deficit) : '平衡')}</i>
+              <b>${m.n}</b>
             </button>`).join('')}
         </div>
-        <div class="hint" style="margin:10px 0 16px">切模式会带一个<b>建议的缺口/盈余</b>（上面每档都写着），应用后你仍然可以自己改；之后只有你改它才变。</div>
+        <div class="hint" style="margin:10px 0 16px">建议：<b>${(() => {
+          const k = setting('diet_mode', 'maintain');
+          const mm = DIET_MODES[k] || DIET_MODES.maintain;
+          return mm.deficit > 0 ? '缺口 ' + mm.deficit : (mm.deficit < 0 ? '盈余 ' + (-mm.deficit) : '平衡');
+        })()}</b></div>
         <div class="field">
           <label>目标缺口 / 盈余（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">

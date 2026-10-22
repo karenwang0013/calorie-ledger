@@ -762,26 +762,26 @@ body.add-open .sheet-mask.on {
 
 /* 目标模式选择 */
 /* 目标模式三格：和 Dock / 趋势页同一套玻璃滑块 */
+/* 目标模式三格：和趋势页 7/30/90 完全同一套 —— 胶囊形、同样的高度、同样的滑块 */
 .modes {
   position: relative;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
-  padding: 5px;
-  background: rgba(255, 255, 255, 0.045);
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  --seg-btn-r: 12px;
+  border-radius: 999px;
+  --seg-btn-r: 999px;
 }
 .modes button {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 2px;
-  align-items: center; justify-content: center;      /* 文字在格子里居中，不靠左 */
-  padding: 9px 8px; border-radius: var(--seg-btn-r); text-align: center;
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px; border-radius: var(--seg-btn-r); text-align: center;
   background: transparent; border: 0;
   color: var(--muted);
   transition: color .3s ease;
 }
-.modes button b { font-size: 13px; font-weight: 600; color: var(--muted); transition: color .3s ease; }
-.modes button i { font-style: normal; font-size: 10px; color: var(--muted2); line-height: 1.3; }
+.modes button b { font-size: 15.5px; font-weight: 700; color: var(--muted); transition: color .3s ease; }
+.modes button i { display: none; }   /* 每格下面那行小字不要了 */
 .modes button.on { background: transparent; border-color: transparent; }
 .modes button.on b { color: var(--lime); }
 
