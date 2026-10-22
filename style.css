@@ -897,8 +897,7 @@ body.add-open .sheet-mask.on {
     radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.26), rgba(255,255,255,.085) 55%, rgba(255,255,255,.03) 100%);
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
-    inset 0 -2px 8px rgba(0,0,0,.16),
-    0 3px 12px rgba(0,0,0,.20);
+    inset 0 -2px 8px rgba(0,0,0,.10);   /* 不再向外打黑影，免得看着像底下垫了一层黑 */
   transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
 }
@@ -916,7 +915,7 @@ body.add-open .sheet-mask.on {
   pointer-events: none;
 }
 .dock-lens.settled .lens-body::after { opacity: 1; }
-.dock-lens.settled .lens-body { box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px rgba(0,0,0,.22); }
+.dock-lens.settled .lens-body { box-shadow: inset 0 1px 0 rgba(255,255,255,.10); }
 .dock-lens.settled .lens-body::before { opacity: .05; }
 .dock-lens.settled .hl { opacity: 0; }
 /* 玻璃边缘：一圈亮边 + 很淡的彩虹色散 */
@@ -1253,8 +1252,7 @@ body.add-open .sheet-mask.on {
   background: radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.24), rgba(255,255,255,.07) 55%, rgba(255,255,255,.02) 100%);
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
-    inset 0 -2px 8px rgba(0,0,0,.16),
-    0 2px 8px rgba(0,0,0,.18);
+    inset 0 -2px 8px rgba(0,0,0,.10);
   /* 只动 transform：宽高一旦参与过渡，每一帧都要重新排版，iOS 上就会抖 */
   transition: transform .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
@@ -1273,7 +1271,7 @@ body.add-open .sheet-mask.on {
   pointer-events: none;
 }
 .seg-lens.settled::after { opacity: 1; }
-.seg-lens.settled { box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px rgba(0,0,0,.22); }
+.seg-lens.settled { box-shadow: inset 0 1px 0 rgba(255,255,255,.10); }
 
 .drop {
   border: 1px dashed var(--line2);
