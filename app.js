@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.81', d: '10-23', items: [
+    '改：Dock 那格滑块缩小一档（留白 5 → 10）→ 高 72、宽 120，四周留白仍相等（11/11/11/11），圆角同心差 0',
+    '确认：滑块下面没有黑影 —— 只有一层 inset 内高光，实测滑块正下方 1/4/8px 亮度 26/25/27，与同高度别处一致',
+  ]},
   { v: 'v6.80', d: '10-23', items: [
     '改：Dock 那格滑块拉高一点、四周留白统一成 5px（原来上下 8、左右 17），实测到 Dock 边 6/6/6/6',
     '改：滑块圆角改成与 Dock 严格同心（内圆 = Dock 圆角 − 留白 − 边框），实测同心差 0（39→33 / 47→41 / 26→20）',
@@ -1681,7 +1685,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.80';
+const APP_VERSION = 'v6.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4990,7 +4994,7 @@ function initDockLens() {
     const cellW = cols[idx] || r.width;
     // 滑块到 Dock 边的留白：上下左右必须是**同一个数**，
     // 这样"圆角同心"才能成立（内圆半径 = Dock 圆角 − 这个留白，弧线才是平行的）
-    const PAD = 5;
+    const PAD = 10;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
     const w = Math.max(70, Math.round(cellW + 2 * (padL - PAD)));
