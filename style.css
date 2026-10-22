@@ -1012,13 +1012,13 @@ body.add-open .sheet-mask.on {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
   background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06);
-  border-radius: 16px; margin: 12px 18px 14px;   /* 跟顶栏之间留出空隙，不再贴着 */
+  border-radius: 16px; margin: 6px 18px 14px;    /* 离顶栏一点点空隙：不贴着，也不显得远 */
   --seg-btn-r: 12px;
 }
 .seg button {
   position: relative; z-index: 1;
   padding: 11px 6px; border-radius: var(--seg-btn-r);
-  font-size: 13.5px; font-weight: 600; color: var(--muted2); background: transparent;
+  font-size: 14.5px; font-weight: 700; color: var(--muted2); background: transparent;
   transition: color .3s ease;
 }
 .seg button.on { background: transparent; color: var(--lime); box-shadow: none; }
