@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.07', d: '10-22', items: [
+    '改：底部 Dock 中间的加号重画 —— 笔画更粗、四个端头的左右两个角带一点圆角（不是整个半圆），整体比上一版放大一些',
+  ]},
   { v: 'v5.06', d: '10-22', items: [
     '改：底部 Dock 中间的加号改成矢量重画 —— 笔画比原来粗一点，四个端头（上、下、左、右）都是圆角，不再是字体自带的方头',
   ]},
@@ -1302,7 +1305,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.06';
+const APP_VERSION = 'v5.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
