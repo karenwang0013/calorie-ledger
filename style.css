@@ -1257,11 +1257,12 @@ body.add-open .sheet-mask.on {
 
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
-#nlogSheet, #nutSheet {
+/* 只有"营养编辑"是居中卡片，进场原地浮起；提醒记录仍在底部，按原来的方式滑上来 */
+#nutSheet {
   transform: translateY(24px) scale(.97);
   transition: transform .30s cubic-bezier(.22,.8,.3,1), opacity .22s ease-out;
 }
-#nlogSheet.on, #nutSheet.on { transform: none; opacity: 1; }
+#nutSheet.on { transform: none; opacity: 1; }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
 .sheet.noanim { transition: none !important; }

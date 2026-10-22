@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.18', d: '10-23', items: [
+    '改：提醒记录卡片恢复原来的底部位置（居中会和 Dock 栏重叠）',
+    '改：营养编辑卡片里"这 25 克 = … → 每 100 克 = …"那行换算预览删掉（卡片高度 440 → 423）',
+    '新：克数会按食物记住 —— 这次记 12.5 克，下次添加/编辑同名食物就直接是 12.5 克，不再用它自带的推荐值（千焦/热量也按你填的走，不自动推荐）',
+  ]},
   { v: 'v7.17', d: '10-23', items: [
     '修：列表和明细里那两个「…」和营养文字不在一条中心线上（实测差 1.4px）→ 现在实测差 0 / -0.2px',
     '改：营养编辑卡片加宽（314 → 338），说明文字压缩成两行，整张卡高度 501 → 440，保证完整落在屏幕内',
@@ -1828,7 +1833,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.17';
+const APP_VERSION = 'v7.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2717,12 +2722,25 @@ function rememberFoods(items) {
       cat: it.cat || '以前记过',
       at: Date.now(),
     };
+    // 记住这个食物这次用的克数（下次添加/编辑都用它，不再推荐别的数字）
+    st.settings = st.settings || {};
+    st.settings.food_grams = Object.assign({}, st.settings.food_grams || {}, { [name]: +Number(g).toFixed(1) });
     const i = st.foodHist.findIndex(x => x.n === name);
     if (i >= 0) st.foodHist[i] = Object.assign({}, st.foodHist[i], rec);
     else st.foodHist.push(rec);
     dels.delete(name);                    // 手动记一次 = 重新加回名单
   });
   if (dels.size) st.foodHistDel = [...dels];
+  Store.save();
+}
+
+/* 记住某个食物这次填的克数（下次添加同名的食物就用这个数） */
+function rememberGrams(name, grams) {
+  const g = Number(grams);
+  if (!name || !(g > 0)) return;
+  const st = Store.load();
+  st.settings = st.settings || {};
+  st.settings.food_grams = Object.assign({}, st.settings.food_grams || {}, { [String(name)]: +g.toFixed(1) });
   Store.save();
 }
 
@@ -2833,7 +2851,9 @@ function runSearch(q) {
 }
 
 function pushFood(f) {
-  const def = Number(f.grams) || (f.units && f.units[0] ? f.units[0].g : 100);
+  // 上次这个食物记了多少克，这次就用多少克（不再用它自带的推荐值）
+  const remembered = (setting('food_grams', {}) || {})[f.name];
+  const def = Number(remembered) || Number(f.grams) || (f.units && f.units[0] ? f.units[0].g : 100);
   S.items.push({
     name: f.name,
     grams: def,
@@ -2944,6 +2964,7 @@ function renderResult() {
   $$('input[data-g]', box).forEach(inp => {
     inp.oninput = () => {
       S.items[Number(inp.dataset.g)].grams = Number(inp.value) || 0;
+      rememberGrams(S.items[Number(inp.dataset.g)].name, inp.value);
       const kc = S.items[Number(inp.dataset.g)];
       const el = inp.closest('.ritem').querySelector('.kc');
       el.textContent = Math.round(kc.kcal_per_100g * kc.grams / 100);
@@ -3087,7 +3108,7 @@ function applyNutFood(f) {
 
 function paintNutPreview() {
   const box = $('#nutPreview');
-  if (!box) return;
+  if (!box) return;                       // 这行已经删掉，函数留着不影响
   const ref = Number($('#nutRef').value) || 0;
   const raw = $('#nutKcal').value.trim();
   const kcal = raw === '' ? NaN : Number(raw);
@@ -3108,6 +3129,7 @@ function saveNutEdit() {
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
   const k = 100 / ref;                            // 换算到每 100 克
   it.grams = +ref.toFixed(1);                     // 参考量就是"这一份吃多少克"，写回克数
+  rememberGrams(it.name, ref);                     // 记住这个食物的克数，下次直接用
   const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
   it.kcal_per_100g = +(kcalIn * k).toFixed(1);
@@ -3121,6 +3143,7 @@ function saveNutEdit() {
     const l = (d.logs || []).find(x => x.id === nutLogId);
     if (l) {
       l.grams = +ref.toFixed(1);
+      rememberGrams(l.name, ref);
       l.kcal = Math.round(kcalIn * 10) / 10;
       l.p = +(num('#nutP')).toFixed(1);
       l.c = +(num('#nutC')).toFixed(1);
@@ -3889,16 +3912,8 @@ function openNotifyLog() {
   }
   document.body.classList.add('nlog-open');
   raiseSheet(sheet);                         // 最后打开的放在最上面
-  // 位置：屏幕正中。**先落位、再显示**（落位那一帧关掉过渡），
-  // 否则会看到它从底部先冒出来再跳到中间 —— 就是那种"往上跳一下"的顿挫
-  if (sheet) {
-    sheet.classList.add('noanim');
-    const h = sheet.getBoundingClientRect().height || 0;
-    sheet.style.top = Math.max(8, Math.round((window.innerHeight - h) / 2)) + 'px';
-    sheet.style.bottom = 'auto';
-    void sheet.offsetHeight;                 // 强制先应用这个位置
-    sheet.classList.remove('noanim');
-  }
+  // 位置：恢复原来的底部位置（居中会和 Dock 栏重叠）
+  if (sheet) { sheet.style.top = ''; sheet.style.bottom = ''; }
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
 }
