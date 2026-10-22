@@ -1226,9 +1226,11 @@ body.add-open .sheet-mask.on {
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.16),
     0 2px 8px rgba(0,0,0,.18);
-  /* 不带回弹：分段控件的滑块只负责"滑到位"，多一下回弹就会被看成抖 */
-  transition: transform .42s cubic-bezier(.22,.85,.24,1), width .42s cubic-bezier(.22,.85,.24,1), height .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease;
+  /* 只动 transform：宽高一旦参与过渡，每一帧都要重新排版，iOS 上就会抖 */
+  transition: transform .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease;
   will-change: transform;
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
 }
 .seg-lens.on { opacity: 1; }
 

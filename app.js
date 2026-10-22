@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.27', d: '10-22', items: [
+    '修：三处分段滑块在真机上一直有轻微抖动 —— 根因是滑块的「宽 / 高」也参与了过渡动画，每一帧都要重新排版',
+    '现在宽高只在第一次量一次，之后动画只改 transform（走 GPU 合成层），和 Dock 那颗同一种做法；手机上手感应该和其它 App 的分段控件一样干净',
+  ]},
   { v: 'v6.26', d: '10-22', items: [
     '修：饮食目标三格左右切换时那一点点抖动 —— 两个来源都去掉了：① 按住时滑块会"压扁再弹回"，模式切换要等接口，那一压一回就被看成抖；② 滑动曲线带一点回弹过冲',
     '现在分段滑块只有"滑到位"这一个动作，曲线是单纯的减速落位（Dock 那颗仍然保留回弹，那颗你说好看）',
@@ -1456,7 +1460,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.26';
+const APP_VERSION = 'v6.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1908,10 +1912,16 @@ function initSegLens(wrap) {
       h: Math.round(r.height - 2),
     };
   };
-  const apply = (g, press) => {
-    lens.style.width = g.w + 'px';
-    lens.style.height = g.h + 'px';
-    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)' + (press ? ' scale(1.03,.94)' : '');
+  // 尺寸只在第一次（或格子尺寸明显变了）时写一次；平时只改 transform，
+  // 这样动画过程中不需要重新排版，iOS 上才不会抖
+  let cellW = 0, cellH = 0;
+  const apply = (g) => {
+    if (Math.abs(g.w - cellW) > 2 || Math.abs(g.h - cellH) > 2) {
+      cellW = g.w; cellH = g.h;
+      lens.style.width = g.w + 'px';
+      lens.style.height = g.h + 'px';
+    }
+    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)';
     lens.classList.add('on');
   };
   // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
@@ -1926,11 +1936,11 @@ function initSegLens(wrap) {
   }
   // remember=false 用在"按住"的时候：那只是预览位置，不能当成最终落点记下来，
   // 否则重画时新滑块会直接从按住的位置出现，看不到滑过去的过程
-  const place = (el, press, remember = true) => {
+  const place = (el, remember = true) => {
     const g = el && geoOf(el);
     if (!g) return;
     if (remember) segLensMem[key] = g;
-    apply(g, press);
+    apply(g);
   };
   const sync = () => {
     lens.classList.remove('press');
@@ -1963,7 +1973,7 @@ function initSegLens(wrap) {
     const b = ev.target.closest('button');
     if (!b) return;
     pressedEl = b;
-    place(b, false, false);         // 按下去就直接滑到手指这一格（不压扁、不记账）
+    place(b, false);                // 按下去就直接滑到手指这一格（不记账）
   }, { passive: true });
 
   // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下。
