@@ -739,6 +739,10 @@ function cloudHeaders() {
 function cloudUrl() {
   return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?access_token=${encodeURIComponent(cloudToken())}`;
 }
+/* 公开仓库：读取不需要令牌（少一个出错点） */
+function cloudReadUrl() {
+  return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?t=${Date.now()}`;
+}
 
 /* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
 function cloudPayload() {
@@ -819,7 +823,7 @@ async function cloudPull(force) {
   if (!cloudToken()) { if (typeof logError === 'function') logError('err-notoken', '还没配置同步令牌', 'E03 去 设置 → 数据同步 填 Gitee 令牌'); return false; }
   cloudPulling = true;
   try {
-    const res = await fetchRetry(cloudUrl(), { headers: cloudHeaders() });
+    const res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } });
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
     if (!res.ok) throw new Error('读取失败 ' + res.status);
     const j = await res.json();

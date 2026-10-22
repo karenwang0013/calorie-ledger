@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.74', d: '10-22', items: [
+    '修：读取 data.json 不再拼 token（公开仓库读取免令牌）—— 之前带 token 的那条请求容易 Load failed',
+  ]},
   { v: 'v4.73', d: '10-22', items: [
     '加：设置 → 数据同步 里多了「网络自检」按钮 —— 一键显示：令牌有没有存进去、匿名读 Gitee 通不通、带令牌读通不通（含 HTTP 状态和原始报错）',
   ]},
@@ -1185,7 +1188,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.73';
+const APP_VERSION = 'v4.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
