@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.24', d: '10-23', items: [
+    '修：v7.23 我把被放大的历史数据"删掉了"，结果那个食物直接消失（搜不到了）—— 现在改成**修回来**：用同名记账反推 → 再去掉当初多乘的倍数 → 实在不行用食物库的数据；无论如何都保留这个食物',
+    '实测：那条 蛋白976.9/碳水6738/脂肪3027 的历史 → 自动修成 509 / 8 / 52.8 / 29.6（正确值），搜索里正常显示',
+  ]},
   { v: 'v7.23', d: '10-23', items: [
     '修：搜索里那条"每 100g 蛋白 976.9 / 碳水 6738 / 脂肪 3027"——根因是写历史时把"已经是每 100 克"的值又按 100/克数 放大了一次（克数越小放大越多）。现在按原值写入',
     '修：启动时自动清掉历史里已经被放大的坏数据（蛋白+碳水+脂肪 超过 100 克的直接丢掉），不再出现在搜索里',
@@ -1855,7 +1859,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.23';
+const APP_VERSION = 'v7.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2777,6 +2781,7 @@ function forgetFood(name) {
 
 /* 记过的食物（按最近一次用的时间倒序） */
 function historyFoods() {
+  if (!window.__histFixed) { window.__histFixed = 1; try { sanitizeFoodHist(); } catch (e) {} }
   const st = Store.load();
   if (!Array.isArray(st.foodHist)) st.foodHist = [];
   // 一次性把老日志里的食物补进名单（补过就不再补，删掉的不会自己回来）
@@ -3153,15 +3158,44 @@ function nutKnownFood(name) {
   return all.find(x => x.name === key) || null;
 }
 
-/* 历史里如果有被算坏的数据（三大项合计 > 100 克），直接丢掉，别让它出现在搜索里 */
+/* 历史里如果有被算坏的数据（三大项合计 > 100 克）：
+   不删掉（删了这个食物就从搜索里消失了），而是尽量修回来：
+   ① 用同名的记账反推 → ② 把当初多乘的 100/克数 除掉 → ③ 用食物库的数据 */
+function repairHistEntry(f) {
+  if (nutSane(f.k, f.p, f.c, f.f)) return f;
+  const logs = (Store.load().logs || []).filter(l => l.name === f.n && Number(l.grams) > 0);
+  for (const l of logs) {
+    const sc = 100 / Number(l.grams);
+    const cand = { k: Number(l.kcal) * sc, p: Number(l.p) * sc, c: Number(l.c) * sc, f: Number(l.f) * sc };
+    if (nutSane(cand.k, cand.p, cand.c, cand.f)) {
+      return Object.assign({}, f, { k: Math.round(cand.k), p: +cand.p.toFixed(1), c: +cand.c.toFixed(1), f: +cand.f.toFixed(1) });
+    }
+  }
+  const g = Number(f.g) || 0;
+  if (g > 0) {
+    const sc = g / 100;                       // 当初是乘了 100/g，这里除回来
+    const cand = { k: f.k * sc, p: f.p * sc, c: f.c * sc, f: f.f * sc };
+    if (nutSane(cand.k, cand.p, cand.c, cand.f)) {
+      return Object.assign({}, f, { k: Math.round(cand.k), p: +cand.p.toFixed(1), c: +cand.c.toFixed(1), f: +cand.f.toFixed(1) });
+    }
+  }
+  const db = (S.foods || []).find(x => x.name === f.n);
+  if (db && nutSane(db.kcal, db.p, db.c, db.f)) {
+    return Object.assign({}, f, { k: Math.round(db.kcal), p: +Number(db.p).toFixed(1), c: +Number(db.c).toFixed(1), f: +Number(db.f).toFixed(1) });
+  }
+  return f;                                   // 实在救不了，原样留着（至少还能找到这个食物）
+}
+
 function sanitizeFoodHist() {
   const st = Store.load();
   if (!Array.isArray(st.foodHist) || !st.foodHist.length) return;
-  const sane = st.foodHist.filter(f => nutSane(f.k, f.p, f.c, f.f));
-  if (sane.length !== st.foodHist.length) {
-    st.foodHist = sane;
-    Store.save({ silent: true });
-  }
+  let changed = false;
+  st.foodHist = st.foodHist.map(f => {
+    const fixed = repairHistEntry(f);
+    if (fixed !== f) changed = true;
+    return fixed;
+  });
+  if (changed) Store.save({ silent: true });
 }
 
 /* 面板里按食物名找库/历史，找到就把"这一份"的营养填进来（用户只知道克数、不知道千焦时用） */
@@ -5664,7 +5698,6 @@ function init() {
   if (window.__inited) return;      // 脚本被补加载时可能被调用两次，只跑一次
   window.__inited = true;
   const synced = consumeHealthLink();
-  try { sanitizeFoodHist(); } catch (e) {}
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
