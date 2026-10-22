@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.38', d: '10-22', items: [
+    '改：记录详情里「蛋 / 碳 / 脂」这三个数之间拉开距离（改成「蛋 6 · 碳 33 · 脂 4」），不再挤在斜杠两边',
+    '改：这一行和上面的克重都加粗（12.5px / 600），看得更清楚',
+  ]},
   { v: 'v6.37', d: '10-22', items: [
     '改：记录详情里的克重和「蛋/碳/脂」那行小字放大一点（11 → 12.5px），颜色提亮一档但仍比正文淡',
   ]},
@@ -1498,7 +1502,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.37';
+const APP_VERSION = 'v6.38';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2546,7 +2550,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}/碳${Math.round(l.c)}/脂${Math.round(l.f)}</span></div>
+      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋 ${Math.round(l.p)} · 碳 ${Math.round(l.c)} · 脂 ${Math.round(l.f)}</span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
