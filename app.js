@@ -23,6 +23,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.06', d: '10-22', items: [
+    '改：加号弹出的记录卡片换成和「通知记录」同一套玻璃材质（磨砂 + 渐变描边），横杠也改成一样长短',
+    '改：记录卡片不再贴着 Dock —— 浮在 Dock 上面留一条缝；尺寸自己一套（比通知那张矮一些）',
+    '改：记录卡片保留左上角标题，去掉右上角的 ×；下滑可以关掉，点空白也能关',
+    '改：开关做成玻璃的 —— 底盘像一条玻璃管（内凹阴影 + 顶边高光），圆钮像一颗玻璃珠，打开时白钮外面压了一圈深色细边，绿底上不再糊成一片',
+  ]},
   { v: 'v6.05', d: '10-22', items: [
     '改：Dock 整体变大一号（手机 88→94、iPad 96→104），图标和文字也跟着放大，两台设备各自一档',
     '改：液态滑块上下只留 7px，更贴着 Dock 的上下边，看起来更饱满（高度也按 Dock 算，iPad 跟着变）',
@@ -1366,7 +1372,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.05';
+const APP_VERSION = 'v6.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1786,7 +1792,12 @@ function openAdd(meal) {
 }
 function closeAdd() {
   $('#addMask').classList.remove('on');
-  $('#addSheet').classList.remove('on');
+  const sh = $('#addSheet');
+  // 下滑关闭时脚本写过 transform，这里必须清掉，否则下次打开会停在半路
+  sh.classList.remove('dragging');
+  sh.style.transform = '';
+  sh.style.opacity = '';
+  sh.classList.remove('on');
 }
 
 function setAddMode(m) {
@@ -2926,11 +2937,9 @@ function closeNotifyLog() {
 }
 
 /* 提醒记录：手指下滑关闭（列表在顶部时生效），松手回弹或关闭 */
-function wireNotifyDrag() {
-  const sheet = $('#nlogSheet');
+function wireSheetDrag(sheet, list, closeFn) {
   if (!sheet || sheet.dataset.dragWired) return;
   sheet.dataset.dragWired = '1';
-  const list = $('#nlogList');
   let y0 = 0, dy = 0, dragging = false, armed = false;
   sheet.addEventListener('touchstart', (e) => {
     if (!sheet.classList.contains('on')) return;
@@ -2961,7 +2970,7 @@ function wireNotifyDrag() {
     dragging = false;
     sheet.classList.remove('dragging');
     if (dy > 96) {
-      closeNotifyLog();               // 走 CSS 的滑出动画
+      closeFn();                      // 走 CSS 的滑出动画
     } else {
       sheet.style.transform = '';
       sheet.style.opacity = '';
@@ -2971,6 +2980,9 @@ function wireNotifyDrag() {
   sheet.addEventListener('touchend', end);
   sheet.addEventListener('touchcancel', end);
 }
+function wireNotifyDrag() { wireSheetDrag($('#nlogSheet'), $('#nlogList'), closeNotifyLog); }
+/* 记录卡片：同一套下滑关闭（内容滚到顶才生效，别和内部滚动打架） */
+function wireAddDrag() { wireSheetDrag($('#addSheet'), $('#addSheet .sh-body'), closeAdd); }
 
 function runNotifyChecks() {
   if (setting('notify_inapp', true) === false) return false;   // 总开关关掉就全部静音
@@ -4470,6 +4482,7 @@ function initDockLens() {
 function init() {
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
+  wireAddDrag();   // 记录卡片：下滑关闭
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -4489,7 +4502,8 @@ function init() {
   };
   $('#fab').onclick = () => openAdd();
   $('#addTop').onclick = () => openAdd();
-  $('#addClose').onclick = closeAdd;
+  const addCloseBtn = $('#addClose');
+  if (addCloseBtn) addCloseBtn.onclick = closeAdd;   // 记录卡片不再有右上角叉号（靠下滑或点空白关闭）
   $('#addMask').onclick = closeAdd;
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));

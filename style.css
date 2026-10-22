@@ -1116,6 +1116,27 @@ body.nlog-open .sheet-mask.on {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
+/* 记录卡片（中间加号）：材质跟「通知记录」那张一致，尺寸自己一套；
+   位置不贴着 Dock —— 浮在 Dock 上面留一条缝；没有叉号，靠下滑或点空白关掉 */
+#addSheet {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(46, 53, 58, 0.44) 0%, rgba(28, 34, 39, 0.54) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-radius: var(--dock-r, 26px);
+  left: var(--dock-inset); right: var(--dock-inset);
+  bottom: calc(var(--safe-b) + var(--dock-bottom) + var(--dock-h) + 10px);
+  max-width: 470px;
+  min-height: 60dvh;
+  max-height: 78dvh;
+  box-shadow: 0 24px 56px rgba(0,0,0,.55);
+}
+#addSheet .grab { width: 66px; height: 4px; }        /* 和通知记录那条横杠一样 */
+#addSheet .sh-foot { background: transparent; border-top: 1px solid rgba(255,255,255,.08); }
+
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -1149,7 +1170,7 @@ body.nlog-open .sheet-mask.on {
 .prow-pick { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .prow-pick .pickbtn { flex: 1; padding: 12px 10px; font-size: 14px; }
 .prow-pick .pickbtn.on { padding: 13px 10px; font-size: 15px; }
-#addSheet { min-height: 0; max-height: 88dvh; }
+#addSheet { min-height: 60dvh; max-height: 78dvh; }
 .drop.small { padding: 20px 14px; position: relative; }
 .drop.small .preview { max-height: 150px; }
 .drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }
@@ -1467,20 +1488,52 @@ body.nlog-open .sheet-mask.on {
 .switchrow > div:first-child { flex: 1; }
 .stitle { font-size: 14.5px; }
 .sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; touch-action: manipulation; }
-/* 按下去的液态感：底盘轻微压扁提亮，白色圆钮被"拉长"一点再弹回 */
-.sw i { transition: background .2s ease, transform .2s cubic-bezier(.2,1.3,.4,1), filter .2s ease; }
-.sw:active i { transform: scale(.96); filter: brightness(1.14); }
-.sw i:after { transition: transform .2s cubic-bezier(.2,1.3,.4,1), width .2s cubic-bezier(.2,1.3,.4,1), border-radius .2s ease; }
-.sw:active i:after { width: 28px; border-radius: 12px; }
-.sw input:checked:active + i:after { transform: translateX(16px); width: 28px; border-radius: 12px; }
 .sw input { position: absolute; opacity: 0; width: 0; height: 0; }
-.sw i { position: absolute; inset: 0; background: #2c3236; border-radius: 15px; transition: .18s; }
+
+/* 底盘：一条玻璃管 —— 内凹的阴影 + 顶边一道高光，打开时是发光的柠檬玻璃 */
+.sw i {
+  position: absolute; inset: 0; border-radius: 15px;
+  background: linear-gradient(180deg, #343b40 0%, #262c30 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -2px 6px rgba(0,0,0,.35),
+    0 1px 2px rgba(0,0,0,.25);
+  transition: background .22s ease, box-shadow .22s ease, transform .2s cubic-bezier(.2,1.3,.4,1);
+}
+.sw input:checked + i {
+  background: linear-gradient(180deg, #dcff6e 0%, #cbf22e 58%, #b3dd1e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -2px 6px rgba(96,126,10,.45),
+    0 0 12px rgba(214,255,75,.30),
+    0 1px 2px rgba(0,0,0,.25);
+}
+/* 圆钮：一颗玻璃珠 —— 顶部高光、底部一圈暗边，压在绿色上也能分得清 */
 .sw i:after {
   content: ''; position: absolute; left: 3px; top: 3px;
-  width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: .18s;
+  width: 24px; height: 24px; border-radius: 50%;
+  background:
+    radial-gradient(70% 62% at 34% 20%, #ffffff 0%, #ffffff 42%, #eef2ee 62%, #dfe6e0 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.95),
+    inset 0 -2px 3px rgba(0,0,0,.10),
+    0 1px 3px rgba(0,0,0,.32),
+    0 0 0 1px rgba(0,0,0,.16);          /* 一圈细暗边：白钮压绿底不再糊成一片 */
+  transition: transform .22s cubic-bezier(.2,1.3,.4,1), width .22s cubic-bezier(.2,1.3,.4,1), border-radius .22s ease;
 }
-.sw input:checked + i { background: var(--lime); }
-.sw input:checked + i:after { transform: translateX(20px); }
+/* 打开时再压一条更深的边，绿底和白钮之间留出分界 */
+.sw input:checked + i:after {
+  transform: translateX(20px);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.95),
+    inset 0 -2px 3px rgba(0,0,0,.12),
+    0 1px 3px rgba(0,0,0,.34),
+    0 0 0 1px rgba(58,84,0,.34);
+}
+/* 按下去的液态感：底盘轻压、玻璃珠被"拉长"再弹回 */
+.sw:active i { transform: scale(.96); filter: brightness(1.10); }
+.sw:active i:after { width: 28px; border-radius: 12px; }
+.sw input:checked:active + i:after { transform: translateX(16px); width: 28px; border-radius: 12px; }
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }
 
 .pagetitle { margin: 0; padding: 4px 18px 16px; font-size: 29px; font-weight: 700; letter-spacing: .5px; }
