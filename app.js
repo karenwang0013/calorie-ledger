@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.83', d: '10-22', items: [
+    '改：体重趋势拖动跟手（连续位移，松手才换页），不再一块一块跳',
+    '加：点某个点后，那个点上会有一条竖直虚线，点变绿',
+  ]},
   { v: 'v4.82', d: '10-22', items: [
     '改：体重趋势去掉左右圆圈按钮，改成在图上左右滑动翻 7 天',
     '加：点图上的任意一个点，上面「最近一次」就显示那天的体重/体脂/BMI/去脂体重',
@@ -1215,7 +1219,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.82';
+const APP_VERSION = 'v4.83';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2312,7 +2316,7 @@ function renderTrends() {
   if (gw) gw.onclick = openWeight;
 }
 
-function lineChart(points, start, end) {
+function lineChart(points, start, end, selDate) {
   const W = 320, H = 130, pl = 4, pr = 4, pt = 12, pb = 22;
   const xs = points.map(p => +parseISO(p.date));
   const ys = points.map(p => p.kg);
@@ -2331,8 +2335,20 @@ function lineChart(points, start, end) {
   const area = `${path} L${X(xs[xs.length - 1]).toFixed(1)},${H - pb} L${X(xs[0]).toFixed(1)},${H - pb} Z`;
   const dots = points.map((p, i) => {
     const last = i === points.length - 1;
-    return `<circle data-d="${p.date}" cx="${X(xs[i]).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="${last ? 4.5 : 4}" fill="${last ? '#d6ff4b' : '#6ea8ff'}" stroke="#15181b" stroke-width="1.5" style="pointer-events:all"/>`;
+    const sel = selDate && p.date === selDate;
+    const r = sel ? 5.5 : (last ? 4.5 : 4);
+    const fill = sel ? '#6bff9a' : (last ? '#d6ff4b' : '#6ea8ff');
+    return `<circle data-d="${p.date}" cx="${X(xs[i]).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="${r}" fill="${fill}" stroke="#15181b" stroke-width="1.5" style="pointer-events:all"/>`;
   }).join('');
+  // 选中点：一条竖线从图顶到点的位置
+  let vline = '';
+  if (selDate) {
+    const si = points.findIndex(p => p.date === selDate);
+    if (si >= 0) {
+      const vx = X(xs[si]).toFixed(1), vy = Y(points[si].kg).toFixed(1);
+      vline = `<line x1="${vx}" y1="${pt}" x2="${vx}" y2="${H - pb}" stroke="rgba(214,255,75,.55)" stroke-width="1" stroke-dasharray="3 3"/>`;
+    }
+  }
 
   const first = points[0], last = points[points.length - 1];
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
@@ -2341,6 +2357,7 @@ function lineChart(points, start, end) {
       <stop offset="100%" stop-color="#6ea8ff" stop-opacity="0"/>
     </linearGradient></defs>
     <path d="${area}" fill="url(#wg)"/>
+    ${vline}
     <path d="${path}" fill="none" stroke="#6ea8ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     ${dots}
     <text x="${pl}" y="${H - 6}" style="font-size:9px">${first.date.slice(5)}</text>
@@ -3173,7 +3190,7 @@ function renderMe() {
             <div><span>较上次</span><b class="${pvDelta > 0 ? 'up' : (pvDelta < 0 ? 'down' : '')}">${pvDelta == null ? '—' : (pvDelta > 0 ? '+' : '') + pvDelta}<small>kg</small></b></div>
             <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
           </div>
-          ${pagePts.length >= 2 ? `<div class="chartwrap" id="btWrap" data-start="${pageStart}" data-end="${pageEnd}">${lineChart(pagePts, pageStart, pageEnd)}</div>` : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
+          ${pagePts.length >= 2 ? `<div class="chartwrap" id="btWrap" data-start="${pageStart}" data-end="${pageEnd}">${lineChart(pagePts, pageStart, pageEnd, bodySelDate)}</div>` : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
         </div>`;
       })() : ''}
       ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
@@ -3517,17 +3534,28 @@ function wireMe() {
       c.style.cursor = 'pointer';
       c.onclick = () => { bodySelDate = c.getAttribute('data-d'); renderMe(); };
     });
-    let sx = 0, sy = 0, moved = false;
+    const svgEl = btWrap.querySelector('svg');
+    let sx = 0, sy = 0, dragging = false, dx = 0;
     btWrap.addEventListener('touchstart', (e) => {
-      const t0 = e.touches[0]; sx = t0.clientX; sy = t0.clientY; moved = false;
+      const t0 = e.touches[0]; sx = t0.clientX; sy = t0.clientY; dragging = false; dx = 0;
+      if (svgEl) svgEl.style.transition = 'none';
     }, { passive: true });
-    btWrap.addEventListener('touchmove', () => { moved = true; }, { passive: true });
-    btWrap.addEventListener('touchend', (e) => {
-      const t0 = (e.changedTouches && e.changedTouches[0]) || null;
-      if (!t0) return;
-      const dx = t0.clientX - sx, dy = t0.clientY - sy;
-      if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;   // 不是横滑就交给点击
-      bodyTrendEnd = addDays(bodyTrendEnd, dx < 0 ? 7 : -7);
+    btWrap.addEventListener('touchmove', (e) => {
+      const t0 = e.touches[0];
+      dx = t0.clientX - sx;
+      const dy = t0.clientY - sy;
+      if (!dragging && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) dragging = true;
+      if (dragging && svgEl) { svgEl.style.transform = 'translateX(' + dx + 'px)'; e.preventDefault(); }
+    }, { passive: false });
+    btWrap.addEventListener('touchend', () => {
+      if (svgEl) {
+        svgEl.style.transition = 'transform .22s cubic-bezier(.32,.72,0,1)';
+        svgEl.style.transform = '';
+      }
+      if (!dragging) return;               // 没拖动 → 交给点击
+      const w = btWrap.clientWidth || 320;
+      const shift = Math.round(dx / w * 7) || (dx > 0 ? 1 : -1);
+      bodyTrendEnd = addDays(bodyTrendEnd, -shift);   // 往右拖 = 看更早
       bodySelDate = null;
       renderMe();
     });
