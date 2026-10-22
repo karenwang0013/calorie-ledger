@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.15', d: '10-23', items: [
+    '修：整页点不动/滑不动 —— 关掉的弹层（透明但在屏幕内）还在拦截触摸。现在所有没打开的弹层一律 pointer-events: none，关掉时也会把临时定位清干净',
+    '（v7.14 那次部署只更新了版本号，样式文件没跟上，这次重新发一遍并核对线上文件）',
+  ]},
   { v: 'v7.14', d: '10-23', items: [
     '改：营养编辑面板默认单位改成「千焦」（包装上基本都是千焦），打开时预填的数值也按千焦显示；要千卡点 ⇄ 切换',
   ]},
@@ -1814,7 +1818,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.14';
+const APP_VERSION = 'v7.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2979,6 +2983,7 @@ function closeNutEdit() {
   sh.style.transform = '';
   sh.style.opacity = '';
   sh.classList.remove('on');
+  setTimeout(() => { sh.style.top = ''; sh.style.bottom = ''; }, 420);
   nutEditIdx = -1;
 }
 let nutUnit = 'kcal';
@@ -3790,6 +3795,8 @@ function closeNotifyLog() {
   if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; }
   if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.remove('on');
+  // 临时定位（top/bottom）也要清掉，否则下次的"关闭位置"会落在屏幕里
+  if (sheet) setTimeout(() => { sheet.style.top = ''; sheet.style.bottom = ''; }, 420);
 }
 
 /* 提醒记录：手指下滑关闭（列表在顶部时生效），松手回弹或关闭 */
