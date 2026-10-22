@@ -1210,7 +1210,9 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 18px 6px; border-radius: var(--seg-btn-r);
+  /* 左右内边距故意差 4px：图标本身四周有留白，视觉上左重右轻，
+     这样反着补一下，看起来才是"字在中间" */
+  padding: 18px 8px 18px 4px; border-radius: var(--seg-btn-r);
   font-size: 14.5px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
