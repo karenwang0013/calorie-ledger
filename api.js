@@ -500,13 +500,14 @@ function cleanItems(obj, opt) {
   const hint = String((opt && opt.hint) || '');
   (obj.items || []).slice(0, 15).forEach(it => {
     const name = String(it.name || '').trim();
-    const grams = num(it.grams, 0);
-    if (!name || grams <= 0) return;
+    let grams = num(it.grams, 0);
+    if (!name) return;
+    if (it.label) grams = 0;                 // 拍到营养成分表：克数留空，用户自己填（不默认 100）
     // 0 千卡是合法值（无糖饮料、白水），只有「根本没给数字」才去拿总热量倒推
     let k100 = num(it.kcal_per_100g, NaN);
     if (isNaN(k100)) {
       const total = num(it.kcal, NaN);
-      k100 = isNaN(total) ? 0 : total / grams * 100;
+      k100 = (isNaN(total) || !(grams > 0)) ? 0 : total / grams * 100;
     }
     if (k100 < 0) k100 = 0;
     let p100 = num(it.protein_per_100g), c100 = num(it.carb_per_100g), f100 = num(it.fat_per_100g);

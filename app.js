@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.41', d: '10-23', items: [
+    '改：克数不再默认 100 —— 拍营养成分表出来的每一条，克数框**空着**，你自己填（包装上的、或称出来的）。没填之前热量显示「—」、合计不计算，点「记入」会提示先填克数',
+    '改：顶部三格的磨砂再加重（blur 40px → 64px）',
+  ]},
   { v: 'v7.40', d: '10-23', items: [
     '撤销上一版那条"默认用标签每份克数"——那只是那包威化的 12.5 克，不能当通用基准。克数恢复中性默认 100，你自己按包装/称重填（整包的话说一句"整包"就按净含量算）',
     '保留：拍营养成分表时，每 100 克仍然由标签数字换算（508.6 千卡 / 蛋白 8 / 碳水 52.8 / 脂肪 29.6），这部分是准的',
@@ -1916,7 +1920,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.40';
+const APP_VERSION = 'v7.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2962,7 +2966,7 @@ function runSearch(q) {
 function pushFood(f) {
   // 上次这个食物记了多少克，这次就用多少克（不再用它自带的推荐值）
   const remembered = (setting('food_grams', {}) || {})[f.name];
-  const def = Number(remembered) || Number(f.grams) || (f.units && f.units[0] ? f.units[0].g : 100);
+  const def = Number(remembered) || Number(f.grams) || 0;   // 没有记忆就空着，由用户填
   S.items.push({
     name: f.name,
     grams: def,
@@ -3032,15 +3036,15 @@ function renderResult() {
         </div>
         <div class="meta"><span class="mtxt">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</span><button class="pen" data-nut="${i}" aria-label="改营养数据">${PEN_ICON}</button></div>
         <div class="gr">
-          <input type="number" inputmode="decimal" value="${it.grams}" data-g="${i}">
+          <input type="number" inputmode="decimal" value="${it.grams || ''}" placeholder="克" data-g="${i}">
           <span class="u">克</span>
           <div class="chips">${chips}</div>
-          <span class="kc">${Math.round(kcal)}</span>
+          <span class="kc">${it.grams ? Math.round(kcal) : '—'}</span>
         </div>
       </div>`;
   }).join('');
 
-  const total = S.items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0);
+  const total = S.items.reduce((a, b) => a + b.kcal_per_100g * (Number(b.grams) || 0) / 100, 0);
   $('#resultTotal').textContent = Math.round(total);
   $('#addFoot').hidden = S.items.length === 0;
   $('#resultArea').hidden = S.items.length === 0;
@@ -3419,8 +3423,17 @@ function saveNutEdit() {
 }
 
 async function saveItems() {
-  const items = S.items.filter(i => i.grams > 0);
-  if (!items.length) return toast('没有可保存的条目');
+  const items = S.items.filter(i => Number(i.grams) > 0);
+  if (!items.length) {
+    const inp = document.querySelector('#resultItems input[data-g]');
+    if (inp) inp.focus();
+    return toast('先填克数（每项吃了多少克）再记入', 3000);
+  }
+  if (items.length < S.items.length) {
+    const inp = document.querySelector(`#resultItems input[data-g="${S.items.findIndex(i => !(Number(i.grams) > 0))}"]`);
+    if (inp) inp.focus();
+    return toast('还有一项没填克数，先填上再记入', 3000);
+  }
   const dishName = ($('#batchName').value || '').trim().slice(0, 20);
   if (items.length > 1 && !dishName) {
     $('#batchName').focus();
