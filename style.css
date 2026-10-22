@@ -547,6 +547,7 @@ body.nlog-open .sheet-mask.on {
 .trendsum b small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
 .trendsum b.up { color: #ff8a7a; }
 .trendsum b.down { color: #7fe3a1; }
+.trendsum b.sel { color: var(--lime); }
 
 /* 身体数据 · 历史列表 */
 .hlist { margin-top: 4px; }

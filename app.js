@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.04', d: '10-22', items: [
+    '修：在体重趋势图上点某个点后，一起跟着变的还有图上那三组数字 —— 第一组变成「所选那天」的体重、第二组是那天比上一次的增减、第三组变成「距上次」几天；不点还是原来的本页最新/本页区间',
+    '修：点过点以后，趋势卡右上角会多一个「回到最新」，一下退回到看最新那几天；重新进这一页也会自动回到最新',
+    '改：上面那张卡片点过点以后标题写「所选那天」，不再写「最近一次」',
+  ]},
   { v: 'v5.03', d: '10-22', items: [
     '改：饮食目标页顶部卡片的标题「建议模式」改成「模式建议」',
   ]},
@@ -1290,7 +1295,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.03';
+const APP_VERSION = 'v5.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3270,7 +3275,7 @@ function renderMe() {
 
     h = meBackBar('身体数据') + `
       <div class="card">
-        <h3 class="bh">最近一次${showDate ? ` <span class="datechip">${showDate.slice(5)}</span>` : ''}</h3>
+        <h3 class="bh">${showDate && showDate !== last ? '所选那天' : '最近一次'}${showDate ? ` <span class="datechip">${showDate.slice(5)}</span>` : ''}</h3>
         ${showDate ? `
           <div class="bstats">
             <div><div class="k">体重 <em>kg</em></div><div class="v">${w || '—'}</div></div>
@@ -3297,17 +3302,28 @@ function renderMe() {
         const pvDelta = pv != null && pvPrev != null ? Math.round((pv - pvPrev) * 10) / 10 : null;
         const pvMin = pagePts.length ? Math.min(...pagePts.map(p => p.kg)) : null;
         const pvMax = pagePts.length ? Math.max(...pagePts.map(p => p.kg)) : null;
+        // 点了图上某一天 → 这三组数字跟着那一天走（不点 = 本页最新）
+        const selIdx = bodySelDate ? wtPts.findIndex(p => p.date === bodySelDate) : -1;
+        const selPt = selIdx >= 0 ? wtPts[selIdx] : null;
+        const selPrevPt = selIdx > 0 ? wtPts[selIdx - 1] : null;
+        const selDelta = (selPt && selPrevPt) ? Math.round((selPt.kg - selPrevPt.kg) * 10) / 10 : null;
+        const selGap = (selPt && selPrevPt) ? Math.round((parseISO(selPt.date) - parseISO(selPrevPt.date)) / 86400000) : null;
+        const s1 = selPt ? { l: '所选那天', v: selPt.kg, u: 'kg' } : { l: '本页最新', v: pv, u: 'kg' };
+        const s2v = selPt ? selDelta : pvDelta;
+        const s3 = selPt
+          ? { l: '距上次', v: selGap != null ? selGap : '—', u: selGap != null ? '天' : '' }
+          : { l: '本页区间', v: pvMin != null ? pvMin + '–' + pvMax : '—', u: pvMin != null ? 'kg' : '' };
         return `<div class="card">
           <h3 class="bh">体重趋势
             <span class="pager">
-              ${bodyTrendPage > 0 ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
+              ${(bodyTrendPage > 0 || selPt) ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
             </span>
           </h3>
           <div class="trendsum">
-            <div><span>本页最新</span><b>${pv != null ? pv : '—'}<small>kg</small></b></div>
-            <div><span>较上次</span><b class="${pvDelta > 0 ? 'up' : (pvDelta < 0 ? 'down' : '')}">${pvDelta == null ? '—' : (pvDelta > 0 ? '+' : '') + pvDelta}<small>kg</small></b></div>
-            <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
+            <div><span>${s1.l}</span><b class="${selPt ? 'sel' : ''}">${s1.v != null ? s1.v : '—'}<small>${s1.u}</small></b></div>
+            <div><span>较上次</span><b class="${s2v > 0 ? 'up' : (s2v < 0 ? 'down' : '')}">${s2v == null ? '—' : (s2v > 0 ? '+' : '') + s2v}<small>kg</small></b></div>
+            <div><span>${s3.l}</span><b>${s3.v}<small>${s3.u}</small></b></div>
           </div>
           ${(() => {
             const mk = (pts) => {
@@ -3396,7 +3412,11 @@ function wireMe() {
   }
   const back = $('#meBack');
   if (back) back.onclick = () => { mePage = null; renderMe(); };
-  $$('.srow').forEach(b => b.onclick = () => { mePage = b.dataset.page; renderMe(); });
+  $$('.srow').forEach(b => b.onclick = () => {
+    mePage = b.dataset.page;
+    if (mePage === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
+    renderMe();
+  });
 
   $$('.swatch').forEach(b => b.onclick = async () => {
     const t = b.dataset.theme;
