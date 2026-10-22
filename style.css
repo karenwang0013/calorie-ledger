@@ -500,6 +500,9 @@ body.nlog-open .sheet-mask.on {
   padding: 3px 10px; border-radius: 20px; line-height: 1.4;
 }
 
+/* 身体数据 · 趋势交互区 */
+.chartwrap { touch-action: pan-y; }
+
 /* 身体数据 · 趋势翻页 */
 .pager { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
 .pgbtn {

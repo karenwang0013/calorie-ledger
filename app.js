@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.82', d: '10-22', items: [
+    '改：体重趋势去掉左右圆圈按钮，改成在图上左右滑动翻 7 天',
+    '加：点图上的任意一个点，上面「最近一次」就显示那天的体重/体脂/BMI/去脂体重',
+  ]},
   { v: 'v4.81', d: '10-22', items: [
     '修：设备同步 data.json 的读取也带上令牌（匿名同样被限流）',
   ]},
@@ -1211,7 +1215,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.81';
+const APP_VERSION = 'v4.82';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1245,6 +1249,7 @@ let toastTimer = null;
       注意：横杠宽度（66px）和卡片玻璃质感【不要】跟着回退，保持现状。 */
 const NLOG_UI = { closeX: false, grab: true, titleCenter: false, showTitle: false };
 let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
+let bodySelDate = null;    // 图上点选的那一天（不点 = 最近一次）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
 
@@ -2326,7 +2331,7 @@ function lineChart(points, start, end) {
   const area = `${path} L${X(xs[xs.length - 1]).toFixed(1)},${H - pb} L${X(xs[0]).toFixed(1)},${H - pb} Z`;
   const dots = points.map((p, i) => {
     const last = i === points.length - 1;
-    return `<circle cx="${X(xs[i]).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="${last ? 3.5 : 2}" fill="${last ? '#d6ff4b' : '#6ea8ff'}" stroke="#15181b" stroke-width="1.5"/>`;
+    return `<circle data-d="${p.date}" cx="${X(xs[i]).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="${last ? 4.5 : 4}" fill="${last ? '#d6ff4b' : '#6ea8ff'}" stroke="#15181b" stroke-width="1.5" style="pointer-events:all"/>`;
   }).join('');
 
   const first = points[0], last = points[points.length - 1];
@@ -3104,8 +3109,9 @@ function renderMe() {
     const body = st.body || {}, wts = st.weights || {};
     const dates = Array.from(new Set([...Object.keys(body), ...Object.keys(wts)])).sort().reverse();
     const last = dates[0];
-    const b = last ? (body[last] || {}) : {};
-    const w = last ? wts[last] : null;
+    const showDate = (bodySelDate && (body[bodySelDate] || wts[bodySelDate])) ? bodySelDate : last;
+    const b = showDate ? (body[showDate] || {}) : {};
+    const w = showDate ? wts[showDate] : null;
     const bmi = b.bmi || (w && st.profile.height_cm ? Math.round((w / Math.pow(st.profile.height_cm / 100, 2)) * 10) / 10 : null);
 
     // 历史：一行一天，日期 + 体重 + 小标签
@@ -3133,8 +3139,8 @@ function renderMe() {
 
     h = meBackBar('身体数据') + `
       <div class="card">
-        <h3 class="bh">最近一次${last ? ` <span class="datechip">${last.slice(5)}</span>` : ''}</h3>
-        ${last ? `
+        <h3 class="bh">最近一次${showDate ? ` <span class="datechip">${showDate.slice(5)}</span>` : ''}</h3>
+        ${showDate ? `
           <div class="bstats">
             <div><div class="k">体重 <em>kg</em></div><div class="v">${w || '—'}</div></div>
             <div><div class="k">体脂率 <em>%</em></div><div class="v">${b.bf || '—'}</div></div>
@@ -3159,9 +3165,7 @@ function renderMe() {
         return `<div class="card">
           <h3 class="bh">体重趋势
             <span class="pager">
-              <button class="pgbtn" id="btPrev" ${canPrev ? '' : 'disabled'} aria-label="上一页"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
-              <button class="pgbtn" id="btNext" ${canNext ? '' : 'disabled'} aria-label="下一页"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
             </span>
           </h3>
           <div class="trendsum">
@@ -3169,7 +3173,7 @@ function renderMe() {
             <div><span>较上次</span><b class="${pvDelta > 0 ? 'up' : (pvDelta < 0 ? 'down' : '')}">${pvDelta == null ? '—' : (pvDelta > 0 ? '+' : '') + pvDelta}<small>kg</small></b></div>
             <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
           </div>
-          ${pagePts.length >= 2 ? lineChart(pagePts, pageStart, pageEnd) : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
+          ${pagePts.length >= 2 ? `<div class="chartwrap" id="btWrap" data-start="${pageStart}" data-end="${pageEnd}">${lineChart(pagePts, pageStart, pageEnd)}</div>` : `<div class="hint" style="margin:8px 0 2px">这 7 天还没有记录</div>`}
         </div>`;
       })() : ''}
       ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
@@ -3506,9 +3510,28 @@ function wireMe() {
     renderMe();
   };
 
-  const btPrev = $('#btPrev'), btNext = $('#btNext');
-  if (btPrev) btPrev.onclick = () => { bodyTrendEnd = addDays(bodyTrendEnd, -7); renderMe(); };
-  if (btNext) btNext.onclick = () => { bodyTrendEnd = addDays(bodyTrendEnd, 7); renderMe(); };
+  // 体重趋势：点某个点 = 查看那天的数据；在图上左右滑 = 翻 7 天
+  const btWrap = $('#btWrap');
+  if (btWrap) {
+    $$('#btWrap circle[data-d]').forEach(c => {
+      c.style.cursor = 'pointer';
+      c.onclick = () => { bodySelDate = c.getAttribute('data-d'); renderMe(); };
+    });
+    let sx = 0, sy = 0, moved = false;
+    btWrap.addEventListener('touchstart', (e) => {
+      const t0 = e.touches[0]; sx = t0.clientX; sy = t0.clientY; moved = false;
+    }, { passive: true });
+    btWrap.addEventListener('touchmove', () => { moved = true; }, { passive: true });
+    btWrap.addEventListener('touchend', (e) => {
+      const t0 = (e.changedTouches && e.changedTouches[0]) || null;
+      if (!t0) return;
+      const dx = t0.clientX - sx, dy = t0.clientY - sy;
+      if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;   // 不是横滑就交给点击
+      bodyTrendEnd = addDays(bodyTrendEnd, dx < 0 ? 7 : -7);
+      bodySelDate = null;
+      renderMe();
+    });
+  }
 
   const cfp = $('#cloudForcePull');
   if (cfp) cfp.onclick = async () => {
