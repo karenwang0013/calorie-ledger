@@ -944,6 +944,10 @@ body.add-open .sheet-mask.on {
 
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
+#view-trends { padding-top: 12px; }   /* 第一张卡和顶栏之间，留出与卡片之间一样的距离 */
+/* 塞进卡片里的时间滑块：不再单独一条，融成卡片的一部分 */
+.card > .seg { margin: 0 0 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); }
+.card > .seg button { padding: 10px 6px; }
 .view.on { display: block; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -1022,19 +1026,6 @@ body.add-open .sheet-mask.on {
 
 /* ---------- 分段 ---------- */
 /* 趋势页：状态卡 → 「数据明细」+ 7/30/90 → 三张明细卡 */
-.secrow {
-  display: flex; align-items: center;
-  margin: 2px 18px 6px;
-}
-.secrow span {
-  font-size: 11.5px; color: var(--muted2); letter-spacing: .8px;
-  display: flex; align-items: center; gap: 8px;
-}
-.secrow span::after {
-  content: ''; flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
-  width: 60px;
-}
 .seg {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
@@ -1689,6 +1680,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 
   /* 趋势：还是手机的单列，只把卡片和图表放大 */
   #view-trends .seg { margin: 14px 18px 16px; padding: 5px; border-radius: 16px; }
+  .card > .seg { margin: 2px 0 16px; }
   #view-trends .seg button { padding: 12px 8px; font-size: 17px; }   /* iPad 也要比手机大一档，不能比手机还小 */
   .card { margin: 0 18px 14px; padding: 18px; border-radius: 20px; }
   .card h3 { font-size: 13px; }
