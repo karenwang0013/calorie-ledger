@@ -489,7 +489,7 @@ body.nlog-open .sheet-mask.on {
 .rec-date { margin-left: auto; font-size: 11px; }
 
 /* 身体数据：三个板块标题统一、和右侧控件同一中心线 */
-.bh { font-size: 13px; line-height: 1; min-height: 26px; align-items: center; }
+.bh { font-size: 13.5px; line-height: 20px; min-height: 26px; align-items: center; }
 .bh .datechip, .bh .pager, .bh .tag { align-self: center; }
 .bh .pager { height: 26px; }
 
@@ -844,10 +844,12 @@ body.nlog-open .sheet-mask.on {
   padding: 16px;
 }
 .card h3 {
-  margin: 0 0 12px;
-  font-size: 12px;
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 20px;      /* 统一高度：所有卡片小字都在同一基线 */
+  min-height: 20px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   color: var(--muted);
   display: flex; align-items: center; gap: 8px;
 }

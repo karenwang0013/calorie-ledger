@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.90', d: '10-22', items: [
+    '修：体重趋势快速滑动时会连着翻好几页 —— 改成惯性停下（140ms 无滚动）后才判定翻页',
+    '改：所有卡片左上角小字统一字号 13.5px、统一 20px 行高，位置不再高低不一',
+  ]},
   { v: 'v4.89', d: '10-22', items: [
     '修：「体重数据已更新」只显示体脂 —— 现在把体重/体脂/BMI/去脂体重四项都列出来',
     '修：镜像任务可能写入空文件 —— 现在校验非空才覆盖（避免读到空的 body.json）',
@@ -1241,7 +1245,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.89';
+const APP_VERSION = 'v4.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3591,12 +3595,13 @@ function wireMe() {
     const slides = pager.querySelectorAll('.cpslide');
     const mid = () => Math.round(pager.clientWidth * 1);
     requestAnimationFrame(() => { pager.scrollLeft = mid(); });
-    let ticking = false;
+    let settleTimer = null, pagerLock = false;
+    window.__pagerLock = false;
     pager.addEventListener('scroll', () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
+      if (pagerLock) return;
+      clearTimeout(settleTimer);
+      // 等惯性滚动停下来（140ms 内没有新的滚动事件）再判定，避免连环跳页
+      settleTimer = setTimeout(() => {
         const w = pager.clientWidth || 1;
         const idx = Math.round(pager.scrollLeft / w);
         if (idx === 1) return;
@@ -3608,15 +3613,17 @@ function wireMe() {
           pager.scrollTo({ left: w, behavior: 'smooth' });
           return;
         }
-        // 有下一页：先淡出，再换页，避免画面"啪"地一变
+        // 有下一页：先淡出，再换页
+        pagerLock = true;
         pager.style.transition = 'opacity .16s ease';
         pager.style.opacity = '0.25';
         setTimeout(() => {
           bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
           bodySelDate = null;
+          pagerLock = false;
           renderMe();
         }, 150);
-      });
+      }, 140);
     });
     slides.forEach(sl => {
       sl.querySelectorAll('circle[data-d]').forEach(c => {
