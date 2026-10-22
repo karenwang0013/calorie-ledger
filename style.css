@@ -1130,7 +1130,12 @@ body.add-open .sheet-mask.on {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
-/* 记录卡片：卡片本身和提醒记录那张完全一样，只有"内容"是自己的 */
+/* 记录卡片：卡片本身和提醒记录那张完全一样，只有"内容"是自己的。
+   --blk-gap 是这张卡里唯一的间距基准：块到卡片边、块与块之间都用它。
+   以后调三个按钮的高度/间距，就只动这个变量或那排的内边距，下面虚线框会自动跟着涨落。 */
+#addSheet { --blk-gap: 12px; }
+#addSheet .sh-body { padding: calc(var(--blk-gap) - 4px) var(--blk-gap) var(--blk-gap); }
+#addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 #addSheet .grab { width: 66px; height: 4px; }
 #addSheet .sh-foot {
   background: transparent;
@@ -1201,8 +1206,9 @@ body.add-open .sheet-mask.on {
 .tabs3 {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
-  padding: 6px; margin: 4px -6px 12px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
+  padding: 6px; flex: 0 0 auto;
   --seg-btn-r: calc(var(--dock-r, 26px) - 18px);          /* 卡片圆角 39 → 这一条 27 → 里面的按钮/滑块 21 */
+  margin: 4px 0 12px;                                     /* 不再外扩：和下面虚线框用同一个左右基准 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
   /* 和卡片的圆角同心：卡片圆角 − 这一条到卡片边的距离（12px），再往里 6px 是按钮 */
