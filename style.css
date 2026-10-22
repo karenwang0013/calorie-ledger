@@ -767,8 +767,9 @@ body.add-open .sheet-mask.on {
 }
 .modes button {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
-  padding: 10px 10px; border-radius: var(--seg-btn-r); text-align: left;
+  display: flex; flex-direction: column; gap: 2px;
+  align-items: center; justify-content: center;      /* 文字在格子里居中，不靠左 */
+  padding: 9px 8px; border-radius: var(--seg-btn-r); text-align: center;
   background: transparent; border: 0;
   color: var(--muted);
   transition: color .3s ease;
