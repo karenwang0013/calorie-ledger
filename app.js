@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.00', d: '10-22', items: [
+    '改：错误提醒加「宽限期」—— 2 分半内前 2 次失败不打扰，连续 3 次失败才记 ⚠️；一旦后来成功，自动把错误记录删掉',
+  ]},
   { v: 'v4.99', d: '10-22', items: [
     '改：按钮文案去掉「用 / 从」—— 「本机覆盖云端」「云端覆盖本机」',
   ]},
@@ -1277,7 +1280,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.99';
+const APP_VERSION = 'v5.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2741,9 +2744,31 @@ function friendlyErr(m) {
   return 'E99 ' + (t || '未知错误');
 }
 
-/* 任何同步/读取错误都记一条（红色 ✗），不受「App 内提醒」开关影响 */
+/* 错误提醒的「宽限期」：短时间内的失败不打扰，连续失败/持续太久才记一条 */
+const ERR_GRACE = { minFails: 3, windowMs: 150000 };
 function logError(kind, title, body) {
+  try {
+    const key = 'errc_' + kind;
+    let st = {};
+    try { st = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (e) { st = {}; }
+    const now = Date.now();
+    if (!st.first || now - st.first > ERR_GRACE.windowMs) st = { first: now, n: 0 };
+    st.n = (st.n || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(st));
+    if (st.n < ERR_GRACE.minFails) return false;   // 还在宽限期，先不打扰
+  } catch (e) {}
   return logNotify(kind, title, friendlyErr(body), false);
+}
+/* 成功之后：清掉这个类别的错误计数，并把之前记的错误提醒删掉 */
+function clearErr(kind) {
+  try { localStorage.removeItem('errc_' + kind); } catch (e) {}
+  try {
+    const d = Store.load();
+    if (!Array.isArray(d.notifyLog)) return;
+    const before = d.notifyLog.length;
+    d.notifyLog = d.notifyLog.filter(x => !(x.k === kind && x.ok === false));
+    if (d.notifyLog.length !== before) Store.save({ silent: true });
+  } catch (e) {}
 }
 
 function renderNotifyDot() {
@@ -4209,6 +4234,7 @@ async function pullCloudData() {
     const unchanged = cur.active === active && cur.source === 'cloud';
     d.daily[date] = Object.assign({}, cur, { active, source: 'cloud', cloudAt: at });
     if (!unchanged || cur.cloudAt !== at) Store.save();
+    try { clearErr('err-health'); } catch (e) {}
     lastCloud = { date, active, at, changed: !unchanged };
     return unchanged ? null : date;
   } catch (e) {
@@ -4984,6 +5010,7 @@ function init() {
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
       try { loadDay(); } catch (e) {}
+      try { clearErr('err-body'); clearErr('err-history'); } catch (e) {}
       const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
       updToast(what, j.d, SCALE_NAME, 2600);
       try {

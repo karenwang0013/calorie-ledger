@@ -811,6 +811,7 @@ async function cloudPush() {
     cloudLast = String(h);
     cloudErr = '';
     try { localStorage.removeItem('pending_push'); } catch (e) {}
+    if (typeof clearErr === 'function') clearErr('err-push');
     setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
     return true;
   } catch (e) {
@@ -900,6 +901,7 @@ async function cloudPull(force) {
       local.settings.updatedAt = rAt;
       localStorage.setItem(Store.KEY, JSON.stringify(local));
       setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
+      if (typeof clearErr === 'function') clearErr('err-pull');
       cloudPulling = false;
       return 'pulled';
     }
