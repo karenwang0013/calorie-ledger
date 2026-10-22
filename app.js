@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.35', d: '10-22', items: [
+    '改：日期下面那行措辞改成「今天 · 19:17 更新」，这个时间就是「热量采集」写进去的那一刻（不是手机本地时间、也不是云端同步时间）',
+  ]},
   { v: 'v6.34', d: '10-22', items: [
     '加：日期下面那行改成显示这份数据的同步时间（「今天 · 12:30 的数据」），不用再往下找小字',
   ]},
@@ -1487,7 +1490,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.34';
+const APP_VERSION = 'v6.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1621,7 +1624,7 @@ function renderToday() {
   // 日期下面那行：直接写清"这份数据是几点同步的"，不用再往下找
   const watchAt = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11, 16) : '';
   $('#dateSub').textContent = isToday
-    ? (watchAt ? `今天 · ${watchAt} 的数据` : '今天 · 实时')
+    ? (watchAt ? `今天 · ${watchAt} 更新` : '今天 · 实时')
     : (watchAt ? `${WEEK[dt.getDay()]} · ${watchAt}` : WEEK[dt.getDay()]);
   $('#nextDay').disabled = isToday;
   $('#nextDay').style.opacity = isToday ? 0.45 : 1;
