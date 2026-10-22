@@ -41,8 +41,8 @@
   },
   {
     "file": "index.html",
-    "find": "align-items:center;justify-content:space-between;margin:0 0 10px",
-    "why": "记录区顶部那行（已添加 / 继续选 / 重来）必须共用一条中心线"
+    "find": "align-items:center;justify-content:space-between;margin:10px 0",
+    "why": "记录区顶部那行（已添加 / 继续选 / 重来）：共用一条中心线，并且上下各留 10px（落在虚线框和卡片之间的正中）"
   },
   {
     "file": "style.css",

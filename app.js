@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.01', d: '10-23', items: [
+    '改：「已添加 / 继续选 / 重来」那一行落到虚线框和食物卡片之间的正中（实测上下各 10px）',
+  ]},
   { v: 'v7.00', d: '10-23', items: [
     '改（只营养编辑卡）：卡片更短 —— 不再被 56dvh 撑高，按内容高度（实测 472.6 → 424.8，短 48px）',
     '改（只营养编辑卡）：内容再往中间靠（左右各 26px）、整体下移（第一个字段离卡片顶 61px）',
@@ -1762,7 +1765,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.00';
+const APP_VERSION = 'v7.01';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

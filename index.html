@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=652">
+<link rel="stylesheet" href="style.css?v=653">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -259,7 +259,7 @@
 
     <!-- 结果 -->
     <div id="resultArea" hidden>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0">
         <div style="font-size:12.5px;color:var(--muted);line-height:1" id="resultTitle">识别结果</div>
         <div style="display:flex;gap:14px">
           <button id="resultMore" style="font-size:11.5px;line-height:1;color:var(--lime)">继续选</button>
@@ -407,9 +407,9 @@
   </div>
 </div>
 
-<script src="foods.js?v=652"></script>
-<script src="api.js?v=652"></script>
-<script src="app.js?v=652"></script>
+<script src="foods.js?v=653"></script>
+<script src="api.js?v=653"></script>
+<script src="app.js?v=653"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
