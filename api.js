@@ -911,7 +911,7 @@ async function cloudPull(force) {
         }
       }
     } catch (e) {}
-    res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } });
+    res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } }, 8000, 1);
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
     if (!res.ok) throw new Error('读取失败 ' + res.status);
     const j = await res.json();

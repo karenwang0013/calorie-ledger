@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.68', d: '10-22', items: [
+    '修：强制刷新特别慢 —— 两个原因：① 刚打开时 Service Worker 接管会再 reload 一次，等于整页加载两遍；现在 5 秒内不再 reload',
+    '② 云端同步原来失败会试 3 次 × 12 秒（最坏等 40 秒）；现在单次 8 秒就放弃，等你下次打开/切回前台再自动重试',
+    '另外几处云端读取都加了 4 秒上限，某一路卡住不会把整页拖住',
+  ]},
   { v: 'v6.67', d: '10-22', items: [
     '改：玻璃→实色的淡入再放柔到 1.4 秒（前段很慢、后段慢慢收），实测中间有 30 多个过渡值',
     '按住时"淡出回玻璃"单独用 0.3 秒 —— 不然按下去会像卡住不动',
@@ -1624,7 +1629,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.67';
+const APP_VERSION = 'v6.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3198,7 +3203,7 @@ async function giteeGetText(path, force) {
     try {
       const tk = (typeof setting === 'function' ? (setting('gitee_token', '') || '') : '').trim();
       const url = GITEE_API + '/' + path + '?t=' + now + (tk ? '&access_token=' + encodeURIComponent(tk) : '');
-      r = await fetch(url, { cache: 'no-store' });
+      r = await fetchT(url, { cache: 'no-store' }, 4000);
       if (r.ok) break;
       // 4xx 不重试（重试也没用，还会加重限流）
       if (r.status === 403 || r.status === 429) {
@@ -4635,7 +4640,7 @@ function normPct(v) {
 async function pullBodyHistory() {
   try {
     let txt = '';
-    try { const r0 = await fetch('body-history.json?t=' + Date.now(), { cache: 'no-store' }); if (r0.ok) txt = await r0.text(); } catch (e) {}
+    try { const r0 = await fetchT('body-history.json?t=' + Date.now(), { cache: 'no-store' }, 4000); if (r0.ok) txt = await r0.text(); } catch (e) {}
     if (!txt) txt = await giteeGetText('body-history.json');
     const j = JSON.parse(txt);
     const items = Array.isArray(j && j.items) ? j.items : [];
@@ -4798,7 +4803,7 @@ function healthStamp(t) {
   return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
 }
 async function getText(url) {
-  try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) return (await r.text()).trim(); } catch (e) {}
+  try { const r = await fetchT(url, { cache: 'no-store' }, 4000); if (r.ok) return (await r.text()).trim(); } catch (e) {}
   return '';
 }
 async function fetchHealthText(forceFresh) {
@@ -5655,7 +5660,7 @@ function init() {
   // 版本自检：线上版本变了就带随机参数重开，绕开缓存
   const checkVersion = async () => {
     try {
-      const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
+      const r = await fetchT('version.txt?t=' + Date.now(), { cache: 'no-store' }, 4000);
       if (!r.ok) return;
       const v = (await r.text()).trim();
       // 以前用"本次会话只跳一次"的标记：PWA 挂在后台好几天，
