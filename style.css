@@ -904,7 +904,7 @@ body.add-open .sheet-mask.on {
 /* 按下：横向撑开、纵向压扁，松手弹回去（只动这一层，不影响位置那层） */
 .dock-lens.press .lens-body {
   transform: scale(1.055, .925);
-  border-radius: calc(var(--lens-r, 36px) + 2px);
+  border-radius: calc(var(--lens-r, 36px) + 1px);
 }
 /* 停稳（不再移动/按住）→ 实色层淡入盖住玻璃。
    不能直接给 background 做过渡：渐变和纯色之间浏览器没法插值，那就是硬切。 */

@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.80', d: '10-23', items: [
+    '改：Dock 那格滑块拉高一点、四周留白统一成 5px（原来上下 8、左右 17），实测到 Dock 边 6/6/6/6',
+    '改：滑块圆角改成与 Dock 严格同心（内圆 = Dock 圆角 − 留白 − 边框），实测同心差 0（39→33 / 47→41 / 26→20）',
+    '固化：圆角同心公式写进手册，发版自检新增两条（四周留白必须同值、圆角必须按公式算）',
+  ]},
   { v: 'v6.79', d: '10-23', items: [
     '改：所有卡片上下内边距改成相等（原来上 12 / 下 16）→ 内容离上沿 15px、离下沿 15px',
     '固化：项目手册写入"发现不等距/不居中/不共线就直接改，不用问"；发版自检新增三条（卡片内边距不等、Dock 滑块上下不等距、滑块默认不许自己淡）',
@@ -1676,7 +1681,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.79';
+const APP_VERSION = 'v6.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4983,25 +4988,25 @@ function initDockLens() {
     const padL = parseFloat(cs.paddingLeft) || 0;
     const before = cols.slice(0, idx).reduce((a, b) => a + b, 0) + gap * idx;
     const cellW = cols[idx] || r.width;
-    const insetX = 4;
-    // 高度跟着 Dock 走（上下各留 7px），Dock 变高滑块就跟着变高，两台设备各自适配
-    // 注意：Dock 外框有 1px 边框，"上下等距"要按**边框里面**那块高度来算，
+    // 滑块到 Dock 边的留白：上下左右必须是**同一个数**，
+    // 这样"圆角同心"才能成立（内圆半径 = Dock 圆角 − 这个留白，弧线才是平行的）
+    const PAD = 5;
+    // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
-    const w = Math.max(70, Math.round(cellW - insetX * 2));
+    const w = Math.max(70, Math.round(cellW + 2 * (padL - PAD)));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
-    const h = Math.max(40, Math.round(visH - 14));
+    const h = Math.max(40, Math.round(visH - PAD * 2));
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
     lens.style.setProperty('--lens-x', Math.round(cellLeft + (cellW - w) / 2) + 'px');
     lens.style.setProperty('--lens-y', Math.round((visH - h) / 2) + 'px');
-    // 圆角按 Dock 自己的比例缩（Dock 圆角 ÷ Dock 高度），iPhone 和 iPad 的 Dock 圆角不一样，
-    // 滑块就跟着那台设备的 Dock 走 —— 形状永远是 Dock 的缩小版，而不是换成另一种圆
+    // 圆角同心：内圆 = Dock 圆角 − 留白（不是"按比例缩"，那样弧线对不上）
+    // Dock 圆角是画在边框外沿的，所以先减掉那 1px 边框，再减留白 —— 这样两条弧线才是严格平行
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
-    const dockH = ir.height || 88;
-    lens.style.setProperty('--lens-r', Math.max(12, Math.round(h * (dockR / dockH))) + 'px');
+    lens.style.setProperty('--lens-r', Math.max(12, Math.round(dockR - PAD - bT)) + 'px');
     if (opt.press) {
       const hx = (evX - r.left) / Math.max(1, r.width) * 100;
       const hy = (evY - r.top) / Math.max(1, r.height) * 100;
