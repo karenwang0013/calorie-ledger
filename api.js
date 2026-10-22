@@ -274,13 +274,28 @@ function computeTrends(days) {
 
   // 实测 TDEE：体重回归斜率 × 7700
   let real = null;
-  if (weights.length >= 4) {
-    const x0 = parseISO(weights[0].date).getTime();
-    const pts = weights.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
+  // 实测消耗用「这段设备上现有的全部数据」（最多近 90 天），跟上面选的 7/30/90 天无关 ——
+  // 否则切到 7 天时体重点太少，卡片就退回"要你手动补数据"的样子
+  const allW = Object.keys(d.weights || {})
+    .filter(k => k >= addDays(today, -89) && k <= today)
+    .sort()
+    .map(k => ({ date: k, kg: d.weights[k] }));
+  if (allW.length >= 4) {
+    const x0 = parseISO(allW[0].date).getTime();
+    const pts = allW.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
     const [slope, , r2] = linreg(pts);
-    const span = (parseISO(weights[weights.length - 1].date).getTime() - x0) / 86400000 + 1;
-    const aligned = logged.filter(s =>
-      s.date >= weights[0].date && s.date <= weights[weights.length - 1].date);
+    const span = (parseISO(allW[allW.length - 1].date).getTime() - x0) / 86400000 + 1;
+    // 每天吃了多少直接从 logs 汇总（不受窗口影响）
+    const intakeByDate = {};
+    (d.logs || []).forEach(l => {
+      if (!l.date) return;
+      intakeByDate[l.date] = (intakeByDate[l.date] || 0) + (Number(l.kcal) || 0);
+    });
+    const aligned = [];
+    for (let i = 0; i < span; i++) {
+      const ds = addDays(allW[0].date, i);
+      if (intakeByDate[ds] > 0) aligned.push({ date: ds, intake: intakeByDate[ds] });
+    }
     const coverage = aligned.length / Math.max(1, span);
     // 以前要求「8 次称重 + 一半天数有饮食记录」，普通人很难满足，一直显示"再记录几天"。
     // 现在只要 4 次称重、跨度 ≥5 天、≥2 天有饮食记录就先算出来，靠置信度标注可信程度。

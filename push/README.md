@@ -1,3 +1,10 @@
+# 锁屏推送（Cloudflare Worker）· 已停用（2026-10-22）
+
+> **现在的推送不走这里。** 真正发推送的是 `.github/workflows/push.yml` + `push/send.mjs`
+> （订阅存在仓库根目录 `push-subs.json`，2 台设备）。
+> 这个 Worker 一直没登记到设备（KV 里 0 台），2026-10-22 已执行 `npx wrangler delete` 删除部署。
+> 代码和说明留在这里，将来若要"准点推送"可以按下面的步骤重新部署（约 2 分钟）。
+
 # 锁屏推送（Cloudflare Worker）· 一次性设置
 
 > **当前状态（已部署完成，2026-10-21）**
