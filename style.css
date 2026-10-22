@@ -1665,8 +1665,8 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .meal .empty { padding: 0 16px 18px; font-size: 13px; }
 
   /* 趋势：还是手机的单列，只把卡片和图表放大 */
-  #view-trends .seg { margin: 0 18px 16px; padding: 5px; border-radius: 15px; }
-  #view-trends .seg button { padding: 10px; font-size: 13.5px; }
+  #view-trends .seg { margin: 14px 18px 16px; padding: 5px; border-radius: 16px; }
+  #view-trends .seg button { padding: 12px 8px; font-size: 17px; }   /* iPad 也要比手机大一档，不能比手机还小 */
   .card { margin: 0 18px 14px; padding: 18px; border-radius: 20px; }
   .card h3 { font-size: 13px; }
   .kpi b { font-size: 40px; }

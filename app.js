@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.31', d: '10-22', items: [
+    '修：滑块尺寸是在卡片弹出动画（那个 0.98 缩放）期间量的，量小了 2% —— 手机上差 2px、iPad 上差 5px，所以看着"左边空右边挤"。改用布局坐标量，全机型都精确贴合',
+    '修：iPad 上趋势页 7 天/30 天/90 天反而比手机小（13.5px）—— 改成 17px，大屏更大一档，和别处一致',
+  ]},
   { v: 'v6.30', d: '10-22', items: [
     '修：记录卡片三个选项里的「图标 + 文字」看着偏右（左边空、右边挤）—— 图标本身四周有留白，视觉重心偏左',
     '现在左右内边距差 4px 反着补一下，图标+文字在滑块里看起来才是居中',
@@ -1472,7 +1476,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.30';
+const APP_VERSION = 'v6.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1914,15 +1918,14 @@ function initSegLens(wrap) {
   lens.className = 'seg-lens';
   wrap.prepend(lens);
 
+  // 用布局坐标（offset*）而不是 getBoundingClientRect：
+  // 卡片弹出时有个 scale(.98) 的过渡，用 rect 量出来的尺寸会小 2%，滑块就会偏小、看着不居中
   const geoOf = el => {
-    const wr = wrap.getBoundingClientRect(), r = el.getBoundingClientRect();
-    if (!r.width) return null;
-    return {
-      x: Math.round(r.left - wr.left + 1),
-      y: Math.round(r.top - wr.top + 1),
-      w: Math.round(r.width - 2),
-      h: Math.round(r.height - 2),
-    };
+    const w = el.offsetWidth, h = el.offsetHeight;
+    if (!w || !h) return null;
+    let x = 0, y = 0, n = el;
+    while (n && n !== wrap) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    return { x: Math.round(x) + 1, y: Math.round(y) + 1, w: w - 2, h: h - 2 };
   };
   // 尺寸只在第一次（或格子尺寸明显变了）时写一次；平时只改 transform，
   // 这样动画过程中不需要重新排版，iOS 上才不会抖
