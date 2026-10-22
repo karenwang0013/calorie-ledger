@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.07', d: '10-23', items: [
+    '改：几个弹层同时开着时的叠放顺序 —— 改成"谁最后打开谁在最上面"：记录卡片 61 → 营养编辑 62 → 提醒记录 63（实测自上而下：提醒记录 / 营养编辑 / 记录卡片）',
+  ]},
   { v: 'v7.06', d: '10-23', items: [
     '改：千卡/千焦切换按钮挪回「热量」标签这一行（一个小亮色 ⇄），不再放输入框里',
     '改：「热量」后面直接写明当前单位是千卡还是千焦，点 ⇄ 会跟着变',
@@ -1786,7 +1789,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.06';
+const APP_VERSION = 'v7.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2203,6 +2206,16 @@ function renderMeals() {
   });
 }
 
+/* ---------------- 弹层叠放顺序 ---------------- */
+/* 记录卡片 / 营养编辑 / 提醒记录 可能同时开着：谁最后打开谁在最上面，
+   所以打开时统一往上抬一层（按打开顺序叠，不写死 z-index） */
+let sheetZ = 60;
+function raiseSheet(id) {
+  const el = typeof id === 'string' ? $(id) : id;
+  if (!el) return;
+  el.style.zIndex = String(++sheetZ);
+}
+
 /* ---------------- 记录弹层 ---------------- */
 function openAdd(meal) {
   S.items = [];
@@ -2224,6 +2237,7 @@ function openAdd(meal) {
   renderMealPick();
   renderRecent();
 
+  raiseSheet('#addSheet');                   // 刚打开的弹层放到最上面
   document.body.classList.add('add-open');   // 用和提醒记录一样的浅遮罩，玻璃才透得出来
   initAddTabsLens();
   setTimeout(() => { if (window.__addTabsLens) window.__addTabsLens.sync(); }, 60);
@@ -2908,6 +2922,7 @@ function openNutEdit(i) {
   sh.style.top = '';
   sh.style.bottom = '';
   setNutUnit('kcal', false);                     // 每次打开都从千卡开始
+  raiseSheet(sh);                                // 后打开的叠在记录卡片之上
   $('#nutMask').classList.add('on');
   sh.classList.add('on');
   const centerOnBig = () => {
@@ -3692,6 +3707,7 @@ function openNotifyLog() {
     sheet.classList.toggle('hide-title', !NLOG_UI.showTitle);
   }
   document.body.classList.add('nlog-open');
+  raiseSheet(sheet);                         // 最后打开的放在最上面
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
 }
