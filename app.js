@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.14', d: '10-23', items: [
+    '改：营养编辑面板默认单位改成「千焦」（包装上基本都是千焦），打开时预填的数值也按千焦显示；要千卡点 ⇄ 切换',
+  ]},
   { v: 'v7.13', d: '10-23', items: [
     '修：提醒记录卡片打开时"往上跳一下"的顿挫 —— 它原来是从屏幕底部一路滑到中间（滑 500px），最后一段看着像跳。现在改成原地浮起 24px + 淡入（实测 top 只从 294 → 269，26px 平滑到位）',
     '修：营养编辑卡片同样处理；两张居中卡片都改成"先无过渡落位、再淡入"，不会先出现在底部再跳上来',
@@ -1811,7 +1814,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.13';
+const APP_VERSION = 'v7.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2937,8 +2940,10 @@ function openNutEdit(i) {
   // 预填成"这一份"的实际数值（参考量 = 当前克数），保存时再换算回每 100 克
   const g = Number(it.grams) || 100;
   const share = g / 100;
+  setNutUnit('kJ', false);                        // 默认按千焦（包装上绝大多数写的是千焦）
+  const kcalOfPortion = (Number(it.kcal_per_100g) || 0) * share;
   $('#nutRef').value = +g.toFixed(1);
-  $('#nutKcal').value = Math.round((Number(it.kcal_per_100g) || 0) * share);
+  $('#nutKcal').value = nutUnit === 'kJ' ? Math.round(kcalOfPortion * KJ_PER_KCAL) : Math.round(kcalOfPortion);
   $('#nutP').value = +(((Number(it.protein_per_100g) || 0) * share).toFixed(1));
   $('#nutC').value = +(((Number(it.carb_per_100g) || 0) * share).toFixed(1));
   $('#nutF').value = +(((Number(it.fat_per_100g) || 0) * share).toFixed(1));
@@ -2949,7 +2954,6 @@ function openNutEdit(i) {
   const sh = $('#nutSheet');
   sh.style.top = '';
   sh.style.bottom = '';
-  setNutUnit('kcal', false);                     // 每次打开都从千卡开始
   raiseSheet(sh);                                // 后打开的叠在记录卡片之上
   // 同样：先落位（关过渡）→ 再显示，避免"先出现在底部再跳到中间"
   sh.classList.add('noanim');
