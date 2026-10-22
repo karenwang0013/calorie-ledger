@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.25', d: '10-22', items: [
+    '修：强制刷新后第一次点「趋势」，7 天/30 天/90 天那颗滑块会从屏幕顶部滑下来 —— 现在第一次定位直接落位、不播入场动画',
+    '饮食目标那三格也同样是这个处理，滑块永远只在这一栏里左右滑',
+  ]},
   { v: 'v6.24', d: '10-22', items: [
     '修：饮食目标切换模式时滑块还乱跳 —— 根子是"点一下整页重画"，滑块跟着整页一起被重建',
     '现在改成只切这一排的选中状态、再刷新下面那几个数字（缺口/可吃/蛋白），页面不重画，滑块就只是滑过去',
@@ -1448,7 +1452,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.24';
+const APP_VERSION = 'v6.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1907,12 +1911,14 @@ function initSegLens(wrap) {
     lens.classList.add('on');
   };
   // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
+  let primed = false;      // 有没有过一次"不带动画"的落位（防止第一次显示时从左上角滑下来）
   const mem = segLensMem[key];
   if (mem) {
     lens.style.transition = 'none';
     apply(mem);
     void lens.offsetWidth;
     lens.style.transition = '';
+    primed = true;         // 已经从老位置接着了，下一次可以正常滑动
   }
   // remember=false 用在"按住"的时候：那只是预览位置，不能当成最终落点记下来，
   // 否则重画时新滑块会直接从按住的位置出现，看不到滑过去的过程
@@ -1922,7 +1928,23 @@ function initSegLens(wrap) {
     if (remember) segLensMem[key] = g;
     apply(g, press);
   };
-  const sync = () => { lens.classList.remove('press'); place(wrap.querySelector('button.on')); };
+  const sync = () => {
+    lens.classList.remove('press');
+    const on = wrap.querySelector('button.on');
+    const g = on && geoOf(on);
+    if (!g) return;
+    if (!primed) {
+      // 第一次定位（刚刷新完、刚切到这一页）：直接落位，绝不播放入场动画
+      lens.style.transition = 'none';
+      apply(g);
+      void lens.offsetWidth;
+      lens.style.transition = '';
+      segLensMem[key] = g;
+      primed = true;
+      return;
+    }
+    place(on);
+  };
   window.__addTabsLens = { sync };
 
   // 同一帧内多次触发只做一次，避免连点/重绘把滑块来回拽
