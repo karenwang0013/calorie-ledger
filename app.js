@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.37', d: '10-22', items: [
+    '改：记录详情里的克重和「蛋/碳/脂」那行小字放大一点（11 → 12.5px），颜色提亮一档但仍比正文淡',
+  ]},
   { v: 'v6.36', d: '10-22', items: [
     '修：会出现"数据卡在几小时前"—— 原因是 App 只读 GitHub 那份镜像，而镜像任务会被 GitHub 限流漏跑；Gitee 的 API 有时也 403',
     '现在：每次拉数据都三路同时取（Gitee 源、GitHub 原始文件、页面镜像），按内容里的时间挑最新的那一份，任何一路挂了都不会再把数据卡住',
@@ -1495,7 +1498,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.36';
+const APP_VERSION = 'v6.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
