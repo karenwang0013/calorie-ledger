@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.33', d: '10-22', items: [
+    '改：打开 App 的头一次、以及每 5 分钟、以及手动点「数据同步」，都直接读 Gitee 上的源文件（最新），不再等 GitHub 那份每 5 分钟才同步一次的镜像',
+    '原因：镜像任务会被 GitHub 限流/漏跑，数据会卡在几个小时前；源文件其实一直是新的',
+  ]},
   { v: 'v6.32', d: '10-22', items: [
     '改：记录卡片里的间距统一成一个基准 —— 三个选项那一排、下面的大虚线框、卡片左右边和底边，现在全部是 12px（加上卡片 1px 描边 = 13px）',
     '好处：以后调三个按钮的高度/间距，只改一个数，下面虚线框会自己涨落，别处不会错位（这条已写进自检）',
@@ -1480,7 +1484,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.32';
+const APP_VERSION = 'v6.33';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3003,6 +3007,7 @@ async function disablePush() {
 /* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages。
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
+let freshAt = { health: 0, body: 0 };   // 上次直接读 Gitee 源的时间（5 分钟内不重复读）
 const _gtCache = {};
 let giteeBlockedUntil = 0;
 async function giteeGetText(path, force) {
@@ -4451,14 +4456,21 @@ async function pullBodyHistory() {
   } catch (e) { return 0; }
 }
 
-async function pullBodyJson() {
+async function pullBodyJson(forceFresh) {
   try {
     let bodyText = '';
-    // 先读同源镜像（由 GitHub Action 每 15 分钟从 Gitee 同步过来），最快且不限流
+    // 先读同源镜像（Action 每 15 分钟从 Gitee 同步一次）
     try {
       const r0 = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
       if (r0.ok) bodyText = await r0.text();
     } catch (e) {}
+    // 打开 App 的头一次 / 手动刷新：直接读 Gitee 源，不等镜像（不然刚称完要等十几分钟）
+    const needFresh = !!forceFresh || Date.now() - freshAt.body > 300000;
+    if (needFresh) freshAt.body = Date.now();
+    if (needFresh) {
+      const g = await giteeFresh('body.json');
+      if (g) bodyText = g;
+    }
     if (!bodyText) {
       try { bodyText = await giteeGetText('body.json'); }
       catch (e) {
@@ -4573,24 +4585,32 @@ function parseLooseDate(s) {
 /* 最近一次从 health.json 读到的内容，给刷新提示用 */
 let lastCloud = null;
 
-/* 优先从 raw.githubusercontent 取（提交后几秒就有），失败再回落到 Pages 上的副本 */
-async function fetchHealthText() {
+/* 每次打开 App 的头一次拉取：直接读 Gitee 源文件，不等 15 分钟一次的镜像同步。
+   之后的轮询再走同源镜像（快、不限流）。手动刷新也强制读源。 */
+async function giteeFresh(path) {
+  try { const t = await giteeGetText(path, true); return String(t || '').trim(); } catch (e) { return ''; }
+}
+
+async function fetchHealthText(forceFresh) {
+  let mirror = '';
   try {
     const r0 = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
-    if (r0.ok) { const t0 = (await r0.text()).trim(); if (t0) return t0; }
+    if (r0.ok) mirror = (await r0.text()).trim();
   } catch (e) {}
-  try {
-    const t = (await giteeGetText('health.json')).trim();
-    if (t) return t;
-  } catch (e) {
-    logError('err-health', '热量数据读取失败', 'health.json 读取失败：' + (e.message || e));
+  const needFresh = !!forceFresh || Date.now() - freshAt.health > 300000;
+  if (needFresh) freshAt.health = Date.now();
+  if (needFresh || !mirror) {
+    const g = await giteeFresh('health.json');
+    if (g) return g;
   }
+  if (mirror) return mirror;
+  logError('err-health', '热量数据读取失败', 'health.json 读取失败');
   return '';
 }
 
-async function pullCloudData() {
+async function pullCloudData(forceFresh) {
   try {
-    const txt = await fetchHealthText();
+    const txt = await fetchHealthText(forceFresh);
     if (!txt) return null;
     const sep = txt.includes('|') ? '|' : ',';
     const i = txt.lastIndexOf(sep);
@@ -4839,10 +4859,10 @@ function init() {
     if (!refreshBtn) return;
     refreshBtn.classList.add('spin');
     let date = null;
-    try { date = await pullCloudData(); } catch (e) {}
+    try { date = await pullCloudData(true); } catch (e) {}
     refreshBtn.classList.remove('spin');
     try { await giteeGetText('body.json', true); await giteeGetText('health.json', true); } catch (e) {}
-    const gotBody = await pullBodyJson();   // 体脂秤那份也一起拉
+    const gotBody = await pullBodyJson(true);   // 体脂秤那份也一起拉（强制读源）
     loadDay();
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
