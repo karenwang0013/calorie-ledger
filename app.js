@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.15', d: '10-22', items: [
+    '改：身体数据里的「回到最新」按钮挪到「体重趋势」标题右边，不再挤着右边的日期区间',
+    '改：「最新那天 / 所选那天」改成「最新 / 所选」两个字',
+  ]},
   { v: 'v5.14', d: '10-22', items: [
     '改：身体数据里的「最高 / 最低」移到三组数字那一行最右边，和「最新那天 / 较上次 / 距上次」中心线对齐；图上不再压着折线',
   ]},
@@ -1330,7 +1334,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.14';
+const APP_VERSION = 'v5.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3364,17 +3368,15 @@ function renderMe() {
         const selPrevPt = selIdx > 0 ? wtPts[selIdx - 1] : null;
         const selDelta = (selPt && selPrevPt) ? Math.round((selPt.kg - selPrevPt.kg) * 10) / 10 : null;
         const selGap = (selPt && selPrevPt) ? Math.round((parseISO(selPt.date) - parseISO(selPrevPt.date)) / 86400000) : null;
-        const s1 = selPt ? { l: isExplicit ? '所选那天' : '最新那天', v: selPt.kg, u: 'kg' } : { l: '本页最新', v: pv, u: 'kg' };
+        const s1 = selPt ? { l: isExplicit ? '所选' : '最新', v: selPt.kg, u: 'kg' } : { l: '本页最新', v: pv, u: 'kg' };
         const s2v = selPt ? selDelta : pvDelta;
         const s3 = selPt
           ? { l: '距上次', v: selGap != null ? selGap : '—', u: selGap != null ? '天' : '' }
           : { l: '本页区间', v: pvMin != null ? pvMin + '–' + pvMax : '—', u: pvMin != null ? 'kg' : '' };
         return `<div class="card">
           <h3 class="bh">体重趋势
-            <span class="pager">
-              ${(bodyTrendPage > 0 || isExplicit) ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
-              <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
-            </span>
+            ${(bodyTrendPage > 0 || isExplicit) ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;border-radius:10px;font-size:11px;line-height:18px;font-weight:500">回到最新</button>` : ''}
+            <span class="pgdate" style="margin-left:auto">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
           </h3>
           <div class="tsumrow">
             <div class="trendsum">
