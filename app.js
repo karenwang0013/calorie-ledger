@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.01', d: '10-22', items: [
+    '改：中间加号不再带绿色底框，平时和另外两个一样是灰的；只有按住它的时候才亮成绿色',
+    '改：每次打开 App，液态滑块默认停在中间的加号上；之后点哪个就滑到哪个，没点中的都不亮',
+    '改：滑块的手感放慢了一点（约 0.6 秒），圆角改成和 Dock 同一套圆角，边缘的亮圈也压柔了，不再像贴了一个框',
+  ]},
   { v: 'v6.00', d: '10-22', items: [
     '加：底部 Dock 有了「液态滑块」—— 一层玻璃药丸跟着当前页面停靠；按任何一个按钮，它会滑过去、横向撑开纵向压扁一下再弹回来，按下的位置还会亮一团光',
     '改：图标和中间那个加号永远压在玻璃滑块上面，滑块只负责背后的玻璃，不挡字也不挡点按',
@@ -1339,7 +1344,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.00';
+const APP_VERSION = 'v6.01';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4016,7 +4021,7 @@ function switchView(v) {
   S.view = v;
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'view-' + v));
   $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  if (window.__dockLens) window.__dockLens.sync();   // 液态滑块跟到新选中的 Tab
+  if (window.__dockLens) window.__dockLens.go(document.querySelector('.tab.on'));   // 液态滑块跟到新选中的 Tab
   document.body.classList.toggle('view-me', v === 'me');
   document.body.classList.toggle('view-trends', v === 'trends');
   if (window.scTop) window.scTop();
@@ -4371,7 +4376,9 @@ function initDockLens() {
     lens.style.setProperty('--lens-h', Math.round(r.height + padY * 2) + 'px');
     lens.style.setProperty('--lens-x', Math.round(r.left - ir.left - padX) + 'px');
     lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - padY) + 'px');
-    lens.classList.toggle('on-fab', !!opt.fab);
+    // 圆角直接跟 Dock 一致（同一套圆角，内外看着才是同一种框）
+    const dockR = parseFloat(getComputedStyle(inner).borderTopLeftRadius) || 26;
+    lens.style.setProperty('--lens-r', Math.max(14, Math.round(dockR)) + 'px');
     if (opt.press) {
       const hx = (evX - r.left + padX) / (r.width + padX * 2) * 100;
       const hy = (evY - r.top + padY) / (r.height + padY * 2) * 100;
@@ -4381,30 +4388,40 @@ function initDockLens() {
     lens.classList.add('on');
   };
 
-  const sync = () => { lens.classList.remove('press'); place(activeTab()); };
-  window.__dockLens = { sync };
+  const fabEl = inner.querySelector('.fab');
+  let target = null;                       // 滑块现在停在哪
+  const go = el => { if (!el) return; target = el; place(el); };
+  const reflow = () => { lens.classList.remove('press'); place(target || fabEl); };
+  window.__dockLens = { go, reflow };
 
   inner.addEventListener('pointerdown', ev => {
     const el = ev.target.closest('.tab, .fab');
     if (!el) return;
     evX = ev.clientX; evY = ev.clientY;
-    place(el, { press: true, fab: el.classList.contains('fab') });
+    place(el, { press: true });
     lens.classList.add('press');
+    if (el.classList.contains('fab')) el.classList.add('pressed');
   }, { passive: true });
 
   const release = () => {
+    inner.querySelectorAll('.fab.pressed').forEach(f => f.classList.remove('pressed'));
     if (!lens.classList.contains('press')) return;
     lens.classList.remove('press');
     // 松手后滑回当前选中的 Tab（点 Tab 的话此时已经切过去了，看起来就是原地弹一下）
-    setTimeout(() => { if (!lens.classList.contains('press')) sync(); }, 10);
+    setTimeout(() => { if (!lens.classList.contains('press')) reflow(); }, 10);
   };
   window.addEventListener('pointerup', release, { passive: true });
   window.addEventListener('pointercancel', release, { passive: true });
 
-  // 首帧、切页、转屏都重新贴一次（尺寸和位置会变）
-  requestAnimationFrame(() => requestAnimationFrame(sync));
-  window.addEventListener('resize', () => setTimeout(sync, 120));
-  window.addEventListener('orientationchange', () => setTimeout(sync, 260));
+  // 打开 App 时滑块默认停在中间的加号上（不播放入场动画），之后跟着点击跑
+  lens.classList.add('noanim');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    go(fabEl);
+    requestAnimationFrame(() => lens.classList.remove('noanim'));
+  }));
+  // 转屏 / 尺寸变化时重新贴一次（尺寸和位置会变）
+  window.addEventListener('resize', () => setTimeout(reflow, 120));
+  window.addEventListener('orientationchange', () => setTimeout(reflow, 260));
 }
 
 function init() {
