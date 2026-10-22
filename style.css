@@ -1271,11 +1271,13 @@ body.add-open .sheet-mask.on {
 }
 #nutSheet.on { transform: none; opacity: 1; }
 
-/* 记录卡片顶部那三格：滚动时固定；底色/描边**和 Dock 栏同一套**（Dock 的 .tabbar .inner 就是这两行渐变） */
+/* 记录卡片顶部那三格：滚动时固定；颜色按 Dock 栏的"观感"取
+   （Dock 那层玻璃是 rgba(38,44,49,.46) 叠在深色底上，最终看起来是中灰；
+     这里在弹层里没法用 backdrop-filter（父层已经有磨砂），所以直接给同观感的实色） */
 #addTabs {
   position: sticky; top: 0; z-index: 3;
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
+  background: linear-gradient(180deg, #2b3035 0%, #24282c 100%);
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
