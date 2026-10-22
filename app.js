@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.91', d: '10-22', items: [
+    '改：卡片左上角小字统一再小一档（12.5px）',
+    '修：体重趋势翻页会闪一下 —— 渲染后立刻把滚动位置放到中间，去掉淡出过渡',
+    '改：「回到最新」按钮变小、离日期远一点、和日期同一中线',
+  ]},
   { v: 'v4.90', d: '10-22', items: [
     '修：体重趋势快速滑动时会连着翻好几页 —— 改成惯性停下（140ms 无滚动）后才判定翻页',
     '改：所有卡片左上角小字统一字号 13.5px、统一 20px 行高，位置不再高低不一',
@@ -1245,7 +1250,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.90';
+const APP_VERSION = 'v4.91';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3228,7 +3233,7 @@ function renderMe() {
         return `<div class="card">
           <h3 class="bh">体重趋势
             <span class="pager">
-              ${bodyTrendPage > 0 ? `<button class="pgbtn" id="btLatest" style="width:auto;padding:0 10px;border-radius:14px;font-size:12px">回到最新</button>` : ''}
+              ${bodyTrendPage > 0 ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
             </span>
           </h3>
@@ -3594,6 +3599,7 @@ function wireMe() {
   if (pager) {
     const slides = pager.querySelectorAll('.cpslide');
     const mid = () => Math.round(pager.clientWidth * 1);
+    pager.scrollLeft = mid();                    // 同步设一次，避免先闪一下第 1 页
     requestAnimationFrame(() => { pager.scrollLeft = mid(); });
     let settleTimer = null, pagerLock = false;
     window.__pagerLock = false;
@@ -3613,16 +3619,12 @@ function wireMe() {
           pager.scrollTo({ left: w, behavior: 'smooth' });
           return;
         }
-        // 有下一页：先淡出，再换页
+        // 有下一页：直接换页（不淡出、不闪）
         pagerLock = true;
-        pager.style.transition = 'opacity .16s ease';
-        pager.style.opacity = '0.25';
-        setTimeout(() => {
-          bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
-          bodySelDate = null;
-          pagerLock = false;
-          renderMe();
-        }, 150);
+        bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
+        bodySelDate = null;
+        renderMe();
+        requestAnimationFrame(() => { pagerLock = false; });
       }, 140);
     });
     slides.forEach(sl => {
