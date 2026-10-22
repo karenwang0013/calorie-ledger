@@ -374,7 +374,7 @@ function addLog(date, meal, it, source, batch, batchName) {
     ts: nowTs(),
     meal: meal || 'other',
     name: it.name,
-    grams: Math.round(g),
+    grams: Math.round(g * 10) / 10,      // 克数保留 1 位（12.5g 一份不能被四舍五入成 13g）
     kcal: Math.round(k100 * g / 100 * 10) / 10,
     p: Math.round((Number(it.protein_per_100g) || 0) * g / 100 * 10) / 10,
     c: Math.round((Number(it.carb_per_100g) || 0) * g / 100 * 10) / 10,

@@ -1255,6 +1255,13 @@ body.add-open .sheet-mask.on {
    之前"通知关掉后下面全点不动"就是这个原因 */
 .sheet:not(.on) { pointer-events: none; }
 
+/* 营养编辑卡后面的遮罩：浅一点 + 磨砂模糊（原来 .66 太黑，看不出背后是什么） */
+#nutMask.on {
+  background: rgba(0, 0, 0, 0.20);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
 /* 只有"营养编辑"是居中卡片，进场原地浮起；提醒记录仍在底部，按原来的方式滑上来 */

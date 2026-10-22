@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.19', d: '10-23', items: [
+    '改：营养编辑卡后面的遮罩从纯黑 .66 改成浅色 .20 + 磨砂模糊（blur 12px），能看出背后是什么',
+    '修：记账时克数被四舍五入成整数（12.5 克存成 13 克）→ 现在保留 1 位小数，列表里也显示 12.5g',
+  ]},
   { v: 'v7.18', d: '10-23', items: [
     '改：提醒记录卡片恢复原来的底部位置（居中会和 Dock 栏重叠）',
     '改：营养编辑卡片里"这 25 克 = … → 每 100 克 = …"那行换算预览删掉（卡片高度 440 → 423）',
@@ -1833,7 +1837,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.18';
+const APP_VERSION = 'v7.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2130,7 +2134,7 @@ function renderMeals() {
       <div class="mitem" data-item="${l.id}">
         ${thumbOf(l)}
         <div class="n">${nameLine(l.name, `data-pen="${l.id}"`)}
-          <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
+          <span class="sub">${l.grams ? g1(l.grams) + 'g' : ''}${
             l.p ? ' · 蛋' + g1(l.p) + '·碳' + g1(l.c) + '·脂' + g1(l.f) : ''}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span>
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
@@ -3251,7 +3255,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${g1(l.p)}·碳${g1(l.c)}·脂${g1(l.f)}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span></div>
+      <div class="n">${esc(l.name)}<span class="sub">${g1(l.grams)}g · 蛋${g1(l.p)}·碳${g1(l.c)}·脂${g1(l.f)}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
