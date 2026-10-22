@@ -371,7 +371,7 @@ html.kb .sc-body {
 #addSheet {
   /* 材质跟 Dock 一样：半透磨砂玻璃 */
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(46, 53, 58, 0.44) 0%, rgba(28, 34, 39, 0.54) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
@@ -812,7 +812,7 @@ body.add-open .sheet-mask.on {
   max-width: var(--dock-max);
   padding: 0 12px;
   pointer-events: auto;
-  background: linear-gradient(180deg, #15191c 0%, #0d1012 100%);
+  background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--dock-r);
   /* 浮起来的那一层：底部投影 + 顶边一道细高光，比纯色块更有厚度 */
@@ -1186,12 +1186,12 @@ body.add-open .sheet-mask.on {
   padding: 6px; margin: 10px -6px 18px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
-  /* 圆角跟卡片的圆角呼应（卡片圆角 × 0.62），滑块再往里收 6px（padding） */
-  border-radius: calc(var(--dock-r, 26px) * 0.62);
+  /* 和卡片的圆角同心：卡片圆角 − 这一条到卡片边的距离（12px），再往里 6px 是按钮 */
+  border-radius: calc(var(--dock-r, 26px) - 12px);
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 16px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
+  padding: 16px 6px; border-radius: calc(var(--dock-r, 26px) - 18px);
   font-size: 14px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
@@ -1202,7 +1202,7 @@ body.add-open .sheet-mask.on {
 /* 选项后面的玻璃滑块：和 Dock 那颗一个做法（滑动 + 按下压扁 + 柔和边光） */
 .tabs3 .seg-lens {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
-  border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px); z-index: 0; pointer-events: none; opacity: 0;
+  border-radius: calc(var(--dock-r, 26px) - 18px); z-index: 0; pointer-events: none; opacity: 0;
   background: radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.24), rgba(255,255,255,.07) 55%, rgba(255,255,255,.02) 100%);
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
@@ -1841,7 +1841,7 @@ input:focus, textarea:focus, select:focus {
   border: 1px solid transparent;
   background-color: transparent;
   /* 更透一点、颜色也淡一档：让底下的内容隐约透出来，磨砂才显得高级 */
-  background-image: linear-gradient(180deg, rgba(46, 53, 58, 0.44) 0%, rgba(28, 34, 39, 0.54) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   /* 模糊再强一点，透出来才像磨砂玻璃（不是一块半透明塑料） */
