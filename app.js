@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.52', d: '10-23', items: [
+    '改：搜索栏那三格的滑块改成和 Dock **同一套动作** —— 滑动时长/曲线从 .42s 改成 Dock 的 .24s，按下时同样横向撑开 1.055、纵向压扁 0.925，松手弹回；实色层仍是 2.2 秒渐变',
+    '实测按压→松手：不透明度 0.56→0→0.01→…→1（2.4 秒平滑），缩放 1.04→1.055→1.00，没有跳变',
+  ]},
   { v: 'v7.51', d: '10-23', items: [
     '改：顶部三格那一圈不再是"一条亮线"——边框压到 0.035，另加一层从顶边往下 14px 的柔和内发光。实测顶边往下每 1px 的亮度：60 → 52 → 51 → 50 → 49 → 47（渐隐），改之前是 67 之后立刻掉到 43（硬切）',
     '新：营养编辑里输入食物名，最后一条候选是「AI 查「X」一份多少克」——点它让 AI 按常见份量估克数，自动填进参考量；估不出来会提示你手动填',
@@ -1957,7 +1961,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.51';
+const APP_VERSION = 'v7.52';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2456,13 +2460,16 @@ function initSegLens(wrap) {
   // 尺寸只在第一次（或格子尺寸明显变了）时写一次；平时只改 transform，
   // 这样动画过程中不需要重新排版，iOS 上才不会抖
   let cellW = 0, cellH = 0;
+  let segPressed = false;
   const apply = (g) => {
     if (Math.abs(g.w - cellW) > 2 || Math.abs(g.h - cellH) > 2) {
       cellW = g.w; cellH = g.h;
       lens.style.width = g.w + 'px';
       lens.style.height = g.h + 'px';
     }
-    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)';
+    // 和 Dock 那格完全一样的按下形变：横向撑开 1.055、纵向压扁 0.925
+    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)'
+      + (segPressed ? ' scale(1.055, 0.925)' : '');
     lens.classList.add('on');
   };
   // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
@@ -2542,6 +2549,7 @@ function initSegLens(wrap) {
     lens.classList.add('fadeout');      // 按住/滑动中是玻璃（0.25 秒，跟手）
     lens.classList.remove('settled', 'fadein');
     setTimeout(() => lens.classList.remove('fadeout'), 320);
+    segPressed = true;                  // 按下压扁（和 Dock 一样）
     place(b, false);                    // 按下去就直接滑到手指这一格（不记账）
   }, { passive: true });
 
@@ -2551,6 +2559,8 @@ function initSegLens(wrap) {
     const el = pressedEl;
     pressedEl = null;
     if (!el) return;          // 没按在这一排上 → 什么都不做（否则点页面任何地方都会闪一下实色）
+    segPressed = false;
+    place(wrap.querySelector('button.on') || el, false);   // 弹回去
     settleSeg(260);
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上

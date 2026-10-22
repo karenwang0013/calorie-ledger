@@ -1414,7 +1414,8 @@ body.add-open .sheet-mask.on {
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.10);
   /* 只动 transform：宽高一旦参与过渡，每一帧都要重新排版，iOS 上就会抖 */
-  transition: transform .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease, background .18s ease, box-shadow .5s ease;
+  /* 和 Dock 那颗一样的时长/曲线（原来 .42s 慢一档，看着就"跳"） */
+  transition: transform .24s cubic-bezier(.32,.9,.28,1), opacity .25s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
   transform: translate3d(0,0,0);
   backface-visibility: hidden;
