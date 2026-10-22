@@ -273,19 +273,20 @@ function computeTrends(days) {
     ? Math.round(series.reduce((a, b) => a + b.expenditure, 0) / series.length) : 0;
 
   // 实测 TDEE：体重回归斜率 × 7700
-  let real = null;
-  // 实测消耗用「这段设备上现有的全部数据」（最多近 90 天），跟上面选的 7/30/90 天无关 ——
-  // 否则切到 7 天时体重点太少，卡片就退回"要你手动补数据"的样子
-  const allW = Object.keys(d.weights || {})
-    .filter(k => k >= addDays(today, -89) && k <= today)
-    .sort()
-    .map(k => ({ date: k, kg: d.weights[k] }));
+  let real = null, realMissing = null;
+  // 实测消耗只看「当前这段窗口」（7/30/90）—— 窗口里点数不够 4 次，才往前借一点（最多 90 天）。
+  // 之前一版固定吃满 90 天，结果窗口选 90 天时它会用 88 天的体重去算，而饮食记录只有 3 天，得出 968 千卡这种假数字。
+  const winW = Object.keys(d.weights || {}).filter(k => k >= start && k <= today).sort();
+  let useDates = winW;
+  if (winW.length < 4) {
+    useDates = Object.keys(d.weights || {}).filter(k => k >= addDays(today, -89) && k <= today).sort();
+  }
+  const allW = useDates.map(k => ({ date: k, kg: d.weights[k] }));
   if (allW.length >= 4) {
     const x0 = parseISO(allW[0].date).getTime();
     const pts = allW.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
     const [slope, , r2] = linreg(pts);
     const span = (parseISO(allW[allW.length - 1].date).getTime() - x0) / 86400000 + 1;
-    // 每天吃了多少直接从 logs 汇总（不受窗口影响）
     const intakeByDate = {};
     (d.logs || []).forEach(l => {
       if (!l.date) return;
@@ -297,22 +298,25 @@ function computeTrends(days) {
       if (intakeByDate[ds] > 0) aligned.push({ date: ds, intake: intakeByDate[ds] });
     }
     const coverage = aligned.length / Math.max(1, span);
-    // 以前要求「8 次称重 + 一半天数有饮食记录」，普通人很难满足，一直显示"再记录几天"。
-    // 现在只要 4 次称重、跨度 ≥5 天、≥2 天有饮食记录就先算出来，靠置信度标注可信程度。
-    if (aligned.length >= 2 && span >= 5) {
+    // 饮食记录少于 20% 的天数时，反推出来的数字没有意义（会算出 900 多千卡这种离谱值），干脆不给
+    if (aligned.length >= 3 && coverage >= 0.2) {
       const meanIntake = aligned.reduce((a, b) => a + b.intake, 0) / aligned.length;
       real = {
         tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
         slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
         r2: Math.round(r2 * 100) / 100,
-        span_days: span,
+        span_days: Math.round(span),
         logged_days: aligned.length,
         coverage: Math.round(coverage * 100),
         avg_intake: Math.round(meanIntake),
         confidence: (span >= 21 && coverage >= 0.7 && r2 > 0.3) ? '较高'
           : (span >= 14 && coverage >= 0.5) ? '中等' : '偏低',
       };
+    } else {
+      realMissing = { type: 'intake', span: Math.round(span), logged: aligned.length, coverage: Math.round(coverage * 100) };
     }
+  } else {
+    realMissing = { type: 'weights', have: allW.length, window: days };
   }
 
   return {
@@ -322,6 +326,7 @@ function computeTrends(days) {
     avg_balance: avgIntake ? Math.round(avgExp - avgIntake) : null,
     logged_days: logged.length,
     real_tdee: real,
+    real_missing: realMissing,
     weights,
     body: d.body || {},
   };

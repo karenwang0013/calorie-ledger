@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.51', d: '10-22', items: [
+    '修：实测每日消耗不再固定用 88 天 —— 只算你当前选的那段（7/30/90）；窗口里体重不够 4 次才往前借',
+    '修：饮食记录太少（不到 20% 的天数）时不再给数字。之前 88 天里只有 3 天记录，算出 968 千卡、误差 104%，那是假数字',
+    '现在会直接说清「90 天里只有 3 天记了饮食（3%），至少要有 20% 的天数有记录」，就不会再看到离谱的数值',
+  ]},
   { v: 'v6.50', d: '10-22', items: [
     '改：Dock 中间加号的圆角再加大一点（1.0 → 1.25，32px 下约 1.7px），端头更接近圆头但仍不是整个半圆',
   ]},
@@ -2681,13 +2686,12 @@ function renderTrends() {
         </div>
       </div>`;
   } else {
-    // 说不清"还差几天"都是废话：直接说清卡在哪一步
-    const nW = (t.weights || []).length;
-    const nL = t.logged_days || 0;
-    const lack = nW < 4
-      ? `体重还差 ${4 - nW} 次（至少 4 次、跨度 5 天以上）`
-      : `这段时间只有 ${nL} 天记了饮食（至少 2 天）`;
-    const lackBtn = nW < 4 ? '记录今天的体重' : '记一餐';
+    // 说不清"还差几天"都是废话：直接说清卡在哪一步（数据由 api 的 real_missing 给）
+    const miss = t.real_missing || {};
+    const lack = miss.type === 'intake'
+      ? `${miss.span} 天里只有 ${miss.logged} 天记了饮食（${miss.coverage}%），至少要有 20% 的天数有记录`
+      : `体重记录还差 ${Math.max(0, 4 - (miss.have || 0))} 次（近 90 天里至少 4 次）`;
+    const lackBtn = miss.type === 'intake' ? '记一餐' : '记录今天的体重';
     realCard = `
       <div class="card">
         <h3>实测每日消耗</h3>
