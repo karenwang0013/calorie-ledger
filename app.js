@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.03', d: '10-22', items: [
+    '改：饮食目标页顶部卡片的标题「建议模式」改成「模式建议」',
+  ]},
   { v: 'v5.02', d: '10-22', items: [
     '改：手机上两个覆盖按钮改成两行显示（「本机」在上、「覆盖云端」在下），不再把词拆成「本机覆盖 / 云端」；iPad 宽屏保持一行',
   ]},
@@ -1287,7 +1290,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.02';
+const APP_VERSION = 'v5.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3142,7 +3145,7 @@ function renderMe() {
       ${rec ? `
       <div class="rec-card">
         <div class="rec-top">
-          <span class="rec-label">建议模式</span>
+          <span class="rec-label">模式建议</span>
           <span class="rec-pill rec-${rec.mode}">${recName}</span>
         </div>
         <div class="rec-why">${rec.why}${rec.trendTxt ? ' · ' + rec.trendTxt : ''}</div>
