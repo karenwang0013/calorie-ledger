@@ -1271,8 +1271,12 @@ body.add-open .sheet-mask.on {
 }
 #nutSheet.on { transform: none; opacity: 1; }
 
-/* 记录卡片顶部那三格：滚动时固定在顶上（只加这一条，颜色、底色、模糊都不动） */
-#addTabs { position: sticky; top: 0; z-index: 3; }
+/* 记录卡片顶部那三格：滚动时固定；底色/描边**和 Dock 栏同一套**（Dock 的 .tabbar .inner 就是这两行渐变） */
+#addTabs {
+  position: sticky; top: 0; z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
+}
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
 .sheet.noanim { transition: none !important; }

@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.32', d: '10-23', items: [
+    '改：顶部三格的底色/描边改成和 Dock 栏同一套（#111518 → #090c0e 渐变 + 同款描边），食物滚上去不再透出下面的内容',
+    '改：可以反复描述、结果**叠加**（描述两次鸡蛋 → 拍照那边就是两个鸡蛋，合计自动累加，标题显示「已累加：…」）',
+  ]},
   { v: 'v7.31', d: '10-23', items: [
     '修：描述页算完跳到拍照后，再切回描述，成分表/合计/记到哪一餐/记入按钮又挂在那里（那几块是公共区域，原来不分页）→ 现在记录区**只在拍照页显示**，描述和搜索页只有输入框',
   ]},
@@ -1884,7 +1888,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.31';
+const APP_VERSION = 'v7.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2751,10 +2755,12 @@ async function runText() {
   btn.innerHTML = '<span class="spinner"></span> 估算中…';
   try {
     const r = await api('/api/ai/text', { text });
-    S.items = r.items.map(x => ({ ...x, _src: 'ai' }));
-    S.batchName = r.dish || '';
-    $('#batchName').value = S.batchName;
-    showResult(r.dish ? '估算：' + r.dish : '估算结果', r.note);
+    // 累加：描述好几次的结果要叠加（第一次鸡蛋 + 第二次鸡蛋 = 两个鸡蛋）
+    const prevN = (S.items || []).length;
+    S.items = (S.items || []).concat(r.items.map(x => ({ ...x, _src: 'ai' })));
+    if (!prevN) S.batchName = r.dish || '';
+    $('#batchName').value = S.batchName || '';
+    showResult((prevN ? '已累加：' : '估算：') + (r.dish || ''), r.note);
     // 和"搜索选中"一样的处理：算完直接切到左边的「拍照」，成分表在那边看/改，
     // 描述这边不留结果（描述页只负责输入）
     const sb = document.querySelector('#addSheet .sh-body');
