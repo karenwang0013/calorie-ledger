@@ -278,11 +278,14 @@ function computeTrends(days) {
   // 之前一版固定吃满 90 天，结果窗口选 90 天时它会用 88 天的体重去算，而饮食记录只有 3 天，得出 968 千卡这种假数字。
   const winW = Object.keys(d.weights || {}).filter(k => k >= start && k <= today).sort();
   let useDates = winW;
-  if (winW.length < 4) {
+  if (winW.length < 2) {
     useDates = Object.keys(d.weights || {}).filter(k => k >= addDays(today, -89) && k <= today).sort();
   }
   const allW = useDates.map(k => ({ date: k, kg: d.weights[k] }));
-  if (allW.length >= 4) {
+  const span0 = allW.length >= 2
+    ? (parseISO(allW[allW.length - 1].date).getTime() - parseISO(allW[0].date).getTime()) / 86400000 + 1
+    : 0;
+  if (allW.length >= 2) {
     const x0 = parseISO(allW[0].date).getTime();
     const pts = allW.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
     const [slope, , r2] = linreg(pts);
@@ -299,7 +302,8 @@ function computeTrends(days) {
     }
     const coverage = aligned.length / Math.max(1, span);
     // 饮食记录少于 20% 的天数时，反推出来的数字没有意义（会算出 900 多千卡这种离谱值），干脆不给
-    if (aligned.length >= 3 && coverage >= 0.2) {
+    // 用户每天记饮食、隔几天称一次：只要 2 次体重、跨度 ≥3 天、饮食覆盖一半天数，就先给数
+    if (span >= 3 && aligned.length >= 2 && coverage >= 0.4) {
       const meanIntake = aligned.reduce((a, b) => a + b.intake, 0) / aligned.length;
       real = {
         tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
@@ -310,13 +314,13 @@ function computeTrends(days) {
         coverage: Math.round(coverage * 100),
         avg_intake: Math.round(meanIntake),
         confidence: (span >= 21 && coverage >= 0.7 && r2 > 0.3) ? '较高'
-          : (span >= 14 && coverage >= 0.5) ? '中等' : '偏低',
+          : (span >= 7 && coverage >= 0.5) ? '中等' : '偏低',
       };
     } else {
-      realMissing = { type: 'intake', span: Math.round(span), logged: aligned.length, coverage: Math.round(coverage * 100) };
+      realMissing = { type: 'intake', span: Math.round(span), logged: aligned.length, coverage: Math.round(coverage * 100), need: Math.max(2, Math.ceil(span * 0.5)) - aligned.length };
     }
   } else {
-    realMissing = { type: 'weights', have: allW.length, window: days };
+    realMissing = { type: 'weights', have: allW.length, window: days, span: Math.round(span0) };
   }
 
   return {
