@@ -185,6 +185,9 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - 锁屏推送已落地：Cloudflare Worker `ledger-push`（详见 `push/README.md` 顶部「当前状态」）。
 - 回退方式：`git revert <该提交>` 或 `git checkout v3.65-ok`（tag）。
 - **v5.15（2026-10-22）**：液态玻璃改造前的存档（tag `v5.15-ok`，另有 21MB 全量快照在 `热量账本/备份/`）。要退回「没有 Dock 液态滑块」的样子：`git checkout v5.15-ok -- index.html style.css app.js`。
+- **v6.10（2026-10-22）**：Dock 加宽，并统一了「和 Dock 重叠的卡牌」的适配规则 ——
+  Dock 用 `--dock-inset`（左右离边）+ `--dock-max`（最大宽度），`#nlogSheet` / `#addSheet` 也用这两个变量，
+  所以 Dock 一改宽，这两张卡自动同宽、圆角同源（`var(--dock-r)`）。**以后凡是浮在 Dock 上方、要求圆角/底边与 Dock 对齐的卡，都套这两个变量，不要写死 max-width。**
 - **v6.00（2026-10-22）**：Dock 液态滑块（`.dock-lens`，`initDockLens()`）+ 全局按钮按压回弹。规则：滑块只做变形和高光、不做折射（iPhone WebKit 不支持 `backdrop-filter: url()`）；`.tab` / `.fab` 必须保持 `position: relative; z-index: 1` 在滑块之上，自检脚本已锁。
 
 ### 体重趋势两行小字 · 尺寸存档（tag `v5.07-ok`）

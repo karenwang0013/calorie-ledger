@@ -18,7 +18,8 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
-  --dock-inset: 14px;      /* 左右离屏幕边（收窄一点，和屏幕圆角更呼应） */
+  --dock-inset: 8px;       /* 左右离屏幕边（越窄 Dock 越宽；圆角会跟着重算，仍然和屏幕弧呼应） */
+  --dock-max: 100%;        /* Dock 最大宽度；和 Dock 重叠的卡牌也用这个值 */
   --dock-bottom: 14px;     /* 下边离屏幕底（贴近屏幕圆角那一圈） */
   /* Dock 高度（固定，圆角上限要看它） */
   --dock-h: 94px;
@@ -382,7 +383,7 @@ html.kb .sc-body {
   bottom: calc(var(--dock-bottom) + var(--safe-b));
   top: auto;
   margin: 0 auto;
-  max-width: 470px;
+  max-width: var(--dock-max);
   min-height: 64dvh;
   max-height: 92dvh;
   border-radius: var(--dock-r, 26px);
@@ -808,6 +809,7 @@ body.add-open .sheet-mask.on {
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;    /* 三个按钮都在 Dock 的上下正中 */
   height: var(--dock-h);
+  max-width: var(--dock-max);
   padding: 0 12px;
   pointer-events: auto;
   background: linear-gradient(180deg, #15191c 0%, #0d1012 100%);
@@ -1181,25 +1183,26 @@ body.add-open .sheet-mask.on {
 .tabs3 {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
-  padding: 5px; margin: 0 0 16px; flex: 0 0 auto;
+  padding: 6px; margin: 10px -6px 18px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
-  border-radius: 18px;
+  /* 圆角跟卡片的圆角呼应（卡片圆角 × 0.62），滑块再往里收 6px（padding） */
+  border-radius: calc(var(--dock-r, 26px) * 0.62);
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 10px 4px; border-radius: 14px;
-  font-size: 12.5px; font-weight: 600; color: var(--muted2);
+  padding: 18px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
+  font-size: 14px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
   transition: color .3s ease;
 }
-.tabs3 button svg { width: 16px; height: 16px; opacity: .95; }
+.tabs3 button svg { width: 19px; height: 19px; opacity: .95; }
 .tabs3 button.on { color: var(--lime); }
 /* 选项后面的玻璃滑块：和 Dock 那颗一个做法（滑动 + 按下压扁 + 柔和边光） */
 .tabs3 .seg-lens {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
-  border-radius: 14px; z-index: 0; pointer-events: none; opacity: 0;
+  border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px); z-index: 0; pointer-events: none; opacity: 0;
   background: radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.24), rgba(255,255,255,.07) 55%, rgba(255,255,255,.02) 100%);
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
@@ -1226,13 +1229,18 @@ body.add-open .sheet-mask.on {
 #pane-photo, #pane-text { display: flex; flex-direction: column; }
 #pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; min-height: 0; }
 #pane-photo:not([hidden]) .drop.photobox {
-  flex: 1 1 auto; min-height: 0;
-  align-items: stretch; grid-template-rows: 1fr auto;
+  flex: 0 0 auto; min-height: 0;
+  align-items: start; grid-template-rows: auto auto;
 }
+#pane-photo:not([hidden]) { justify-content: center; }   /* 照片位+按钮当成一整块，在剩余高度里居中 */
 #pane-photo .pslot { min-height: 0; }
-#pane-photo .pslot-body { height: 100%; }
-#pane-photo .pslot-empty { aspect-ratio: auto; height: 100%; min-height: 130px; }
-#pane-photo .pslot-body .preview { aspect-ratio: auto; height: 100%; }
+#pane-photo .pslot-body { min-height: 0; }
+#pane-photo .pslot-empty {
+  aspect-ratio: 1 / 1.05; height: auto; min-height: 0; max-height: 100%;
+}
+#pane-photo .pslot-body .preview {
+  aspect-ratio: 1 / 1.05; height: auto; min-height: 0; max-height: 100%; object-fit: cover;
+}
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }
@@ -1563,7 +1571,8 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 @media (min-width: 700px) {
   /* iPad：Dock 用自己的一档边距（离边更远、整体更宽），手机和 iPad 各自看着都合适 */
   :root {
-    --dock-inset: 14px;
+    --dock-inset: 8px;
+    --dock-max: 780px;      /* iPad 上 Dock 也加宽一档 */
     --dock-bottom: 26px;
     --dock-h: 104px;
     --dock-r: 16px;
@@ -1663,7 +1672,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 
   /* 底部 Dock：iPad 屏幕圆角比 iPhone "紧"，半径和间距都换成 iPad 的一档；
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
-  .tabbar .inner { padding: 0 18px; max-width: 700px; }
+  .tabbar .inner { padding: 0 18px; max-width: var(--dock-max); }
   .tab svg { width: 34px; height: 34px; }
   .tab { font-size: 13.5px; }
   .fab { font-size: 13.5px; }
