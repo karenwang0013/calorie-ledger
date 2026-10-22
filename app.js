@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.12', d: '10-22', items: [
+    '修：点「趋势」刚进来时，那行只写着「体重 kg」、看不到具体数字 —— 现在默认就显示最新那个点的数据（和点它一下后的样子完全一样：日期 · 体重 kg，下面体能数据那行也不再重复日期）',
+  ]},
   { v: 'v5.11', d: '10-22', items: [
     '改：体重趋势图下面那行不再重复日期和「体脂秤：」，只写数值 —— 「体脂率 16.6% · BMI 21.2」（那天没有体脂秤记录、退回的是另一天时，才在前面带上日期）',
     '改：图上所选那天那行（「10-13 · 66.2 kg」）字号再放大一点，13.5px',
@@ -1320,7 +1323,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.11';
+const APP_VERSION = 'v5.12';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2337,7 +2340,10 @@ function renderTrends() {
 
   // 体重图
   const weights = t.weights || [];
+  const lastW = weights.length ? weights[weights.length - 1] : null;
   const selW = trSelDate ? weights.find(x => x.date === trSelDate) : null;
+  // 没点过任何点 → 默认当成点了最新的那个点，两行文字和点过时一模一样（不会出现空的「体重 kg」）
+  const shownW = selW || lastW;
   const wKgs = weights.map(x => x.kg);
   const wMaxTxt = wKgs.length ? Math.max(...wKgs).toFixed(1) : '—';
   const wMinTxt = wKgs.length ? Math.min(...wKgs).toFixed(1) : '—';
@@ -2346,10 +2352,10 @@ function renderTrends() {
     wChart = `<div class="card wchart">
       <h3>体重趋势</h3>
       <div class="wminmax"><span>最高 ${wMaxTxt}</span><span>最低 ${wMinTxt}</span></div>
-      <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate, { range: false })}</div>
+      <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, shownW ? shownW.date : null, { range: false })}</div>
       <div class="legend wlegend">
-        ${selW
-          ? `<span class="onsel"><i style="background:#6bff9a"></i>${selW.date.slice(5)} · ${selW.kg} kg</span>`
+        ${shownW
+          ? `<span class="onsel"><i style="background:#6bff9a"></i>${shownW.date.slice(5)} · ${shownW.kg} kg</span>`
           : `<span><i style="background:var(--blue)"></i>体重 kg</span>`}
         <span style="margin-left:auto">${weights.length} 次记录</span>
       </div>
@@ -2365,7 +2371,7 @@ function renderTrends() {
         if (b.bf) bits.push('体脂率 ' + b.bf + '%');
         if (b.bmi) bits.push('BMI ' + b.bmi);
         // 上面那行已经有日期和体重时，这行就不重复写日期，只留数值
-        const needDate = !selW || pickD !== selW.date;
+        const needDate = !shownW || pickD !== shownW.date;
         return `<div class="hint wbody">${needDate ? pickD.slice(5) + ' · ' : ''}${bits.join(' · ')}</div>`;
       })()}
     </div>`;
