@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.13', d: '10-22', items: [
+    '改：设置 → 身体数据里的体重趋势也照趋势页的规矩来 —— 进去就自动是最后一个点的状态（「最新那天 64.3 kg · 较上次 -1.7 · 距上次 1 天」，图上那个点直接高亮带竖线），不用先点一下才有数字',
+    '改：没点过点时那一格写「最新那天」，点过别的点才写「所选那天」；「回到最新」按钮只在点过点或翻过页时才出现',
+  ]},
   { v: 'v5.12', d: '10-22', items: [
     '修：点「趋势」刚进来时，那行只写着「体重 kg」、看不到具体数字 —— 现在默认就显示最新那个点的数据（和点它一下后的样子完全一样：日期 · 体重 kg，下面体能数据那行也不再重复日期）',
   ]},
@@ -1323,7 +1327,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.12';
+const APP_VERSION = 'v5.13';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3284,7 +3288,17 @@ function renderMe() {
     const body = st.body || {}, wts = st.weights || {};
     const dates = Array.from(new Set([...Object.keys(body), ...Object.keys(wts)])).sort().reverse();
     const last = dates[0];
-    const showDate = (bodySelDate && (body[bodySelDate] || wts[bodySelDate])) ? bodySelDate : last;
+    // 和趋势页一样的逻辑：进来就当「点了本页最后一个点」，不用先点一下才有数字
+    const wtAsc = dates.filter(dt => wts[dt]).sort();
+    const PAGE_N = 7;
+    const trendLastPage = Math.max(0, Math.ceil(wtAsc.length / PAGE_N) - 1);
+    const pageIdx0 = Math.min(Math.max(bodyTrendPage, 0), trendLastPage);
+    const endI0 = Math.min(wtAsc.length, wtAsc.length - pageIdx0 * PAGE_N);
+    const startI0 = Math.max(0, endI0 - PAGE_N);
+    const pageLastDate = wtAsc.length ? wtAsc[Math.max(startI0, endI0 - 1)] : null;
+    const effDate = (bodySelDate && (body[bodySelDate] || wts[bodySelDate])) ? bodySelDate : pageLastDate;
+    const isExplicit = !!bodySelDate;
+    const showDate = effDate || last;
     const b = showDate ? (body[showDate] || {}) : {};
     const w = showDate ? wts[showDate] : null;
     const bmi = b.bmi || (w && st.profile.height_cm ? Math.round((w / Math.pow(st.profile.height_cm / 100, 2)) * 10) / 10 : null);
@@ -3341,13 +3355,13 @@ function renderMe() {
         const pvDelta = pv != null && pvPrev != null ? Math.round((pv - pvPrev) * 10) / 10 : null;
         const pvMin = pagePts.length ? Math.min(...pagePts.map(p => p.kg)) : null;
         const pvMax = pagePts.length ? Math.max(...pagePts.map(p => p.kg)) : null;
-        // 点了图上某一天 → 这三组数字跟着那一天走（不点 = 本页最新）
-        const selIdx = bodySelDate ? wtPts.findIndex(p => p.date === bodySelDate) : -1;
+        // 点了图上某一天 → 这三组数字跟着那一天走（不点 = 本页最后一个点）
+        const selIdx = effDate ? wtPts.findIndex(p => p.date === effDate) : -1;
         const selPt = selIdx >= 0 ? wtPts[selIdx] : null;
         const selPrevPt = selIdx > 0 ? wtPts[selIdx - 1] : null;
         const selDelta = (selPt && selPrevPt) ? Math.round((selPt.kg - selPrevPt.kg) * 10) / 10 : null;
         const selGap = (selPt && selPrevPt) ? Math.round((parseISO(selPt.date) - parseISO(selPrevPt.date)) / 86400000) : null;
-        const s1 = selPt ? { l: '所选那天', v: selPt.kg, u: 'kg' } : { l: '本页最新', v: pv, u: 'kg' };
+        const s1 = selPt ? { l: isExplicit ? '所选那天' : '最新那天', v: selPt.kg, u: 'kg' } : { l: '本页最新', v: pv, u: 'kg' };
         const s2v = selPt ? selDelta : pvDelta;
         const s3 = selPt
           ? { l: '距上次', v: selGap != null ? selGap : '—', u: selGap != null ? '天' : '' }
@@ -3355,20 +3369,20 @@ function renderMe() {
         return `<div class="card">
           <h3 class="bh">体重趋势
             <span class="pager">
-              ${(bodyTrendPage > 0 || selPt) ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
+              ${(bodyTrendPage > 0 || isExplicit) ? `<button class="pgbtn" id="btLatest" style="width:auto;height:20px;padding:0 8px;margin-right:12px;border-radius:10px;font-size:11px;line-height:18px">回到最新</button>` : ''}
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
             </span>
           </h3>
           <div class="trendsum">
-            <div><span>${s1.l}</span><b class="${selPt ? 'sel' : ''}">${s1.v != null ? s1.v : '—'}<small>${s1.u}</small></b></div>
-            <div><span>较上次</span><b class="${s2v > 0 ? 'up' : (s2v < 0 ? 'down' : '')}">${s2v == null ? '—' : (s2v > 0 ? '+' : '') + s2v}<small>kg</small></b></div>
-            <div><span>${s3.l}</span><b>${s3.v}<small>${s3.u}</small></b></div>
+            <div><span>${s1.l}</span><b class="${selPt ? 'sel' : ''}">${(s1.v != null && s1.v !== '—') ? `${s1.v}<small>${s1.u}</small>` : '—'}</b></div>
+            <div><span>较上次</span><b class="${s2v > 0 ? 'up' : (s2v < 0 ? 'down' : '')}">${s2v == null ? '—' : `${(s2v > 0 ? '+' : '') + s2v}<small>kg</small>`}</b></div>
+            <div><span>${s3.l}</span><b>${s3.v !== '—' ? `${s3.v}<small>${s3.u}</small>` : '—'}</b></div>
           </div>
           ${(() => {
             const mk = (pts) => {
               if (pts.length >= 2) {
                 return lineChart(pts, pts[0].date, pts[pts.length - 1].date,
-                  (bodySelDate && pts.some(p => p.date === bodySelDate)) ? bodySelDate : null);
+                  (effDate && pts.some(p => p.date === effDate)) ? effDate : null);
               }
               return `<div class="hint" style="margin:24px 0">这边没有更多记录</div>`;
             };
