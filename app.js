@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.80', d: '10-22', items: [
+    '修：E04 的真正原因 —— Gitee 的「匿名」API 被限流(403)，带 token 才通。读取重新带上令牌；同源镜像仍然优先',
+  ]},
   { v: 'v4.79', d: '10-22', items: [
     '改架构：新增 GitHub Action「每 15 分钟把 Gitee 的数据镜像到网站目录」；App 读取优先用同源文件（零限流、秒开），Gitee 只作为兜底',
     '写入仍然只写 Gitee（手机不再频繁请求 Gitee API，避免被限流）',
@@ -1205,7 +1208,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.79';
+const APP_VERSION = 'v4.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2583,7 +2586,9 @@ async function giteeGetText(path, force) {
   let r = null, err = null;
   for (let i = 0; i < 2; i++) {
     try {
-      r = await fetch(GITEE_API + '/' + path + '?t=' + now, { cache: 'no-store' });
+      const tk = (typeof setting === 'function' ? (setting('gitee_token', '') || '') : '').trim();
+      const url = GITEE_API + '/' + path + '?t=' + now + (tk ? '&access_token=' + encodeURIComponent(tk) : '');
+      r = await fetch(url, { cache: 'no-store' });
       if (r.ok) break;
       // 4xx 不重试（重试也没用，还会加重限流）
       if (r.status === 403 || r.status === 429) {
