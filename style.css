@@ -1461,7 +1461,14 @@ body.add-open .sheet-mask.on {
   display: grid; place-items: center;
   color: var(--muted2); font-size: 18px; line-height: 1;
 }
-.ritem .meta { font-size: 10.5px; color: var(--muted2); margin-top: 5px; overflow-wrap: anywhere; }
+/* 营养那一行：文字和后面的「…」共用一条中心线（之前「…」是贴顶的） */
+.ritem .meta {
+  display: flex; align-items: center; gap: 2px;
+  font-size: 10.5px; color: var(--muted2); margin-top: 5px;
+}
+.ritem .meta .mtxt { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }   /* 文字多长就多长，三点紧跟其后 */
+.ritem .meta .pen { width: 22px; height: 18px; }     /* 和 10.5px 的文字同高，中心线才对得上 */
+.ritem .meta .pen svg { width: 18px; height: 18px; }
 .ritem .gr {
   display: flex; align-items: center; gap: 8px; margin-top: 10px;
 }
