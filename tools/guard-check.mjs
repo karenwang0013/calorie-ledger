@@ -78,7 +78,15 @@ const checks = [
   ['Dock 滑块四周留白必须同一个值（不然圆角没法同心）', /const PAD = \d+;/.test(app) && /cellW \+ 2 \* \(padL - PAD\)/.test(app) && /visH - PAD \* 2/.test(app)],
   ['Dock 滑块圆角与 Dock 同心：内圆 = Dock 圆角 − 留白 − 边框', /dockR - PAD - bT/.test(app)],
   ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', Math\.round\(\(visH - h\) \/ 2\)/.test(app)],
-  ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein::after/.test(css) && /\.seg-lens::after \{[\s\S]{0,200}?transition: none;/.test(css)],
+  ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein\s+\.lens-body::after/.test(css) && /\.seg-lens \.lens-body::after \{[\s\S]{0,240}?transition: none;/.test(css)],
+  ['分段滑块和 Dock 是同一套两层结构：外层只走位置（.62s 过冲），内层 .lens-body 管压扁（.24s）', /\.seg-lens \{[\s\S]{0,700}?transform \.62s cubic-bezier\(\.33, 1\.06, \.32, 1\)/.test(css) && /\.seg-lens \.lens-body \{[\s\S]{0,700}?transform \.24s cubic-bezier\(\.32,\.9,\.28,1\)/.test(css) && /\.seg-lens\.press \.lens-body \{[\s\S]{0,140}?scale\(1\.055, \.925\)/.test(css)],
+  ['分段滑块是两层 DOM（.seg-lens > .lens-body），按压形变走内层', /lens\.className = 'seg-lens';[\s\S]{0,220}?className = 'lens-body'/.test(app)],
+  ['分段滑块的位移里不许再带缩放（位置/压扁混在一条 transform 上 → 一按就跳）', (() => {
+    const i = app.indexOf('const apply = (g) => {');
+    if (i < 0) return false;
+    return !/scale/.test(app.slice(i, i + 600));
+  })()],
+  ['分段滑块按下就认手指那一格，松手不许先弹回旧格再滑过来（和 Dock 一样用 target）', /function initSegLens[\s\S]{0,6000}?target = b;/.test(app) && !/function initSegLens[\s\S]{0,9000}?place\(wrap\.querySelector\('button\.on'\) \|\| el/.test(app)],
   ['Dock 三格等宽居中（加号永远在正中那格，左右各一格）', /grid-template-columns: 1fr 1fr 1fr/.test(css)],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],
@@ -106,7 +114,7 @@ const checks = [
     const blk = css.slice(i, css.indexOf('\n}', i));
     return !/^[ \t]*(-webkit-)?backdrop-filter\s*:/m.test(blk);   // 只看真声明，不看注释里提到的
   })()],
-  ['分段滑块首次定位不播入场动画（不许从顶部落下）', /primed/.test(app) && /transition = 'none'/.test(app)],
+  ['分段滑块首次定位不播入场动画（不许从顶部落下）', /primed/.test(app) && /classList\.add\('noanim'\)/.test(app) && /\.seg-lens\.noanim \{ transition: none !important; \}/.test(css)],
   ['数据拉取必须三路并发取最新（镜像/GitHub/Gitee），不许退回单路', /GH_RAW/.test(app) && /healthStamp/.test(app) && /giteeFresh\('health\.json'\)/.test(app)],
   ['记录卡片所有间距由 --blk-gap 派生（改一处全跟着动）', /#addSheet \{ --blk-gap:/.test(css) && /#addSheet \.sh-body \{[\s\S]*?var\(--blk-gap\)/.test(css) && /#addSheet \.tabs3 \{[\s\S]*?var\(--blk-gap\)/.test(css)],
   ['四处版本号一致（APP_VERSION / version.txt / CACHE / index ?v）', vApp === vtxt && !!vCache && !!vHtml && vCache.endsWith(vHtml.slice(-3))],

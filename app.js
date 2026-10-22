@@ -24,6 +24,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.57', d: '10-23', items: [
+    '修：记录卡片顶上那三格（拍照 / 搜索 / 描述）的小滑块**和 Dock 那颗彻底同一套** —— 外层只走位置（同样的 .62 秒过冲曲线），按压的"压扁回弹"交给里面那一层（.24 秒）',
+    '修：以前按下去那一刻，滑块会**先弹回原来那格再滑过来**（所以看着"过去又回来"、乱跳），现在按下就认手指这一格，松手只会沿一个方向滑到底',
+    '修：滑块在滑动过程中不再被按压动作打断、也不再一边滑一边轻微变大（纵向会飘 1.5px），现在高度、宽度全程不变，只动位置',
+    '修：按住 → 淡回玻璃 → 停下 520ms 后用 2.2 秒渗成实色，这一整条曲线和 Dock 的实测曲线逐帧对得上',
+    '顺带对齐一处：这三格按钮本身不再跟着缩 0.96（Dock 的按钮也不缩），按下去的形变只由滑块负责，不会"图标抖一下、滑块也抖一下"',
+  ]},
   { v: 'v7.56', d: '10-23', items: [
     '死规则已实现：食物的营养参数**一旦改过，以后一律以最后一次改的为准** —— 搜索选中、拍照识别、文字描述三个入口都先查历史，查到就用它覆盖库里/AI 的原始值',
     '实测：历史改成 500/9 → 搜索选中得到 500/9、拍照识别也被覆盖成 500/9；再改成 480/10 → 立刻以 480/10 为准',
@@ -1980,7 +1987,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.56';
+const APP_VERSION = 'v7.57';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2442,6 +2449,8 @@ function openAdd(meal) {
   raiseSheet('#addSheet');                   // 刚打开的弹层放到最上面
   document.body.classList.add('add-open');   // 用和提醒记录一样的浅遮罩，玻璃才透得出来
   initAddTabsLens();
+  // 打开卡片：滑块直接落在「拍照」上（不从上一次停的那格滑过来），而且一出现就是实色
+  if (window.__addTabsLens) window.__addTabsLens.sync(true, true);
   setTimeout(() => { if (window.__addTabsLens) window.__addTabsLens.sync(); }, 60);
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
@@ -2457,14 +2466,22 @@ function closeAdd() {
   sh.classList.remove('on');
 }
 
-/* 记录卡片里那三个选项（拍照/搜索/描述）：和 Dock 一样的玻璃滑块 */
-const segLensMem = {};   // 记住每一条滑块最后停在哪，DOM 被重建时能接着滑，不会"跳一下"
+/* 记录卡片里那三个选项（拍照/搜索/描述）、趋势页 7/30/90、目标模式三格：
+   全部沿用 Dock 那颗玻璃滑块（.dock-lens / initDockLens）的做法 —— 同一套结构、同一组时间。
+   - 外层 .seg-lens 只负责"位置"（translate，.62s 过冲曲线）
+   - 内层 .lens-body 只负责"按压压扁"（scale，.24s）
+   分两层是因为：位置和缩放在同一个 transform 上时，按下去那一下会把还没走完的滑动打断 → 看着就是"跳"。
+   还有一条和 Dock 一致：按下就认这一格（target），松手**绝不**先弹回旧格再滑过来。 */
+const segLensMem = {};   // 记住每一条滑块最后停在哪，DOM 被重建时能接着落位，不会"跳一下"
 function initSegLens(wrap) {
   if (!wrap || wrap.dataset.lens) return;
   wrap.dataset.lens = '1';
   const key = wrap.id || wrap.className || 'seg';
   const lens = document.createElement('span');
   lens.className = 'seg-lens';
+  const body = document.createElement('span');
+  body.className = 'lens-body';
+  lens.appendChild(body);
   wrap.prepend(lens);
 
   // 用布局坐标（offset*）而不是 getBoundingClientRect：
@@ -2479,28 +2496,28 @@ function initSegLens(wrap) {
   // 尺寸只在第一次（或格子尺寸明显变了）时写一次；平时只改 transform，
   // 这样动画过程中不需要重新排版，iOS 上才不会抖
   let cellW = 0, cellH = 0;
-  let segPressed = false;
   const apply = (g) => {
     if (Math.abs(g.w - cellW) > 2 || Math.abs(g.h - cellH) > 2) {
       cellW = g.w; cellH = g.h;
       lens.style.width = g.w + 'px';
       lens.style.height = g.h + 'px';
     }
-    // 和 Dock 那格完全一样的按下形变：横向撑开 1.055、纵向压扁 0.925
-    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)'
-      + (segPressed ? ' scale(1.055, 0.925)' : '');
+    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)';
     lens.classList.add('on');
   };
-  // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
+
   let primed = false;      // 有没有过一次"不带动画"的落位（防止第一次显示时从左上角滑下来）
-  const mem = segLensMem[key];
-  if (mem) {
-    lens.style.transition = 'none';
-    apply(mem);
+  const jump = el => {                 // 不播动画，直接落位（首次出现 / 整块被重建后接上老位置）
+    const g = el && geoOf(el);
+    if (!g) return false;
+    lens.classList.add('noanim');
+    apply(g);
     void lens.offsetWidth;
-    lens.style.transition = '';
-    primed = true;         // 已经从老位置接着了，下一次可以正常滑动
-  }
+    lens.classList.remove('noanim');
+    segLensMem[key] = g;
+    primed = true;
+    return true;
+  };
   // remember=false 用在"按住"的时候：那只是预览位置，不能当成最终落点记下来，
   // 否则重画时新滑块会直接从按住的位置出现，看不到滑过去的过程
   const place = (el, remember = true) => {
@@ -2509,12 +2526,23 @@ function initSegLens(wrap) {
     if (remember) segLensMem[key] = g;
     apply(g);
   };
-  // instant = 不播动画，直接是实色（用于"你根本没点过它"的场合：切页、重画、首次定位）
+  // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
+  const mem = segLensMem[key];
+  if (mem) {
+    lens.classList.add('noanim');
+    apply(mem);
+    void lens.offsetWidth;
+    lens.classList.remove('noanim');
+    primed = true;
+  }
+
+  // 「玻璃 → 实色」和 Dock 同一组数：按住 0.25 秒淡回玻璃（跟手），
+  // 停下后等 520ms，再用 2.2 秒慢慢渗成实色
   let glassUntil = 0;                  // 正在"玻璃→实色"过渡中，到这个时刻为止
-  const settleSeg = (delay, instant) => {
+  const settle = (delay, instant) => {
     if (instant) {
       // 注意：这里**绝不能**先 clearTimeout —— 那会把"松手后加 settled"的定时器清掉，
-      // 结果就是按完一直停在玻璃状态（v6.74 的 bug 就是这个）
+      // 结果就是按完一直停在玻璃状态
       if (Date.now() < glassUntil) return;                 // 正在淡入 → 让它走完，不插队
       clearTimeout(lens.__settleT);
       lens.classList.remove('fadein', 'fadeout');
@@ -2532,26 +2560,23 @@ function initSegLens(wrap) {
       setTimeout(() => lens.classList.remove('fadein'), 2400);
     }, delay);
   };
-  const sync = () => {
+
+  let target = null;                   // 滑块现在认哪一格（按下就认，不跟着 class 回弹）
+  let pressedEl = null;
+
+  // 切页 / 重画 / 首次定位：直接落位 + 直接实色，不播动画
+  // hard=true：连"从上次停的那格滑过来"都不要（打开记录卡片时用，滑块要一出现就在「拍照」上）
+  const sync = (instant, hard) => {
+    if (pressedEl) return;             // 手指还按着 → 以手指为准
     lens.classList.remove('press');
-    if (!pressedEl) settleSeg(0, true);   // 切页/重画时直接就是实色，不播"玻璃→实色" 
-    const on = wrap.querySelector('button.on');
-    const g = on && geoOf(on);
-    if (!g) return;
-    if (!primed) {
-      // 第一次定位（刚刷新完、刚切到这一页）：直接落位，绝不播放入场动画
-      lens.style.transition = 'none';
-      apply(g);
-      void lens.offsetWidth;
-      lens.style.transition = '';
-      segLensMem[key] = g;
-      primed = true;
-      lens.classList.add('settled');
-      return;
-    }
-    place(on);
+    const on = wrap.querySelector('button.on');   // 这里以"选中"为准：重开卡片/切页时不能被上次按下的那格带跑
+    if (!on) return;
+    target = on;
+    if (!primed || hard) { if (!jump(on)) return; } else place(on);
+    if (instant !== false) settle(0, true);
   };
-  window.__addTabsLens = { sync };
+  window.__addTabsLens = { sync };     // 记录卡片打开后补一次定位（其它几条也用同一个入口同步）
+  wrap.__lensSync = sync;
 
   // 同一帧内多次触发只做一次，避免连点/重绘把滑块来回拽
   let raf = 0;
@@ -2560,45 +2585,53 @@ function initSegLens(wrap) {
     raf = requestAnimationFrame(() => { raf = 0; sync(); });
   };
 
-  let pressedEl = null;
   wrap.addEventListener('pointerdown', ev => {
     const b = ev.target.closest('button');
     if (!b) return;
     pressedEl = b;
-    lens.classList.add('fadeout');      // 按住/滑动中是玻璃（0.25 秒，跟手）
+    target = b;                        // 按下去就认这一格，松手不会弹回原来那格
+    lens.classList.add('fadeout');     // 按住/滑动中是玻璃（0.25 秒，跟手）
     lens.classList.remove('settled', 'fadein');
     setTimeout(() => lens.classList.remove('fadeout'), 320);
-    segPressed = true;                  // 按下压扁（和 Dock 一样）
-    place(b, false);                    // 按下去就直接滑到手指这一格（不记账）
+    place(b, false);                   // 按下去就直接滑到手指这一格（不记账）
+    lens.classList.add('press');       // 压扁只动内层，不打断还没走完的滑动
   }, { passive: true });
 
-  // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下。
+  // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下（就是之前那个"跳"）。
   // 等点击结果落地（或在 900ms 后确认没生效）才决定要不要回位。
-  const settle = () => {
+  const settleUp = () => {
     const el = pressedEl;
     pressedEl = null;
     if (!el) return;          // 没按在这一排上 → 什么都不做（否则点页面任何地方都会闪一下实色）
-    segPressed = false;
-    place(wrap.querySelector('button.on') || el, false);   // 弹回去
-    settleSeg(520);          // 和 Dock 同一个延迟（Dock 是 settle(520)），之前这里 260 会让渐变早半拍
+    lens.classList.remove('press');
+    settle(520);              // 和 Dock 同一个延迟（Dock 是 settle(520)）；
+                              // 必须在这里排上，否则紧接着的 sync 会把它直接拍成实色
+    setTimeout(() => {        // 10ms：先让 click 把 .on 切过去，这一步才不会有位移
+      if (pressedEl) return;
+      place(target || el, false);
+    }, 10);
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
       const on = wrap.querySelector('button.on');
-      if (on && on !== el) sync();                // 按了但没切过去 → 回位
+      if (on && on !== target) { target = on; place(on); settle(520); }   // 按了但没切过去 → 回位
     }, 900);
   };
-  window.addEventListener('pointerup', settle, { passive: true });
-  window.addEventListener('pointercancel', settle, { passive: true });
+  window.addEventListener('pointerup', settleUp, { passive: true });
+  window.addEventListener('pointercancel', settleUp, { passive: true });
 
   // 只要哪一格变成选中就跟着走（不依赖各页自己的点击处理）
   const mo = new MutationObserver(syncSoon);
   wrap.querySelectorAll('button').forEach(b => mo.observe(b, { attributes: true, attributeFilter: ['class'] }));
 
-  requestAnimationFrame(() => requestAnimationFrame(sync));
+  requestAnimationFrame(() => requestAnimationFrame(() => sync()));
   window.addEventListener('resize', () => setTimeout(sync, 120));
-  wrap.__lensSync = sync;
 }
-function initAddTabsLens() { initSegLens($('#addTabs')); }
+function initAddTabsLens() {
+  initSegLens($('#addTabs'));
+  const w = $('#addTabs');
+  // 从这里挂全局入口：initSegLens 已经初始化过时不会再赋值，直接指过来才不会指到别的那条
+  if (w && w.__lensSync) window.__addTabsLens = { sync: w.__lensSync };
+}
 function initTrendSegLens() { initSegLens($('#trendSeg')); }
 
 let addMode = 'photo';
