@@ -1277,7 +1277,14 @@ body.add-open .sheet-mask.on {
 #addTabs {
   position: sticky; top: 0; z-index: 3;
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: linear-gradient(180deg, #2b3035 0%, #24282c 100%);
+  /* 和 Dock 同一个做法：中灰底 + 顶边内高光 + 一圈柔和阴影，
+     叠起来才有"一块玻璃"的厚度，不是一块平色 */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.10) 100%),
+    linear-gradient(180deg, #2f353b 0%, #23282d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
