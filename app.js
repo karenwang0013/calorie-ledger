@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.21', d: '10-23', items: [
+    '修：营养编辑里改「参考量（克）」时，下面的热量/蛋白/碳水/脂肪**全部跟着按比例变**（12.5 克 ↔ 25 克 数值自动翻倍/减半）；你手填过的那一格会保持你填的，不会被覆盖',
+    '说明：以前只改了热量、不动蛋白碳水脂肪，所以会出现"25 克蛋白比 16 克还少"这种对不上的数',
+  ]},
   { v: 'v7.20', d: '10-23', items: [
     '修：从某一组明细里打开营养编辑后，点外面第一下只是"背景暗一次"、第二下才关 —— 原因是新面板的遮罩压在了下面那张卡的遮罩之下，第一次点到了别人的遮罩。现在遮罩和面板一起往上抬两级（遮罩 61 / 面板 62，别的遮罩是 60），一次点击就能关',
     '改：营养面板后面的磨砂从 blur 12px 降到 5px（只要一点点模糊）',
@@ -1841,7 +1845,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.20';
+const APP_VERSION = 'v7.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3006,6 +3010,7 @@ function openNutEdit(i, fake) {
   const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
   nutBase = { k: Number(it.kcal_per_100g) || 0, p: Number(it.protein_per_100g) || 0,
               c: Number(it.carb_per_100g) || 0, f: Number(it.fat_per_100g) || 0 };
+  nutDirty = { k: false, p: false, c: false, f: false };
   paintNutPreview();
   // 位置：弹在记录卡片的垂直正中间（等它显示出来量到真实高度后再定位，误差 0）
   const sh = $('#nutSheet');
@@ -3074,6 +3079,7 @@ function closeNutEdit() {
 }
 let nutUnit = 'kcal';
 let nutBase = { k: 0, p: 0, c: 0, f: 0 };   // 上面那格记住"每 100 克"的原始值
+let nutDirty = { k: false, p: false, c: false, f: false };   // 用户手改过的格子，改克数时不被覆盖
 const KJ_PER_KCAL = 4.184;
 function setNutUnit(u, convert) {
   const inp = $('#nutKcal');
@@ -3082,6 +3088,13 @@ function setNutUnit(u, convert) {
     inp.value = u === 'kJ' ? Math.round(v * KJ_PER_KCAL) : Math.round(v / KJ_PER_KCAL);
   }
   nutUnit = u;
+  // 切换单位时把已经显示的数值按新单位写回基准（这样之后改克数仍然按每 100 克等比）
+  const curRef = Number($('#nutRef').value) || 0;
+  if (convert && curRef > 0) {
+    const kEl2 = $('#nutKcal');
+    const shown = Number(kEl2 && kEl2.value) || 0;
+    if (shown > 0) nutBase = Object.assign({}, nutBase, { k: u === 'kJ' ? (shown / KJ_PER_KCAL) * 100 / curRef : shown * 100 / curRef });
+  }
   const now = $('#nutUnitNow');
   if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
   if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
@@ -5649,14 +5662,29 @@ function init() {
   wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
   const ut = $('#nutUnitTog');
   if (ut) ut.onclick = ev => { ev.preventDefault(); setNutUnit(nutUnit === 'kJ' ? 'kcal' : 'kJ', true); };
-  // 改「参考量」时**不许**去改热量那几格（之前会自动按每 100 克反算，
-  // 结果把包装上的千焦数覆盖成"千卡数"，填 25 克却变成 532 千卡）。
-  // 只更新下面的换算预览，用户按包装填什么就是什么。
+  // 改克数：把"这一份"的四项按每 100 克等比换算（12.5 → 25 克，数值翻倍；反过来减半）。
+  // 只动用户还没手改过的格子，手填过的保持原样（避免覆盖刚输入的数）。
   const refEl = $('#nutRef');
-  if (refEl) refEl.oninput = paintNutPreview;
+  if (refEl) refEl.oninput = () => {
+    const ref = Number(refEl.value) || 0;
+    const share = ref / 100;
+    if (ref > 0) {
+      const put = (sel, v) => { const el = $(sel); if (el) el.value = v; };
+      if (!nutDirty.k) put('#nutKcal', Math.round(nutUnit === 'kJ' ? nutBase.k * share * KJ_PER_KCAL : nutBase.k * share));
+      if (!nutDirty.p) put('#nutP', +((nutBase.p * share).toFixed(1)));
+      if (!nutDirty.c) put('#nutC', +((nutBase.c * share).toFixed(1)));
+      if (!nutDirty.f) put('#nutF', +((nutBase.f * share).toFixed(1)));
+    }
+    paintNutPreview();
+  };
   const kEl = $('#nutKcal');
-  if (kEl) kEl.oninput = paintNutPreview;
-  ['#nutP', '#nutC', '#nutF'].forEach(sel => { const el = $(sel); if (el) el.oninput = paintNutPreview; });
+  if (kEl) kEl.oninput = () => { nutDirty.k = true; paintNutPreview(); };
+  ['#nutP', '#nutC', '#nutF'].forEach(sel => {
+    const el = $(sel);
+    if (!el) return;
+    const key = sel === '#nutP' ? 'p' : sel === '#nutC' ? 'c' : 'f';
+    el.oninput = () => { nutDirty[key] = true; paintNutPreview(); };
+  });
   // 顶部「食物名」：边输入边给候选，点一下就带出这一份的营养
   const nq = $('#nutNameQ'), sug = $('#nutSug');
   if (nq && sug) {
