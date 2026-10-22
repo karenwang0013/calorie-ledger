@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.17', d: '10-23', items: [
+    '修：列表和明细里那两个「…」和营养文字不在一条中心线上（实测差 1.4px）→ 现在实测差 0 / -0.2px',
+    '改：营养编辑卡片加宽（314 → 338），说明文字压缩成两行，整张卡高度 501 → 440，保证完整落在屏幕内',
+    '修：营养卡片定位 —— 从记录卡片打开时对齐那张卡片（差 0），从「今天吃了什么」直接打开时对齐**屏幕正中**（上下各 202px，差 0）；量高度改用不受缩放影响的 offsetHeight，不再往下溢出屏幕',
+  ]},
   { v: 'v7.16', d: '10-23', items: [
     '新：今天列表里每一项、以及点开那一组明细里的每一项，营养那一行后面都加了「…」，点了能直接改这一条已记录的营养数据',
     '新：营养编辑顶部加了「食物名」输入框 —— 只知道吃多少克、不知道千焦时，输入「香蕉」会列出候选，点一下按克数自动带出热量和蛋白碳水脂肪',
@@ -1823,7 +1828,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.16';
+const APP_VERSION = 'v7.17';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2981,12 +2986,24 @@ function openNutEdit(i, fake) {
   // 同样：先落位（关过渡）→ 再显示，避免"先出现在底部再跳到中间"
   sh.classList.add('noanim');
   {
-    const big = $('#addSheet').getBoundingClientRect();
-    const h = sh.getBoundingClientRect().height || 0;
-    const top = Math.max(8, Math.min(big.top + big.height / 2 - h / 2, window.innerHeight - h - 8));
-    sh.style.top = Math.round(top) + 'px';
-    sh.style.bottom = 'auto';
+    // 量两次：第一次排好版，第二次拿到"预览行换行之后"的真实高度
+    // 用 offsetHeight（不受 transform: scale 影响），否则会算小、卡片往下溢出屏幕
+    const place = () => {
+      const bigEl = $('#addSheet');
+      const bigOpen = bigEl && bigEl.classList.contains('on');
+      // 从记录卡片里打开 → 对齐那张卡片；从"今天吃了什么"直接打开（卡片没开）→ 对齐屏幕
+      const centerY = bigOpen
+        ? bigEl.getBoundingClientRect().top + bigEl.getBoundingClientRect().height / 2
+        : window.innerHeight / 2;
+      const h = sh.offsetHeight || 0;
+      const top = Math.max(8, Math.min(centerY - h / 2, window.innerHeight - h - 8));
+      sh.style.top = Math.round(top) + 'px';
+      sh.style.bottom = 'auto';
+    };
+    place();
+    paintNutPreview();
     void sh.offsetHeight;
+    place();
   }
   sh.classList.remove('noanim');
   $('#nutMask').classList.add('on');

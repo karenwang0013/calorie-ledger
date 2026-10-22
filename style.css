@@ -683,6 +683,19 @@ body.add-open .sheet-mask.on {
 .pen svg { width: 20px; height: 20px; }
 .pen:active { opacity: .55; }
 /* 一次识别出来的一组：一行汇总，点开看明细 */
+/* 列表/明细里紧跟在营养文字后面的「…」：和文字共用一条中心线（行内弹性居中，不用 baseline 对齐） */
+.mitem .sub, .gitem .sub {
+  display: inline-flex; align-items: center; gap: 2px;
+  line-height: 14px;                       /* 文字行高和三点的盒子同高，中心线才对得死 */
+}
+.pen.inl {
+  width: 20px; height: 14px; margin: 0 0 0 2px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle;
+  position: relative; top: -1.5px;        /* 文字墨迹比行框略偏下，这里补回来，中线才重合 */
+}
+.pen.inl svg { width: 15px; height: 15px; display: block; }
+
 .mitem.ghead { cursor: pointer; }
 .mitem.ghead .sub { color: var(--muted2); }
 .mitem.ghead .chev { color: var(--muted2); font-size: 18px; margin-left: 6px; line-height: 1; }
@@ -964,10 +977,12 @@ body.add-open .sheet-mask.on {
 /* 改营养数据的小面板：比记录弹层小一圈，左右和底边与它等距 */
 #nutSheet {
   z-index: 62;                                   /* 浮在记录弹层之上 */
-  left: calc(var(--dock-inset, 8px) + 30px);
-  right: calc(var(--dock-inset, 8px) + 30px);
-  bottom: calc(var(--dock-bottom, 16px) + var(--safe-b, 0px) + 30px);
-  max-width: calc(var(--dock-max, 470px) - 60px);
+  left: calc(var(--dock-inset, 8px) + 18px);
+  right: calc(var(--dock-inset, 8px) + 18px);
+  bottom: calc(var(--dock-bottom, 16px) + var(--safe-b, 0px) + 18px);
+  max-width: calc(var(--dock-max, 470px) - 36px);
+  /* 卡片整体必须落在屏幕里：内容再长也不许超出，超出就在卡片内滚动 */
+  max-height: calc(100dvh - var(--topbar-h, 64px) - var(--safe-b, 0px) - 24px);
   min-height: 0;                                 /* 按内容高度走，不再被 56dvh 撑高 */
   /* 只这一张卡片：比记录弹层更"实"一点（背后内容透上来会看着发灰），磨砂也更厚 */
   background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
