@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.09', d: '10-23', items: [
+    '修：营养面板里改「参考量」不生效 —— 原来它只当换算基准，不改这一项的克数。现在参考量就是"这一份吃多少克"，保存后克数、热量、蛋白碳水脂肪全部跟着更新',
+    '修：改参考量时，下面四格按「每 100 克」的原始值等比重算，不会把食物数据算坏（实测 85g/52 千卡 → 改成 25g 自动变 15 千卡，每 100 克仍是 60-61）',
+    '新：面板里加了一行实时换算预览（「这 25 克 = 15 千卡 → 每 100 克 = 60 千卡」），边填边看',
+  ]},
   { v: 'v7.08', d: '10-23', items: [
     '改：提醒记录（通知）卡片改成弹在屏幕正中 —— 实测卡片中心 422、屏幕中心 422，差 0',
   ]},
@@ -1792,7 +1797,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.08';
+const APP_VERSION = 'v7.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2915,11 +2920,17 @@ function openNutEdit(i) {
   const it = S.items[i];
   if (!it) return;
   nutEditIdx = i;
-  $('#nutRef').value = 100;                       // 默认按每 100 克显示当前值
-  $('#nutKcal').value = Math.round(Number(it.kcal_per_100g) || 0);
-  $('#nutP').value = Number(it.protein_per_100g) || 0;
-  $('#nutC').value = Number(it.carb_per_100g) || 0;
-  $('#nutF').value = Number(it.fat_per_100g) || 0;
+  // 预填成"这一份"的实际数值（参考量 = 当前克数），保存时再换算回每 100 克
+  const g = Number(it.grams) || 100;
+  const share = g / 100;
+  $('#nutRef').value = +g.toFixed(1);
+  $('#nutKcal').value = Math.round((Number(it.kcal_per_100g) || 0) * share);
+  $('#nutP').value = +(((Number(it.protein_per_100g) || 0) * share).toFixed(1));
+  $('#nutC').value = +(((Number(it.carb_per_100g) || 0) * share).toFixed(1));
+  $('#nutF').value = +(((Number(it.fat_per_100g) || 0) * share).toFixed(1));
+  nutBase = { k: Number(it.kcal_per_100g) || 0, p: Number(it.protein_per_100g) || 0,
+              c: Number(it.carb_per_100g) || 0, f: Number(it.fat_per_100g) || 0 };
+  paintNutPreview();
   // 位置：弹在记录卡片的垂直正中间（等它显示出来量到真实高度后再定位，误差 0）
   const sh = $('#nutSheet');
   sh.style.top = '';
@@ -2952,6 +2963,7 @@ function closeNutEdit() {
   nutEditIdx = -1;
 }
 let nutUnit = 'kcal';
+let nutBase = { k: 0, p: 0, c: 0, f: 0 };   // 上面那格记住"每 100 克"的原始值
 const KJ_PER_KCAL = 4.184;
 function setNutUnit(u, convert) {
   const inp = $('#nutKcal');
@@ -2965,6 +2977,19 @@ function setNutUnit(u, convert) {
   if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
 }
 
+/* 边填边算：让用户当场看到「这一份 = 每 100 克多少」 */
+function paintNutPreview() {
+  const box = $('#nutPreview');
+  if (!box) return;
+  const ref = Number($('#nutRef').value) || 0;
+  const raw = $('#nutKcal').value.trim();
+  const kcal = raw === '' ? NaN : Number(raw);
+  if (!(ref > 0) || !isFinite(kcal)) { box.textContent = '填了参考量和热量，这里会显示换算结果'; return; }
+  const per100 = nutUnit === 'kJ' ? (kcal / KJ_PER_KCAL) * 100 / ref : kcal * 100 / ref;
+  const unit = nutUnit === 'kJ' ? '千焦' : '千卡';
+  box.innerHTML = `这 ${+ref.toFixed(1)} 克 = <b>${Math.round(kcal)} ${unit}</b>　→　每 100 克 = <b>${Math.round(per100)} 千卡</b>`;
+}
+
 function saveNutEdit() {
   const it = S.items[nutEditIdx];
   if (!it) return closeNutEdit();
@@ -2973,6 +2998,7 @@ function saveNutEdit() {
   if (!(ref > 0)) return toast('参考量必须填（这份多少克）', 2600);
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
   const k = 100 / ref;                            // 换算到每 100 克
+  it.grams = +ref.toFixed(1);                     // 参考量就是"这一份吃多少克"，写回克数
   const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
   it.kcal_per_100g = +(kcalIn * k).toFixed(1);
@@ -5443,6 +5469,20 @@ function init() {
   wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
   const ut = $('#nutUnitTog');
   if (ut) ut.onclick = ev => { ev.preventDefault(); setNutUnit(nutUnit === 'kJ' ? 'kcal' : 'kJ', true); };
+  const refEl = $('#nutRef');
+  if (refEl) refEl.oninput = () => {
+    const ref = Number(refEl.value) || 0;
+    const share = ref / 100;                       // 按"每 100 克"的原始值等比还原
+    if (ref > 0 && nutBase.k) {
+      $('#nutKcal').value = nutUnit === 'kJ' ? Math.round(nutBase.k * share * KJ_PER_KCAL) : Math.round(nutBase.k * share);
+      $('#nutP').value = +(nutBase.p * share).toFixed(1);
+      $('#nutC').value = +(nutBase.c * share).toFixed(1);
+      $('#nutF').value = +(nutBase.f * share).toFixed(1);
+    }
+    paintNutPreview();
+  };
+  const kEl = $('#nutKcal');
+  if (kEl) kEl.oninput = paintNutPreview;
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');
