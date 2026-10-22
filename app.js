@@ -24,6 +24,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.00', d: '10-23', items: [
+    '改（只营养编辑卡）：卡片更短 —— 不再被 56dvh 撑高，按内容高度（实测 472.6 → 424.8，短 48px）',
+    '改（只营养编辑卡）：内容再往中间靠（左右各 26px）、整体下移（第一个字段离卡片顶 61px）',
+    '改（只营养编辑卡）：右上角叉号缩小并把位置挪到圆角弧里（28px，距上/右各 30px），不再压住下面的输入框',
+    '改（只营养编辑卡）：恢复下滑关闭（拖拽结束、系统打断都会复位，不会再卡在半路）；叉号和点遮罩也能关',
+  ]},
   { v: 'v6.99', d: '10-23', items: [
     '改：营养编辑卡片的按钮到卡片底边，和记录卡片的「记入」完全一致（实测都是 31px；左右也都是 17px）',
   ]},
@@ -1756,7 +1762,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.99';
+const APP_VERSION = 'v7.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5343,7 +5349,8 @@ function init() {
   $('#textGo').onclick = runText;
   $('#saveItems').onclick = saveItems;
   $('#nutMask').onclick = closeNutEdit;
-  // 这张卡片不做下滑关闭（一直卡在拖拽中途），只用右上角叉号 / 点遮罩关
+  // 下滑关闭（拖拽结束时一定会复位，touchcancel 也复位）；叉号和点遮罩也都能关
+  wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
   const nx = $('#nutClose');
   if (nx) nx.onclick = closeNutEdit;
   $('#nutSave').onclick = saveNutEdit;

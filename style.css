@@ -968,6 +968,7 @@ body.add-open .sheet-mask.on {
   right: calc(var(--dock-inset, 8px) + 30px);
   bottom: calc(var(--dock-bottom, 16px) + var(--safe-b, 0px) + 30px);
   max-width: calc(var(--dock-max, 470px) - 60px);
+  min-height: 0;                                 /* 按内容高度走，不再被 56dvh 撑高 */
   /* 只这一张卡片：比记录弹层更"实"一点（背后内容透上来会看着发灰），磨砂也更厚 */
   background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
   -webkit-backdrop-filter: blur(26px) saturate(150%);
@@ -982,9 +983,8 @@ body.add-open .sheet-mask.on {
    所以不高不低、正好卡在弧线的中心上；用 SVG 画，天生居中 */
 #nutSheet .nut-x {
   position: absolute; z-index: 4;
-  width: 32px; height: 32px; padding: 0;
-  top: calc(var(--card-r, 26px) - 16px);
-  right: calc(var(--card-r, 26px) - 16px);
+  width: 28px; height: 28px; padding: 0;
+  top: 30px; right: 30px;                        /* 落在圆角弧里，又不压住下面的输入框 */
   display: grid; place-items: center;
   background: none; border: 0; color: var(--muted2);
   -webkit-tap-highlight-color: transparent;
@@ -994,7 +994,8 @@ body.add-open .sheet-mask.on {
 
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
-#nutSheet .sh-body { padding: 26px 22px 14px; }
+#nutSheet .sh-body { padding: 60px 26px 12px; }
+#nutSheet .hint { line-height: 1.5; }             /* 这张卡的说明文字收紧一点，整体更短 */
 /* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉；
    padding 和记录卡片完全一致（8/16/30）→ 按钮离卡片底边的距离同样是 31px */
 #nutSheet .sh-foot {
