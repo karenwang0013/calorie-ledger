@@ -979,6 +979,25 @@ body.add-open .sheet-mask.on {
   position: absolute; top: 3.5px; left: 50%; transform: translateX(-50%);
   width: 66px; height: 4px; margin: 0; z-index: 3;
 }
+/* 这一行两格的标签必须同高：「热量」标签里带一个切换按钮，
+   不固定高度的话它会把右边那格整体压下去（左边参考量就会显得高一头） */
+#nutSheet .nutgrid .field > label {
+  display: flex; align-items: center; gap: 6px;
+  height: 20px; line-height: 1;
+}
+/* 单位切换做成输入框里的小胶囊（明显、又不占标签宽度，标签就不会被挤成竖排） */
+#nutSheet .unitwrap { position: relative; }
+#nutSheet .unitwrap input { padding-right: 58px; }
+#nutSheet #nutUnitTog {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  height: 22px; padding: 0 8px; border-radius: 11px;
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600; line-height: 1;
+  background: rgba(214, 255, 75, 0.16);
+  color: var(--lime);
+  border: 1px solid rgba(214, 255, 75, 0.32);
+}
+
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
 #nutSheet .sh-body { padding: 24px 26px 12px; }

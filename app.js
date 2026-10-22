@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.05', d: '10-23', items: [
+    '修：营养面板第一行两格错位 —— 「热量」标签里塞了按钮，把右边那格压低了；现在两格标签同高（实测两个输入框顶完全对齐，差 0）',
+    '改：千卡/千焦切换做成输入框右侧的亮色小胶囊「千卡 ⇄」（点一下切到千焦，数值自动按 4.184 换算），不再挤在标签里',
+  ]},
   { v: 'v7.04', d: '10-23', items: [
     '固化：手册写入"做相似的卡片/开关，先抄已有的那一个，不要另起一套"—— 用户没抱怨过的部分就是对的，重做几乎必然带出新问题（营养卡下滑卡住就是这个原因）',
   ]},
@@ -1777,7 +1781,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.04';
+const APP_VERSION = 'v7.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2933,9 +2937,8 @@ function setNutUnit(u, convert) {
     inp.value = u === 'kJ' ? Math.round(v * KJ_PER_KCAL) : Math.round(v / KJ_PER_KCAL);
   }
   nutUnit = u;
-  const now = $('#nutUnitNow'), tog = $('#nutUnitTog');
-  if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
-  if (tog) tog.textContent = u === 'kJ' ? '换成千卡' : '换成千焦';
+  const tog = $('#nutUnitTog');
+  if (tog) tog.textContent = (u === 'kJ' ? '千焦' : '千卡') + ' ⇄';
   if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
 }
 
