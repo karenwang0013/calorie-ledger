@@ -512,6 +512,10 @@ function cleanItems(obj, opt) {
     // 拍到营养成分表：包装上写了克数就自动填（净含量优先，其次"每份 X 克"）；没写就留空，由用户必填
     if (it.label || it.net_grams) {
       grams = num(it.net_grams, 0) || num(it.label && it.label.basis_grams, 0) || 0;
+    } else if (!(grams > 0)) {
+      // 实物照片/日常描述：模型没给定具体克数时，按"一份普通饭菜"兜底，绝不能留空
+      // （用户不可能带秤吃饭，克数由 AI 看着估，估完他还能改）
+      grams = 200;
     }
     // 0 千卡是合法值（无糖饮料、白水），只有「根本没给数字」才去拿总热量倒推
     let k100 = num(it.kcal_per_100g, NaN);
