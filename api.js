@@ -238,6 +238,68 @@ function linreg(points) {
   return [slope, inter, ssTot > 1e-9 ? 1 - ssRes / ssTot : 0];
 }
 
+
+/* 实测每日消耗：自动找一段「一半天数有饮食」的最近区间（跟页面选 7/30/90 无关） */
+function computeRealTdee(d) {
+  const today = todayISO();
+  let real = null, realMissing = null;
+  // 实测消耗是一件"身体事实"，不该因为你切 7/30/90 就变。做法：
+    // 从最近一次体重往前找，取「覆盖够（一半天数有饮食）+ 跨度最长」的那段；找不到才提示缺什么。
+    const allDates = Object.keys(d.weights || {}).filter(k => k >= addDays(today, -89) && k <= today).sort();
+    const intakeByDate = {};
+    (d.logs || []).forEach(l => {
+      if (!l.date) return;
+      intakeByDate[l.date] = (intakeByDate[l.date] || 0) + (Number(l.kcal) || 0);
+    });
+    const countIntake = (a, b) => {
+      let n = 0, sum = 0;
+      const n0 = Math.round((parseISO(b).getTime() - parseISO(a).getTime()) / 86400000) + 1;
+      for (let i = 0; i < n0; i++) {
+        const ds = addDays(a, i);
+        if (intakeByDate[ds] > 0) { n++; sum += intakeByDate[ds]; }
+      }
+      return { n, sum, span: n0 };
+    };
+    let pick = null;
+    const lastD = allDates[allDates.length - 1];
+    if (lastD) {
+      for (let i = 0; i < allDates.length - 1; i++) {
+        const firstD = allDates[i];
+        const pts = allDates.slice(i);
+        const span = Math.round((parseISO(lastD).getTime() - parseISO(firstD).getTime()) / 86400000) + 1;
+        if (pts.length < 2 || span < 3) continue;
+        const it = countIntake(firstD, lastD);
+        const coverage = it.n / span;
+        if (coverage >= 0.4 && it.n >= 2) { pick = { firstD, pts: pts.map(k => ({ date: k, kg: d.weights[k] })), span, it, coverage }; break; }
+      }
+    }
+    if (pick) {
+      const x0 = parseISO(pick.firstD).getTime();
+      const xy = pick.pts.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
+      const [slope, , r2] = linreg(xy);
+      const meanIntake = pick.it.sum / pick.it.n;
+      real = {
+        tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
+        slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
+        r2: Math.round(r2 * 100) / 100,
+        span_days: pick.span,
+        logged_days: pick.it.n,
+        coverage: Math.round(pick.coverage * 100),
+        avg_intake: Math.round(meanIntake),
+        confidence: (pick.span >= 21 && pick.coverage >= 0.7 && r2 > 0.3) ? '较高'
+          : (pick.span >= 7 && pick.coverage >= 0.5) ? '中等' : '偏低',
+      };
+    } else if (lastD && allDates.length >= 2) {
+      // 有体重但没有一段覆盖够的：说清"再记几天饮食"
+      const firstD = allDates[Math.max(0, allDates.length - 2)];
+      const it = countIntake(firstD, lastD);
+      realMissing = { type: 'intake', span: it.span, logged: it.n, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
+    } else {
+      realMissing = { type: 'weights', have: allDates.length };
+    }
+  return { real, missing: realMissing };
+}
+
 function computeTrends(days) {
   const d = Store.load();
   const p = d.profile;
@@ -272,62 +334,9 @@ function computeTrends(days) {
   const avgExp = series.length
     ? Math.round(series.reduce((a, b) => a + b.expenditure, 0) / series.length) : 0;
 
-  // 实测 TDEE：体重回归斜率 × 7700
-  let real = null, realMissing = null;
-  // 实测消耗是一件"身体事实"，不该因为你切 7/30/90 就变。做法：
-  // 从最近一次体重往前找，取「覆盖够（一半天数有饮食）+ 跨度最长」的那段；找不到才提示缺什么。
-  const allDates = Object.keys(d.weights || {}).filter(k => k >= addDays(today, -89) && k <= today).sort();
-  const intakeByDate = {};
-  (d.logs || []).forEach(l => {
-    if (!l.date) return;
-    intakeByDate[l.date] = (intakeByDate[l.date] || 0) + (Number(l.kcal) || 0);
-  });
-  const countIntake = (a, b) => {
-    let n = 0, sum = 0;
-    const n0 = Math.round((parseISO(b).getTime() - parseISO(a).getTime()) / 86400000) + 1;
-    for (let i = 0; i < n0; i++) {
-      const ds = addDays(a, i);
-      if (intakeByDate[ds] > 0) { n++; sum += intakeByDate[ds]; }
-    }
-    return { n, sum, span: n0 };
-  };
-  let pick = null;
-  const lastD = allDates[allDates.length - 1];
-  if (lastD) {
-    for (let i = 0; i < allDates.length - 1; i++) {
-      const firstD = allDates[i];
-      const pts = allDates.slice(i);
-      const span = Math.round((parseISO(lastD).getTime() - parseISO(firstD).getTime()) / 86400000) + 1;
-      if (pts.length < 2 || span < 3) continue;
-      const it = countIntake(firstD, lastD);
-      const coverage = it.n / span;
-      if (coverage >= 0.4 && it.n >= 2) { pick = { firstD, pts: pts.map(k => ({ date: k, kg: d.weights[k] })), span, it, coverage }; break; }
-    }
-  }
-  if (pick) {
-    const x0 = parseISO(pick.firstD).getTime();
-    const xy = pick.pts.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
-    const [slope, , r2] = linreg(xy);
-    const meanIntake = pick.it.sum / pick.it.n;
-    real = {
-      tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
-      slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
-      r2: Math.round(r2 * 100) / 100,
-      span_days: pick.span,
-      logged_days: pick.it.n,
-      coverage: Math.round(pick.coverage * 100),
-      avg_intake: Math.round(meanIntake),
-      confidence: (pick.span >= 21 && pick.coverage >= 0.7 && r2 > 0.3) ? '较高'
-        : (pick.span >= 7 && pick.coverage >= 0.5) ? '中等' : '偏低',
-    };
-  } else if (lastD && allDates.length >= 2) {
-    // 有体重但没有一段覆盖够的：说清"再记几天饮食"
-    const firstD = allDates[Math.max(0, allDates.length - 2)];
-    const it = countIntake(firstD, lastD);
-    realMissing = { type: 'intake', span: it.span, logged: it.n, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
-  } else {
-    realMissing = { type: 'weights', have: allDates.length };
-  }
+  // 实测 TDEE：体重回归斜率 × 7700（算法抽在 computeRealTdee，跟页面选几天无关）
+  const _rt = computeRealTdee(d);
+  const real = _rt.real, realMissing = _rt.missing;
 
   return {
     days, start, end: today, series,

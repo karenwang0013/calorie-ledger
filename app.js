@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.54', d: '10-22', items: [
+    '加：饮食目标页的「模式建议」现在会对照实测数据 —— 会写「实测每天烧 X 千卡 / 公式估算 Y 千卡」',
+    '加：方向冲突时明确提醒，例如「模式建议是增肌，但你实际每天 2182 千卡缺口（约 1.98 kg/周），方向相反」',
+  ]},
   { v: 'v6.53', d: '10-22', items: [
     '修：切到 30 天 / 90 天时又退回「记一餐」，只有 7 天有数字 —— 原因是它拿"整段 30/90 天"去算覆盖率，而你的饮食记录只有最近几天',
     '现在实测消耗改成自动找一段合适的区间：从最近一次称重往前找，「一半天数有饮食」的最长一段；所以 7/30/90 三个 tab 显示的是同一个数（这本来就该是同一个数）',
@@ -3582,6 +3586,13 @@ function renderMe() {
       return { mode, why, trendTxt, w, bmi, bf, date: last };
     })();
     const recName = rec ? DIET_MODES[rec.mode].n : '';
+    // 实测数据（跟趋势页那张卡同一套算法）：用来校验"建议的方向"和"你实际在走的方向"
+    const rt = computeRealTdee(Store.load());
+    const realT = rt.real;
+    const bal = realT ? Math.round(realT.avg_intake - realT.tdee) : null;      // 负=缺口
+    const dir = bal == null ? null : (bal < -150 ? 'deficit' : (bal > 150 ? 'surplus' : 'balance'));
+    const conflict = !!(dir && rec && ((rec.mode === 'bulk' && dir === 'deficit') || (rec.mode === 'cut' && dir === 'surplus')));
+    const kgW = bal ? Math.abs(bal) * 7 / 7700 : 0;
     h = meBackBar('饮食目标') + `
       ${rec ? `
       <div class="rec-card">
@@ -3596,6 +3607,10 @@ function renderMe() {
           <span>体脂 ${rec.bf ? rec.bf + '%' : '—'}</span>
           <span class="rec-date">${rec.date.slice(5)}</span>
         </div>
+        <div class="rec-note">${realT
+          ? `实测每天烧 ${realT.tdee} 千卡（用你 ${realT.span_days} 天的数据，${realT.coverage}% 的天数有饮食记录）；公式估算是 ${d.expenditure} 千卡`
+          : '还没有足够的实测数据 —— 下面的方向是按公式估的'}</div>
+        ${conflict ? `<div class="rec-warn">⚠️ 你现在实际是每天 ${Math.abs(bal)} 千卡${dir === 'deficit' ? '缺口' : '盈余'}（约 ${kgW.toFixed(2)} kg/周），和上面「${recName}」的方向相反。先定一个方向，别两头对着干</div>` : ''}
       </div>` : ''}
       <div class="card">
         <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">目标模式</label>
