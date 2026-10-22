@@ -6,7 +6,7 @@
 
 - 线上：<https://karenwang0013.github.io/calorie-ledger/>
 - 仓库：`karenwang0013/calorie-ledger`，main 分支根目录，GitHub Pages 部署
-- 本地：`~/Documents/calorie-ledger`
+- 本地：`~/OpenCode/01-项目/热量账本/代码`
 
 ## 文件职责
 
