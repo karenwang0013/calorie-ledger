@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.97', d: '10-23', items: [
+    '改：营养编辑卡片再小一圈（左右和底边各内缩 20px，宽 334 vs 记录卡片 374），内容整体下移（离卡片顶 27px）',
+    '修：营养卡片往下滑会卡住/像死机 —— 拖拽结束时没清掉行内 transform，系统打断触摸（touchcancel）时更会卡在半路；现在两种结束都会复位，再打开也不会歪',
+  ]},
   { v: 'v6.96', d: '10-23', items: [
     '改：记录区顶部那行「已添加 / 继续选 / 重来」改成共用一条中心线（实测中线差 0 / 0）',
     '改：营养行后面那个「…」不再贴顶 —— 和文字同一条中心线（实测差 0.5px），并且紧跟文字后面（不再被推到最右边）',
@@ -1744,7 +1748,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.96';
+const APP_VERSION = 'v6.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3655,11 +3659,14 @@ function wireSheetDrag(sheet, list, closeFn) {
     }
   }, { passive: false });
   const end = () => {
-    if (!dragging) return;
+    if (!dragging) { dy = 0; return; }
     dragging = false;
     sheet.classList.remove('dragging');
     if (dy > 96) {
       closeFn();                      // 走 CSS 的滑出动画
+      // 一定把拖拽时写进去的行内样式清掉：不清的话下次打开会停在半路，
+      // 手指被系统打断（touchcancel）时更是直接"卡住 / 像死机"
+      setTimeout(() => { sheet.style.transform = ''; sheet.style.opacity = ''; }, 420);
     } else {
       sheet.style.transform = '';
       sheet.style.opacity = '';
@@ -3667,6 +3674,7 @@ function wireSheetDrag(sheet, list, closeFn) {
     dy = 0;
   };
   sheet.addEventListener('touchend', end);
+  sheet.addEventListener('touchcancel', end);   // 系统打断也要复位，否则会卡在拖到一半的位置
   sheet.addEventListener('touchcancel', end);
 }
 function wireNotifyDrag() { wireSheetDrag($('#nlogSheet'), $('#nlogList'), closeNotifyLog); }
