@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.79', d: '10-22', items: [
+    '改架构：新增 GitHub Action「每 15 分钟把 Gitee 的数据镜像到网站目录」；App 读取优先用同源文件（零限流、秒开），Gitee 只作为兜底',
+    '写入仍然只写 Gitee（手机不再频繁请求 Gitee API，避免被限流）',
+  ]},
   { v: 'v4.78', d: '10-22', items: [
     '改：Gitee 读取加 5 分钟缓存；被限流(403/429)后冷却 10 分钟不再请求，避免越撞越死',
     '改：E04 提示改成「被 Gitee 限流，稍后再试」，不再误报成权限问题',
@@ -1201,7 +1205,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.78';
+const APP_VERSION = 'v4.79';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3793,7 +3797,9 @@ function normPct(v) {
 
 async function pullBodyHistory() {
   try {
-    const txt = await giteeGetText('body-history.json');
+    let txt = '';
+    try { const r0 = await fetch('body-history.json?t=' + Date.now(), { cache: 'no-store' }); if (r0.ok) txt = await r0.text(); } catch (e) {}
+    if (!txt) txt = await giteeGetText('body-history.json');
     const j = JSON.parse(txt);
     const items = Array.isArray(j && j.items) ? j.items : [];
     if (!items.length) { logError('err-history', '身体历史读取失败', 'body-history.json 是空的或格式不对'); return 0; }
@@ -3821,15 +3827,22 @@ async function pullBodyHistory() {
 async function pullBodyJson() {
   try {
     let bodyText = '';
-    try { bodyText = await giteeGetText('body.json'); }
-    catch (e) {
-      logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e));
-      return false;
+    // 先读同源镜像（由 GitHub Action 每 15 分钟从 Gitee 同步过来），最快且不限流
+    try {
+      const r0 = await fetch('body.json?t=' + Date.now(), { cache: 'no-store' });
+      if (r0.ok) bodyText = await r0.text();
+    } catch (e) {}
+    if (!bodyText) {
+      try { bodyText = await giteeGetText('body.json'); }
+      catch (e) {
+        logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e));
+        return false;
+      }
     }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
     try {
-      const lm = r.headers.get('last-modified');
+      const lm = (typeof r !== 'undefined' && r && r.headers) ? r.headers.get('last-modified') : '';
       if (lm) {
         const dt = new Date(lm);
         const p2 = n => String(n).padStart(2, '0');
@@ -3935,6 +3948,10 @@ let lastCloud = null;
 
 /* 优先从 raw.githubusercontent 取（提交后几秒就有），失败再回落到 Pages 上的副本 */
 async function fetchHealthText() {
+  try {
+    const r0 = await fetch('health.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r0.ok) { const t0 = (await r0.text()).trim(); if (t0) return t0; }
+  } catch (e) {}
   try {
     const t = (await giteeGetText('health.json')).trim();
     if (t) return t;

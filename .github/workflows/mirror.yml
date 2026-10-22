@@ -1,0 +1,39 @@
+name: Mirror data from Gitee
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # 每 15 分钟
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch files from Gitee
+        run: |
+          set -e
+          for f in body.json health.json body-history.json data.json; do
+            url="https://gitee.com/karen228/calorie-ledger-data/raw/master/$f"
+            if curl -fsSL --max-time 20 "$url" -o "$f.new"; then
+              mv "$f.new" "$f"
+              echo "ok $f"
+            else
+              echo "skip $f (fetch failed)"
+              rm -f "$f.new"
+            fi
+          done
+      - name: Commit if changed
+        run: |
+          git config user.name "data-bot"
+          git config user.email "data-bot@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "no change"
+          else
+            git add body.json health.json body-history.json data.json
+            git commit -m "mirror data from gitee"
+            git push
+          fi
