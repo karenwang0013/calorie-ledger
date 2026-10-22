@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.02', d: '10-22', items: [
+    '改：手机上两个覆盖按钮改成两行显示（「本机」在上、「覆盖云端」在下），不再把词拆成「本机覆盖 / 云端」；iPad 宽屏保持一行',
+  ]},
   { v: 'v5.01', d: '10-22', items: [
     '修：只要这次读到了云端（哪怕本机更新/只做了合并），就先清掉旧的读取错误提醒 —— 不让 ⚠️ 赖着不走',
     '改：超时提示里残留的「api.github.com」改成「Gitee」',
@@ -1284,7 +1287,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.01';
+const APP_VERSION = 'v5.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3071,8 +3074,8 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
-          <button class="btn sm" id="cloudForcePush">本机覆盖云端</button>
-          <button class="btn sm" id="cloudForcePull">云端覆盖本机</button>
+          <button class="btn sm btntwo" id="cloudForcePush">本机<br class="brk">覆盖云端</button>
+          <button class="btn sm btntwo" id="cloudForcePull">云端<br class="brk">覆盖本机</button>
         </div>
         <div class="hint" id="cloudState" style="margin-top:10px"></div>
         ${localStorage.getItem('pending_push') ? '<div class="hint" style="margin-top:6px;color:#ffab3d">有改动还没传上去（网络问题）· 会自动重试，不会丢</div>' : ''}
