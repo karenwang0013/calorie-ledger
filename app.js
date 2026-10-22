@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.70', d: '10-22', items: [
+    '加：云端读取失败自动重试（最多 3 次、带间隔），网络抖动不再立刻报 E01',
+  ]},
   { v: 'v4.69', d: '10-22', items: [
     '加：数据自动校验 —— 体重不在 25–300kg、体脂不在 1–70%、热量不在 5–5000 千卡，直接判为异常（E10）并拒收，不会写进身体数据',
   ]},
@@ -1173,7 +1176,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.69';
+const APP_VERSION = 'v4.70';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2537,7 +2540,17 @@ async function disablePush() {
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
 async function giteeGetText(path) {
-  const r = await fetch(GITEE_API + '/' + path + '?t=' + Date.now(), { cache: 'no-store' });
+  let r = null, lastErr = null;
+  for (let i = 0; i < 3; i++) {
+    try {
+      r = await fetch(GITEE_API + '/' + path + '?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) break;
+      lastErr = new Error('HTTP ' + r.status);
+    } catch (e) { lastErr = e; }
+    r = null;
+    await new Promise(res => setTimeout(res, 500 + i * 700));   // 失败重试 3 次
+  }
+  if (!r) throw lastErr || new Error('Load failed');
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const j = await r.json();
   const b64 = String(j && j.content || '').replace(/\s/g, '');

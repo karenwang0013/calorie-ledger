@@ -723,6 +723,16 @@ function fetchT(url, opt, ms = 15000) {
   return fetch(url, Object.assign({}, opt, { signal: ctrl.signal }))
     .finally(() => clearTimeout(t));
 }
+/* 带重试的 GET：网络抖动时不立刻报错，最多试 3 次 */
+async function fetchRetry(url, opt, ms = 12000, tries = 3) {
+  let last = null;
+  for (let i = 0; i < tries; i++) {
+    try { return await fetchT(url, opt, ms); }
+    catch (e) { last = e; }
+    await new Promise(r => setTimeout(r, 600 + i * 800));
+  }
+  throw last || new Error('Load failed');
+}
 function cloudHeaders() {
   return { 'Content-Type': 'application/json' };
 }
@@ -809,7 +819,7 @@ async function cloudPull(force) {
   if (!cloudToken()) { if (typeof logError === 'function') logError('err-notoken', '还没配置同步令牌', 'E03 去 设置 → 数据同步 填 Gitee 令牌'); return false; }
   cloudPulling = true;
   try {
-    const res = await fetchT(cloudUrl(), { headers: cloudHeaders() });
+    const res = await fetchRetry(cloudUrl(), { headers: cloudHeaders() });
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
     if (!res.ok) throw new Error('读取失败 ' + res.status);
     const j = await res.json();
