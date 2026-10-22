@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.87', d: '10-22', items: [
+    '改：体重趋势改成「每页 7 个点」（按称重记录分页，不再按 7 个自然日）',
+    '加：翻到旧数据后，标题右边会出现「回到最新」按钮，一键跳回最新',
+    '加：Dock「趋势」页的体重图也能点选 —— 点某个点，下面的小字立刻显示那天的体重',
+  ]},
   { v: 'v4.86', d: '10-22', items: [
     '修：上传报 400「文件名已存在」—— 遇到已存在会自动取 sha 改成覆盖更新（PUT）',
   ]},
@@ -1229,7 +1234,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.86';
+const APP_VERSION = 'v4.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1262,7 +1267,8 @@ let toastTimer = null;
       这样标题会回到左上、和 ×（距顶 0.52 个圆角半径）同一条中心线、16px。
       注意：横杠宽度（66px）和卡片玻璃质感【不要】跟着回退，保持现状。 */
 const NLOG_UI = { closeX: false, grab: true, titleCenter: false, showTitle: false };
-let bodyTrendEnd = null;   // 体重趋势当前页的最后一天（7 天/页）
+let bodyTrendPage = 0;     // 体重趋势第几页（0 = 最新的 7 次记录）
+let trSelDate = null;      // 趋势页体重图上点选的日期
 let bodySelDate = null;    // 图上点选的那一天（不点 = 最近一次）
 const WATCH_NAME = "Karen's Apple Watch";
 const SCALE_NAME = "米家体脂秤";
@@ -2193,6 +2199,15 @@ async function loadTrends() {
   }
 }
 
+function wireTrendChart() {
+  const wrap = document.querySelector('#trWrap');
+  if (!wrap) return;
+  wrap.querySelectorAll('circle[data-d]').forEach(c => {
+    c.style.cursor = 'pointer';
+    c.onclick = () => { trSelDate = c.getAttribute('data-d'); renderTrends(); };
+  });
+}
+
 function renderTrends() {
   const t = S.trend;
   const box = $('#trendBody');
@@ -2240,9 +2255,14 @@ function renderTrends() {
   if (weights.length >= 2) {
     wChart = `<div class="card">
       <h3>体重趋势</h3>
-      ${lineChart(weights, t.start, t.end)}
+      <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate)}</div>
       <div class="legend">
-        <span><i style="background:var(--blue)"></i>体重 kg</span>
+        ${(() => {
+          const sel = trSelDate ? weights.find(x => x.date === trSelDate) : null;
+          return sel
+            ? `<span><i style="background:#6bff9a"></i>${sel.date.slice(5)} · ${sel.kg} kg</span>`
+            : `<span><i style="background:var(--blue)"></i>体重 kg</span>`;
+        })()}
         <span style="margin-left:auto">${weights.length} 次记录</span>
       </div>
       ${(() => {
@@ -2324,6 +2344,7 @@ function renderTrends() {
 
   const gw = $('#goWeight') || $('#goWeight2');
   if (gw) gw.onclick = openWeight;
+  wireTrendChart();
 }
 
 function lineChart(points, start, end, selDate) {
@@ -3177,13 +3198,17 @@ function renderMe() {
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
       ${nPt >= 1 ? (() => {
-        const firstD = wtPts[0].date, lastD = wtPts[nPt - 1].date;
-        if (!bodyTrendEnd || bodyTrendEnd > lastD) bodyTrendEnd = lastD;
-        const pageEnd = bodyTrendEnd < firstD ? firstD : bodyTrendEnd;
-        const pageStart = addDays(pageEnd, -6);
-        const pagePts = wtPts.filter(p => p.date >= pageStart && p.date <= pageEnd);
-        const canPrev = pageStart > firstD;
-        const canNext = pageEnd < lastD;
+        const PAGE = 7;
+        const pagesTot = Math.max(1, Math.ceil(nPt / PAGE));
+        if (bodyTrendPage > pagesTot - 1) bodyTrendPage = pagesTot - 1;
+        if (bodyTrendPage < 0) bodyTrendPage = 0;
+        const endIdx = Math.max(Math.min(nPt, nPt - bodyTrendPage * PAGE), PAGE);
+        const startIdx = Math.max(0, endIdx - PAGE);
+        const pagePts = wtPts.slice(startIdx, endIdx);
+        const prevPts = wtPts.slice(Math.max(0, startIdx - PAGE), startIdx);
+        const nextPts = wtPts.slice(endIdx, endIdx + PAGE);
+        const pageStart = pagePts.length ? pagePts[0].date : (wtPts[0] || {}).date;
+        const pageEnd = pagePts.length ? pagePts[pagePts.length - 1].date : pageStart;
         const pv = pagePts.length ? pagePts[pagePts.length - 1].kg : null;
         const pvPrev = pagePts.length >= 2 ? pagePts[pagePts.length - 2].kg : null;
         const pvDelta = pv != null && pvPrev != null ? Math.round((pv - pvPrev) * 10) / 10 : null;
@@ -3192,6 +3217,7 @@ function renderMe() {
         return `<div class="card">
           <h3 class="bh">体重趋势
             <span class="pager">
+              ${bodyTrendPage > 0 ? `<button class="pgbtn" id="btLatest" style="width:auto;padding:0 10px;border-radius:14px;font-size:12px">回到最新</button>` : ''}
               <span class="pgdate">${pageStart.slice(5)}–${pageEnd.slice(5)}</span>
             </span>
           </h3>
@@ -3201,18 +3227,17 @@ function renderMe() {
             <div><span>本页区间</span><b>${pvMin != null ? pvMin + '–' + pvMax : '—'}<small>${pvMin != null ? 'kg' : ''}</small></b></div>
           </div>
           ${(() => {
-            const mk = (st, en) => {
-              const pts = wtPts.filter(p => p.date >= st && p.date <= en);
-              return pts.length >= 2
-                ? lineChart(pts, st, en, (bodySelDate && pts.some(p => p.date === bodySelDate)) ? bodySelDate : null)
-                : `<div class="hint" style="margin:24px 0">这段时间没有记录</div>`;
+            const mk = (pts) => {
+              if (pts.length >= 2) {
+                return lineChart(pts, pts[0].date, pts[pts.length - 1].date,
+                  (bodySelDate && pts.some(p => p.date === bodySelDate)) ? bodySelDate : null);
+              }
+              return `<div class="hint" style="margin:24px 0">这边没有更多记录</div>`;
             };
-            const s0 = addDays(pageStart, -7), e0 = addDays(pageEnd, -7);
-            const s2 = addDays(pageStart, 7),  e2 = addDays(pageEnd, 7);
             return `<div class="chartpager" id="btPager">
-              <div class="cpslide">${mk(s0, e0)}</div>
-              <div class="cpslide">${mk(pageStart, pageEnd)}</div>
-              <div class="cpslide">${mk(s2, e2)}</div>
+              <div class="cpslide">${mk(prevPts)}</div>
+              <div class="cpslide">${mk(pagePts)}</div>
+              <div class="cpslide">${mk(nextPts)}</div>
             </div>`;
           })()}
         </div>`;
@@ -3552,6 +3577,8 @@ function wireMe() {
   };
 
   // 体重趋势：原生横向分页（左/当前/右三页），松手自动吸附
+  const btLatest = $('#btLatest');
+  if (btLatest) btLatest.onclick = () => { bodyTrendPage = 0; bodySelDate = null; renderMe(); };
   const pager = $('#btPager');
   if (pager) {
     const slides = pager.querySelectorAll('.cpslide');
@@ -3566,7 +3593,7 @@ function wireMe() {
         const w = pager.clientWidth || 1;
         const idx = Math.round(pager.scrollLeft / w);
         if (idx === 1) return;
-        bodyTrendEnd = addDays(bodyTrendEnd, idx < 1 ? -7 : 7);
+        bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
         bodySelDate = null;
         renderMe();
       });
