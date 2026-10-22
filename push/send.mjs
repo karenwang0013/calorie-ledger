@@ -60,9 +60,9 @@ if (isMorning) {
 } else if (event === 'fail') {
   if (flags.fail) body = '☁️ 同步失败：读不到云端数据';
 } else {
-  // 定时：按优先级只发一条，条件不成立就不发
-  if (flags.weight && lastW && daysW >= 3) body = `该称体重了：上次记是 ${daysW} 天前`;
-  else if (flags.day && !logs.length) body = '今天还没记录，点一下记一笔';
+  // 晚上这一次只管"补记 / 小结"：称重提醒已经挪到早上 08:30 那一条，
+  // 这样一天里称重最多提醒一次，不会早晚各来一遍。
+  if (flags.day && !logs.length) body = '今天还没记录，点一下记一笔';
   else if (flags.daily) body = intake
     ? `今天已记 ${intake} 千卡` + (left != null ? ` · ${left >= 0 ? '还差' : '超出'} ${Math.abs(left)} 千卡` : '')
     : '今天还没记录，点一下记一笔';
