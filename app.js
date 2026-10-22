@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.10', d: '10-23', items: [
+    '加固：营养面板保存后，除了重绘，还会直接把外面那一项的克数框写成新值；并弹一条「已更新：这一份 25 克 · 532 千卡」的提示，能立刻确认生效',
+  ]},
   { v: 'v7.09', d: '10-23', items: [
     '修：营养面板里改「参考量」不生效 —— 原来它只当换算基准，不改这一项的克数。现在参考量就是"这一份吃多少克"，保存后克数、热量、蛋白碳水脂肪全部跟着更新',
     '修：改参考量时，下面四格按「每 100 克」的原始值等比重算，不会把食物数据算坏（实测 85g/52 千卡 → 改成 25g 自动变 15 千卡，每 100 克仍是 60-61）',
@@ -1797,7 +1800,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.09';
+const APP_VERSION = 'v7.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3005,9 +3008,13 @@ function saveNutEdit() {
   it.protein_per_100g = +(num('#nutP') * k).toFixed(1);
   it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
   it.fat_per_100g = +(num('#nutF') * k).toFixed(1);
+  const idx = nutEditIdx;
   closeNutEdit();
   renderResult();                                 // 热量、合计当场重算
-  toast('已更新，按新数据重新算了', 2200);
+  // 双保险：外面那一项的克数框直接写成新值（万一重绘时序有问题也不会看着没变）
+  const gi = document.querySelector(`#resultItems input[data-g="${idx}"]`);
+  if (gi) gi.value = it.grams;
+  toast(`已更新：这一份 ${it.grams} 克 · ${Math.round(it.kcal_per_100g * it.grams / 100)} 千卡`, 2600);
 }
 
 async function saveItems() {
