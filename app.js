@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.28', d: '10-23', items: [
+    '改：「描述」算完不再把成分表留在描述页 —— 和「搜索选中」一样，直接切到左边的「拍照」，成分表在那边看和改，描述页只负责输入',
+  ]},
   { v: 'v7.27', d: '10-23', items: [
     '修：补回历史时不再因为"那条账的数字看着不对"就跳过 —— 只要记过就补回来（食物消失比数字不准严重，数字可以点「…」按包装改）',
     '新增诊断：设置 → 关于与更新 里会显示「历史 N 条 · 记账 M 条 · 已删 K 条」，万一还找不到，一眼就能看出是数据没了还是界面没刷新',
@@ -1870,7 +1873,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.27';
+const APP_VERSION = 'v7.28';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2729,6 +2732,11 @@ async function runText() {
     S.batchName = r.dish || '';
     $('#batchName').value = S.batchName;
     showResult(r.dish ? '估算：' + r.dish : '估算结果', r.note);
+    // 和"搜索选中"一样的处理：算完直接切到左边的「拍照」，成分表在那边看/改，
+    // 描述这边不留结果（描述页只负责输入）
+    const sb = document.querySelector('#addSheet .sh-body');
+    if (sb) sb.scrollTop = 0;
+    setAddMode('photo');
   } catch (e) {
     toast(e.message, 5000);
   } finally {
