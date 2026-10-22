@@ -24,6 +24,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.55', d: '10-23', items: [
+    '改（克重逻辑统一）：拍照识别后，凡是**没带克数**的条目，App 会自己再问一次 AI「这个食物一份多少克」并自动填上 —— 不需要你手动点按钮',
+    '认不出名字的，你在名字里写上它是什么，点「AI 估克数」或直接保存前它也会自动再试一次',
+  ]},
+  { v: 'v7.54', d: '10-23', items: [
+    '改：搜索栏滑块的"玻璃→实色"和 Dock 用同一组数据 —— 松手后等 520ms 才开始淡入（原来 260ms，早半拍），淡入 2.2 秒同一条曲线；实测两边逐帧完全一致',
+  ]},
   { v: 'v7.54', d: '10-23', items: [
     '改：搜索栏滑块的"玻璃→实色"改成和 Dock 完全同一组数据 —— 松手后等 **520ms** 才开始淡入（Dock 是 settle(520)，这里原来是 260ms，早了半拍），淡入仍是 2.2 秒同一条曲线',
     '实测两处逐帧一致（每 50ms 采一次）：52ms 0.85 → 102ms 0.42 → 202ms 0.05 → 253ms 0 → … → 902ms 0.01，两条曲线完全相同',
@@ -1969,7 +1976,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.54';
+const APP_VERSION = 'v7.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2808,11 +2815,32 @@ async function runPhoto() {
     S.batchName = r.dish || '';
     $('#batchName').value = S.batchName;
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
+    // 认出来但没给克数的条目：再让 AI 按食物名估一次（不用你手动点）
+    fillMissingGrams();
   } catch (e) {
     toast(e.message, 5000);
   } finally {
     btn.disabled = false;
     btn.innerHTML = old;
+  }
+}
+
+/* 结果里有"没有克数"的条目：逐条用食物名问 AI 一份多少克，补上 */
+async function fillMissingGrams() {
+  const idxs = (S.items || []).map((it, i) => (Number(it.grams) > 0 ? -1 : i)).filter(i => i >= 0);
+  if (!idxs.length) return;
+  for (const i of idxs) {
+    const it = S.items[i];
+    const name = String(it && it.name || '').trim();
+    if (!name) continue;
+    try {
+      const r = await api('/api/ai/text', { text: `「${name}」一份（一人份 / 一份 / 一碗，按最常见的一份）通常多少克？只估克数` });
+      const g = Number(r && r.items && r.items[0] && r.items[0].grams) || 0;
+      if (g > 0 && S.items[i] === it) {
+        it.grams = Math.round(g);
+        renderResult();
+      }
+    } catch (e) { /* 估不出来就留着让用户点「AI 估克数」 */ }
   }
 }
 
