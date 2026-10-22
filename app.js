@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.97', d: '10-22', items: [
+    '修：铃铛里还留着迁移前的旧提醒（文案写着「连不上 GitHub」）—— 启动时自动清理一次',
+  ]},
   { v: 'v4.96', d: '10-22', items: [
     '修：「用本机覆盖云端」会假成功 —— 现在上传后立即回读云端校验，成功才提示✅并显示云端时间，没写进去会明确告警',
   ]},
@@ -1267,7 +1270,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.96';
+const APP_VERSION = 'v4.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4938,6 +4941,17 @@ function init() {
     const d = Store.load(); d.notifyLog = []; Store.save({ silent: true });
     openNotifyLog(); toast('已清空提醒记录', 1600);
   };
+  // 一次性清理：迁移到 Gitee 之前留下的旧提醒（文案里还写着 GitHub）
+  try {
+    if (!localStorage.getItem('notify_purged_v1')) {
+      const d = Store.load();
+      if (Array.isArray(d.notifyLog)) {
+        d.notifyLog = d.notifyLog.filter(x => !/GitHub/i.test(String(x.b || '')));
+        Store.save({ silent: true });
+      }
+      localStorage.setItem('notify_purged_v1', '1');
+    }
+  } catch (e) {}
   renderNotifyDot();
   wireNotifyDrag();
 
