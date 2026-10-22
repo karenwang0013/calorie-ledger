@@ -23,6 +23,21 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.44', d: '10-22', items: [
+    '加：早上 08:30 的锁屏提醒 —— 「上秤时间」（还没称才发；已经称过就不打扰）',
+    '提醒里会带一句还差什么：「再连续称 2 天就能算出真实消耗」，够了就写「每周称一次，曲线才准」',
+    '晚上 22:00 那条照旧（补记 / 小结），称重提醒不会再一天轰炸两次',
+  ]},
+  { v: 'v6.43', d: '10-22', items: [
+    '改：记录体重时自动带出最新体重（体脂秤采集过就直接显示，不用手敲）',
+    '改：称重提醒会看数据够不够 —— 不够就每天提醒（连续称 3~4 天就能算出真实消耗），够了改成每周一次、保持曲线',
+    '改：提醒里会写清还差什么（「再连续称 2 天」/「再记 2 天饮食」），不再只写「该称体重了」',
+  ]},
+  { v: 'v6.42', d: '10-22', items: [
+    '改：「实测每日消耗」不再要求"8 次称重 + 一半天数有饮食记录"，那样大多数人永远看不到数字',
+    '现在：4 次称重、跨度 5 天、2 天饮食记录就先算出来，可信度用「置信度 偏高/中等/偏低」标出来，完全自动，不用你手动喂数据',
+    '改：算不出来时不再写"再记录约 0 天"这种废话，直接说卡在哪一步（缺几次体重 / 缺几天饮食）',
+  ]},
   { v: 'v6.41', d: '10-22', items: [
     '改：克重和营养素那行再收小一点（列表 11.5px、详情 12px），并取消加粗；间隔号保持不变',
   ]},
@@ -2645,15 +2660,21 @@ function renderTrends() {
         </div>
       </div>`;
   } else {
-    const need = Math.max(0, 14 - (t.weights?.length || 0));
+    // 说不清"还差几天"都是废话：直接说清卡在哪一步
+    const nW = (t.weights || []).length;
+    const nL = t.logged_days || 0;
+    const lack = nW < 4
+      ? `体重还差 ${4 - nW} 次（至少 4 次、跨度 5 天以上）`
+      : `这段时间只有 ${nL} 天记了饮食（至少 2 天）`;
+    const lackBtn = nW < 4 ? '记录今天的体重' : '记一餐';
     realCard = `
       <div class="card">
         <h3>实测每日消耗</h3>
         <div class="hint" style="margin-top:0">
-          再记录约 <b style="color:var(--text)">${need}</b> 天体重和饮食，我就能反推出你的真实消耗。<br>
+          ${lack}。补齐之后就能反推出来。<br>
           <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span>
         </div>
-        <button class="btn sm" id="goWeight" style="margin-top:14px">记录今天的体重</button>
+        <button class="btn sm" id="goWeight" style="margin-top:14px">${lackBtn}</button>
       </div>`;
   }
 
@@ -2761,7 +2782,11 @@ function renderTrends() {
     </div>`;
 
   const gw = $('#goWeight') || $('#goWeight2');
-  if (gw) gw.onclick = openWeight;
+  if (gw) {
+    // 缺的是饮食记录就开到「记一餐」，缺的是体重就开体重弹层
+    const needFood = gw.textContent.trim() !== '记录今天的体重' && gw.textContent.trim() !== '记录体重';
+    gw.onclick = () => (needFood ? openAdd() : openWeight());
+  }
   wireTrendChart();
 }
 
@@ -3277,12 +3302,27 @@ function runNotifyChecks() {
     return true;
   }
   if (hit('weight')) {
-    const ws = (Store.load().weights || {});
+    const st0 = Store.load();
+    const ws = st0.weights || {};
     const dates = Object.keys(ws).sort();
     const last = dates[dates.length - 1];
     const days = last ? Math.floor((Date.now() - new Date(last + 'T00:00:00').getTime()) / 86400000) : 999;
-    if (days >= 3) {
-      logNotify('weight', '该称体重了', last ? `上次记是 ${days} 天前` : '还没记过体重，今晚称一下？');
+    // 反推真实消耗需要「连续称重 + 连续记饮食」：数据不够就每天提醒（连称几天），够了就每周一次
+    let nW = 0, nL = 0;
+    for (let i = 0; i < 10; i++) {
+      const dd = addDays(todayISO(), -i);
+      if (ws[dd] != null) nW++;
+      if ((st0.logs || []).some(l => l.date === dd)) nL++;
+    }
+    const needW = Math.max(0, 4 - nW), needL = Math.max(0, 2 - nL);
+    const sprint = needW > 0 || needL > 0;
+    const gap = sprint ? 1 : 7;
+    const weighedToday = ws[todayISO()] != null;
+    if (!weighedToday && days >= gap) {
+      const tip = sprint
+        ? (needW > 0 ? `再连续称 ${needW} 天，就能反推真实消耗` : `再记 ${needL} 天饮食，就能反推真实消耗`)
+        : `上次是 ${days} 天前，一周一次保持曲线`;
+      logNotify('weight', '该称体重了', tip);
       return true;
     }
     delete seen.weight; localStorage.setItem('notify_seen', JSON.stringify(seen));   // 没到期就不占用今天的名额
@@ -4305,7 +4345,12 @@ async function hardReloadApp() {
 
 /* ---------------- 体重 ---------------- */
 function openWeight() {
-  $('#weightInput').value = S.day?.profile?.weight_kg || '';
+  // 体脂秤那份（健康采集）每天会自动写进 weights，这里直接带出来，不用手敲
+  const st = Store.load();
+  const ws = st.weights || {};
+  const dates = Object.keys(ws).sort();
+  const latest = dates.length ? ws[dates[dates.length - 1]] : null;
+  $('#weightInput').value = ws[S.date] || ws[S.today] || latest || st.profile.weight_kg || '';
   $('#weightMask').classList.add('on');
   $('#weightSheet').classList.add('on');
   setTimeout(() => $('#weightInput').focus(), 300);

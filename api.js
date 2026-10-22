@@ -274,7 +274,7 @@ function computeTrends(days) {
 
   // 实测 TDEE：体重回归斜率 × 7700
   let real = null;
-  if (weights.length >= 8) {
+  if (weights.length >= 4) {
     const x0 = parseISO(weights[0].date).getTime();
     const pts = weights.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
     const [slope, , r2] = linreg(pts);
@@ -282,7 +282,9 @@ function computeTrends(days) {
     const aligned = logged.filter(s =>
       s.date >= weights[0].date && s.date <= weights[weights.length - 1].date);
     const coverage = aligned.length / Math.max(1, span);
-    if (aligned.length && coverage >= 0.5) {
+    // 以前要求「8 次称重 + 一半天数有饮食记录」，普通人很难满足，一直显示"再记录几天"。
+    // 现在只要 4 次称重、跨度 ≥5 天、≥2 天有饮食记录就先算出来，靠置信度标注可信程度。
+    if (aligned.length >= 2 && span >= 5) {
       const meanIntake = aligned.reduce((a, b) => a + b.intake, 0) / aligned.length;
       real = {
         tdee: Math.round(meanIntake - slope * KCAL_PER_KG),

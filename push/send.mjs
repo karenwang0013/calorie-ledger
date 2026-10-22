@@ -33,10 +33,27 @@ const ws = Object.keys(store.weights || {}).sort();
 const lastW = ws[ws.length - 1];
 const daysW = lastW ? Math.floor((Date.now() - new Date(lastW + 'T00:00:00').getTime()) / 86400000) : 999;
 
-const event = process.env.EVENT || '';       // '' = 定时；watch/goal/fail = 事件
+const event = process.env.EVENT || '';       // '' = 定时；morning/watch/goal/fail = 事件
+const bjHour = new Date(Date.now() + 8 * 3600 * 1000).getUTCHours();
+const isMorning = event === 'morning' || (event === '' && bjHour < 12);
 let body = '';
 
-if (event === 'watch') {
+if (isMorning) {
+  // 早上这一次只干一件事：提醒上秤。已经称过今天就不打扰。
+  const weighedToday = (store.weights || {})[today];
+  let nW = 0;
+  const d0 = new Date(today + 'T00:00:00Z');
+  for (let i = 0; i < 10; i++) {
+    const d = new Date(d0.getTime() - i * 86400000).toISOString().slice(0, 10);
+    if ((store.weights || {})[d]) nW++;
+  }
+  const need = Math.max(0, 4 - nW);
+  if (flags.weight && !weighedToday) {
+    body = need > 0
+      ? `⚖️ 上秤时间 · 再连续称 ${need} 天就能算出真实消耗`
+      : `⚖️ 上秤时间 · 每周称一次，曲线才准`;
+  }
+} else if (event === 'watch') {
   if (flags.watch) body = `⌚ 数据已更新：活动 ${active} 千卡` + (left != null ? ` · 还可以吃 ${left} 千卡` : '');
 } else if (event === 'goal') {
   if (flags.goal && left != null && left < 0) body = `⚠️ 今天已超出目标 ${Math.abs(left)} 千卡`;
