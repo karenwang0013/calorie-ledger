@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.16', d: '10-22', items: [
+    '改：趋势页顶部「7 天 / 30 天 / 90 天」不再贴着顶栏，留出 12px 空隙',
+    '改：这三个也换成 Dock 那套玻璃滑块 —— 等宽三格、选中的变绿、点哪滑哪、按住会压扁再弹回',
+  ]},
   { v: 'v6.15', d: '10-22', items: [
     '改：记录卡片里「拍照」和「从相册选」两个按钮都加高到 52px，并且锁成一样高（之前两个高度不一样，看着不齐）',
   ]},
@@ -1411,7 +1415,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.15';
+const APP_VERSION = 'v6.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1844,8 +1848,7 @@ function closeAdd() {
 }
 
 /* 记录卡片里那三个选项（拍照/搜索/描述）：和 Dock 一样的玻璃滑块 */
-function initAddTabsLens() {
-  const wrap = $('#addTabs');
+function initSegLens(wrap) {
   if (!wrap || wrap.dataset.lens) return;
   wrap.dataset.lens = '1';
   const lens = document.createElement('span');
@@ -1878,9 +1881,16 @@ function initAddTabsLens() {
     setTimeout(sync, 10);
   }, { passive: true });
 
+  // 只要哪一格变成选中就跟着走（不依赖各页自己的点击处理）
+  const mo = new MutationObserver(() => sync());
+  wrap.querySelectorAll('button').forEach(b => mo.observe(b, { attributes: true, attributeFilter: ['class'] }));
+
   requestAnimationFrame(() => requestAnimationFrame(sync));
   window.addEventListener('resize', () => setTimeout(sync, 120));
+  wrap.__lensSync = sync;
 }
+function initAddTabsLens() { initSegLens($('#addTabs')); }
+function initTrendSegLens() { initSegLens($('#trendSeg')); }
 
 function setAddMode(m) {
   S.addMode = m;
@@ -4142,7 +4152,7 @@ function switchView(v) {
   document.body.classList.toggle('view-me', v === 'me');
   document.body.classList.toggle('view-trends', v === 'trends');
   if (window.scTop) window.scTop();
-  if (v === 'trends') { renderTrends(); loadTrends(); }
+  if (v === 'trends') { renderTrends(); loadTrends(); initTrendSegLens(); const sg = $('#trendSeg'); if (sg && sg.__lensSync) setTimeout(sg.__lensSync, 30); }
   if (v === 'me') { mePage = null; renderMe(); }
 }
 
