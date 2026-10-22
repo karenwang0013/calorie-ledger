@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.69', d: '10-22', items: [
+    '修：没点 7/30/90，点页面任何地方那颗滑块都会闪一下实色 —— 松手处理器没判断"是不是按在这一排上"，已修',
+    '改：玻璃→实色的过渡再慢一点（1.4 秒 → 1.8 秒），实测 40 个中间值，几乎看不出"闪"',
+  ]},
   { v: 'v6.68', d: '10-22', items: [
     '修：强制刷新特别慢 —— 两个原因：① 刚打开时 Service Worker 接管会再 reload 一次，等于整页加载两遍；现在 5 秒内不再 reload',
     '② 云端同步原来失败会试 3 次 × 12 秒（最坏等 40 秒）；现在单次 8 秒就放弃，等你下次打开/切回前台再自动重试',
@@ -1629,7 +1633,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.68';
+const APP_VERSION = 'v6.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2169,8 +2173,8 @@ function initSegLens(wrap) {
   const settle = () => {
     const el = pressedEl;
     pressedEl = null;
+    if (!el) return;          // 没按在这一排上 → 什么都不做（否则点页面任何地方都会闪一下实色）
     settleSeg(260);
-    if (!el) return;
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
       const on = wrap.querySelector('button.on');
