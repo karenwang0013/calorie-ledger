@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.75', d: '10-22', items: [
+    '修：E04 被 Gitee 限流 —— 读取加 90 秒缓存，4xx 不再重试（点「数据同步」时会强制刷新）',
+  ]},
   { v: 'v4.74', d: '10-22', items: [
     '修：读取 data.json 不再拼 token（公开仓库读取免令牌）—— 之前带 token 的那条请求容易 Load failed',
   ]},
@@ -1188,7 +1191,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.74';
+const APP_VERSION = 'v4.75';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2551,29 +2554,30 @@ async function disablePush() {
 /* 数据文件走 Gitee（国内直连稳定），网页仍在 GitHub Pages。
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
-async function giteeGetText(path) {
-  let r = null, lastErr = null;
-  for (let i = 0; i < 3; i++) {
+const _gtCache = {};
+async function giteeGetText(path, force) {
+  const now = Date.now();
+  const hit = _gtCache[path];
+  if (!force && hit && now - hit.at < 90000) return hit.txt;   // 90 秒内复用，避免被限流
+  let r = null, err = null;
+  for (let i = 0; i < 2; i++) {
     try {
-      r = await fetch(GITEE_API + '/' + path + '?t=' + Date.now(), { cache: 'no-store' });
+      r = await fetch(GITEE_API + '/' + path + '?t=' + now, { cache: 'no-store' });
       if (r.ok) break;
-      lastErr = new Error('HTTP ' + r.status);
-    } catch (e) { lastErr = e; }
+      // 4xx 不重试（重试也没用，还会加重限流）
+      if (r.status >= 400 && r.status < 500) throw new Error('HTTP ' + r.status);
+      err = new Error('HTTP ' + r.status);
+    } catch (e) { err = e; }
     r = null;
-    await new Promise(res => setTimeout(res, 500 + i * 700));   // 失败重试 3 次
+    await new Promise(res => setTimeout(res, 700));
   }
-  if (!r) throw lastErr || new Error('Load failed');
-  if (!r.ok) throw new Error('HTTP ' + r.status);
+  if (!r) throw err || new Error('Load failed');
   const j = await r.json();
   const b64 = String(j && j.content || '').replace(/\s/g, '');
   if (!b64) throw new Error('内容为空');
-  return decodeURIComponent(escape(atob(b64)));
-}
-
-/* ---------------- 提醒记录（锁屏推送的内容，App 里也能查） ---------------- */
-function notifyLogGet() {
-  const d = Store.load();
-  return Array.isArray(d.notifyLog) ? d.notifyLog : [];
+  const txt = decodeURIComponent(escape(atob(b64)));
+  _gtCache[path] = { at: now, txt };
+  return txt;
 }
 function logNotify(kind, title, body, ok = true) {
   const d = Store.load();
@@ -4059,6 +4063,7 @@ function init() {
     let date = null;
     try { date = await pullCloudData(); } catch (e) {}
     refreshBtn.classList.remove('spin');
+    try { await giteeGetText('body.json', true); await giteeGetText('health.json', true); } catch (e) {}
     const gotBody = await pullBodyJson();   // 体脂秤那份也一起拉
     loadDay();
     const dd = Store.load().daily[S.today] || {};
