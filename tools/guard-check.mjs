@@ -39,6 +39,9 @@ const checks = [
   ['Dock 液态滑块存在且不挡点击', /class="dock-lens"/.test(html) && /\.dock-lens \{[\s\S]*?pointer-events: none;/.test(css) && /initDockLens/.test(app)],
   ['图标/加号必须在液态滑块上面（z-index 1）', /\.tab \{\n  position: relative; z-index: 1;/.test(css) && /\.fab \{\n  position: relative; z-index: 1;/.test(css)],
   ['按下的水光跟着手指（--hx / --hy）', /--hx/.test(app) && /--hy/.test(app)],
+  ['和 Dock 重叠的卡牌宽度取自 --dock-max（不许写死）', /max-width: var\(--dock-max\)/.test(css) && !/max-width: 470px/.test(css)],
+  ['记录卡片选项框的圆角由 --dock-r 推算（与卡片同心）', /\.tabs3 \{[\s\S]*?border-radius: calc\(var\(--dock-r/.test(css)],
+  ['记录卡片大虚线框贴住卡片底边（底部对齐）', /#pane-photo:not\(\[hidden\]\) \.drop\.photobox \{[\s\S]*?flex: 1 1 auto/.test(css)],
 ];
 
 let bad = 0;
