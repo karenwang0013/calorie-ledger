@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.08', d: '10-23', items: [
+    '改：提醒记录（通知）卡片改成弹在屏幕正中 —— 实测卡片中心 422、屏幕中心 422，差 0',
+  ]},
   { v: 'v7.07', d: '10-23', items: [
     '改：几个弹层同时开着时的叠放顺序 —— 改成"谁最后打开谁在最上面"：记录卡片 61 → 营养编辑 62 → 提醒记录 63（实测自上而下：提醒记录 / 营养编辑 / 记录卡片）',
   ]},
@@ -1789,7 +1792,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.07';
+const APP_VERSION = 'v7.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3710,6 +3713,17 @@ function openNotifyLog() {
   raiseSheet(sheet);                         // 最后打开的放在最上面
   if (mask) mask.classList.add('on');
   if (sheet) sheet.classList.add('on');
+  // 位置：弹在屏幕正中（高度是显示出来之后才量的，所以进场后再校一次）
+  const centerOnScreen = () => {
+    if (!sheet) return;
+    const h = sheet.getBoundingClientRect().height || 0;
+    const top = Math.max(8, Math.round((window.innerHeight - h) / 2));
+    sheet.style.top = top + 'px';
+    sheet.style.bottom = 'auto';
+  };
+  centerOnScreen();
+  requestAnimationFrame(centerOnScreen);
+  setTimeout(centerOnScreen, 460);
 }
 function closeNotifyLog() {
   document.body.classList.remove('nlog-open');
