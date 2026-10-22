@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.62', d: '10-22', items: [
+    '改：滑块的行为完全按你说的——「移动中 / 按住时 = 玻璃」，「停下落位后 = 实色」',
+    '修：上一版按住不放超过 0.4 秒就会被误判成"停稳"变成实色，现在按住期间一直是玻璃',
+    '玻璃↔实色之间加了 0.18 秒淡变，不是硬切',
+  ]},
   { v: 'v6.61', d: '10-22', items: [
     '改：7 天 / 30 天 / 90 天 再扁一点（47 → 43px），还是胶囊形',
     '改：选中的滑块「停稳以后」变成实色块（不再一直是玻璃）；按住、滑动过程中仍然是玻璃',
@@ -1598,7 +1603,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.61';
+const APP_VERSION = 'v6.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2090,7 +2095,6 @@ function initSegLens(wrap) {
     if (!g) return;
     if (remember) segLensMem[key] = g;
     apply(g);
-    settleSeg(420);
   };
   const settleSeg = (delay) => {
     lens.classList.remove('settled');
@@ -2099,6 +2103,7 @@ function initSegLens(wrap) {
   };
   const sync = () => {
     lens.classList.remove('press');
+    if (!pressedEl) settleSeg(420);
     const on = wrap.querySelector('button.on');
     const g = on && geoOf(on);
     if (!g) return;
@@ -2110,6 +2115,7 @@ function initSegLens(wrap) {
       lens.style.transition = '';
       segLensMem[key] = g;
       primed = true;
+      lens.classList.add('settled');
       return;
     }
     place(on);
@@ -2137,6 +2143,7 @@ function initSegLens(wrap) {
   const settle = () => {
     const el = pressedEl;
     pressedEl = null;
+    settleSeg(420);
     if (!el) return;
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
@@ -4898,7 +4905,7 @@ function initDockLens() {
     lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
   };
   const go = el => { if (!el) return; target = el; place(el); lit(el); settle(620); };
-  const reflow = () => { lens.classList.remove('press'); place(target || fabEl); };
+  const reflow = () => { lens.classList.remove('press'); place(target || fabEl); settle(620); };
   window.__dockLens = { go, reflow };
 
   inner.addEventListener('pointerdown', ev => {
