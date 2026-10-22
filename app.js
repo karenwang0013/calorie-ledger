@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.26', d: '10-23', items: [
+    '修：搜索的默认列表里没有那个食物（不是要搜才找得到）—— 现在只要账本里有这条记录，就会自动补回历史列表，即使那条账当时记歪了也会按 100 克归一后补回来，先让你能找到，再点「…」按包装改一次',
+  ]},
   { v: 'v7.25', d: '10-23', items: [
     '修：被旧版本误删的食物找不回来 —— 现在会从"记账"里自动补回历史（只要那条账的数据正常），食物重新出现在搜索里',
     '修：搜索太死板 —— 打「威化饼干」找不到「威化黑巧克力」。现在整词没命中会按"两字片段"再找一次（威化 / 化饼 / 饼干），实测搜「威化饼干」能同时列出「威化黑巧克力」和食物库的「饼干」',
@@ -1863,7 +1866,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.25';
+const APP_VERSION = 'v7.26';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3206,9 +3209,16 @@ function refillHistFromLogs() {
     const g = Number(l.grams) || 0;
     if (!name || !g || has.has(name) || dels.has(name)) return;
     const sc = 100 / g;
-    const cand = { k: Math.round((Number(l.kcal) || 0) * sc), p: +((Number(l.p) || 0) * sc).toFixed(1),
-                   c: +((Number(l.c) || 0) * sc).toFixed(1), f: +((Number(l.f) || 0) * sc).toFixed(1) };
-    if (!nutSane(cand.k, cand.p, cand.c, cand.f)) return;      // 记坏的那条不补
+    let cand = { k: Math.round((Number(l.kcal) || 0) * sc), p: +((Number(l.p) || 0) * sc).toFixed(1),
+                 c: +((Number(l.c) || 0) * sc).toFixed(1), f: +((Number(l.f) || 0) * sc).toFixed(1) };
+    // 那条账本身记得不准（三大项超过 100 克）：按比例压到 100 克以内再用，
+    // 这样这个食物至少还在列表里，用户可以点「…」按包装改一次
+    const mass = cand.p + cand.c + cand.f;
+    if (mass > 100) {
+      const k2 = 100 / mass;
+      cand = { k: cand.k, p: +(cand.p * k2).toFixed(1), c: +(cand.c * k2).toFixed(1), f: +(cand.f * k2).toFixed(1) };
+    }
+    if (!nutSane(cand.k, cand.p, cand.c, cand.f)) return;
     has.add(name);
     st.foodHist.push({ n: name, k: cand.k, p: cand.p, c: cand.c, f: cand.f, g, cat: '以前记过', at: Number(l.ts) || 0 });
     added++;
