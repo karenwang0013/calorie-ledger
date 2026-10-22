@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v597';
+const CACHE = 'ledger-v598';
 const ASSETS = [
   './',
   './index.html',
@@ -95,13 +95,31 @@ self.addEventListener('push', (e) => {
         const now = new Date();
         const p2 = (n) => String(n).padStart(2, '0');
         const today = now.getFullYear() + '-' + p2(now.getMonth() + 1) + '-' + p2(now.getDate());
-        const logs = (d.logs || []).filter((l) => l.date === today);
-        const intake = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
-        const day = (d.daily || {})[today] || {};
-        if (intake > 0) {
-          body = '今天已记 ' + intake + ' 千卡' + (day.active ? ' · 活动消耗 ' + Math.round(day.active) + ' 千卡' : '');
+        const hour = now.getHours();
+        const morning = hour >= 5 && hour < 12;
+        if (morning) {
+          // 早上这一次只管"上秤"：今天已经称过就干脆不弹
+          const ws = d.weights || {};
+          if (ws[today]) return;
+          let n = 0;
+          for (let i = 0; i < 10; i++) {
+            const t = new Date(now); t.setDate(t.getDate() - i);
+            const k = t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate());
+            if (ws[k]) n++;
+          }
+          const need = Math.max(0, 4 - n);
+          body = need > 0
+            ? '⚖️ 上秤时间 · 再连续称 ' + need + ' 天就能算出真实消耗'
+            : '⚖️ 上秤时间 · 每周称一次，曲线才准';
         } else {
-          body = '今天还没记录，点一下记一笔';
+          const logs = (d.logs || []).filter((l) => l.date === today);
+          const intake = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
+          const day = (d.daily || {})[today] || {};
+          if (intake > 0) {
+            body = '今天已记 ' + intake + ' 千卡' + (day.active ? ' · 活动消耗 ' + Math.round(day.active) + ' 千卡' : '');
+          } else {
+            body = '今天还没记录，点一下记一笔';
+          }
         }
       }
     } catch (err) { /* 没网就用默认文案 */ }
