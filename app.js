@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.81', d: '10-22', items: [
+    '修：设备同步 data.json 的读取也带上令牌（匿名同样被限流）',
+  ]},
   { v: 'v4.80', d: '10-22', items: [
     '修：E04 的真正原因 —— Gitee 的「匿名」API 被限流(403)，带 token 才通。读取重新带上令牌；同源镜像仍然优先',
   ]},
@@ -1208,7 +1211,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.80';
+const APP_VERSION = 'v4.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

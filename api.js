@@ -741,7 +741,8 @@ function cloudUrl() {
 }
 /* 公开仓库：读取不需要令牌（少一个出错点） */
 function cloudReadUrl() {
-  return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?t=${Date.now()}`;
+  const tk = encodeURIComponent(cloudToken());
+  return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?t=${Date.now()}` + (tk ? `&access_token=${tk}` : '');
 }
 
 /* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
