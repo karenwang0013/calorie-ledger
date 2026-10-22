@@ -1202,6 +1202,7 @@ body.add-open .sheet-mask.on {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   padding: 6px; margin: 4px -6px 12px; flex: 0 0 auto;   /* 左右各外扩 6px，整条更宽 */
+  --seg-btn-r: calc(var(--dock-r, 26px) - 18px);          /* 卡片圆角 39 → 这一条 27 → 里面的按钮/滑块 21 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
   /* 和卡片的圆角同心：卡片圆角 − 这一条到卡片边的距离（12px），再往里 6px 是按钮 */
