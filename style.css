@@ -828,6 +828,11 @@ body.nlog-open .sheet-mask.on {
 .tab svg { width: 29px; height: 29px; stroke: currentColor; fill: none; stroke-width: 2.9; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
+/* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
+.tab.lit { color: var(--lime); }
+.tab.lit svg { stroke: var(--lime); }
+.tab.on:not(.lit) { color: var(--muted2); }
+.tab.on:not(.lit) svg { stroke: var(--muted2); }
 .fab {
   position: relative; z-index: 1;   /* 加号也要在液态滑块上面 */
   justify-self: center;
@@ -841,7 +846,7 @@ body.nlog-open .sheet-mask.on {
   transition: color .26s ease, transform .2s cubic-bezier(.3,.9,.3,1);
 }
 .fab:active { transform: scale(0.93); color: var(--lime); }
-.fab.pressed { color: var(--lime); }
+.fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号用矢量画：笔画略粗，四个端头是圆的（不再是打印字体的方头） */
 .fab svg { width: 34px; height: 34px; display: block; }
 
@@ -854,8 +859,8 @@ body.nlog-open .sheet-mask.on {
 .dock-lens {
   position: absolute; left: 0; top: 0;
   width: var(--lens-w, 84px); height: var(--lens-h, 46px);
-  /* 和 Dock 的圆角同源：外层圆角减去滑块到外框的距离，一层套一层才对得上 */
-  border-radius: var(--lens-r, 18px);
+  /* 形状是 Dock 的缩小版：同一个圆角比例，不要变成圆 */
+  border-radius: var(--lens-r, 20px);
   z-index: 0; pointer-events: none; opacity: 0;
   transform: translate3d(var(--lens-x, 0px), var(--lens-y, 0px), 0) scale(var(--sx, 1), var(--sy, 1));
   transition:
@@ -878,7 +883,7 @@ body.nlog-open .sheet-mask.on {
 /* 按下：横向撑开、纵向压扁，松手用同一条弹簧曲线弹回去 */
 .dock-lens.press {
   --sx: 1.055; --sy: .925;
-  border-radius: calc(var(--lens-r, 18px) + 3px);
+  border-radius: calc(var(--lens-r, 20px) + 2px);
   transition:
     transform .24s cubic-bezier(.32,.9,.28,1),
     opacity .3s ease,

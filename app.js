@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.02', d: '10-22', items: [
+    '改：液态滑块的圆角改成按 Dock 的「圆角 ÷ 高度」同比例算，是 Dock 的缩小版，不再是一个圆',
+    '改：亮不亮不再看「哪个页面」，而是看「滑块停在哪」—— 停在加号上就是加号亮、两个 Tab 都不亮；滑到哪个 Tab 就是那个亮',
+  ]},
   { v: 'v6.01', d: '10-22', items: [
     '改：中间加号不再带绿色底框，平时和另外两个一样是灰的；只有按住它的时候才亮成绿色',
     '改：每次打开 App，液态滑块默认停在中间的加号上；之后点哪个就滑到哪个，没点中的都不亮',
@@ -1344,7 +1348,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.01';
+const APP_VERSION = 'v6.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4376,9 +4380,12 @@ function initDockLens() {
     lens.style.setProperty('--lens-h', Math.round(r.height + padY * 2) + 'px');
     lens.style.setProperty('--lens-x', Math.round(r.left - ir.left - padX) + 'px');
     lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - padY) + 'px');
-    // 圆角直接跟 Dock 一致（同一套圆角，内外看着才是同一种框）
+    // 形状跟 Dock 同一套比例（Dock 圆角 ÷ Dock 高度 ≈ 0.38），滑块用同样的比例，
+    // 这样它是 Dock 的缩小版，而不是一个圆
     const dockR = parseFloat(getComputedStyle(inner).borderTopLeftRadius) || 26;
-    lens.style.setProperty('--lens-r', Math.max(14, Math.round(dockR)) + 'px');
+    const lensH = r.height + padY * 2;
+    const ratio = dockR / Math.max(1, inner.getBoundingClientRect().height);
+    lens.style.setProperty('--lens-r', Math.max(12, Math.min(26, Math.round(lensH * ratio))) + 'px');
     if (opt.press) {
       const hx = (evX - r.left + padX) / (r.width + padX * 2) * 100;
       const hy = (evY - r.top + padY) / (r.height + padY * 2) * 100;
@@ -4390,7 +4397,11 @@ function initDockLens() {
 
   const fabEl = inner.querySelector('.fab');
   let target = null;                       // 滑块现在停在哪
-  const go = el => { if (!el) return; target = el; place(el); };
+  const lit = el => {
+    inner.querySelectorAll('.lit').forEach(x => x.classList.remove('lit'));
+    if (el) el.classList.add('lit');      // 停在哪，哪个就亮
+  };
+  const go = el => { if (!el) return; target = el; place(el); lit(el); };
   const reflow = () => { lens.classList.remove('press'); place(target || fabEl); };
   window.__dockLens = { go, reflow };
 
