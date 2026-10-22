@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.71', d: '10-22', items: [
+    '加：体脂数据读取兜底 —— Gitee 不通时自动读 GitHub 镜像，两边有一条通就行',
+  ]},
   { v: 'v4.70', d: '10-22', items: [
     '加：云端读取失败自动重试（最多 3 次、带间隔），网络抖动不再立刻报 E01',
   ]},
@@ -1176,7 +1179,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.70';
+const APP_VERSION = 'v4.71';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3761,7 +3764,14 @@ async function pullBodyJson() {
   try {
     let bodyText = '';
     try { bodyText = await giteeGetText('body.json'); }
-    catch (e) { logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e)); return false; }
+    catch (e) {
+      // 兜底：Gitee 不通时读 GitHub 上的镜像（快捷指令若也双写，就能读到）
+      try {
+        const r2 = await fetch('https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/body.json?t=' + Date.now(), { cache: 'no-store' });
+        if (r2.ok) bodyText = await r2.text();
+      } catch (e2) {}
+      if (!bodyText) { logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e) + '（Gitee 和 GitHub 都不通）'); return false; }
+    }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
     try {
