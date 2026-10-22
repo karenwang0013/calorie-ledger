@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.65', d: '10-22', items: [
+    '改：玻璃→实色淡入放到最柔（1 秒，缓入缓出），几乎是"慢慢渗出来"的感觉',
+    '改：7 天 / 30 天 / 90 天 那张卡再压窄一点（43 → 39px），按钮 35 → 33px；按钮和卡片四周仍各留 2px，不会贴边',
+  ]},
   { v: 'v6.64', d: '10-22', items: [
     '改：玻璃→实色的淡入再放柔（0.34 秒 → 0.6 秒，缓出曲线），边光和阴影也一起慢慢过渡',
     '实测淡入过程：0.08 → 0.19 → 0.35 → 0.54 → 0.64 → 0.76 → 0.85 → 0.90 → 0.94 → 1.00，是连续渐亮而不是一跳',
@@ -1612,7 +1616,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.64';
+const APP_VERSION = 'v6.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2112,7 +2116,7 @@ function initSegLens(wrap) {
   };
   const sync = () => {
     lens.classList.remove('press');
-    if (!pressedEl) settleSeg(330);
+    if (!pressedEl) settleSeg(260);
     const on = wrap.querySelector('button.on');
     const g = on && geoOf(on);
     if (!g) return;
@@ -2152,7 +2156,7 @@ function initSegLens(wrap) {
   const settle = () => {
     const el = pressedEl;
     pressedEl = null;
-    settleSeg(330);
+    settleSeg(260);
     if (!el) return;
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
