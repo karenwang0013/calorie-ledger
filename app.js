@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.94', d: '10-22', items: [
+    '改：两台设备同时开着时，互相同步从 90 秒一次改为 30 秒一次（双向：谁记的都往 Gitee 写，另一端拉）',
+    '说明：镜像任务受 GitHub 限制最快只能 5 分钟；但 App 已经不再依赖镜像的时效 —— 镜像不是最新时会直接去 Gitee 拉',
+  ]},
   { v: 'v4.93', d: '10-22', items: [
     '修：iPad 记录延迟 —— 同源镜像如果不是最新的，会继续去 Gitee 拉实时数据（之前直接放弃）',
     '改：镜像任务从每 15 分钟改为每 5 分钟',
@@ -1257,7 +1261,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.93';
+const APP_VERSION = 'v4.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5030,7 +5034,7 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') syncRecords();
   });
-  setInterval(() => { if (!document.hidden) syncRecords(); }, 90000);
+  setInterval(() => { if (!document.hidden) syncRecords(); }, 30000);
 }
 
 document.addEventListener('DOMContentLoaded', init);

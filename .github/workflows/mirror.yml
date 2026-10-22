@@ -2,7 +2,7 @@ name: Mirror data from Gitee
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # 每 5 分钟
+    - cron: '*/5 * * * *'   # GitHub 最小间隔就是 5 分钟
   workflow_dispatch: {}
 
 permissions:
