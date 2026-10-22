@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.72', d: '10-22', items: [
+    '改：数据全部只走 Gitee —— 热量、体脂、身体历史、设备同步，不再有任何 GitHub 兜底',
+  ]},
   { v: 'v4.71', d: '10-22', items: [
     '加：体脂数据读取兜底 —— Gitee 不通时自动读 GitHub 镜像，两边有一条通就行',
   ]},
@@ -1179,7 +1182,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.71';
+const APP_VERSION = 'v4.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3734,9 +3737,8 @@ function normPct(v) {
 
 async function pullBodyHistory() {
   try {
-    const r = await fetch('body-history.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
-    if (!r.ok) return 0;
-    const j = await r.json();
+    const txt = await giteeGetText('body-history.json');
+    const j = JSON.parse(txt);
     const items = Array.isArray(j && j.items) ? j.items : [];
     if (!items.length) { logError('err-history', '身体历史读取失败', 'body-history.json 是空的或格式不对'); return 0; }
     const d = Store.load();
@@ -3765,12 +3767,8 @@ async function pullBodyJson() {
     let bodyText = '';
     try { bodyText = await giteeGetText('body.json'); }
     catch (e) {
-      // 兜底：Gitee 不通时读 GitHub 上的镜像（快捷指令若也双写，就能读到）
-      try {
-        const r2 = await fetch('https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/body.json?t=' + Date.now(), { cache: 'no-store' });
-        if (r2.ok) bodyText = await r2.text();
-      } catch (e2) {}
-      if (!bodyText) { logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e) + '（Gitee 和 GitHub 都不通）'); return false; }
+      logError('err-body', '体脂数据读取失败', 'body.json 读取失败：' + (e.message || e));
+      return false;
     }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
@@ -3884,18 +3882,8 @@ async function fetchHealthText() {
   try {
     const t = (await giteeGetText('health.json')).trim();
     if (t) return t;
-  } catch (e) { /* 换下一个源 */ }
-  const urls = [
-    'https://raw.githubusercontent.com/karenwang0013/calorie-ledger/main/health.json',
-    'health.json',
-  ];
-  for (const u of urls) {
-    try {
-      const res = await fetch(u + '?t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) continue;
-      const t = (await res.text()).trim();
-      if (t) return t;
-    } catch (e) { /* 换下一个源 */ }
+  } catch (e) {
+    logError('err-health', '热量数据读取失败', 'health.json 读取失败：' + (e.message || e));
   }
   return '';
 }
