@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.03', d: '10-22', items: [
+    '修：Dock 液态滑块在 iPhone 上会发卡 —— 原因是那层玻璃带了「背景模糊」，iOS 上每动一帧就重算一次模糊。Dock 底色本来就不透明，模糊没东西可糊，已去掉（样子几乎不变，手感顺回来了）',
+    '修：万一液态滑块这段代码出错，也不会再连累整个 App 打不开（加了一层保护）',
+  ]},
   { v: 'v6.02', d: '10-22', items: [
     '改：液态滑块的圆角改成按 Dock 的「圆角 ÷ 高度」同比例算，是 Dock 的缩小版，不再是一个圆',
     '改：亮不亮不再看「哪个页面」，而是看「滑块停在哪」—— 停在加号上就是加号亮、两个 Tab 都不亮；滑到哪个 Tab 就是那个亮',
@@ -1348,7 +1352,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.02';
+const APP_VERSION = 'v6.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4437,7 +4441,7 @@ function initDockLens() {
 
 function init() {
   const synced = consumeHealthLink();
-  initDockLens();
+  try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
