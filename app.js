@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.77', d: '10-22', items: [
+    '修：启动报错「Can\'t find variable: notifyLogGet」—— 上一版改缓存时误删了这个函数，已补回',
+  ]},
   { v: 'v4.76', d: '10-22', items: [
     '加：启动兜底 —— 万一启动报错，不再白屏/卡住，直接显示错误原因 + 「强制重新加载」按钮',
   ]},
@@ -1194,7 +1197,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.76';
+const APP_VERSION = 'v4.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2582,6 +2585,11 @@ async function giteeGetText(path, force) {
   _gtCache[path] = { at: now, txt };
   return txt;
 }
+function notifyLogGet() {
+  const d = Store.load();
+  return Array.isArray(d.notifyLog) ? d.notifyLog : [];
+}
+
 function logNotify(kind, title, body, ok = true) {
   const d = Store.load();
   const list = Array.isArray(d.notifyLog) ? d.notifyLog : (d.notifyLog = []);
