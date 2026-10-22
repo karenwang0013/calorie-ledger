@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.19', d: '10-22', items: [
+    '改：设置 → 饮食目标的「减脂 / 维持 / 增肌」三格也换成同一套玻璃滑块（选中变绿、点哪滑哪、按住压扁回弹）',
+    '改：这三格的说明改成两行整齐排（缺口/盈余 一行、蛋白 一行），不再折成「蛋白 / 2.0」这种断字',
+  ]},
   { v: 'v6.18', d: '10-22', items: [
     '改：趋势页「7 天 / 30 天 / 90 天」离顶栏的距离，改成和它离下面卡片的距离一样（都是 14px）',
     '改：这三个字再放大一档（16px，加粗不变）',
@@ -1423,7 +1427,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.18';
+const APP_VERSION = 'v6.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3361,7 +3365,7 @@ function renderMe() {
         <div class="modes" id="dietModes">
           ${Object.entries(DIET_MODES).map(([k, m]) => `
             <button data-mode="${k}" class="${(setting('diet_mode', 'maintain') === k) ? 'on' : ''}">
-              <b>${m.n}</b><i>${m.tip}</i>
+              <b>${m.n}</b><i>${m.deficit > 0 ? '缺口 ' + m.deficit : (m.deficit < 0 ? '盈余 ' + (-m.deficit) : '不缺口')}<br>蛋白 ${Number(m.p).toFixed(1)}</i>
             </button>`).join('')}
         </div>
         <div class="hint" style="margin:10px 0 16px">切模式会带一个<b>建议的缺口/盈余</b>（上面每档都写着），应用后你仍然可以自己改；之后只有你改它才变。</div>
@@ -3660,6 +3664,7 @@ function wireMe() {
     nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); paintWarn(); };
     paintWarn();
   }
+  initSegLens($('#dietModes'));   // 目标模式三格也挂玻璃滑块
   $$('#dietModes button').forEach(b => b.onclick = async () => {
     const k = b.dataset.mode;
     const m = DIET_MODES[k];
