@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.98', d: '10-23', items: [
+    '改：所有带横杠的卡片，横杠统一放到"卡片顶边到下面那条卡之间"的正中（实测上下各 4.5px）',
+    '改（只这张）：营养编辑卡片再小一圈（左右和底边各内缩 30px，宽 314 vs 记录卡 374）、内容左右各再收 6px、底色更实一点磨砂更厚一点（只改这一张）',
+    '改（只这张）：右上角加关闭叉号，中心点落在圆角圆心上（实测到上 47 / 到右 47，差 0）；这张卡不再用下滑关闭（一直会卡在拖拽中途），改为点叉号或点遮罩关闭',
+  ]},
   { v: 'v6.97', d: '10-23', items: [
     '改：营养编辑卡片再小一圈（左右和底边各内缩 20px，宽 334 vs 记录卡片 374），内容整体下移（离卡片顶 27px）',
     '修：营养卡片往下滑会卡住/像死机 —— 拖拽结束时没清掉行内 transform，系统打断触摸（touchcancel）时更会卡在半路；现在两种结束都会复位，再打开也不会歪',
@@ -1748,7 +1753,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.97';
+const APP_VERSION = 'v6.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5335,7 +5340,9 @@ function init() {
   $('#textGo').onclick = runText;
   $('#saveItems').onclick = saveItems;
   $('#nutMask').onclick = closeNutEdit;
-  wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);   // 和记录弹层同一套下滑退出
+  // 这张卡片不做下滑关闭（一直卡在拖拽中途），只用右上角叉号 / 点遮罩关
+  const nx = $('#nutClose');
+  if (nx) nx.onclick = closeNutEdit;
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');
