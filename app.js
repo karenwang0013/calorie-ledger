@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.11', d: '10-23', items: [
+    '加固：保存营养编辑后，除了整块重绘，还会逐项直接改写「克数框 / 每 100 克那行 / 该项热量 / 合计」，三重保证外面的数值一定跟着变',
+  ]},
   { v: 'v7.10', d: '10-23', items: [
     '加固：营养面板保存后，除了重绘，还会直接把外面那一项的克数框写成新值；并弹一条「已更新：这一份 25 克 · 532 千卡」的提示，能立刻确认生效',
   ]},
@@ -1800,7 +1803,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.10';
+const APP_VERSION = 'v7.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2857,7 +2860,7 @@ function renderResult() {
       `<button data-u="${i}" data-g="${u.g}">${u.unit}</button>`).join('');
     const low = it.confidence != null && it.confidence < 0.55;
     return `
-      <div class="ritem" data-low="${low ? 1 : 0}">
+      <div class="ritem" data-low="${low ? 1 : 0}" data-row="${i}">
         <button class="del" data-rm="${i}" aria-label="删掉这一项">×</button>
         <div class="top">
           <span class="nm">${nameLine(it.name, `data-ren="${i}"`)}</span>
@@ -3011,9 +3014,20 @@ function saveNutEdit() {
   const idx = nutEditIdx;
   closeNutEdit();
   renderResult();                                 // 热量、合计当场重算
-  // 双保险：外面那一项的克数框直接写成新值（万一重绘时序有问题也不会看着没变）
-  const gi = document.querySelector(`#resultItems input[data-g="${idx}"]`);
-  if (gi) gi.value = it.grams;
+  // 双保险：外面那一项的克数框 / 每 100 克那行 / 热量，全部直接写成新值
+  // （哪怕重绘时序出问题，用户也能立刻看到变化）
+  const row = document.querySelector(`#resultItems .ritem[data-row="${idx}"]`)
+           || document.querySelectorAll('#resultItems .ritem')[idx];
+  if (row) {
+    const gi = row.querySelector('input[data-g]');
+    if (gi) gi.value = it.grams;
+    const mt = row.querySelector('.meta .mtxt');
+    if (mt) mt.textContent = `每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}`;
+    const kc = row.querySelector('.kc');
+    if (kc) kc.textContent = Math.round(it.kcal_per_100g * it.grams / 100);
+  }
+  const tot = document.querySelector('#resultTotal');
+  if (tot) tot.textContent = Math.round(S.items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0));
   toast(`已更新：这一份 ${it.grams} 克 · ${Math.round(it.kcal_per_100g * it.grams / 100)} 千卡`, 2600);
 }
 
