@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.60', d: '10-22', items: [
+    '修：版本号一直显示 6.41 —— 原因是发版脚本里只改了 version.txt 和缓存号，app.js 里的 APP_VERSION 从 6.41 起就没再变过（所以界面永远写着 6.41）',
+    '这个版本四处版本号终于对齐了；以后每次发版由 tools/bump.mjs 一次改齐，自检脚本也会卡住不一致的情况',
+  ]},
   { v: 'v6.59', d: '10-22', items: [
     '修：App 挂在后台几天后，版本号会一直卡在旧版（你看到的 6.41 就是这个）—— 自动更新原来"一次会话只跳一次"，那个标记一直没清',
     '现在改成"每次发现新版本都会自动更新（15 秒内不重复）"',
@@ -1589,7 +1593,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.41';
+const APP_VERSION = 'v6.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

@@ -6,6 +6,13 @@ const css = fs.readFileSync('style.css', 'utf8');
 const html = fs.readFileSync('index.html', 'utf8');
 const api = fs.readFileSync('api.js', 'utf8');
 const manifest = fs.readFileSync('manifest.webmanifest', 'utf8');
+const sw = fs.readFileSync('sw.js', 'utf8');
+
+// 四处版本号必须完全对得上（2026-10-22 踩过：APP_VERSION 一直没跟着改，App 永远显示旧版本）
+const vtxt = fs.readFileSync('version.txt', 'utf8').trim();
+const vApp = (app.match(/const APP_VERSION = '([^']+)'/) || [])[1];
+const vCache = (sw.match(/const CACHE = 'ledger-v(\d+)'/) || [])[1];
+const vHtml = (html.match(/app\.js\?v=(\d+)/) || [])[1];
 
 const checks = [
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
@@ -58,6 +65,7 @@ const checks = [
   ['分段滑块首次定位不播入场动画（不许从顶部落下）', /primed/.test(app) && /transition = 'none'/.test(app)],
   ['数据拉取必须三路并发取最新（镜像/GitHub/Gitee），不许退回单路', /GH_RAW/.test(app) && /healthStamp/.test(app) && /giteeFresh\('health\.json'\)/.test(app)],
   ['记录卡片所有间距由 --blk-gap 派生（改一处全跟着动）', /#addSheet \{ --blk-gap:/.test(css) && /#addSheet \.sh-body \{[\s\S]*?var\(--blk-gap\)/.test(css) && /#addSheet \.tabs3 \{[\s\S]*?var\(--blk-gap\)/.test(css)],
+  ['四处版本号一致（APP_VERSION / version.txt / CACHE / index ?v）', vApp === vtxt && !!vCache && !!vHtml && vCache.endsWith(vHtml.slice(-3))],
   ['切目标模式只做局部刷新，不许整页重绘（否则滑块会跳）', (() => {
     const i = app.indexOf("$$('#dietModes button').forEach(b => b.onclick");
     if (i < 0) return false;
