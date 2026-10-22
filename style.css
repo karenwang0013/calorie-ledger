@@ -1258,8 +1258,8 @@ body.add-open .sheet-mask.on {
 /* 营养编辑卡后面的遮罩：浅一点 + 磨砂模糊（原来 .66 太黑，看不出背后是什么） */
 #nutMask.on {
   background: rgba(0, 0, 0, 0.20);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(5px) saturate(115%);
+  backdrop-filter: blur(5px) saturate(115%);
 }
 
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——

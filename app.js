@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.20', d: '10-23', items: [
+    '修：从某一组明细里打开营养编辑后，点外面第一下只是"背景暗一次"、第二下才关 —— 原因是新面板的遮罩压在了下面那张卡的遮罩之下，第一次点到了别人的遮罩。现在遮罩和面板一起往上抬两级（遮罩 61 / 面板 62，别的遮罩是 60），一次点击就能关',
+    '改：营养面板后面的磨砂从 blur 12px 降到 5px（只要一点点模糊）',
+  ]},
   { v: 'v7.19', d: '10-23', items: [
     '改：营养编辑卡后面的遮罩从纯黑 .66 改成浅色 .20 + 磨砂模糊（blur 12px），能看出背后是什么',
     '修：记账时克数被四舍五入成整数（12.5 克存成 13 克）→ 现在保留 1 位小数，列表里也显示 12.5g',
@@ -1837,7 +1841,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.19';
+const APP_VERSION = 'v7.20';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3007,7 +3011,11 @@ function openNutEdit(i, fake) {
   const sh = $('#nutSheet');
   sh.style.top = '';
   sh.style.bottom = '';
-  raiseSheet(sh);                                // 后打开的叠在记录卡片之上
+  // 遮罩和面板一起往上抬两级：遮罩在面板下一层，但要在"别的卡片的遮罩"之上，
+  // 否则点外面时第一下命中别人的遮罩（先暗一次）、第二下才关这个面板
+  const nm = $('#nutMask');
+  if (nm) nm.style.zIndex = String(++sheetZ);
+  sh.style.zIndex = String(++sheetZ);
   // 同样：先落位（关过渡）→ 再显示，避免"先出现在底部再跳到中间"
   sh.classList.add('noanim');
   {
