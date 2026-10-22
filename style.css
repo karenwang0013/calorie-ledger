@@ -830,6 +830,8 @@ body.nlog-open .sheet-mask.on {
   box-shadow: 0 6px 16px rgba(214, 255, 75, 0.26);
 }
 .fab:active { transform: scale(0.94); }
+/* 加号用矢量画：笔画略粗，四个端头是圆的（不再是打印字体的方头） */
+.fab svg { width: 32px; height: 32px; display: block; }
 
 /* ---------- 视图切换 ---------- */
 .view { display: none; animation: fade .22s ease; }
