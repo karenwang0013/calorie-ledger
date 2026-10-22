@@ -928,6 +928,16 @@ async function cloudPull(force) {
       // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
       local.body = Object.assign({}, lBody, rd.body || {});
       local.weights = Object.assign({}, lWts, rd.weights || {});
+      // 食物历史：按名字取并集（云端没有的保留本机），删掉的按名字记进 foodHistDel
+      const fh = new Map();
+      for (const f of (rd.foodHist || [])) if (f && f.n) fh.set(f.n, f);
+      for (const f of (local.foodHist || [])) if (f && f.n) {
+        const o = fh.get(f.n);
+        if (!o || (f.at || 0) > (o.at || 0)) fh.set(f.n, f);
+      }
+      const fdel = new Set([...(rd.foodHistDel || []), ...(local.foodHistDel || [])]);
+      local.foodHist = [...fh.values()].filter(f => !fdel.has(f.n)).sort((a, b) => (a.at || 0) - (b.at || 0));
+      if (fdel.size) local.foodHistDel = [...fdel];
       // 记录按 id 合并（两边各自加的都保留，不再互相覆盖）
       const byId = new Map();
       for (const l of (rd.logs || [])) if (l && l.id) byId.set(l.id, l);

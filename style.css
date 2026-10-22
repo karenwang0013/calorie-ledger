@@ -899,33 +899,16 @@ body.add-open .sheet-mask.on {
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.10);   /* 不再向外打黑影，免得看着像底下垫了一层黑 */
   /* 果冻：松手回弹用"过冲"曲线（会稍微弹过 1.0 再落回），按下去用短促的压扁 */
-  /* 果冻：松手回弹带明显过冲（会鼓过原尺寸再落回），按下去是清晰的"缩一下" */
-  transition: transform .60s cubic-bezier(.15,2.6,.32,1), border-radius .60s cubic-bezier(.15,2.6,.32,1), background .18s ease, box-shadow .5s ease;
+  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
 }
 /* 按下：横向撑开、纵向压扁（快，110ms 压到位），松手用上面那条过冲曲线弹回来
    —— 只动这一层（底），位置层不动，文字也不会被拉变形 */
 .dock-lens.press .lens-body {
-  transform: scale(.90, .86);          /* 明显缩一圈（看得见的"按下"） */
-  border-radius: calc(var(--lens-r, 36px) + 5px);
-  transition: transform .09s cubic-bezier(.3,.75,.4,1), border-radius .09s ease;
+  transform: scale(1.055, .925);
+  border-radius: calc(var(--lens-r, 36px) + 1px);
 }
 
-/* 果冻回弹：松手后连弹三次（大 → 小 → 小大 → 落定），一次 transition 只抖一下，
-   所以这里用关键帧做"duang duang" */
-@keyframes jellyBounce {
-  0%   { transform: scale(.90, .86); }
-  22%  { transform: scale(1.055, 1.075); }
-  40%  { transform: scale(.972, .962); }
-  57%  { transform: scale(1.024, 1.032); }
-  72%  { transform: scale(.991, .989); }
-  86%  { transform: scale(1.006, 1.007); }
-  100% { transform: scale(1, 1); }
-}
-.dock-lens.jelly .lens-body { animation: jellyBounce .62s cubic-bezier(.3,.7,.3,1) both; }
-/* 按钮内容（图标 + 文字）同步做同样的缩放 —— 整块一起动，视觉上才是"按钮被按了一下" */
-.tabbar .tab.press-squash, .tabbar .fab.press-squash { transform: scale(.90, .86); transition: transform .09s cubic-bezier(.3,.75,.4,1); }
-.tabbar .tab.jelly, .tabbar .fab.jelly { animation: jellyBounce .62s cubic-bezier(.3,.7,.3,1) both; }
 /* 停稳（不再移动/按住）→ 实色层淡入盖住玻璃。
    不能直接给 background 做过渡：渐变和纯色之间浏览器没法插值，那就是硬切。 */
 .lens-body::after {
@@ -1285,6 +1268,10 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button svg { width: 20px; height: 20px; opacity: .95; }
 .tabs3 button.on { color: var(--lime); }
+/* Dock 三格：图标在上、文字在下，两者的"墨迹"合起来视觉重心偏低 2px（字有下缘空白、图标是环形），
+   所以整体上提 1px，让墨迹到上下边相等（实测 15/13 → 14/14） */
+.tabbar .tab, .tabbar .fab { padding-top: 1px; }
+
 /* 玻璃滑块（记录卡片的三格、趋势页的三格共用）：和 Dock 那颗一个做法 */
 .seg-lens {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
@@ -1472,6 +1459,14 @@ body.add-open .sheet-mask.on {
 }
 .sitem .cat { font-size: 10px; color: var(--muted2); }
 .sitem .kc { margin-left: auto; font-size: 11.5px; color: var(--muted2); font-variant-numeric: tabular-nums; }
+/* 历史项右边的小叉号：只删历史，不会把这条加进记录 */
+.sitem .hdel {
+  flex: 0 0 auto; width: 26px; height: 26px; margin-left: 2px;
+  display: grid; place-items: center; border-radius: 50%;
+  background: rgba(255,255,255,.06); color: var(--muted2);
+  font-size: 15px; line-height: 1;
+}
+.sitem .hdel:active { background: rgba(255,255,255,.12); color: var(--text); }
 
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip {

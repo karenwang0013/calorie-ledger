@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.86', d: '10-23', items: [
+    '撤：果冻效果整体撤掉（手感回到 v6.82 那一版：按下轻微压扁、松手弹回）',
+    '改：Dock 三格的内容整体上提 1px（原来墨迹偏低：上 15 / 下 13）',
+    '新：记过的食物进一份**永久名单** —— 记一次就永久保存、搜索永远找得到；旧日志会自动补录一次；搜索列表每行右边加了一个 × ，点了只删这条历史，不动已经记过的账',
+  ]},
   { v: 'v6.85', d: '10-23', items: [
     '改：果冻改成"整块"一起动 —— 按住时滑块和图标文字一起缩到 0.90（之前只缩底、图标不动，所以看不出变小）',
     '改：松手用关键帧连弹三次（1.054 → 0.972 → 1.024 → 0.992 → 1.000），这才是 duang 的来回感',
@@ -1700,7 +1705,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.85';
+const APP_VERSION = 'v6.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2540,24 +2545,72 @@ async function runText() {
 
 /* ---- 搜索 ---- */
 
-/* 从历史记录里整理出「以前记过」的食物（按最近一次记录换算每100g） */
-function historyFoods() {
-  const logs = Store.load().logs || [];
-  const map = new Map();
-  logs.forEach(l => {
-    const g = Number(l.grams) || 0;
-    if (!g || !l.name) return;
-    map.set(l.name, {
-      name: l.name,
-      kcal: Math.round((Number(l.kcal) || 0) * 100 / g),
-      p: +(((Number(l.p) || 0) * 100) / g).toFixed(1),
-      c: +(((Number(l.c) || 0) * 100) / g).toFixed(1),
-      f: +(((Number(l.f) || 0) * 100) / g).toFixed(1),
-      grams: g,
-      cat: '以前记过',
-    });
+/* 记过的食物 = 一份永久名单（Store.foodHist）：记一次就永久保存，只有用户点 × 才删。
+   早期版本是"从日志里反推"，日志被删/被清就消失了，所以换成独立名单。 */
+function rememberFoods(items) {
+  const st = Store.load();
+  if (!Array.isArray(st.foodHist)) st.foodHist = [];
+  const dels = new Set(st.foodHistDel || []);
+  (items || []).forEach(it => {
+    const name = String(it.name || '').trim();
+    const g = Number(it.grams) || 0;
+    if (!name || !g) return;
+    const per100 = (v, digits) => +(Number(v || 0) * 100 / g).toFixed(digits);
+    const rec = {
+      n: name,
+      k: Math.round(per100(it.kcal_per_100g, 0)),
+      p: per100(it.protein_per_100g, 1),
+      c: per100(it.carb_per_100g, 1),
+      f: per100(it.fat_per_100g, 1),
+      g,                                  // 上次用的克数，下次默认带出来
+      cat: it.cat || '以前记过',
+      at: Date.now(),
+    };
+    const i = st.foodHist.findIndex(x => x.n === name);
+    if (i >= 0) st.foodHist[i] = Object.assign({}, st.foodHist[i], rec);
+    else st.foodHist.push(rec);
+    dels.delete(name);                    // 手动记一次 = 重新加回名单
   });
-  return [...map.values()];
+  if (dels.size) st.foodHistDel = [...dels];
+  Store.save();
+}
+
+function forgetFood(name) {
+  const st = Store.load();
+  st.foodHist = (st.foodHist || []).filter(x => x.n !== name);
+  st.foodHistDel = Array.from(new Set([...(st.foodHistDel || []), name]));
+  Store.save();
+}
+
+/* 记过的食物（按最近一次用的时间倒序） */
+function historyFoods() {
+  const st = Store.load();
+  if (!Array.isArray(st.foodHist)) st.foodHist = [];
+  // 一次性把老日志里的食物补进名单（补过就不再补，删掉的不会自己回来）
+  if (!st.settings.histBackfilled) {
+    const has = new Set(st.foodHist.map(x => x.n));
+    (st.logs || []).forEach(l => {
+      const g = Number(l.grams) || 0;
+      const name = String(l.name || '').trim();
+      if (!g || !name || has.has(name)) return;
+      has.add(name);
+      st.foodHist.push({
+        n: name,
+        k: Math.round((Number(l.kcal) || 0) * 100 / g),
+        p: +(((Number(l.p) || 0) * 100) / g).toFixed(1),
+        c: +(((Number(l.c) || 0) * 100) / g).toFixed(1),
+        f: +(((Number(l.f) || 0) * 100) / g).toFixed(1),
+        g, cat: '以前记过', at: Number(l.ts) || 0,
+      });
+    });
+    st.settings.histBackfilled = 1;
+    Store.save({ silent: true });
+  }
+  const dels = new Set(st.foodHistDel || []);
+  return st.foodHist
+    .filter(x => !dels.has(x.n))
+    .sort((a, b) => (b.at || 0) - (a.at || 0))
+    .map(x => ({ name: x.n, kcal: x.k, p: x.p, c: x.c, f: x.f, grams: x.g, cat: x.cat || '以前记过' }));
 }
 
 function runSearch(q) {
@@ -2567,7 +2620,7 @@ function runSearch(q) {
 
   let list;
   if (!key) {
-    list = hist.slice().reverse().slice(0, 12).map(f => ({ f, h: true }));
+    list = hist.slice(0, 12).map(f => ({ f, h: true }));
   } else {
     const h = hist.filter(f => f.name.toLowerCase().includes(key)).map(f => ({ f, h: true }));
     const db = S.foods
@@ -2593,7 +2646,17 @@ function runSearch(q) {
         <div class="cat">${esc(x.f.cat || '')} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
       </div>
       <div class="kc">${x.f.kcal}<br><span style="font-size:9px">/100g</span></div>
+      ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">×</button>` : ''}
     </div>`).join('');
+
+  // × 只从这个历史名单里删（不影响已经记过的账），点它不会顺手把食物加进去
+  $$('.hdel', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    const n = b.dataset.del;
+    forgetFood(n);
+    toast(`已从历史里删除「${n}」`, 2000);
+    runSearch($('#searchInput').value || '');
+  });
 
   $$('.sitem', box).forEach(el => el.onclick = () => {
     pushFood(list[Number(el.dataset.i)].f);
@@ -2747,6 +2810,7 @@ async function saveItems() {
       batchName: items.length > 1 ? dishName : '',
       shot,
     });
+    rememberFoods(items);                 // 记过的食物永久留档（搜索里能找到，× 才删）
     closeAdd();
     S.batchName = null;
     clearDraft();
@@ -5067,8 +5131,6 @@ function initDockLens() {
     place(el, { press: true });
     lit(el);
     lens.classList.add('press');
-    lens.classList.remove('jelly');       // 重新按下时清掉上一次的回弹动画
-    el.classList.add('press-squash');     // 按钮本身（图标+文字）跟着一起缩，才像"整块按下"
     if (el.classList.contains('fab')) el.classList.add('pressed');
   }, { passive: true });
 
@@ -5076,16 +5138,6 @@ function initDockLens() {
     inner.querySelectorAll('.fab.pressed').forEach(f => f.classList.remove('pressed'));
     if (!lens.classList.contains('press')) return;
     lens.classList.remove('press');
-    // 松手：整块（滑块 + 按钮内容）弹一下 —— 关键帧里做了两三次来回，duang 才明显
-    const pressedEl = inner.querySelector('.tab.press-squash, .fab.press-squash');
-    if (pressedEl) pressedEl.classList.remove('press-squash');
-    [lens, pressedEl].forEach(n => {
-      if (!n) return;
-      n.classList.remove('jelly');
-      void n.offsetWidth;                 // 强制重排，保证同一个动画能重新播
-      n.classList.add('jelly');
-      setTimeout(() => n.classList.remove('jelly'), 700);
-    });
     // 松手后滑回当前选中的 Tab（点 Tab 的话此时已经切过去了，看起来就是原地弹一下）
     setTimeout(() => { if (!lens.classList.contains('press')) reflow(); }, 10);
   };
