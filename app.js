@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.78', d: '10-23', items: [
+    '修：Dock 那格按钮上下间隙不等（上 8px / 下 6px，看着上面宽一点）—— 原因是 1px 边框被算了两次；现在上下都是 8px',
+    '顺带确认：图标和文字在那格里也是上下等距（14px / 14px），水平居中（误差 0）',
+  ]},
   { v: 'v6.77', d: '10-23', items: [
     '回退：滑块"实色"的颜色恢复成 v6.70 那一版的原色（一层 8.5% / 10% 的白），我上一版加的暗底撤掉 —— 实测回到原来的数值',
     '保留：没点过就不许自己淡（进趋势页、进营养页、点页面其他地方都不会再闪）；点过之后 2.2 秒淡回实色',
@@ -1668,7 +1672,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.77';
+const APP_VERSION = 'v6.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4977,13 +4981,18 @@ function initDockLens() {
     const cellW = cols[idx] || r.width;
     const insetX = 4;
     // 高度跟着 Dock 走（上下各留 7px），Dock 变高滑块就跟着变高，两台设备各自适配
+    // 注意：Dock 外框有 1px 边框，"上下等距"要按**边框里面**那块高度来算，
+    // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
     const w = Math.max(70, Math.round(cellW - insetX * 2));
-    const h = Math.max(40, Math.round(ir.height - 14));
+    const bT = parseFloat(cs.borderTopWidth) || 0;
+    const bB = parseFloat(cs.borderBottomWidth) || 0;
+    const visH = ir.height - bT - bB;
+    const h = Math.max(40, Math.round(visH - 14));
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
     lens.style.setProperty('--lens-x', Math.round(cellLeft + (cellW - w) / 2) + 'px');
-    lens.style.setProperty('--lens-y', Math.round((ir.height - h) / 2) + 'px');
+    lens.style.setProperty('--lens-y', Math.round((visH - h) / 2) + 'px');
     // 圆角按 Dock 自己的比例缩（Dock 圆角 ÷ Dock 高度），iPhone 和 iPad 的 Dock 圆角不一样，
     // 滑块就跟着那台设备的 Dock 走 —— 形状永远是 Dock 的缩小版，而不是换成另一种圆
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
