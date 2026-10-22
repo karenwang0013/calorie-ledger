@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.72', d: '10-22', items: [
+    '修：点「强制更新」后会连刷两遍（先是加载出来、几秒后又刷一次，参数还消失一下）—— 原因是新 Service Worker 接管时又触发了一次整页刷新',
+    '现在接管时不再刷新页面；真要更新由版本号比对负责（一次就够）',
+  ]},
   { v: 'v6.71', d: '10-22', items: [
     '改：设置 → 饮食目标的「减脂 / 维持 / 增肌」做成和趋势页 7/30/90 完全一样的卡片 —— 胶囊形、同样高度（39px）、同样大小的按钮（33px）、同一颗滑块',
     '改：去掉每格下面那行小字（缺口 300 / 平衡 / 盈余 250）',
@@ -1641,7 +1645,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.71';
+const APP_VERSION = 'v6.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4991,13 +4995,10 @@ function init() {
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
-    // 新版本接管后自动刷新一次，避免要关掉重开两遍才更新
-    let reloading = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (reloading) return;
-      reloading = true;
-      location.reload();
-    });
+    // 新 Service Worker 接管时**不要自动刷新页面**：
+    // 刚点过"强制更新"时这页本来就是最新下载的，再刷一次就是白刷（表现为"刷一遍又刷一遍、参数先没了又回来"）；
+    // 真出了新版本，由 checkVersion 比对 version.txt 负责刷一次。
+    navigator.serviceWorker.addEventListener('controllerchange', () => {});
   }
   $('#prevDay').onclick = () => { S.date = addDays(S.date, -1); loadDay(); };
   $('#nextDay').onclick = () => {
