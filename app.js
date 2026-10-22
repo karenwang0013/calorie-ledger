@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.59', d: '10-22', items: [
+    '修：App 挂在后台几天后，版本号会一直卡在旧版（你看到的 6.41 就是这个）—— 自动更新原来"一次会话只跳一次"，那个标记一直没清',
+    '现在改成"每次发现新版本都会自动更新（15 秒内不重复）"',
+    '如果你现在还是旧版：设置 → 关于与更新 → 强制更新，或者上滑关掉 App 重开一次',
+  ]},
   { v: 'v6.58', d: '10-22', items: [
     '改：趋势页 7 天 / 30 天 / 90 天 那张卡做成"胶囊"—— 左右两端整个是圆的（像 Dock），整体压扁一点（58 → 47px）',
     '改：里面的按钮和选中那颗滑块形状跟外框一致，也全是圆头',
@@ -5601,8 +5606,13 @@ function init() {
       const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) return;
       const v = (await r.text()).trim();
-      if (v && v !== APP_VERSION && !sessionStorage.getItem('ver-jump')) {
-        sessionStorage.setItem('ver-jump', '1');
+      // 以前用"本次会话只跳一次"的标记：PWA 挂在后台好几天，
+      // 那个标记一直留着，就再也不自动更新了（表现为版本号卡在旧版）。
+      // 改成"15 秒内不重复跳"，每次发现新版本都会自己更新。
+      const lastJump = Number(sessionStorage.getItem('ver-jump-at') || 0);
+      if (v && v !== APP_VERSION && Date.now() - lastJump > 15000) {
+        sessionStorage.setItem('ver-jump-at', String(Date.now()));
+        sessionStorage.removeItem('ver-jump');
         location.replace(location.pathname + '?r=' + Date.now());
       }
     } catch (e) { /* 没网就算了 */ }
