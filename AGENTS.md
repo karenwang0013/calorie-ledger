@@ -188,6 +188,9 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - **v6.10（2026-10-22）**：Dock 加宽，并统一了「和 Dock 重叠的卡牌」的适配规则 ——
   Dock 用 `--dock-inset`（左右离边）+ `--dock-max`（最大宽度），`#nlogSheet` / `#addSheet` 也用这两个变量，
   所以 Dock 一改宽，这两张卡自动同宽、圆角同源（`var(--dock-r)`）。**以后凡是浮在 Dock 上方、要求圆角/底边与 Dock 对齐的卡，都套这两个变量，不要写死 max-width。**
+- **记录卡片的高度联动规则（v6.11 定下）**：加号卡片里「拍照 / 搜索 / 描述」三格的高度和下面那条大虚线框是**反比联动** ——
+  三格调高 → 虚线框变矮；三格调矮 → 虚线框变高。**大虚线框的底边必须始终贴住卡片底边（平行对齐），这条是定死的**；
+  两个照片小框保持固定比例、只做适配不被拉长。三格高度手感：padding 16px ≈ 66px 高（22px 那一版被用户否掉，太高）。
 - **v6.00（2026-10-22）**：Dock 液态滑块（`.dock-lens`，`initDockLens()`）+ 全局按钮按压回弹。规则：滑块只做变形和高光、不做折射（iPhone WebKit 不支持 `backdrop-filter: url()`）；`.tab` / `.fab` 必须保持 `position: relative; z-index: 1` 在滑块之上，自检脚本已锁。
 
 ### 体重趋势两行小字 · 尺寸存档（tag `v5.07-ok`）

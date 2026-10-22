@@ -1191,7 +1191,7 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 22px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
+  padding: 16px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
   font-size: 14px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
