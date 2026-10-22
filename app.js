@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.25', d: '10-23', items: [
+    '修：被旧版本误删的食物找不回来 —— 现在会从"记账"里自动补回历史（只要那条账的数据正常），食物重新出现在搜索里',
+    '修：搜索太死板 —— 打「威化饼干」找不到「威化黑巧克力」。现在整词没命中会按"两字片段"再找一次（威化 / 化饼 / 饼干），实测搜「威化饼干」能同时列出「威化黑巧克力」和食物库的「饼干」',
+  ]},
   { v: 'v7.24', d: '10-23', items: [
     '修：v7.23 我把被放大的历史数据"删掉了"，结果那个食物直接消失（搜不到了）—— 现在改成**修回来**：用同名记账反推 → 再去掉当初多乘的倍数 → 实在不行用食物库的数据；无论如何都保留这个食物',
     '实测：那条 蛋白976.9/碳水6738/脂肪3027 的历史 → 自动修成 509 / 8 / 52.8 / 29.6（正确值），搜索里正常显示',
@@ -1859,7 +1863,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.24';
+const APP_VERSION = 'v7.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2823,14 +2827,18 @@ function runSearch(q) {
   const key = q.trim().toLowerCase();
   const hist = historyFoods();
 
+  // 放宽匹配：整词没命中就按"两个字的片段"再找一次（"威化饼干" → 威化 / 化饼 / 饼干）
+  const bits = key.length > 2 ? [...new Set([key, ...Array.from({ length: key.length - 1 }, (_, i) => key.slice(i, i + 2))])] : [key];
+  const hit = (s2) => bits.some(b => String(s2 || '').toLowerCase().includes(b));
+
   let list;
   if (!key) {
     list = hist.slice(0, 12).map(f => ({ f, h: true }));
   } else {
-    const h = hist.filter(f => f.name.toLowerCase().includes(key)).map(f => ({ f, h: true }));
+    const h = hist.filter(f => hit(f.name)).map(f => ({ f, h: true }));
     const db = S.foods
-      .filter(f => f.name.toLowerCase().includes(key) ||
-        (f.alias || []).some(a => a.toLowerCase().includes(key)))
+      .filter(f => hit(f.name) ||
+        (f.alias || []).some(a => hit(a)))
       .filter(f => !h.some(x => x.f.name === f.name))
       .slice(0, 20)
       .map(f => ({ f, h: false }));
@@ -3186,7 +3194,30 @@ function repairHistEntry(f) {
   return f;                                   // 实在救不了，原样留着（至少还能找到这个食物）
 }
 
+/* 历史里少了、但确实记过的食物（比如被旧版本误删）：从记账里补回来 */
+function refillHistFromLogs() {
+  const st = Store.load();
+  if (!Array.isArray(st.foodHist)) st.foodHist = [];
+  const has = new Set(st.foodHist.map(f => f.n));
+  const dels = new Set(st.foodHistDel || []);
+  let added = 0;
+  (st.logs || []).forEach(l => {
+    const name = String(l.name || '').trim();
+    const g = Number(l.grams) || 0;
+    if (!name || !g || has.has(name) || dels.has(name)) return;
+    const sc = 100 / g;
+    const cand = { k: Math.round((Number(l.kcal) || 0) * sc), p: +((Number(l.p) || 0) * sc).toFixed(1),
+                   c: +((Number(l.c) || 0) * sc).toFixed(1), f: +((Number(l.f) || 0) * sc).toFixed(1) };
+    if (!nutSane(cand.k, cand.p, cand.c, cand.f)) return;      // 记坏的那条不补
+    has.add(name);
+    st.foodHist.push({ n: name, k: cand.k, p: cand.p, c: cand.c, f: cand.f, g, cat: '以前记过', at: Number(l.ts) || 0 });
+    added++;
+  });
+  if (added) Store.save({ silent: true });
+}
+
 function sanitizeFoodHist() {
+  refillHistFromLogs();
   const st = Store.load();
   if (!Array.isArray(st.foodHist) || !st.foodHist.length) return;
   let changed = false;
