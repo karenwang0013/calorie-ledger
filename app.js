@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.16', d: '10-23', items: [
+    '新：今天列表里每一项、以及点开那一组明细里的每一项，营养那一行后面都加了「…」，点了能直接改这一条已记录的营养数据',
+    '新：营养编辑顶部加了「食物名」输入框 —— 只知道吃多少克、不知道千焦时，输入「香蕉」会列出候选，点一下按克数自动带出热量和蛋白碳水脂肪',
+    '改：营养克数显示小于 10 时保留一位小数（不再把 0.3 克显示成 0）',
+  ]},
   { v: 'v7.15', d: '10-23', items: [
     '修：整页点不动/滑不动 —— 关掉的弹层（透明但在屏幕内）还在拦截触摸。现在所有没打开的弹层一律 pointer-events: none，关掉时也会把临时定位清干净',
     '（v7.14 那次部署只更新了版本号，样式文件没跟上，这次重新发一遍并核对线上文件）',
@@ -1818,7 +1823,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.15';
+const APP_VERSION = 'v7.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2100,6 +2105,12 @@ function renderToday() {
   renderMeals();
 }
 
+/* 营养克数的显示：小于 10 保留一位小数，别把 0.3g 显示成 0 */
+function g1(v) {
+  const n = Number(v) || 0;
+  return n >= 10 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
+}
+
 function renderMeals() {
   const d = S.day;
   const box = $('#meals');
@@ -2110,7 +2121,7 @@ function renderMeals() {
         ${thumbOf(l)}
         <div class="n">${nameLine(l.name, `data-pen="${l.id}"`)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
-            l.p ? ' · 蛋' + Math.round(l.p) + '·碳' + Math.round(l.c) + '·脂' + Math.round(l.f) : ''}</span>
+            l.p ? ' · 蛋' + g1(l.p) + '·碳' + g1(l.c) + '·脂' + g1(l.f) : ''}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span>
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
         <span class="chev">›</span>
@@ -2178,6 +2189,10 @@ function renderMeals() {
   });
 
   // 名字边上的小铅笔：改这一条的名字（识别错了也能自己改回来）
+  $$('[data-nutlog]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    openNutEditLog(b.dataset.nutlog);
+  });
   $$('[data-pen]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation(); ev.preventDefault();
     const l = d.logs.find(x => String(x.id) === b.dataset.pen);
@@ -2937,10 +2952,12 @@ function renderResult() {
    场景：包装上写的是「每份 12.5 克 · 60 千卡」，早先被当成「每 100 克」记了。
    这里按"参考量多少克 + 那份的营养"来填，保存时换算成每 100 克。 */
 let nutEditIdx = -1;
-function openNutEdit(i) {
-  const it = S.items[i];
+let nutLogId = null;        // 非空 = 正在编辑"已经记过的一条"
+function openNutEdit(i, fake) {
+  const it = fake || S.items[i];
   if (!it) return;
-  nutEditIdx = i;
+  nutEditIdx = fake ? -1 : i;
+  if (!fake) nutLogId = null;
   // 预填成"这一份"的实际数值（参考量 = 当前克数），保存时再换算回每 100 克
   const g = Number(it.grams) || 100;
   const share = g / 100;
@@ -2951,6 +2968,8 @@ function openNutEdit(i) {
   $('#nutP').value = +(((Number(it.protein_per_100g) || 0) * share).toFixed(1));
   $('#nutC').value = +(((Number(it.carb_per_100g) || 0) * share).toFixed(1));
   $('#nutF').value = +(((Number(it.fat_per_100g) || 0) * share).toFixed(1));
+  const nq0 = $('#nutNameQ'); if (nq0) nq0.value = it.name || '';
+  const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
   nutBase = { k: Number(it.kcal_per_100g) || 0, p: Number(it.protein_per_100g) || 0,
               c: Number(it.carb_per_100g) || 0, f: Number(it.fat_per_100g) || 0 };
   paintNutPreview();
@@ -2974,6 +2993,23 @@ function openNutEdit(i) {
   sh.classList.add('on');
   setTimeout(() => $('#nutRef').focus(), 260);
 }
+/* 从"今天吃了什么"或某一组明细里点那个「…」：改一条已记录的账 */
+function openNutEditLog(id) {
+  const l = (Store.load().logs || []).find(x => x.id === Number(id));
+  if (!l) return;
+  const g = Number(l.grams) || 0;
+  const k = g ? (Number(l.kcal) || 0) * 100 / g : 0;
+  nutLogId = l.id;
+  openNutEdit(-1, {
+    name: l.name,
+    grams: g,
+    kcal_per_100g: k,
+    protein_per_100g: g ? (Number(l.p) || 0) * 100 / g : 0,
+    carb_per_100g: g ? (Number(l.c) || 0) * 100 / g : 0,
+    fat_per_100g: g ? (Number(l.f) || 0) * 100 / g : 0,
+  });
+}
+
 function closeNutEdit() {
   $('#nutMask').classList.remove('on');
   const sh = $('#nutSheet');
@@ -3002,6 +3038,36 @@ function setNutUnit(u, convert) {
 }
 
 /* 边填边算：让用户当场看到「这一份 = 每 100 克多少」 */
+/* 面板里按食物名找库/历史，找到就把"这一份"的营养填进来（用户只知道克数、不知道千焦时用） */
+function nutFindFoods(q) {
+  const key = String(q || '').trim();
+  if (!key) return [];
+  const norm = (x) => String(x || '').toLowerCase();
+  const k = norm(key);
+  const hist = historyFoods().filter(f => norm(f.name).includes(k))
+    .map(f => ({ name: f.name, kcal: f.kcal, p: f.p, c: f.c, f: f.f, from: '历史' }));
+  const fromDb = (S.foods || []).filter(f => norm(f.name).includes(k) ||
+      (f.alias || []).some(a => norm(a).includes(k)))
+    .map(f => ({ name: f.name, kcal: f.kcal, p: f.p, c: f.c, f: f.f, from: '食物库' }));
+  const seen = new Set();
+  return hist.concat(fromDb).filter(f => (seen.has(f.name) ? false : (seen.add(f.name), true))).slice(0, 6);
+}
+
+function applyNutFood(f) {
+  const ref = Number($('#nutRef').value) || 100;
+  const share = ref / 100;
+  const k = Number(f.kcal) || 0;
+  $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? k * share * KJ_PER_KCAL : k * share);
+  $('#nutP').value = +(((Number(f.p) || 0) * share).toFixed(1));
+  $('#nutC').value = +(((Number(f.c) || 0) * share).toFixed(1));
+  $('#nutF').value = +(((Number(f.f) || 0) * share).toFixed(1));
+  const sug = $('#nutSug');
+  if (sug) { sug.hidden = true; sug.innerHTML = ''; }
+  const q = $('#nutNameQ');
+  if (q) q.value = f.name;
+  paintNutPreview();
+}
+
 function paintNutPreview() {
   const box = $('#nutPreview');
   if (!box) return;
@@ -3015,7 +3081,9 @@ function paintNutPreview() {
 }
 
 function saveNutEdit() {
-  const it = S.items[nutEditIdx];
+  // 两种目标：草稿里的一项（S.items）或已经记过的一条（nutLogId）
+  const logTarget = nutLogId ? (Store.load().logs || []).find(x => x.id === nutLogId) : null;
+  const it = logTarget ? { name: logTarget.name } : S.items[nutEditIdx];
   if (!it) return closeNutEdit();
   const ref = Number($('#nutRef').value);
   const kcalRaw = $('#nutKcal').value.trim();
@@ -3030,6 +3098,30 @@ function saveNutEdit() {
   it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
   it.fat_per_100g = +(num('#nutF') * k).toFixed(1);
   const idx = nutEditIdx;
+  // 改的是"已经记过的一条"：直接改那条记录，然后重算当天
+  if (nutLogId) {
+    const d = Store.load();
+    const l = (d.logs || []).find(x => x.id === nutLogId);
+    if (l) {
+      l.grams = +ref.toFixed(1);
+      l.kcal = Math.round(kcalIn * 10) / 10;
+      l.p = +(num('#nutP')).toFixed(1);
+      l.c = +(num('#nutC')).toFixed(1);
+      l.f = +(num('#nutF')).toFixed(1);
+      Store.save();
+    }
+    const wasGroup = S.detailIsGroup, ids = (S.detailIds || []).slice(), tname = S.detailName;
+    closeNutEdit();
+    closeGroup();
+    toast(`已更新：${it.name} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn)} 千卡`, 2600);
+    loadDay().then(() => {
+      if (wasGroup || ids.length) {
+        const fresh = (Store.load().logs || []).filter(x => ids.includes(x.id));
+        if (fresh.length) openDetail(fresh, wasGroup, tname);
+      }
+    });
+    return;
+  }
   closeNutEdit();
   renderResult();                                 // 热量、合计当场重算
   // 双保险：外面那一项的克数框 / 每 100 克那行 / 热量，全部直接写成新值
@@ -3119,7 +3211,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)}·碳${Math.round(l.c)}·脂${Math.round(l.f)}</span></div>
+      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${g1(l.p)}·碳${g1(l.c)}·脂${g1(l.f)}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
@@ -3127,6 +3219,10 @@ function openDetail(logs, isGroup, title) {
   S.detailIds = logs.map(l => l.id);
   S.detailIsGroup = !!isGroup;
   S.detailName = title || logs[0].name;
+  $$('[data-nutlog]', $('#grpItems')).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    openNutEditLog(b.dataset.nutlog);
+  });
   $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {
@@ -5517,6 +5613,22 @@ function init() {
   const kEl = $('#nutKcal');
   if (kEl) kEl.oninput = paintNutPreview;
   ['#nutP', '#nutC', '#nutF'].forEach(sel => { const el = $(sel); if (el) el.oninput = paintNutPreview; });
+  // 顶部「食物名」：边输入边给候选，点一下就带出这一份的营养
+  const nq = $('#nutNameQ'), sug = $('#nutSug');
+  if (nq && sug) {
+    let t = null;
+    nq.oninput = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const list = nutFindFoods(nq.value);
+        if (!list.length) { sug.hidden = true; sug.innerHTML = ''; return; }
+        sug.innerHTML = list.map((f, i) =>
+          `<button data-food="${i}">${esc(f.name)} · ${f.kcal} 千卡/100g</button>`).join('');
+        sug.hidden = false;
+        $$('[data-food]', sug).forEach(b => b.onclick = ev => { ev.preventDefault(); applyNutFood(list[Number(b.dataset.food)]); });
+      }, 140);
+    };
+  }
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');
