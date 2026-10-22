@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.73', d: '10-22', items: [
+    '加：设置 → 数据同步 里多了「网络自检」按钮 —— 一键显示：令牌有没有存进去、匿名读 Gitee 通不通、带令牌读通不通（含 HTTP 状态和原始报错）',
+  ]},
   { v: 'v4.72', d: '10-22', items: [
     '改：数据全部只走 Gitee —— 热量、体脂、身体历史、设备同步，不再有任何 GitHub 兜底',
   ]},
@@ -1182,7 +1185,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.72';
+const APP_VERSION = 'v4.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2898,6 +2901,7 @@ function renderMe() {
         <div class="btnrow">
           <button class="btn primary sm" id="saveGhToken">开启同步</button>
           <button class="btn sm" id="syncNow">立即同步</button>
+          <button class="btn sm" id="netCheck">网络自检</button>
           <button class="btn sm" id="cloudForcePull">从云端覆盖本机</button>
           <button class="btn sm" id="cloudForcePush">用本机覆盖云端</button>
         </div>
@@ -3426,6 +3430,25 @@ function wireMe() {
       toast('❌ ' + err, 4000);
       setCloudState('失败：' + err);
     }
+  };
+
+  const nc = $('#netCheck');
+  if (nc) nc.onclick = async () => {
+    const t = (setting('gitee_token', '') || '').trim();
+    const out = [];
+    out.push('令牌：' + (t ? '已填（' + t.slice(0, 4) + '…' + t.slice(-4) + '）' : '❌ 空'));
+    // 1) 匿名读（不需要令牌）
+    try {
+      const r = await fetch('https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents/body.json?t=' + Date.now(), { cache: 'no-store' });
+      out.push('匿名读：HTTP ' + r.status);
+    } catch (e) { out.push('匿名读：❌ ' + (e.message || e)); }
+    // 2) 带令牌读 data.json
+    try {
+      const r = await fetch('https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents/data.json?access_token=' + encodeURIComponent(t) + '&t=' + Date.now(), { cache: 'no-store' });
+      const txt = await r.text();
+      out.push('带令牌读：HTTP ' + r.status + (r.ok ? '（' + txt.length + ' 字节）' : '（' + txt.slice(0, 40) + '）'));
+    } catch (e) { out.push('带令牌读：❌ ' + (e.message || e)); }
+    alert('网络自检\n' + out.join('\n'));
   };
 
   const ghStop = $('#stopGh');
