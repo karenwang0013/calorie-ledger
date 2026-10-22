@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.87', d: '10-23', items: [
+    '修：搜索里点一条食物（跳到结果区）后，搜索列表会被清空 —— 再切回「搜索」就是一页空白；现在列表会保留',
+    '改：历史行右边的删除改成纯叉号（去掉圆圈），叉号用 SVG 画（字符「×」字形自带偏位，永远差一点），实测到按钮四边都是 6.5px，误差 0',
+  ]},
   { v: 'v6.86', d: '10-23', items: [
     '撤：果冻效果整体撤掉（手感回到 v6.82 那一版：按下轻微压扁、松手弹回）',
     '改：Dock 三格的内容整体上提 1px（原来墨迹偏低：上 15 / 下 13）',
@@ -1705,7 +1709,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.86';
+const APP_VERSION = 'v6.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2646,7 +2650,9 @@ function runSearch(q) {
         <div class="cat">${esc(x.f.cat || '')} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
       </div>
       <div class="kc">${x.f.kcal}<br><span style="font-size:9px">/100g</span></div>
-      ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">×</button>` : ''}
+      ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+      </button>` : ''}
     </div>`).join('');
 
   // × 只从这个历史名单里删（不影响已经记过的账），点它不会顺手把食物加进去
@@ -2661,8 +2667,9 @@ function runSearch(q) {
   $$('.sitem', box).forEach(el => el.onclick = () => {
     pushFood(list[Number(el.dataset.i)].f);
     $('#searchInput').value = '';
-    box.innerHTML = '';
     $('#searchInput').blur();
+    // 不能把列表清空 —— 清空后从"结果"切回「搜索」就是一页空白（用户反馈的 bug）
+    runSearch('');
   });
 }
 
