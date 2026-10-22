@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.54', d: '10-23', items: [
+    '改：搜索栏滑块的"玻璃→实色"改成和 Dock 完全同一组数据 —— 松手后等 **520ms** 才开始淡入（Dock 是 settle(520)，这里原来是 260ms，早了半拍），淡入仍是 2.2 秒同一条曲线',
+    '实测两处逐帧一致（每 50ms 采一次）：52ms 0.85 → 102ms 0.42 → 202ms 0.05 → 253ms 0 → … → 902ms 0.01，两条曲线完全相同',
+  ]},
   { v: 'v7.53', d: '10-23', items: [
     '新：认出来的实物 → 克数自动填好；**认不出来的 → 克数框旁边出现「AI 估克数」**，你先在名字里写上它是什么（或改名），点一下就按常见份量估出克数填进去',
     '实测：有克数的条目不会出现这个按钮；克数空着时出现，点完自动填上',
@@ -1965,7 +1969,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.53';
+const APP_VERSION = 'v7.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2565,7 +2569,7 @@ function initSegLens(wrap) {
     if (!el) return;          // 没按在这一排上 → 什么都不做（否则点页面任何地方都会闪一下实色）
     segPressed = false;
     place(wrap.querySelector('button.on') || el, false);   // 弹回去
-    settleSeg(260);
+    settleSeg(520);          // 和 Dock 同一个延迟（Dock 是 settle(520)），之前这里 260 会让渐变早半拍
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
       const on = wrap.querySelector('button.on');
