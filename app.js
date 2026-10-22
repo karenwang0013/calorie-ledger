@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.50', d: '10-23', items: [
+    '改：顶部三格外面那一圈的亮度按实测压到和 Dock 一致 —— 原来圈上像素 67~69，Dock 是 52~53，现在压到 55~56（画法仍是 Dock 那套"透明边框 + 边框上的高光渐变"）',
+  ]},
   { v: 'v7.49', d: '10-23', items: [
     '改：顶部三格外面那一圈不再用均匀的白色描边（0.10 白边太亮），改成和 Dock 一样的**玻璃高光边**（上亮下暗的渐变，var(--edge-gloss)），里边的颜色一个字没动',
   ]},
@@ -1949,7 +1952,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.49';
+const APP_VERSION = 'v7.50';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
