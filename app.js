@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.41', d: '10-22', items: [
+    '改：克重和营养素那行再收小一点（列表 11.5px、详情 12px），并取消加粗；间隔号保持不变',
+  ]},
   { v: 'v6.40', d: '10-22', items: [
     '改：营养素之间的间隔号收紧 —— 「50g · 蛋6·碳33·脂4」（组里的汇总行和点开的详情一起改）',
   ]},
@@ -1509,7 +1512,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.40';
+const APP_VERSION = 'v6.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
