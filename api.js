@@ -400,7 +400,8 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 2. 估算「实际吃掉的重量」（克）。用碗/盘/勺的常见尺寸和食物堆叠高度作为参照。
 3. 给出每 100 克的热量和蛋白质/碳水/脂肪。优先使用中国食物成分表的数值。
 4. 如果图里有包装食品的营养成分表，按标签精确读数：
-   - 把标签上「每 100 克」的能量/蛋白质/碳水/脂肪原样填进 *_per_100g（能量若是千焦，除以 4.184 换成千卡）
+   - **优先**把标签原样抄到 label 字段（不要自己换算）：label.basis_grams = 标签上「每 X 克」的 X（如每份 12.5 克就填 12.5），label.unit = "kJ" 或 "kcal"，label.energy / protein / carb / fat = 那一份对应的数字。App 会用这些数字自己换算，不用你算
+   - 同时仍按你的理解填 *_per_100g（每 100 克），但 **label 字段必须原样照抄，不许改写单位**
    - grams 用用户在补充说明里说的克数；没说就填 100
    - 如果用户说「整包 / 一包 / 全吃完」，就找包装上的「净含量 / 规格 / 内容量」，把 grams 设成那个数；找不到净含量再按 100
    - name 用包装上的产品名，不要自己编
@@ -413,7 +414,9 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 
 只输出一个 JSON 对象，不要 markdown 代码块，不要任何解释文字：
 
-{"items":[{"name":"食物中文名","grams":180,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}`;
+{"items":[{"name":"食物中文名","grams":180,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8,
+ "label":{"basis_grams":12.5,"unit":"kJ","energy":266,"protein":1.0,"carb":6.6,"fat":3.7}}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
+（label 只在图里真的有营养成分表时才给；没有就省略整个 label 字段）`;
 
 const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃了什么，请估算热量。
 
@@ -505,13 +508,26 @@ function cleanItems(obj) {
       k100 = isNaN(total) ? 0 : total / grams * 100;
     }
     if (k100 < 0) k100 = 0;
+    let p100 = num(it.protein_per_100g), c100 = num(it.carb_per_100g), f100 = num(it.fat_per_100g);
+    // 图里有营养成分表：用标签上的原始数字自己换算（模型只负责"照抄"，除法由 App 做）
+    const lb = it.label;
+    if (lb && num(lb.basis_grams, 0) > 0) {
+      const basis = num(lb.basis_grams, 0);
+      const per = 100 / basis;
+      const isKj = String(lb.unit || '').toLowerCase() === 'kj';
+      const energy = num(lb.energy, NaN);
+      if (!isNaN(energy)) k100 = (isKj ? energy / 4.184 : energy) * per;
+      if (!isNaN(num(lb.protein, NaN))) p100 = num(lb.protein) * per;
+      if (!isNaN(num(lb.carb, NaN))) c100 = num(lb.carb) * per;
+      if (!isNaN(num(lb.fat, NaN))) f100 = num(lb.fat) * per;
+    }
     items.push({
       name,
-      grams: Math.round(grams),
+      grams: Math.round(grams * 10) / 10,
       kcal_per_100g: Math.round(k100 * 10) / 10,
-      protein_per_100g: Math.round(num(it.protein_per_100g) * 10) / 10,
-      carb_per_100g: Math.round(num(it.carb_per_100g) * 10) / 10,
-      fat_per_100g: Math.round(num(it.fat_per_100g) * 10) / 10,
+      protein_per_100g: Math.round(p100 * 10) / 10,
+      carb_per_100g: Math.round(c100 * 10) / 10,
+      fat_per_100g: Math.round(f100 * 10) / 10,
       confidence: Math.min(1, Math.max(0, num(it.confidence, 0.6))),
     });
   });
