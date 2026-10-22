@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.88', d: '10-22', items: [
+    '改：体重趋势滑到头时改成柔和回弹（平滑滑回，不再硬顶）；翻页时加 150ms 淡出过渡，不再"啪"地一变',
+  ]},
   { v: 'v4.87', d: '10-22', items: [
     '改：体重趋势改成「每页 7 个点」（按称重记录分页，不再按 7 个自然日）',
     '加：翻到旧数据后，标题右边会出现「回到最新」按钮，一键跳回最新',
@@ -1234,7 +1237,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.87';
+const APP_VERSION = 'v4.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3234,7 +3237,7 @@ function renderMe() {
               }
               return `<div class="hint" style="margin:24px 0">这边没有更多记录</div>`;
             };
-            return `<div class="chartpager" id="btPager">
+            return `<div class="chartpager" id="btPager" data-has-prev="${prevPts.length ? 1 : 0}" data-has-next="${nextPts.length ? 1 : 0}">
               <div class="cpslide">${mk(prevPts)}</div>
               <div class="cpslide">${mk(pagePts)}</div>
               <div class="cpslide">${mk(nextPts)}</div>
@@ -3593,9 +3596,22 @@ function wireMe() {
         const w = pager.clientWidth || 1;
         const idx = Math.round(pager.scrollLeft / w);
         if (idx === 1) return;
-        bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
-        bodySelDate = null;
-        renderMe();
+        const hasPrev = pager.getAttribute('data-has-prev') === '1';
+        const hasNext = pager.getAttribute('data-has-next') === '1';
+        const changing = idx < 1 ? hasPrev : hasNext;
+        if (!changing) {
+          // 已经到头：柔和滑回中间，不换页
+          pager.scrollTo({ left: w, behavior: 'smooth' });
+          return;
+        }
+        // 有下一页：先淡出，再换页，避免画面"啪"地一变
+        pager.style.transition = 'opacity .16s ease';
+        pager.style.opacity = '0.25';
+        setTimeout(() => {
+          bodyTrendPage = Math.max(0, bodyTrendPage + (idx < 1 ? 1 : -1));
+          bodySelDate = null;
+          renderMe();
+        }, 150);
       });
     });
     slides.forEach(sl => {
