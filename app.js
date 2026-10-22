@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.96', d: '10-22', items: [
+    '修：「用本机覆盖云端」会假成功 —— 现在上传后立即回读云端校验，成功才提示✅并显示云端时间，没写进去会明确告警',
+  ]},
   { v: 'v4.95', d: '10-22', items: [
     '修：iPad 看不到 iPhone 记的食物 —— 拉取时即使本机时间更新，也把云端的记录按 id 合并进来（记录只增不减，不能被时间戳挡住）',
   ]},
@@ -1264,7 +1267,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.95';
+const APP_VERSION = 'v4.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3705,8 +3708,22 @@ function wireMe() {
     if (!confirm('用这台设备的记录覆盖云端？另一台设备上独有的记录会被清掉。')) return;
     cloudLast = '';
     const r = await busyBtn(cfpush, '上传中…', async () => await cloudPush());
-    if (r) { setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚')); toast('✅ 已用本机覆盖云端', 2600); }
-    else toast('❌ 上传失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/token'), 4000);
+    if (!r) {
+      toast('❌ 上传失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/令牌'), 5200);
+      return;
+    }
+    // 回读校验：确认云端真的变了
+    let verified = false, upAt = '';
+    try {
+      const t = await cloudVerify();
+      verified = !!t.ok; upAt = t.updatedAt || '';
+    } catch (e) {}
+    if (verified) {
+      setCloudState('上次同步：' + (setting('cloud_synced_at', '') || '刚刚'));
+      toast('✅ 已用本机覆盖云端（云端时间 ' + (upAt.slice(5, 16).replace('T', ' ')) + '）', 3200);
+    } else {
+      toast('⚠️ 上传返回成功，但回读没看到变化 —— 可能是令牌权限或限流', 5200);
+    }
   };
 
   if (ghNow) ghNow.onclick = async () => {

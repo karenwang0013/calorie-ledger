@@ -826,6 +826,18 @@ async function cloudPush() {
 }
 
 /* 启动时拉一次：云端更新就覆盖本地 */
+/* 回读云端 data.json，拿到它真实的 updatedAt（用来校验"真的写进去了"） */
+async function cloudVerify() {
+  try {
+    const r = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } }, 10000, 2);
+    if (!r.ok) return { ok: false, status: r.status };
+    const j = await r.json();
+    const txt = b64decode(String(j.content || ''));
+    const o = JSON.parse(txt);
+    return { ok: true, updatedAt: o.updatedAt || '', sha: j.sha };
+  } catch (e) { return { ok: false, err: e.message || String(e) }; }
+}
+
 async function cloudPull(force) {
   cloudErr = '';
   if (!cloudToken()) { if (typeof logError === 'function') logError('err-notoken', '还没配置同步令牌', 'E03 去 设置 → 数据同步 填 Gitee 令牌'); return false; }
