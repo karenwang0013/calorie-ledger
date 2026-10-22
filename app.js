@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.10', d: '10-22', items: [
+    '改：最高 / 最低改成上下两行摆（最高在上、最低在下），仍然贴在卡片右上角，不排成左右一行',
+  ]},
   { v: 'v5.09', d: '10-22', items: [
     '改：最高 / 最低再往上移 —— 现在写在「体重趋势」这一行的右边（卡片右上角），图上不再有任何字压着折线，也不会被卡片边缘切掉',
   ]},
@@ -1313,7 +1316,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.09';
+const APP_VERSION = 'v5.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2335,8 +2338,9 @@ function renderTrends() {
   const wMinTxt = wKgs.length ? Math.min(...wKgs).toFixed(1) : '—';
   let wChart = '';
   if (weights.length >= 2) {
-    wChart = `<div class="card">
-      <h3>体重趋势 <span class="wminmax">最高 ${wMaxTxt} · 最低 ${wMinTxt}</span></h3>
+    wChart = `<div class="card wchart">
+      <h3>体重趋势</h3>
+      <div class="wminmax"><span>最高 ${wMaxTxt}</span><span>最低 ${wMinTxt}</span></div>
       <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate, { range: false })}</div>
       <div class="legend wlegend">
         ${(() => {
