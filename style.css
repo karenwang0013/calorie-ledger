@@ -1210,13 +1210,13 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 16px 6px; border-radius: calc(var(--dock-r, 26px) - 18px);
-  font-size: 14px; font-weight: 600; color: var(--muted2);
+  padding: 18px 6px; border-radius: var(--seg-btn-r);
+  font-size: 14.5px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
   transition: color .3s ease;
 }
-.tabs3 button svg { width: 19px; height: 19px; opacity: .95; }
+.tabs3 button svg { width: 20px; height: 20px; opacity: .95; }
 .tabs3 button.on { color: var(--lime); }
 /* 玻璃滑块（记录卡片的三格、趋势页的三格共用）：和 Dock 那颗一个做法 */
 .seg-lens {
