@@ -23,9 +23,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.09', d: '10-22', items: [
+    '改：最高 / 最低再往上移 —— 现在写在「体重趋势」这一行的右边（卡片右上角），图上不再有任何字压着折线，也不会被卡片边缘切掉',
+  ]},
   { v: 'v5.08', d: '10-22', items: [
     '修：在图上点 10-13，下面「10-13 · 66.2 kg」已经跟着变了，可再下一行却还写着 10-22 —— 现在那行体脂秤也跟着所选那天走（那天没有体脂秤记录就退回最新一条）',
-    '改：图上「最高 / 最低」两个刻度挪到图的右上角，不再压着左边那条折线',
+    '改：图上「最高 / 最低」两个刻度从左边挪到图的右上角，不再压着左边那条折线',
     '改：体脂秤那一行（「10-22 体脂秤：体脂率 … · BMI …」）的字号和粗细，和上一行所选那天的数字对齐（同样 12.5px、同样加粗、纯白）',
   ]},
   { v: 'v5.07', d: '10-22', items: [
@@ -1310,7 +1313,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.08';
+const APP_VERSION = 'v5.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2327,11 +2330,14 @@ function renderTrends() {
 
   // 体重图
   const weights = t.weights || [];
+  const wKgs = weights.map(x => x.kg);
+  const wMaxTxt = wKgs.length ? Math.max(...wKgs).toFixed(1) : '—';
+  const wMinTxt = wKgs.length ? Math.min(...wKgs).toFixed(1) : '—';
   let wChart = '';
   if (weights.length >= 2) {
     wChart = `<div class="card">
-      <h3>体重趋势</h3>
-      <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate)}</div>
+      <h3>体重趋势 <span class="wminmax">最高 ${wMaxTxt} · 最低 ${wMinTxt}</span></h3>
+      <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate, { range: false })}</div>
       <div class="legend wlegend">
         ${(() => {
           const sel = trSelDate ? weights.find(x => x.date === trSelDate) : null;
@@ -2426,7 +2432,8 @@ function renderTrends() {
   wireTrendChart();
 }
 
-function lineChart(points, start, end, selDate) {
+function lineChart(points, start, end, selDate, opts = {}) {
+  const showRange = opts.range !== false;   // 趋势页把「最高/最低」放到卡片标题右边，就不在图上重复画
   const W = 320, H = 130, pl = 4, pr = 4, pt = 12, pb = 22;
   const xs = points.map(p => +parseISO(p.date));
   const ys = points.map(p => p.kg);
@@ -2472,8 +2479,8 @@ function lineChart(points, start, end, selDate) {
     ${dots}
     <text x="${pl}" y="${H - 6}" style="font-size:9px">${first.date.slice(5)}</text>
     <text x="${W - pr}" y="${H - 6}" text-anchor="end" style="font-size:9px">${last.date.slice(5)}</text>
-    <text x="${W - pr}" y="11" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最高 ${Math.max(...ys).toFixed(1)}</text>
-    <text x="${W - pr}" y="22" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最低 ${Math.min(...ys).toFixed(1)}</text>
+    ${showRange ? `<text x="${W - pr}" y="11" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最高 ${Math.max(...ys).toFixed(1)}</text>
+    <text x="${W - pr}" y="22" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最低 ${Math.min(...ys).toFixed(1)}</text>` : ''}
   </svg>`;
 }
 

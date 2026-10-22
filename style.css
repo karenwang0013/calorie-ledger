@@ -861,6 +861,11 @@ body.nlog-open .sheet-mask.on {
   padding: 3px 8px; border-radius: 20px;
   background: rgba(214,255,75,.1); color: var(--lime);
 }
+/* 体重趋势标题右边：这段时间的最高 / 最低（取代原来压在折线上的两个刻度） */
+.card h3 .wminmax {
+  margin-left: auto; font-size: 10.5px; font-weight: 500;
+  letter-spacing: 0; color: var(--muted); font-variant-numeric: tabular-nums;
+}
 
 .kpi { display: flex; align-items: baseline; gap: 7px; }
 .kpi b { font-size: 34px; font-weight: 400; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
