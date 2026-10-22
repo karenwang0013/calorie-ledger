@@ -23,6 +23,14 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.04', d: '10-22', items: [
+    '改：Dock 三格等宽，液态滑块就是一整格 —— 中间那格也点得中，滑块会停在正中间',
+    '改：滑块形状按每台设备的 Dock 自己算（圆角 ÷ 高度 同比例），iPhone 和 iPad 各自都是 Dock 的缩小版，不再是正方形',
+    '改：中间的加号换成和左右一样的样式 —— 上面加号图标、下面「记录」两个字，点它也算选中',
+    '改：三个图标统一 30px、同一笔宽；三个文字同一字号、同一粗细、同一颜色，顶部一条线、底部一条线',
+    '修：在设置里点进任意子页后，再点右上角齿轮会直接跳回首页 —— 现在改成退回设置首页（等于返回）',
+    '修：按住 Dock 按钮时没有水光、亮色也不跟手（一个变量名写错，已修）',
+  ]},
   { v: 'v6.03', d: '10-22', items: [
     '修：Dock 液态滑块在 iPhone 上会发卡 —— 原因是那层玻璃带了「背景模糊」，iOS 上每动一帧就重算一次模糊。Dock 底色本来就不透明，模糊没东西可糊，已去掉（样子几乎不变，手感顺回来了）',
     '修：万一液态滑块这段代码出错，也不会再连累整个 App 打不开（加了一层保护）',
@@ -1352,7 +1360,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.03';
+const APP_VERSION = 'v6.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4377,22 +4385,33 @@ function initDockLens() {
 
   const place = (el, opt = {}) => {
     if (!el) return;
+    const cs = getComputedStyle(inner);
     const ir = inner.getBoundingClientRect();
     const r = el.getBoundingClientRect();
-    const padX = 6, padY = 7;
-    lens.style.setProperty('--lens-w', Math.round(r.width + padX * 2) + 'px');
-    lens.style.setProperty('--lens-h', Math.round(r.height + padY * 2) + 'px');
-    lens.style.setProperty('--lens-x', Math.round(r.left - ir.left - padX) + 'px');
-    lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - padY) + 'px');
-    // 形状跟 Dock 同一套比例（Dock 圆角 ÷ Dock 高度 ≈ 0.38），滑块用同样的比例，
-    // 这样它是 Dock 的缩小版，而不是一个圆
-    const dockR = parseFloat(getComputedStyle(inner).borderTopLeftRadius) || 26;
-    const lensH = r.height + padY * 2;
-    const ratio = dockR / Math.max(1, inner.getBoundingClientRect().height);
-    lens.style.setProperty('--lens-r', Math.max(12, Math.min(26, Math.round(lensH * ratio))) + 'px');
+    // 滑块 = Dock 里的一整格：按网格列宽算，左中右三格一样宽，图标在格子正中
+    const cols = (cs.gridTemplateColumns || '').split(' ').map(v => parseFloat(v) || 0).filter(Boolean);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const items = [...inner.querySelectorAll('.tab, .fab')];
+    const idx = Math.max(0, items.indexOf(el));
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const before = cols.slice(0, idx).reduce((a, b) => a + b, 0) + gap * idx;
+    const cellW = cols[idx] || r.width;
+    const insetX = 4, top = 3;
+    const w = Math.max(70, Math.round(cellW - insetX * 2));
+    const h = Math.round(r.height + 6);
+    const cellLeft = padL + before;
+    lens.style.setProperty('--lens-w', w + 'px');
+    lens.style.setProperty('--lens-h', h + 'px');
+    lens.style.setProperty('--lens-x', Math.round(cellLeft + (cellW - w) / 2) + 'px');
+    lens.style.setProperty('--lens-y', Math.round(r.top - ir.top - top) + 'px');
+    // 圆角按 Dock 自己的比例缩（Dock 圆角 ÷ Dock 高度），iPhone 和 iPad 的 Dock 圆角不一样，
+    // 滑块就跟着那台设备的 Dock 走 —— 形状永远是 Dock 的缩小版，而不是换成另一种圆
+    const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
+    const dockH = ir.height || 88;
+    lens.style.setProperty('--lens-r', Math.max(12, Math.round(h * (dockR / dockH))) + 'px');
     if (opt.press) {
-      const hx = (evX - r.left + padX) / (r.width + padX * 2) * 100;
-      const hy = (evY - r.top + padY) / (r.height + padY * 2) * 100;
+      const hx = (evX - r.left) / Math.max(1, r.width) * 100;
+      const hy = (evY - r.top) / Math.max(1, r.height) * 100;
       lens.style.setProperty('--hx', Math.max(0, Math.min(100, hx)).toFixed(1) + '%');
       lens.style.setProperty('--hy', Math.max(0, Math.min(100, hy)).toFixed(1) + '%');
     }
@@ -4413,7 +4432,9 @@ function initDockLens() {
     const el = ev.target.closest('.tab, .fab');
     if (!el) return;
     evX = ev.clientX; evY = ev.clientY;
+    target = el;                  // 按下去就认这一格，松手不会跳回原来那格
     place(el, { press: true });
+    lit(el);
     lens.classList.add('press');
     if (el.classList.contains('fab')) el.classList.add('pressed');
   }, { passive: true });
@@ -4523,7 +4544,11 @@ function init() {
   });
 
   const gm = $('#goMe');
-  if (gm) gm.onclick = () => switchView(S.view === 'me' ? 'today' : 'me');
+  if (gm) gm.onclick = () => {
+    // 已经在设置里、且停在某个子页（身体数据 / 饮食目标 …）→ 先退回设置首页
+    if (S.view === 'me' && mePage) { mePage = null; renderMe(); return; }
+    switchView(S.view === 'me' ? 'today' : 'me');
+  };
   const refreshBtn = $('#cloudRefresh');
   // 手动刷新时，如果还是旧数据，后台再自动补拉几次（GitHub Pages 发布要几十秒）
   let retryLeft = 0, retryBusy = false;
