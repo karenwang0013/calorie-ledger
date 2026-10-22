@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.12', d: '10-23', items: [
+    '修：改「参考量」时**不再**自动改热量那几格 —— 之前它会按旧的每 100 克反算，把包装上的千焦数覆盖成"千卡数"（填 25 克就冒出 532 千卡），这是错的。现在只更新换算预览，你按包装填什么就是什么',
+    '实测：12.5 克/266 千卡 → 切千焦 1113 → 改 25 克（热量保持不动）→ 填 532 千焦 → 预览「这 25 克 = 532 千焦 → 每 100 克 = 509 千卡」→ 保存后外面 25 克 / 127 千卡',
+  ]},
   { v: 'v7.11', d: '10-23', items: [
     '加固：保存营养编辑后，除了整块重绘，还会逐项直接改写「克数框 / 每 100 克那行 / 该项热量 / 合计」，三重保证外面的数值一定跟着变',
   ]},
@@ -1803,7 +1807,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.11';
+const APP_VERSION = 'v7.12';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5490,20 +5494,14 @@ function init() {
   wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
   const ut = $('#nutUnitTog');
   if (ut) ut.onclick = ev => { ev.preventDefault(); setNutUnit(nutUnit === 'kJ' ? 'kcal' : 'kJ', true); };
+  // 改「参考量」时**不许**去改热量那几格（之前会自动按每 100 克反算，
+  // 结果把包装上的千焦数覆盖成"千卡数"，填 25 克却变成 532 千卡）。
+  // 只更新下面的换算预览，用户按包装填什么就是什么。
   const refEl = $('#nutRef');
-  if (refEl) refEl.oninput = () => {
-    const ref = Number(refEl.value) || 0;
-    const share = ref / 100;                       // 按"每 100 克"的原始值等比还原
-    if (ref > 0 && nutBase.k) {
-      $('#nutKcal').value = nutUnit === 'kJ' ? Math.round(nutBase.k * share * KJ_PER_KCAL) : Math.round(nutBase.k * share);
-      $('#nutP').value = +(nutBase.p * share).toFixed(1);
-      $('#nutC').value = +(nutBase.c * share).toFixed(1);
-      $('#nutF').value = +(nutBase.f * share).toFixed(1);
-    }
-    paintNutPreview();
-  };
+  if (refEl) refEl.oninput = paintNutPreview;
   const kEl = $('#nutKcal');
   if (kEl) kEl.oninput = paintNutPreview;
+  ['#nutP', '#nutC', '#nutF'].forEach(sel => { const el = $(sel); if (el) el.oninput = paintNutPreview; });
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');
