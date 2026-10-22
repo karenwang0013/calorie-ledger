@@ -639,7 +639,7 @@ body.add-open .sheet-mask.on {
   font-size: 13px;
 }
 .mitem .n { flex: 1; min-width: 0; overflow: hidden; }
-.mitem .n .sub { display: block; font-size: 11px; color: var(--muted2); margin-top: 2px; overflow-wrap: anywhere; }
+.mitem .n .sub { display: block; font-size: 12px; font-weight: 600; letter-spacing: .2px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
 .mitem .k { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12.5px; }
 .mthumb {
   width: 40px; height: 40px; border-radius: 11px;

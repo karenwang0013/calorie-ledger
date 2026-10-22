@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.39', d: '10-22', items: [
+    '改：营养素那行间距收窄到适中 —— 「蛋6 · 碳33 · 脂4」（标签紧贴数字，只在中间留间隔号），不再是「蛋 6 · 碳 33」那么散',
+    '改：外面的记录列表同一行也照这个改（12px / 加粗 / 颜色提亮一档），和点开后的详情一致',
+  ]},
   { v: 'v6.38', d: '10-22', items: [
     '改：记录详情里「蛋 / 碳 / 脂」这三个数之间拉开距离（改成「蛋 6 · 碳 33 · 脂 4」），不再挤在斜杠两边',
     '改：这一行和上面的克重都加粗（12.5px / 600），看得更清楚',
@@ -1502,7 +1506,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.38';
+const APP_VERSION = 'v6.39';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1783,7 +1787,7 @@ function renderMeals() {
         ${thumbOf(l)}
         <div class="n">${nameLine(l.name, `data-pen="${l.id}"`)}
           <span class="sub">${l.grams ? Math.round(l.grams) + 'g' : ''}${
-            l.p ? ' · 蛋' + Math.round(l.p) + '/碳' + Math.round(l.c) + '/脂' + Math.round(l.f) : ''}</span>
+            l.p ? ' · 蛋' + Math.round(l.p) + ' · 碳' + Math.round(l.c) + ' · 脂' + Math.round(l.f) : ''}</span>
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
         <span class="chev">›</span>
@@ -1817,7 +1821,7 @@ function renderMeals() {
       <div class="mitem ghead" data-group="${esc(g.key)}">
         ${thumbOf(g.logs[0])}
         <div class="n">${nameLine(g.name || '未命名', `data-pen-g="${esc(g.key)}"`)}
-          <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)}/碳${Math.round(c)}/脂${Math.round(f)}</span>
+          <span class="sub">${g.logs.length} 项 · 蛋${Math.round(p)} · 碳${Math.round(c)} · 脂${Math.round(f)}</span>
         </div>
         <div class="k">${kcal}</div>
         <span class="chev">›</span>
@@ -2550,7 +2554,7 @@ function openDetail(logs, isGroup, title) {
   if (tip) tip.hidden = !noShot;
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
-      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋 ${Math.round(l.p)} · 碳 ${Math.round(l.c)} · 脂 ${Math.round(l.f)}</span></div>
+      <div class="n">${esc(l.name)}<span class="sub">${Math.round(l.grams)}g · 蛋${Math.round(l.p)} · 碳${Math.round(l.c)} · 脂${Math.round(l.f)}</span></div>
       <div class="k">${Math.round(l.kcal)}</div>
       <button class="del" data-gdel="${l.id}">×</button>
     </div>`).join('');
