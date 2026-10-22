@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.86', d: '10-22', items: [
+    '修：上传报 400「文件名已存在」—— 遇到已存在会自动取 sha 改成覆盖更新（PUT）',
+  ]},
   { v: 'v4.85', d: '10-22', items: [
     '改：体重趋势改成原生横向分页（前/当前/后三页），左右滑是系统惯性滚动 + 自动吸附，和上下翻页同样丝滑，且不会拖出卡片',
   ]},
@@ -1226,7 +1229,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.85';
+const APP_VERSION = 'v4.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

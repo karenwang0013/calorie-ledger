@@ -786,11 +786,17 @@ async function cloudPush() {
     if (cloudSha) body.sha = cloudSha;
     let method = cloudSha ? 'PUT' : 'POST';
     let res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
-    if (res.status === 409 || res.status === 422) {
-      // sha 过期：重新取一次再传
-      const cur = await fetchT(cloudUrl(), { headers: cloudHeaders() });
-      if (cur.ok) { const j = await cur.json(); cloudSha = j.sha; body.sha = j.sha; method = 'PUT'; }
-      else { cloudSha = null; method = 'POST'; delete body.sha; }
+    // 400/409/422 都可能是「文件已存在 / sha 过期」：取最新 sha 后改用 PUT 覆盖
+    if (res.status === 400 || res.status === 409 || res.status === 422) {
+      let ok = false;
+      try {
+        const cur = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } }, 10000, 2);
+        if (cur.ok) {
+          const j = await cur.json();
+          if (j && j.sha) { cloudSha = j.sha; body.sha = j.sha; method = 'PUT'; ok = true; }
+        }
+      } catch (e) {}
+      if (!ok) { cloudSha = null; method = 'POST'; delete body.sha; }
       res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
     }
     if (!res.ok) {
@@ -827,7 +833,7 @@ async function cloudPull(force) {
     let res = null;
     try {
       const r0 = await fetchT('data.json?t=' + Date.now(), { cache: 'no-store' }, 8000);
-      if (r0 && r0.ok) { const j0 = await r0.json(); if (j0 && j0.data) { cloudSha = null; /* 同源只读 */ const remote0 = j0; const local0 = Store.load(); const rAt0 = String(remote0.updatedAt || ''); const lAt0 = String((local0.settings && local0.settings.updatedAt) || ''); if (force || (rAt0 && rAt0 > lAt0)) { const rd0 = remote0.data || {}; const lb0 = local0.body || {}, lw0 = local0.weights || {}; Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) }); local0.body = Object.assign({}, lb0, rd0.body || {}); local0.weights = Object.assign({}, lw0, rd0.weights || {}); local0.settings.updatedAt = rAt0; localStorage.setItem(Store.KEY, JSON.stringify(local0)); setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })); cloudPulling = false; return 'pulled'; } cloudPulling = false; return 'behind'; } }
+      if (r0 && r0.ok) { const j0 = await r0.json(); if (j0 && j0.data) { const remote0 = j0; const local0 = Store.load(); const rAt0 = String(remote0.updatedAt || ''); const lAt0 = String((local0.settings && local0.settings.updatedAt) || ''); if (force || (rAt0 && rAt0 > lAt0)) { const rd0 = remote0.data || {}; const lb0 = local0.body || {}, lw0 = local0.weights || {}; Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) }); local0.body = Object.assign({}, lb0, rd0.body || {}); local0.weights = Object.assign({}, lw0, rd0.weights || {}); local0.settings.updatedAt = rAt0; localStorage.setItem(Store.KEY, JSON.stringify(local0)); setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })); cloudPulling = false; return 'pulled'; } cloudPulling = false; return 'behind'; } }
     } catch (e) {}
     res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } });
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
