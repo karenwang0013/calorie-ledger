@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.74', d: '10-23', items: [
+    '修：进趋势页、进营养目标页时，没点按钮也会自己从玻璃淡成实色 —— 现在只有真的点过才播这段过渡；没碰过就一直是实色（切页、重画、刚插入都不许自己淡一遍）',
+    '改：模式下面那行小字改成具体数值，例如「建议缺口 300 千卡 / 天，即比消耗少吃 300 千卡；蛋白 2.0 g/kg、脂肪约 25% 热量」，不再重复模式名',
+  ]},
   { v: 'v6.73', d: '10-23', items: [
     '修：卡在"全是破折号"的界面出不来（不关掉重开就一直那样）—— 这是更新正好赶在部署中间，某个 js 没下载完整',
     '现在会自动重载一次；还不行就弹一条「页面没加载完整 + 重新加载」的提示条，不用再杀 App',
@@ -1649,7 +1653,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.73';
+const APP_VERSION = 'v6.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2152,14 +2156,29 @@ function initSegLens(wrap) {
     if (remember) segLensMem[key] = g;
     apply(g);
   };
-  const settleSeg = (delay) => {
-    lens.classList.remove('settled');
+  // instant = 不播动画，直接是实色（用于"你根本没点过它"的场合：切页、重画、首次定位）
+  let glassUntil = 0;                  // 正在"玻璃→实色"过渡中，到这个时刻为止
+  const settleSeg = (delay, instant) => {
     clearTimeout(lens.__settleT);
-    lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
+    if (instant) {
+      if (Date.now() < glassUntil) return;                 // 正在淡入 → 让它走完，不插队
+      lens.classList.remove('fadein', 'fadeout');
+      lens.classList.add('settled');                       // 不过渡：直接就是实色
+      return;
+    }
+    // 有意的操作：先关掉实色（fadeout 的快节奏），再等 delay 后用 fadein 慢慢亮回来
+    lens.classList.remove('settled');
+    glassUntil = Date.now() + delay + 2400;
+    lens.__settleT = setTimeout(() => {
+      lens.classList.add('fadein');
+      void lens.offsetWidth;                               // 先让 2.2s 的过渡生效，再改 opacity
+      lens.classList.add('settled');
+      setTimeout(() => lens.classList.remove('fadein'), 2400);
+    }, delay);
   };
   const sync = () => {
     lens.classList.remove('press');
-    if (!pressedEl) settleSeg(260);
+    if (!pressedEl) settleSeg(0, true);   // 切页/重画时直接就是实色，不播"玻璃→实色" 
     const on = wrap.querySelector('button.on');
     const g = on && geoOf(on);
     if (!g) return;
@@ -2190,7 +2209,9 @@ function initSegLens(wrap) {
     const b = ev.target.closest('button');
     if (!b) return;
     pressedEl = b;
-    lens.classList.remove('settled');   // 按住/滑动中是玻璃
+    lens.classList.add('fadeout');      // 按住/滑动中是玻璃（0.25 秒，跟手）
+    lens.classList.remove('settled', 'fadein');
+    setTimeout(() => lens.classList.remove('fadeout'), 320);
     place(b, false);                    // 按下去就直接滑到手指这一格（不记账）
   }, { passive: true });
 
@@ -2995,6 +3016,18 @@ const DIET_MODES = {
 };
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
 
+// 目标模式下面那行「建议」：只写具体数值，不重复模式名（上面的卡牌已经说清了）
+function modeHintHTML(k) {
+  const mm = DIET_MODES[k] || DIET_MODES.maintain;
+  const d = Number(mm.deficit) || 0;
+  const head = d > 0 ? '建议缺口 <b>' + d + ' 千卡 / 天</b>'
+             : d < 0 ? '建议盈余 <b>' + (-d) + ' 千卡 / 天</b>'
+             : '建议<b>不设缺口</b>（收支平衡）';
+  const tail = d > 0 ? '，即比消耗少吃 ' + d + ' 千卡'
+             : d < 0 ? '，即比消耗多吃 ' + (-d) + ' 千卡' : '';
+  return head + tail + '；蛋白 <b>' + mm.p.toFixed(1) + ' g/kg</b>、脂肪约 <b>' + Math.round(mm.fat * 100) + '%</b> 热量';
+}
+
 // 缺口/盈余合理性提示：只提醒，绝不改用户填的数
 function deficitAdvice(exp, deficit, bmr) {
   const d = Number(deficit) || 0;
@@ -3725,11 +3758,7 @@ function renderMe() {
               <b>${m.n}</b>
             </button>`).join('')}
         </div>
-        <div class="hint" style="margin:10px 0 16px">建议：<b>${(() => {
-          const k = setting('diet_mode', 'maintain');
-          const mm = DIET_MODES[k] || DIET_MODES.maintain;
-          return mm.deficit > 0 ? '缺口 ' + mm.deficit : (mm.deficit < 0 ? '盈余 ' + (-mm.deficit) : '平衡');
-        })()}</b></div>
+        <div class="hint" id="modeHint" style="margin:10px 0 16px">${modeHintHTML(setting('diet_mode', 'maintain'))}</div>
         <div class="field">
           <label>目标缺口 / 盈余（千卡 / 天）</label>
           <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
@@ -4042,6 +4071,8 @@ function wireMe() {
     // 只切这一排的选中状态 + 刷新数字，绝不整页重绘：
     // 整页重绘会把这一排连滑块一起重建，滑块就会"跳"（A5 那条规则说的就是这个）
     $$('#dietModes button').forEach(x => x.classList.toggle('on', x.dataset.mode === k));
+    const mh = $('#modeHint');                       // 原地改这行建议，不重画整排（重画会让滑块跳）
+    if (mh) mh.innerHTML = modeHintHTML(k);
     await loadDay();
     paintNutriValues();
   });
@@ -4962,7 +4993,12 @@ function initDockLens() {
   const settle = (delay) => {
     lens.classList.remove('settled');
     clearTimeout(lens.__settleT);
-    lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
+    lens.__settleT = setTimeout(() => {
+      lens.classList.add('fadein');
+      void lens.offsetWidth;
+      lens.classList.add('settled');
+      setTimeout(() => lens.classList.remove('fadein'), 2400);
+    }, delay);
   };
   const go = el => { if (!el) return; target = el; place(el); lit(el); settle(520); };
   const reflow = () => { lens.classList.remove('press'); place(target || fabEl); settle(520); };
@@ -4973,7 +5009,9 @@ function initDockLens() {
     if (!el) return;
     evX = ev.clientX; evY = ev.clientY;
     target = el;                  // 按下去就认这一格，松手不会跳回原来那格
-    lens.classList.remove('settled');   // 按住时是玻璃，不是实色
+    lens.classList.add('fadeout');      // 按住时是玻璃，不是实色（0.25 秒回玻璃）
+    lens.classList.remove('settled', 'fadein');
+    setTimeout(() => lens.classList.remove('fadeout'), 320);
     place(el, { press: true });
     lit(el);
     lens.classList.add('press');
