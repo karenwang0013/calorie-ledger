@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.22', d: '10-22', items: [
+    '修：趋势页 7/30/90、记录卡片三个选项、饮食目标三格，点的时候滑块会"跳一下" —— 原因是点完那一块会整块重画，新滑块直接出现在新位置，没有滑的过程',
+    '现在：记住滑块上一次停在哪，重画时先瞬移到老位置再滑过去，和 Dock 那颗一样是滑动而不是闪现',
+  ]},
   { v: 'v6.21', d: '10-22', items: [
     '改：饮食目标三格的字改成居中（之前靠左，不符合「文字在格子里居中」的原则）',
     '改：三格高度收矮一点（上下内边距 10 → 9，行距也收紧）',
@@ -1434,7 +1438,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.21';
+const APP_VERSION = 'v6.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1867,26 +1871,54 @@ function closeAdd() {
 }
 
 /* 记录卡片里那三个选项（拍照/搜索/描述）：和 Dock 一样的玻璃滑块 */
+const segLensMem = {};   // 记住每一条滑块最后停在哪，DOM 被重建时能接着滑，不会"跳一下"
 function initSegLens(wrap) {
   if (!wrap || wrap.dataset.lens) return;
   wrap.dataset.lens = '1';
+  const key = wrap.id || wrap.className || 'seg';
   const lens = document.createElement('span');
   lens.className = 'seg-lens';
   wrap.prepend(lens);
 
-  const place = (el, press) => {
-    if (!el) return;
+  const geoOf = el => {
     const wr = wrap.getBoundingClientRect(), r = el.getBoundingClientRect();
-    if (!r.width) return;
-    lens.style.width = Math.round(r.width - 2) + 'px';
-    lens.style.height = Math.round(r.height - 2) + 'px';
-    lens.style.transform =
-      'translate3d(' + Math.round(r.left - wr.left + 1) + 'px,' + Math.round(r.top - wr.top + 1) + 'px,0)' +
-      (press ? ' scale(1.03,.94)' : '');
+    if (!r.width) return null;
+    return {
+      x: Math.round(r.left - wr.left + 1),
+      y: Math.round(r.top - wr.top + 1),
+      w: Math.round(r.width - 2),
+      h: Math.round(r.height - 2),
+    };
+  };
+  const apply = (g, press) => {
+    lens.style.width = g.w + 'px';
+    lens.style.height = g.h + 'px';
+    lens.style.transform = 'translate3d(' + g.x + 'px,' + g.y + 'px,0)' + (press ? ' scale(1.03,.94)' : '');
     lens.classList.add('on');
   };
-  const sync = () => { const b = wrap.querySelector('button.on'); place(b); lens.classList.remove('press'); };
+  // 这条滑块之前停在别处（DOM 刚被重建）→ 先瞬移到老位置，再滑过去
+  const mem = segLensMem[key];
+  if (mem) {
+    lens.style.transition = 'none';
+    apply(mem);
+    void lens.offsetWidth;
+    lens.style.transition = '';
+  }
+  const place = (el, press) => {
+    const g = el && geoOf(el);
+    if (!g) return;
+    segLensMem[key] = g;
+    apply(g, press);
+  };
+  const sync = () => { lens.classList.remove('press'); place(wrap.querySelector('button.on')); };
   window.__addTabsLens = { sync };
+
+  // 同一帧内多次触发只做一次，避免连点/重绘把滑块来回拽
+  let raf = 0;
+  const syncSoon = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; sync(); });
+  };
 
   wrap.addEventListener('pointerdown', ev => {
     const b = ev.target.closest('button');
@@ -1897,11 +1929,11 @@ function initSegLens(wrap) {
   window.addEventListener('pointerup', () => {
     if (!lens.classList.contains('press')) return;
     lens.classList.remove('press');
-    setTimeout(sync, 10);
+    syncSoon();
   }, { passive: true });
 
   // 只要哪一格变成选中就跟着走（不依赖各页自己的点击处理）
-  const mo = new MutationObserver(() => sync());
+  const mo = new MutationObserver(syncSoon);
   wrap.querySelectorAll('button').forEach(b => mo.observe(b, { attributes: true, attributeFilter: ['class'] }));
 
   requestAnimationFrame(() => requestAnimationFrame(sync));
