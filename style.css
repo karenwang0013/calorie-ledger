@@ -985,7 +985,7 @@ body.add-open .sheet-mask.on {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 12px 16px 16px;   /* 标题统一往上收一点 */
+  padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */
 }
 .card h3 {
   margin: 0 0 10px;

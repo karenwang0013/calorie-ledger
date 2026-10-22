@@ -14,6 +14,30 @@ const vApp = (app.match(/const APP_VERSION = '([^']+)'/) || [])[1];
 const vCache = (sw.match(/const CACHE = 'ledger-v(\d+)'/) || [])[1];
 const vHtml = (html.match(/app\.js\?v=(\d+)/) || [])[1];
 
+// 取某个选择器那条规则的声明体（第一处匹配）
+function ruleBody(sel) {
+  const i = css.indexOf(sel + ' {');
+  if (i < 0) return '';
+  const j = css.indexOf('}', i);
+  return css.slice(i, j);
+}
+// padding 简写：上下是否相等（把这个选择器的**所有**规则都扫一遍）
+function padSymmetric(sel) {
+  const re = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{', 'g');
+  let m;
+  while ((m = re.exec(css))) {
+    const j = css.indexOf('}', m.index);
+    const body = css.slice(m.index, j);
+    const pm = body.match(/padding:\s*([^;]+);/);
+    if (!pm) continue;
+    const parts = pm[1].replace(/\/\*[\s\S]*?\*\//g, '').trim().split(/\s+/);
+    if (parts.length < 3) continue;                 // 1~2 值本来就上下相等
+    if (parts.some(v => v.includes('var('))) continue;
+    if (parts[0] !== parts[2]) return false;        // 上下不等 → 不合格
+  }
+  return true;
+}
+
 const checks = [
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
   ['顶栏必须是 fixed', /\.topbar \{\n  position: fixed;/.test(css)],
@@ -35,6 +59,9 @@ const checks = [
   ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
   ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],
+  ['卡片上下内边距必须相等（.card 不许 12/16 这种不等距）', padSymmetric('.card')],
+  ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', Math\.round\(\(visH - h\) \/ 2\)/.test(app)],
+  ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein::after/.test(css) && /\.seg-lens::after \{[\s\S]{0,200}?transition: none;/.test(css)],
   ['Dock 三格等宽居中（加号永远在正中那格，左右各一格）', /grid-template-columns: 1fr 1fr 1fr/.test(css)],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],
