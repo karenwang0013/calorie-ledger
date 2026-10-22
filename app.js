@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.24', d: '10-22', items: [
+    '修：饮食目标切换模式时滑块还乱跳 —— 根子是"点一下整页重画"，滑块跟着整页一起被重建',
+    '现在改成只切这一排的选中状态、再刷新下面那几个数字（缺口/可吃/蛋白），页面不重画，滑块就只是滑过去',
+    '自检脚本加了一条：切模式不许整页重绘，谁改回去就发不了版',
+  ]},
   { v: 'v6.23', d: '10-22', items: [
     '修：三处滑块来回切换时会左右晃一下 —— 原因是松手瞬间先弹回原来的格子，等切换生效后再滑过去，看起来就是"去—回—去"',
     '现在：松手不弹回，等切换真正生效再落位；一遍滑到位，和 Dock 那颗一样',
@@ -1443,7 +1448,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.23';
+const APP_VERSION = 'v6.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3737,9 +3742,30 @@ function wireMe() {
     await api('/api/profile', { protein_per_kg: m.p });
     const dir = m.deficit > 0 ? `缺口 ${m.deficit}` : (m.deficit < 0 ? `盈余 ${-m.deficit}` : '不缺口不盈余');
     toast(`已切到「${m.n}」：${dir}，蛋白质 ${m.p} g/kg`, 3200);
+    // 只切这一排的选中状态 + 刷新数字，绝不整页重绘：
+    // 整页重绘会把这一排连滑块一起重建，滑块就会"跳"（A5 那条规则说的就是这个）
+    $$('#dietModes button').forEach(x => x.classList.toggle('on', x.dataset.mode === k));
     await loadDay();
-    renderMe();
+    paintNutriValues();
   });
+
+  function paintNutriValues() {
+    const d = S.day;
+    if (!d || !d.targets) return;
+    const set = (sel, v) => { const el = $(sel); if (el && document.activeElement !== el) el.value = v; };
+    set('#nDef', -d.targets.deficit);
+    set('#nKcal', d.targets.kcal_budget);
+    set('#nProt', d.targets.protein_g);
+    set('#nCarb', d.targets.carb_g);
+    set('#nFat', d.targets.fat_g);
+    const hint = $('#nKcalHint');
+    if (hint) {
+      const def = -Number(($('#nDef') || {}).value || 0);
+      const exp = d.expenditure || 0;
+      const tail = hint.querySelector('span') ? hint.querySelector('span').outerHTML : '';
+      hint.innerHTML = `= 全天消耗 ${exp} ${def >= 0 ? '− 缺口 ' + Math.abs(Math.round(def)) : '+ 盈余 ' + Math.abs(Math.round(def))}<br>${tail}`;
+    }
+  }
 
   const sn = $('#saveNutri');
   if (sn) sn.onclick = async () => {
