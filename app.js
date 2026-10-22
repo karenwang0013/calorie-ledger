@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.58', d: '10-22', items: [
+    '改：趋势页 7 天 / 30 天 / 90 天 那张卡做成"胶囊"—— 左右两端整个是圆的（像 Dock），整体压扁一点（58 → 47px）',
+    '改：里面的按钮和选中那颗滑块形状跟外框一致，也全是圆头',
+    '改：同步失败的提示改成「已自动重试，不影响本机记录」；Gitee 限流单独给一句「会自动重试，不用管」，不再像报错',
+  ]},
   { v: 'v6.57', d: '10-22', items: [
     '改：7 天 / 30 天 / 90 天 重新独立成一张卡（和别的卡同宽、同圆角、同底色），夹在「实测每日消耗」和「每日热量平衡」中间',
     '上下留白与卡片间距一致（都是 12px），不贴顶也不显得挤',
@@ -3185,13 +3190,14 @@ function logNotify(kind, title, body, ok = true) {
 function friendlyErr(m) {
   const t = String(m || '');
   if (/Load failed|Failed to fetch|NetworkError|offline|The Internet connection appears to be offline/i.test(t)) {
-    return 'E01 连不上云端（' + (t.length > 40 ? t.slice(0, 40) : t) + '）· 30 秒后自动重试';
+    return 'E01 连不上云端 · 已自动重试，不影响本机记录（稍后自己会再同步）';
   }
   if (/AbortError|timeout|超时/i.test(t)) return 'E02 云端响应超时 · 网络太慢';
   if (/401|Bad credentials|Requires authentication|access_token/i.test(t)) return 'E03 令牌无效或没填 · 去 设置 → 数据同步 填 Gitee 令牌';
   if (/403|429/.test(t)) return 'E04 被 Gitee 限流 · 等几分钟再点「数据同步」（缓存还在，不影响看数据）';
   if (/404/.test(t)) return 'E05 云端文件不存在 · 可能被删了';
   if (/409|422/.test(t)) return 'E06 云端版本冲突 · 稍后会自动重试';
+  if (/403|rate limit|limit exceeded|限流/i.test(t)) return 'E07 Gitee 限流（读太频繁）· 会自动重试，不影响本机记录';
   if (/JSON|Unexpected token|parse/i.test(t)) return 'E07 数据格式不对 · 文件内容被改坏了';
   if (/quota|storage|space/i.test(t)) return 'E08 手机存储写不进去了 · 先导出备份';
   if (/E10/.test(t)) return t;   // 数值异常，原样显示

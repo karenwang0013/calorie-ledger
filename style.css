@@ -1028,13 +1028,14 @@ body.add-open .sheet-mask.on {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
   background: var(--card); border: 1px solid var(--line);
-  border-radius: 18px; margin: 0 18px 12px; padding: 6px;
-  --seg-btn-r: 12px;
+  /* 左右两端做成整个圆（像 Dock 的胶囊），整体扁一点 */
+  border-radius: 999px; margin: 0 18px 12px; padding: 4px;
+  --seg-btn-r: 999px;
 }
 .seg button {
   position: relative; z-index: 1;
-  padding: 11px 6px; border-radius: var(--seg-btn-r);
-  font-size: 16px; font-weight: 700; color: var(--muted2); background: transparent;
+  padding: 8px 6px; border-radius: var(--seg-btn-r);
+  font-size: 15.5px; font-weight: 700; color: var(--muted2); background: transparent;
   transition: color .3s ease;
 }
 .seg button.on { background: transparent; color: var(--lime); box-shadow: none; }
