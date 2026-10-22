@@ -198,4 +198,6 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 | 图上「最高 / 最低」 | `lineChart()` 内 `<text>` | 9px，`var(--muted)`，原位置在图的**左上 / 左中** |
 
 v5.08 起：体脂秤那行改成 12.5px / 600 / `var(--text)`（和上一行一致）；最高最低挪到右上角。
+v5.10 起：最高/最低上下两行贴在卡片右上角（`.wchart .wminmax`，10.5px / `var(--muted)`）。
+v5.11 起：所选那天那行放大到 **13.5px**（仍 600 / 纯白）；体脂秤行去掉日期和「体脂秤：」前缀，只留「体脂率 x% · BMI y」，字号保持 12.5px / 600 / 纯白。
 要退回 v5.07 的尺寸：`git checkout v5.07-ok -- style.css app.js`。

@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.11', d: '10-22', items: [
+    '改：体重趋势图下面那行不再重复日期和「体脂秤：」，只写数值 —— 「体脂率 16.6% · BMI 21.2」（那天没有体脂秤记录、退回的是另一天时，才在前面带上日期）',
+    '改：图上所选那天那行（「10-13 · 66.2 kg」）字号再放大一点，13.5px',
+  ]},
   { v: 'v5.10', d: '10-22', items: [
     '改：最高 / 最低改成上下两行摆（最高在上、最低在下），仍然贴在卡片右上角，不排成左右一行',
   ]},
@@ -1316,7 +1320,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.10';
+const APP_VERSION = 'v5.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2333,6 +2337,7 @@ function renderTrends() {
 
   // 体重图
   const weights = t.weights || [];
+  const selW = trSelDate ? weights.find(x => x.date === trSelDate) : null;
   const wKgs = weights.map(x => x.kg);
   const wMaxTxt = wKgs.length ? Math.max(...wKgs).toFixed(1) : '—';
   const wMinTxt = wKgs.length ? Math.min(...wKgs).toFixed(1) : '—';
@@ -2343,26 +2348,25 @@ function renderTrends() {
       <div class="wminmax"><span>最高 ${wMaxTxt}</span><span>最低 ${wMinTxt}</span></div>
       <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate, { range: false })}</div>
       <div class="legend wlegend">
-        ${(() => {
-          const sel = trSelDate ? weights.find(x => x.date === trSelDate) : null;
-          return sel
-            ? `<span class="onsel"><i style="background:#6bff9a"></i>${sel.date.slice(5)} · ${sel.kg} kg</span>`
-            : `<span><i style="background:var(--blue)"></i>体重 kg</span>`;
-        })()}
+        ${selW
+          ? `<span class="onsel"><i style="background:#6bff9a"></i>${selW.date.slice(5)} · ${selW.kg} kg</span>`
+          : `<span><i style="background:var(--blue)"></i>体重 kg</span>`}
         <span style="margin-left:auto">${weights.length} 次记录</span>
       </div>
       ${(() => {
         const body = (S.trend && S.trend.body) || {};
         const datesB = Object.keys(body).sort();
         const latestB = datesB.length ? datesB[datesB.length - 1] : null;
-        // 图上点了哪天，体脂秤那行就跟哪天走；那天没有体脂秤记录就退回最新一条（并写明是另一天）
+        // 图上点了哪天，体脂秤那行就跟哪天走；那天没有体脂秤记录就退回最新一条
         const pickD = (trSelDate && body[trSelDate]) ? trSelDate : latestB;
         const b = pickD ? body[pickD] : null;
         if (!b || (!b.bf && !b.bmi)) return '';
         const bits = [];
         if (b.bf) bits.push('体脂率 ' + b.bf + '%');
         if (b.bmi) bits.push('BMI ' + b.bmi);
-        return `<div class="hint wbody">${pickD.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
+        // 上面那行已经有日期和体重时，这行就不重复写日期，只留数值
+        const needDate = !selW || pickD !== selW.date;
+        return `<div class="hint wbody">${needDate ? pickD.slice(5) + ' · ' : ''}${bits.join(' · ')}</div>`;
       })()}
     </div>`;
   } else {

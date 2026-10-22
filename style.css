@@ -934,7 +934,7 @@ body.nlog-open .sheet-mask.on {
 .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 4px; }
 
 /* 体重趋势下方那两行：点选那天的数值 + 体脂秤，字略大、白色，看得清 */
-.wlegend { font-size: 12.5px; align-items: center; }
+.wlegend { font-size: 13.5px; align-items: center; }
 .wlegend > span:first-child { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .wlegend > span:first-child i { width: 8px; height: 8px; border-radius: 50%; }
 .wlegend > span:last-child { color: var(--muted); }
