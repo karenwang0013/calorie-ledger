@@ -870,40 +870,38 @@ body.add-open .sheet-mask.on {
    - 只有变形和高光，不做折射（iPhone 的 WebKit 不支持 backdrop 滤镜带 url）
    - 图标/加号始终在它上面（.tab/.fab 有 z-index: 1）
    ================================================================== */
+/* 外层只负责"位置"：translate 一条过渡；压扁/回弹交给里面的 .lens-body。
+   分成两层是因为：轻触时"位置"和"缩放"如果写在同一个 transform 上，
+   第二次写会把还没走完的滑动过渡打断 → 看起来抖一下。 */
 .dock-lens {
   position: absolute; left: 0; top: 0;
   width: var(--lens-w, 84px); height: var(--lens-h, 46px);
-  /* 形状 = Dock 的缩小版：一整格宽的胶囊，圆角取高度的一半 */
   border-radius: var(--lens-r, 36px);
   z-index: 0; pointer-events: none; opacity: 0;
-  transform: translate3d(var(--lens-x, 0px), var(--lens-y, 0px), 0) scale(var(--sx, 1), var(--sy, 1));
-  transition:
-    transform .62s cubic-bezier(.33, 1.06, .32, 1),
-    opacity .3s ease,
-    border-radius .4s ease;
+  transform: translate3d(var(--lens-x, 0px), var(--lens-y, 0px), 0);
+  transition: transform .62s cubic-bezier(.33, 1.06, .32, 1), opacity .3s ease;
   will-change: transform;
+}
+.dock-lens.on { opacity: 1; }
+.dock-lens.noanim { transition: none !important; }
+.lens-body {
+  position: absolute; inset: 0; border-radius: inherit;
   background:
     radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.26), rgba(255,255,255,.085) 55%, rgba(255,255,255,.03) 100%);
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.16),
     0 3px 12px rgba(0,0,0,.20);
-  /* 这里故意不用 backdrop-filter：Dock 底色本来是不透明的，模糊没东西可糊，
-     但在 iOS 上会让"移动中的玻璃"每帧重算一次模糊，整页发卡（实测卡顿来源） */
+  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease;
+  will-change: transform;
 }
-.dock-lens.on { opacity: 1; }
-.dock-lens.noanim { transition: none !important; }   /* 打开 App 时不播放入场动画 */
-/* 按下：横向撑开、纵向压扁，松手用同一条弹簧曲线弹回去 */
-.dock-lens.press {
-  --sx: 1.055; --sy: .925;
+/* 按下：横向撑开、纵向压扁，松手弹回去（只动这一层，不影响位置那层） */
+.dock-lens.press .lens-body {
+  transform: scale(1.055, .925);
   border-radius: calc(var(--lens-r, 36px) + 2px);
-  transition:
-    transform .24s cubic-bezier(.32,.9,.28,1),
-    opacity .3s ease,
-    border-radius .24s ease;
 }
 /* 玻璃边缘：一圈亮边 + 很淡的彩虹色散 */
-.dock-lens::before {
+.lens-body::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   padding: 1.2px;
   background: conic-gradient(from 200deg,
@@ -916,13 +914,12 @@ body.add-open .sheet-mask.on {
   opacity: .10;
 }
 /* 手指按下的位置会亮一团光（JS 写 --hx/--hy） */
-.dock-lens .hl {
+.hl {
   position: absolute; inset: 0; border-radius: inherit;
   background: radial-gradient(56px 56px at var(--hx, 50%) var(--hy, 12%), rgba(255,255,255,.26), rgba(255,255,255,.05) 60%, transparent 72%);
   opacity: 0; transition: opacity .18s ease;
 }
 .dock-lens.press .hl { opacity: 1; }
-
 
 /* 其它可点的东西：按下时轻微"软一下"，不是死板的透明度变化 */
 .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch, .topbtn, .arrow, .x, #addTabs button, .pg {
