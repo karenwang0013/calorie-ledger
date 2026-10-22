@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.89', d: '10-22', items: [
+    '修：「体重数据已更新」只显示体脂 —— 现在把体重/体脂/BMI/去脂体重四项都列出来',
+    '修：镜像任务可能写入空文件 —— 现在校验非空才覆盖（避免读到空的 body.json）',
+  ]},
   { v: 'v4.88', d: '10-22', items: [
     '改：体重趋势滑到头时改成柔和回弹（平滑滑回，不再硬顶）；翻页时加 150ms 淡出过渡，不再"啪"地一变',
   ]},
@@ -1237,7 +1241,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.88';
+const APP_VERSION = 'v4.89';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4915,11 +4919,18 @@ function init() {
       const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
       updToast(what, j.d, SCALE_NAME, 2600);
       try {
-        const lb = Store.load().body[String(j.d || '').slice(0, 10)] || {};
+        // 从已保存的数据里取（四项都带上）
+        const st = Store.load();
+        const all = Object.keys(st.body || {}).concat(Object.keys(st.weights || {})).sort();
+        const dd = String(j.d || '').slice(0, 10) || all[all.length - 1];
+        const b2 = (st.body || {})[dd] || {};
+        const w2 = (st.weights || {})[dd];
         const bits = [];
-        if (j.w) bits.push('体重 ' + j.w + ' kg');
-        if (lb.bf) bits.push('体脂 ' + lb.bf + '%');
-        logNotify('body', '体重数据已更新', bits.join(' · ') + (j._at ? ' · 采集 ' + j._at : ''));
+        if (w2) bits.push('体重 ' + w2 + ' kg');
+        if (b2.bf) bits.push('体脂 ' + b2.bf + '%');
+        if (b2.bmi) bits.push('BMI ' + b2.bmi);
+        if (b2.ffm) bits.push('去脂 ' + b2.ffm + ' kg');
+        logNotify('body', '体重数据已更新', (bits.length ? bits.join(' · ') : '（四项都为空）') + (j._at ? ' · 采集 ' + j._at : ''));
       } catch (e) {}
     }
     // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
