@@ -364,8 +364,10 @@ html.kb .sc-body {
 .bellbtn .dot.bad { background: #ff5b5b; }
 
 /* 提醒记录 */
-/* 提醒记录：悬浮卡片式弹层 */
-#nlogSheet {
+/* 悬浮玻璃卡片：提醒记录 + 加号弹出的记录卡片，用的是同一张卡
+   （位置 / 尺寸 / 材质 / 透明度全部一致，只有里面的内容不一样） */
+#nlogSheet,
+#addSheet {
   /* 材质跟 Dock 一样：半透磨砂玻璃 */
   background-color: transparent;
   background-image: linear-gradient(180deg, rgba(46, 53, 58, 0.44) 0%, rgba(28, 34, 39, 0.54) 100%), var(--edge-gloss);
@@ -395,8 +397,9 @@ html.kb .sc-body {
   border-top: 0;
   padding: 8px 16px 30px;
 }
-/* 提醒记录打开时，遮罩浅一点，别把页面压得死黑 */
-body.nlog-open .sheet-mask.on {
+/* 提醒记录 / 记录卡片打开时，遮罩浅一点，别把页面压得死黑（玻璃才透得出来） */
+body.nlog-open .sheet-mask.on,
+body.add-open .sheet-mask.on {
   background: rgba(0,0,0,.28);
   top: var(--topbar-h, 64px);   /* 不盖住顶栏，顶栏一点都不变色 */
 }
@@ -870,10 +873,9 @@ body.nlog-open .sheet-mask.on {
   background:
     radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.26), rgba(255,255,255,.085) 55%, rgba(255,255,255,.03) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.48),
-    inset 0 -1px 0 rgba(255,255,255,.07),
-    inset 0 0 18px rgba(255,255,255,.05),
-    0 2px 8px rgba(0,0,0,.28);
+    inset 0 1px 6px rgba(255,255,255,.20),
+    inset 0 -2px 8px rgba(0,0,0,.16),
+    0 3px 12px rgba(0,0,0,.20);
   /* 这里故意不用 backdrop-filter：Dock 底色本来是不透明的，模糊没东西可糊，
      但在 iOS 上会让"移动中的玻璃"每帧重算一次模糊，整页发卡（实测卡顿来源） */
 }
@@ -899,7 +901,7 @@ body.nlog-open .sheet-mask.on {
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
   mask-composite: exclude;
-  opacity: .16;
+  opacity: .10;
 }
 /* 手指按下的位置会亮一团光（JS 写 --hx/--hy） */
 .dock-lens .hl {
@@ -1116,26 +1118,17 @@ body.nlog-open .sheet-mask.on {
 /* 帮助卡片步骤多，给它高一点 */
 #helpSheet { max-height: 80dvh; }
 
-/* 记录卡片（中间加号）：材质跟「通知记录」那张一致，尺寸自己一套；
-   位置不贴着 Dock —— 浮在 Dock 上面留一条缝；没有叉号，靠下滑或点空白关掉 */
-#addSheet {
-  background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(46, 53, 58, 0.44) 0%, rgba(28, 34, 39, 0.54) 100%), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1px solid transparent;
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  backdrop-filter: blur(20px) saturate(150%);
-  border-radius: var(--dock-r, 26px);
-  left: var(--dock-inset); right: var(--dock-inset);
-  bottom: calc(var(--safe-b) + var(--dock-bottom) + var(--dock-h) + 10px);
-  max-width: 470px;
-  min-height: 60dvh;
-  max-height: 78dvh;
-  box-shadow: 0 24px 56px rgba(0,0,0,.55);
+/* 记录卡片：卡片本身和提醒记录那张完全一样，只有"内容"是自己的 */
+#addSheet .grab { width: 66px; height: 4px; }
+#addSheet .sh-foot {
+  background: transparent;
+  border-top: 0;
+  padding: 8px 16px 30px;
 }
-#addSheet .grab { width: 66px; height: 4px; }        /* 和通知记录那条横杠一样 */
-#addSheet .sh-foot { background: transparent; border-top: 1px solid rgba(255,255,255,.08); }
+#addSheet .sh-hd {
+  padding: calc(var(--dock-r, 26px) * 0.52 - 11px) 18px 2px calc(var(--dock-r, 26px) * 0.62);
+  min-height: 42px;
+}
 
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
@@ -1170,7 +1163,7 @@ body.nlog-open .sheet-mask.on {
 .prow-pick { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .prow-pick .pickbtn { flex: 1; padding: 12px 10px; font-size: 14px; }
 .prow-pick .pickbtn.on { padding: 13px 10px; font-size: 15px; }
-#addSheet { min-height: 60dvh; max-height: 78dvh; }
+
 .drop.small { padding: 20px 14px; position: relative; }
 .drop.small .preview { max-height: 150px; }
 .drop.small .dpick { margin-top: 14px; width: min(100%, 260px); }
@@ -1490,45 +1483,44 @@ body.nlog-open .sheet-mask.on {
 .sw { position: relative; flex: 0 0 auto; width: 50px; height: 30px; touch-action: manipulation; }
 .sw input { position: absolute; opacity: 0; width: 0; height: 0; }
 
-/* 底盘：一条玻璃管 —— 内凹的阴影 + 顶边一道高光，打开时是发光的柠檬玻璃 */
+/* 底盘：一条玻璃管。所有光和影都只在管子里（inset），绝不漏到开关外面 */
 .sw i {
   position: absolute; inset: 0; border-radius: 15px;
-  background: linear-gradient(180deg, #343b40 0%, #262c30 100%);
+  overflow: hidden;                       /* 圆钮的阴影也裁在管子内，不会溢到外面 */
+  background: linear-gradient(180deg, #3a4147 0%, #272d31 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.12),
-    inset 0 -2px 6px rgba(0,0,0,.35),
-    0 1px 2px rgba(0,0,0,.25);
+    inset 0 2px 5px rgba(255,255,255,.06),
+    inset 0 -3px 8px rgba(0,0,0,.26);
   transition: background .22s ease, box-shadow .22s ease, transform .2s cubic-bezier(.2,1.3,.4,1);
 }
 .sw input:checked + i {
-  background: linear-gradient(180deg, #dcff6e 0%, #cbf22e 58%, #b3dd1e 100%);
+  background: linear-gradient(180deg, #dcff74 0%, #ccf231 55%, #bbe41f 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.5),
-    inset 0 -2px 6px rgba(96,126,10,.45),
-    0 0 12px rgba(214,255,75,.30),
-    0 1px 2px rgba(0,0,0,.25);
+    inset 0 2px 6px rgba(255,255,255,.28),
+    inset 0 -3px 9px rgba(104,134,12,.26),
+    inset 0 0 10px rgba(255,255,255,.12);
 }
-/* 圆钮：一颗玻璃珠 —— 顶部高光、底部一圈暗边，压在绿色上也能分得清 */
+/* 圆钮：玻璃珠。高光/暗边都用模糊过渡，且最外那圈阴影被 overflow 裁在管内 */
 .sw i:after {
   content: ''; position: absolute; left: 3px; top: 3px;
   width: 24px; height: 24px; border-radius: 50%;
   background:
-    radial-gradient(70% 62% at 34% 20%, #ffffff 0%, #ffffff 42%, #eef2ee 62%, #dfe6e0 100%);
+    radial-gradient(72% 66% at 34% 18%, #ffffff 0%, #ffffff 38%, #f2f5f2 64%, #e6ebe6 100%);
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.95),
-    inset 0 -2px 3px rgba(0,0,0,.10),
-    0 1px 3px rgba(0,0,0,.32),
-    0 0 0 1px rgba(0,0,0,.16);          /* 一圈细暗边：白钮压绿底不再糊成一片 */
+    inset 0 1px 2px rgba(255,255,255,.9),
+    inset 0 0 6px rgba(0,0,0,.10),
+    inset 0 -2px 4px rgba(0,0,0,.05),
+    0 2px 5px rgba(0,0,0,.22);
   transition: transform .22s cubic-bezier(.2,1.3,.4,1), width .22s cubic-bezier(.2,1.3,.4,1), border-radius .22s ease;
 }
-/* 打开时再压一条更深的边，绿底和白钮之间留出分界 */
+/* 打开时：靠圆钮"内侧"一圈很淡的暗边把白钮和绿底分开，光不往外冒 */
 .sw input:checked + i:after {
   transform: translateX(20px);
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.95),
-    inset 0 -2px 3px rgba(0,0,0,.12),
-    0 1px 3px rgba(0,0,0,.34),
-    0 0 0 1px rgba(58,84,0,.34);
+    inset 0 1px 2px rgba(255,255,255,.9),
+    inset 0 0 8px rgba(58,84,0,.30),
+    inset 0 -2px 4px rgba(0,0,0,.06),
+    0 2px 5px rgba(70,96,0,.18);
 }
 /* 按下去的液态感：底盘轻压、玻璃珠被"拉长"再弹回 */
 .sw:active i { transform: scale(.96); filter: brightness(1.10); }

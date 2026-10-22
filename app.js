@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.07', d: '10-22', items: [
+    '改：加号弹出的记录卡片，卡片本身和提醒记录那张完全一样（大小、圆角、材质、透明度、遮罩深浅都一致），只有里面的内容不一样',
+    '改：开关去掉了硬边的一圈白、一圈黑 —— 高光和暗边都改成模糊过渡',
+    '修：开关打开时那圈光晕跑到开关外面去了 —— 现在所有光和影都收在开关内部（多出来的部分直接裁掉）',
+  ]},
   { v: 'v6.06', d: '10-22', items: [
     '改：加号弹出的记录卡片换成和「通知记录」同一套玻璃材质（磨砂 + 渐变描边），横杠也改成一样长短',
     '改：记录卡片不再贴着 Dock —— 浮在 Dock 上面留一条缝；尺寸自己一套（比通知那张矮一些）',
@@ -1372,7 +1377,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.06';
+const APP_VERSION = 'v6.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1787,10 +1792,12 @@ function openAdd(meal) {
   renderMealPick();
   renderRecent();
 
+  document.body.classList.add('add-open');   // 用和提醒记录一样的浅遮罩，玻璃才透得出来
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
 }
 function closeAdd() {
+  document.body.classList.remove('add-open');
   $('#addMask').classList.remove('on');
   const sh = $('#addSheet');
   // 下滑关闭时脚本写过 transform，这里必须清掉，否则下次打开会停在半路

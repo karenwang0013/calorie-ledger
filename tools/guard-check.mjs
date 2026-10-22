@@ -34,7 +34,7 @@ const checks = [
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
   ['底部提示条永远在 Dock 上方（不许压住）', /\.toast \{[\s\S]*?bottom: calc\(var\(--dock-bottom\) \+ var\(--dock-h\) \+ \d+px/.test(css)],
   ['卡片玻璃质感只有一处定义（--glass-card + --edge-gloss + --glass-blur）', (css.match(/linear-gradient\(var\(--glass-card\)/g) || []).length === 1],
-  ['提醒记录弹层用的是 Dock 那套磨砂玻璃（blur 20 + 半透底）', /#nlogSheet\s*\{[^}]*backdrop-filter: blur\(20px\) saturate\(150%\)/.test(css)],
+  ['提醒记录 / 记录卡片共用同一张磨砂玻璃卡（blur 20 + 半透底）', /#nlogSheet[^{}]*\{[\s\S]*?backdrop-filter: blur\(20px\) saturate\(150%\)/.test(css) && /#nlogSheet,\s*#addSheet \{/.test(css)],
   ['名字和铅笔在同一行（放不下时省略名字，不把铅笔挤到下一行）', /\.nameline \{[^}]*display: flex/.test(css) && /\.nameline \.nmtxt \{[^}]*text-overflow: ellipsis/.test(css)],
   ['Dock 液态滑块存在且不挡点击', /class="dock-lens"/.test(html) && /\.dock-lens \{[\s\S]*?pointer-events: none;/.test(css) && /initDockLens/.test(app)],
   ['图标/加号必须在液态滑块上面（z-index 1）', /\.tab \{\n  position: relative; z-index: 1;/.test(css) && /\.fab \{\n  position: relative; z-index: 1;/.test(css)],
