@@ -1486,41 +1486,37 @@ body.add-open .sheet-mask.on {
 /* 底盘：一条玻璃管。所有光和影都只在管子里（inset），绝不漏到开关外面 */
 .sw i {
   position: absolute; inset: 0; border-radius: 15px;
-  overflow: hidden;                       /* 圆钮的阴影也裁在管子内，不会溢到外面 */
+  overflow: hidden;                       /* 圆钮的投影裁在管子里，不往外溢 */
   background: linear-gradient(180deg, #3a4147 0%, #272d31 100%);
   box-shadow:
-    inset 0 2px 5px rgba(255,255,255,.06),
-    inset 0 -3px 8px rgba(0,0,0,.26);
+    inset 0 1px 0 rgba(255,255,255,.10),  /* 只有一条很淡的顶边高光 */
+    0 3px 8px rgba(0,0,0,.30);            /* 影子落在开关下面 */
   transition: background .22s ease, box-shadow .22s ease, transform .2s cubic-bezier(.2,1.3,.4,1);
 }
 .sw input:checked + i {
   background: linear-gradient(180deg, #dcff74 0%, #ccf231 55%, #bbe41f 100%);
   box-shadow:
-    inset 0 2px 6px rgba(255,255,255,.28),
-    inset 0 -3px 9px rgba(104,134,12,.26),
-    inset 0 0 10px rgba(255,255,255,.12);
+    inset 0 1px 0 rgba(255,255,255,.40),
+    0 3px 8px rgba(86,112,0,.32);
 }
-/* 圆钮：玻璃珠。高光/暗边都用模糊过渡，且最外那圈阴影被 overflow 裁在管内 */
+/* 圆钮：一颗玻璃珠 —— 顶上一道高光，底下自己的影子落在管子底 */
 .sw i:after {
   content: ''; position: absolute; left: 3px; top: 3px;
   width: 24px; height: 24px; border-radius: 50%;
   background:
-    radial-gradient(72% 66% at 34% 18%, #ffffff 0%, #ffffff 38%, #f2f5f2 64%, #e6ebe6 100%);
+    radial-gradient(72% 66% at 34% 18%, #ffffff 0%, #ffffff 40%, #f4f7f4 66%, #eaeeea 100%);
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,.9),
-    inset 0 0 6px rgba(0,0,0,.10),
-    inset 0 -2px 4px rgba(0,0,0,.05),
-    0 2px 5px rgba(0,0,0,.22);
+    inset 0 1px 1px rgba(255,255,255,.95),
+    0 2px 4px rgba(0,0,0,.22),
+    0 4px 8px rgba(0,0,0,.14);
   transition: transform .22s cubic-bezier(.2,1.3,.4,1), width .22s cubic-bezier(.2,1.3,.4,1), border-radius .22s ease;
 }
-/* 打开时：靠圆钮"内侧"一圈很淡的暗边把白钮和绿底分开，光不往外冒 */
 .sw input:checked + i:after {
   transform: translateX(20px);
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,.9),
-    inset 0 0 8px rgba(58,84,0,.30),
-    inset 0 -2px 4px rgba(0,0,0,.06),
-    0 2px 5px rgba(70,96,0,.18);
+    inset 0 1px 1px rgba(255,255,255,.95),
+    0 2px 4px rgba(52,72,0,.30),
+    0 4px 9px rgba(52,72,0,.22);
 }
 /* 按下去的液态感：底盘轻压、玻璃珠被"拉长"再弹回 */
 .sw:active i { transform: scale(.96); filter: brightness(1.10); }
