@@ -23,6 +23,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.34', d: '10-22', items: [
+    '加：日期下面那行改成显示这份数据的同步时间（「今天 · 12:30 的数据」），不用再往下找小字',
+  ]},
   { v: 'v6.33', d: '10-22', items: [
     '改：打开 App 的头一次、以及每 5 分钟、以及手动点「数据同步」，都直接读 Gitee 上的源文件（最新），不再等 GitHub 那份每 5 分钟才同步一次的镜像',
     '原因：镜像任务会被 GitHub 限流/漏跑，数据会卡在几个小时前；源文件其实一直是新的',
@@ -1484,7 +1487,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.33';
+const APP_VERSION = 'v6.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1615,7 +1618,11 @@ function renderToday() {
   const dt = parseISO(d.date);
   $('#dateLabel').textContent = `${dt.getMonth() + 1}月${dt.getDate()}日`;
   const isToday = d.date === S.today;
-  $('#dateSub').textContent = isToday ? '今天 · 实时' : WEEK[dt.getDay()];
+  // 日期下面那行：直接写清"这份数据是几点同步的"，不用再往下找
+  const watchAt = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11, 16) : '';
+  $('#dateSub').textContent = isToday
+    ? (watchAt ? `今天 · ${watchAt} 的数据` : '今天 · 实时')
+    : (watchAt ? `${WEEK[dt.getDay()]} · ${watchAt}` : WEEK[dt.getDay()]);
   $('#nextDay').disabled = isToday;
   $('#nextDay').style.opacity = isToday ? 0.45 : 1;
 
