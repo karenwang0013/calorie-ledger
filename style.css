@@ -1274,17 +1274,19 @@ body.add-open .sheet-mask.on {
 /* 「估算热量」和「记入」两个按钮要一样大：文案栏左右内边距比底部窄 4px，这里补回来 */
 #textGo { width: calc(100% - 8px); margin-left: 4px; margin-right: 4px; align-self: center; }
 
-/* 记录卡片顶部那三格：滚动时固定；颜色按 Dock 栏的"观感"取
-   （Dock 那层玻璃是 rgba(38,44,49,.46) 叠在深色底上，最终看起来是中灰；
-     这里在弹层里没法用 backdrop-filter（父层已经有磨砂），所以直接给同观感的实色） */
+/* 记录卡片顶部那三格：滚动时固定。
+   材质**照抄 Dock 栏**（.tabbar .inner 那一段）：
+   同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
   position: sticky; top: 0; z-index: 3;
-  border: 1px solid rgba(255, 255, 255, 0.06);   /* 描边减弱（原来 0.10 太亮） */
-  /* 稍稍透一点 + 保留玻璃的层次（顶亮底暗），比纯实色更像磨砂 */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.012) 45%, rgba(0, 0, 0, 0.10) 100%),
-    linear-gradient(180deg, rgba(47, 53, 59, 0.94) 0%, rgba(35, 40, 45, 0.96) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);   /* 只要顶边内高光，外阴影按你要求不加 */
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */

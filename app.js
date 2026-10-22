@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.37', d: '10-23', items: [
+    '改：顶部三格直接照抄 Dock 的材质参数 —— 同一套 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，把我之前自己加的白色渐变层去掉了（这就是你说的"上面多了渐变"）',
+  ]},
   { v: 'v7.36', d: '10-23', items: [
     '改：顶部三格的白色描边减弱（0.10 → 0.06），底色稍稍透一点（94%/96%），看起来更像磨砂而不是实心块',
   ]},
@@ -1901,7 +1904,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.36';
+const APP_VERSION = 'v7.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
