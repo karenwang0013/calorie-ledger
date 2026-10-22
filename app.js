@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.23', d: '10-23', items: [
+    '修：搜索里那条"每 100g 蛋白 976.9 / 碳水 6738 / 脂肪 3027"——根因是写历史时把"已经是每 100 克"的值又按 100/克数 放大了一次（克数越小放大越多）。现在按原值写入',
+    '修：启动时自动清掉历史里已经被放大的坏数据（蛋白+碳水+脂肪 超过 100 克的直接丢掉），不再出现在搜索里',
+  ]},
   { v: 'v7.22', d: '10-23', items: [
     '修：营养数据不再"瞎算"——打开一条已经被算坏的记录（三大项加起来比 100 克还多，如蛋白25+碳水172）时，会自动改用历史/食物库里正确的值，并提示你核对',
     '修：保存时拦住不可能的数据（蛋白+碳水+脂肪 超过 100 克、或和热量差太多），不写进账本',
@@ -1851,7 +1855,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.22';
+const APP_VERSION = 'v7.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2730,13 +2734,14 @@ function rememberFoods(items) {
     const name = String(it.name || '').trim();
     const g = Number(it.grams) || 0;
     if (!name || !g) return;
-    const per100 = (v, digits) => +(Number(v || 0) * 100 / g).toFixed(digits);
+    // 注意：草稿里的 *_per_100g 已经是"每 100 克"了，**不能再乘 100/g**（那会把数据放大几十倍）
+    const rr = (v, digits) => +(Number(v || 0)).toFixed(digits);
     const rec = {
       n: name,
-      k: Math.round(per100(it.kcal_per_100g, 0)),
-      p: per100(it.protein_per_100g, 1),
-      c: per100(it.carb_per_100g, 1),
-      f: per100(it.fat_per_100g, 1),
+      k: Math.round(rr(it.kcal_per_100g, 0)),
+      p: rr(it.protein_per_100g, 1),
+      c: rr(it.carb_per_100g, 1),
+      f: rr(it.fat_per_100g, 1),
       g,                                  // 上次用的克数，下次默认带出来
       cat: it.cat || '以前记过',
       at: Date.now(),
@@ -3146,6 +3151,17 @@ function nutKnownFood(name) {
     .concat(historyFoods().map(f => ({ ...f, from: '历史' })))
     .concat((S.foods || []).map(f => ({ name: f.name, kcal: f.kcal, p: f.p, c: f.c, f: f.f, from: '食物库' })));
   return all.find(x => x.name === key) || null;
+}
+
+/* 历史里如果有被算坏的数据（三大项合计 > 100 克），直接丢掉，别让它出现在搜索里 */
+function sanitizeFoodHist() {
+  const st = Store.load();
+  if (!Array.isArray(st.foodHist) || !st.foodHist.length) return;
+  const sane = st.foodHist.filter(f => nutSane(f.k, f.p, f.c, f.f));
+  if (sane.length !== st.foodHist.length) {
+    st.foodHist = sane;
+    Store.save({ silent: true });
+  }
 }
 
 /* 面板里按食物名找库/历史，找到就把"这一份"的营养填进来（用户只知道克数、不知道千焦时用） */
@@ -5648,6 +5664,7 @@ function init() {
   if (window.__inited) return;      // 脚本被补加载时可能被调用两次，只跑一次
   window.__inited = true;
   const synced = consumeHealthLink();
+  try { sanitizeFoodHist(); } catch (e) {}
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
