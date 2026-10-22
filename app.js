@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.55', d: '10-22', items: [
+    '改：趋势页把「实测每日消耗」这张状态卡放到最上面（它跟 7/30/90 无关），7/30/90 移到它下面，前面加一行「数据明细」—— 不再让人误以为上面的数字是按 7/30 天算的',
+    '改：今日页消耗下面那行去掉「同步时间」四个字，只留时间和「数据偏旧」；有「数据偏旧」时整行变橙，没有就保持原色',
+    '改：那一行不管多长，都跟上面的消耗数字中心线对齐（实测偏差 0px）',
+  ]},
   { v: 'v6.54', d: '10-22', items: [
     '加：饮食目标页的「模式建议」现在会对照实测数据 —— 会写「实测每天烧 X 千卡 / 公式估算 Y 千卡」',
     '加：方向冲突时明确提醒，例如「模式建议是增肌，但你实际每天 2182 千卡缺口（约 1.98 kg/周），方向相反」',
@@ -1816,7 +1821,8 @@ function renderToday() {
     const hm = at.match(/(\d{1,2}):(\d{2})/);
     if (hm) { const t0 = parseISO(d.date); t0.setHours(+hm[1], +hm[2], 0, 0); stale = (Date.now() - t0.getTime()) > 90 * 60000; }
   }
-  $('#stExpAt').textContent = at ? ('同步时间 ' + at + (stale ? ' · 数据偏旧' : '')) : '';
+  // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
+  $('#stExpAt').textContent = at ? (at + (stale ? ' · 数据偏旧' : '')) : '';
   $('#stExpAt').style.color = stale ? 'var(--orange)' : '';
   leftEl.innerHTML = (left >= 0 ? left : left) + ' <small>kcal</small>';
   leftEl.style.color = left < 0 ? 'var(--orange)' : '';
@@ -2786,8 +2792,9 @@ function renderTrends() {
     </div>`;
   }).join('');
 
+  const topBox = $('#trendTop');
+  if (topBox) topBox.innerHTML = realCard;   // 状态卡（实测消耗）不受 7/30/90 影响，单独放上面
   box.innerHTML = `
-    ${realCard}
     ${t.logged_days === 0 ? `
     <div class="card">
       <h3>每日热量平衡</h3>

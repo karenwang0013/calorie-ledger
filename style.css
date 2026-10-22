@@ -335,7 +335,7 @@ html.kb .sc-body {
   font-variant-numeric: tabular-nums;
 }
 .stats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
-.stats .at { font-size: 10px; color: var(--muted2); margin-top: 3px; letter-spacing: .2px; min-height: 12px; white-space: nowrap; }
+.stats .at { font-size: 10px; color: var(--muted2); margin: 3px auto 0; letter-spacing: .2px; min-height: 12px; white-space: nowrap; width: max-content; max-width: 190%; }
 
 /* 身体数据 · 最近一次（不套小框） */
 .bstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0 4px; }
@@ -1021,11 +1021,25 @@ body.add-open .sheet-mask.on {
 .btnrow .btn { width: auto; flex: 1 1 0; min-width: 0; }
 
 /* ---------- 分段 ---------- */
+/* 趋势页：状态卡 → 「数据明细」+ 7/30/90 → 三张明细卡 */
+.secrow {
+  display: flex; align-items: center;
+  margin: 2px 18px 6px;
+}
+.secrow span {
+  font-size: 11.5px; color: var(--muted2); letter-spacing: .8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.secrow span::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
+  width: 60px;
+}
 .seg {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
   background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06);
-  border-radius: 16px; margin: 14px 18px 14px;  /* 上下的距离相等：上都 14、下也 14 */
+  border-radius: 16px; margin: 0 18px 14px;
   --seg-btn-r: 12px;
 }
 .seg button {
