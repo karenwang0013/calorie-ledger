@@ -1191,7 +1191,7 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button {
   position: relative; z-index: 1;
-  padding: 18px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
+  padding: 22px 6px; border-radius: calc(var(--dock-r, 26px) * 0.62 - 6px);
   font-size: 14px; font-weight: 600; color: var(--muted2);
   background: transparent;
   display: flex; align-items: center; justify-content: center; gap: 5px;
@@ -1228,11 +1228,14 @@ body.add-open .sheet-mask.on {
 /* 拍照 / 描述这一格：撑满卡片剩下的高度，别在下面留一截空 */
 #pane-photo, #pane-text { display: flex; flex-direction: column; }
 #pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; min-height: 0; }
+#pane-photo:not([hidden]) { justify-content: flex-start; }
+/* 大的虚线框撑满剩下的高度：底边一定和卡片底边平行对齐；两个照片位按固定比例贴在框顶，
+   多余的高度留在框里（照片位不会被拉变形），两个按钮沉在框底 */
 #pane-photo:not([hidden]) .drop.photobox {
-  flex: 0 0 auto; min-height: 0;
-  align-items: start; grid-template-rows: auto auto;
+  flex: 1 1 auto; min-height: 0;
+  align-items: start; grid-template-rows: auto 1fr;
 }
-#pane-photo:not([hidden]) { justify-content: center; }   /* 照片位+按钮当成一整块，在剩余高度里居中 */
+#pane-photo .prow-pick { align-self: end; }
 #pane-photo .pslot { min-height: 0; }
 #pane-photo .pslot-body { min-height: 0; }
 #pane-photo .pslot-empty {
