@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.78', d: '10-22', items: [
+    '改：Gitee 读取加 5 分钟缓存；被限流(403/429)后冷却 10 分钟不再请求，避免越撞越死',
+    '改：E04 提示改成「被 Gitee 限流，稍后再试」，不再误报成权限问题',
+  ]},
   { v: 'v4.77', d: '10-22', items: [
     '修：启动报错「Can\'t find variable: notifyLogGet」—— 上一版改缓存时误删了这个函数，已补回',
   ]},
@@ -1197,7 +1201,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.77';
+const APP_VERSION = 'v4.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2561,16 +2565,27 @@ async function disablePush() {
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
 const _gtCache = {};
+let giteeBlockedUntil = 0;
 async function giteeGetText(path, force) {
   const now = Date.now();
+  // 被限流后 10 分钟内不再请求，直接用缓存（没有缓存就抛错，但不刷屏）
+  if (now < giteeBlockedUntil) {
+    const c = _gtCache[path];
+    if (c) return c.txt;
+    throw new Error('HTTP 403（限流冷却中）');
+  }
   const hit = _gtCache[path];
-  if (!force && hit && now - hit.at < 90000) return hit.txt;   // 90 秒内复用，避免被限流
+  if (!force && hit && now - hit.at < 300000) return hit.txt;   // 5 分钟内复用
   let r = null, err = null;
   for (let i = 0; i < 2; i++) {
     try {
       r = await fetch(GITEE_API + '/' + path + '?t=' + now, { cache: 'no-store' });
       if (r.ok) break;
       // 4xx 不重试（重试也没用，还会加重限流）
+      if (r.status === 403 || r.status === 429) {
+        giteeBlockedUntil = Date.now() + 10 * 60 * 1000;   // 冷却 10 分钟
+        throw new Error('HTTP ' + r.status);
+      }
       if (r.status >= 400 && r.status < 500) throw new Error('HTTP ' + r.status);
       err = new Error('HTTP ' + r.status);
     } catch (e) { err = e; }
@@ -2609,7 +2624,7 @@ function friendlyErr(m) {
   }
   if (/AbortError|timeout|超时/i.test(t)) return 'E02 云端响应超时 · 网络太慢';
   if (/401|Bad credentials|Requires authentication|access_token/i.test(t)) return 'E03 令牌无效或没填 · 去 设置 → 数据同步 填 Gitee 令牌';
-  if (/403/.test(t)) return 'E04 权限不足或被限流 · 检查令牌的 projects 权限';
+  if (/403|429/.test(t)) return 'E04 被 Gitee 限流 · 等几分钟再点「数据同步」（缓存还在，不影响看数据）';
   if (/404/.test(t)) return 'E05 云端文件不存在 · 可能被删了';
   if (/409|422/.test(t)) return 'E06 云端版本冲突 · 稍后会自动重试';
   if (/JSON|Unexpected token|parse/i.test(t)) return 'E07 数据格式不对 · 文件内容被改坏了';
