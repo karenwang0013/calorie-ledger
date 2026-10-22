@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v4.84', d: '10-22', items: [
+    '修：体重趋势拖动时会画出卡片外 —— 图表区裁切，位移限制在卡片宽度的 38% 内',
+    '改：拖动带回弹缓动，手感更接近上下翻页',
+  ]},
   { v: 'v4.83', d: '10-22', items: [
     '改：体重趋势拖动跟手（连续位移，松手才换页），不再一块一块跳',
     '加：点某个点后，那个点上会有一条竖直虚线，点变绿',
@@ -1219,7 +1223,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v4.83';
+const APP_VERSION = 'v4.84';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3545,7 +3549,12 @@ function wireMe() {
       dx = t0.clientX - sx;
       const dy = t0.clientY - sy;
       if (!dragging && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) dragging = true;
-      if (dragging && svgEl) { svgEl.style.transform = 'translateX(' + dx + 'px)'; e.preventDefault(); }
+      if (dragging && svgEl) {
+        const lim = (btWrap.clientWidth || 320) * 0.38;
+        const tx = Math.max(-lim, Math.min(lim, dx * 0.85));
+        svgEl.style.transform = 'translateX(' + tx.toFixed(1) + 'px)';
+        e.preventDefault();
+      }
     }, { passive: false });
     btWrap.addEventListener('touchend', () => {
       if (svgEl) {

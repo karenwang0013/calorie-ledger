@@ -501,7 +501,13 @@ body.nlog-open .sheet-mask.on {
 }
 
 /* 身体数据 · 趋势交互区 */
-.chartwrap { touch-action: pan-y; }
+.chartwrap {
+  touch-action: pan-y;
+  overflow: hidden;            /* 拖动时绝不越出卡片 */
+  border-radius: 12px;
+  position: relative;
+}
+.chartwrap svg { display: block; will-change: transform; }
 
 /* 身体数据 · 趋势翻页 */
 .pager { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
