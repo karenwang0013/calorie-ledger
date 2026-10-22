@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.90', d: '10-23', items: [
+    '修：搜索里选食材 → 点「重来」→ 回到搜索是一片空白。现在会重新渲染，原来的食物全都在',
+    '修：搜索页往上滑时"顶上像盖了一块东西" —— 原因是记录弹层是 46%～58% 的半透玻璃，滑到顶部时背景页面的顶栏/卡片从弹层顶上透出来了；现在改成实底（保留边缘玻璃高光、横杠照旧）',
+  ]},
   { v: 'v6.89', d: '10-23', items: [
     '改：「描述」页输入框下面那行小字改成居中（原来靠左）',
   ]},
@@ -1716,7 +1720,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.89';
+const APP_VERSION = 'v6.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5250,6 +5254,9 @@ function init() {
     clearDraft();
     $('#resultArea').hidden = true;
     $('#addFoot').hidden = true;
+    // 点了「重来」要把搜索列表放出来并重新渲染，否则回到搜索是一页空白
+    syncSearchList();
+    runSearch($('#searchInput').value || '');
   };
 
   let searchTimer = null;
