@@ -961,6 +961,25 @@ body.add-open .sheet-mask.on {
   .dock-lens, .dock-lens.press, .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch { transition-duration: .01ms; }
 }
 
+/* 改营养数据的小面板：比记录弹层小一圈，左右和底边与它等距 */
+#nutSheet {
+  z-index: 62;                                   /* 浮在记录弹层之上 */
+  left: calc(var(--dock-inset, 8px) + 10px);
+  right: calc(var(--dock-inset, 8px) + 10px);
+  bottom: calc(var(--dock-bottom, 16px) + var(--safe-b, 0px) + 10px);
+  max-width: calc(var(--dock-max, 470px) - 20px);
+}
+/* 横杠和记录弹层一样：浮在最上层、不占位（否则滚动时下沿会切出一条"遮挡"） */
+#nutSheet .grab {
+  position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 66px; height: 4px; margin: 0; z-index: 3;
+}
+/* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉 */
+#nutSheet .sh-foot {
+  background: transparent; border-top: 0;
+  padding: 8px 16px 16px;
+}
+
 /* 改营养数据的小面板 */
 .nutgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .nutgrid.three { grid-template-columns: 1fr 1fr 1fr; margin-top: 10px; }

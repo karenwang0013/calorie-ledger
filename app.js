@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.95', d: '10-23', items: [
+    '新：营养成分编辑面板做成比记录弹层小一圈的小卡片 —— 左右和底边各内缩 10px（实测 10/10/10 等距）；无标题、无右上角叉号；横杠浮层、不占位；下滑可退出；保存按钮下面那条黑边去掉',
+    '固化：新增 tools/locked.json 锁死用户认可的颜色/尺寸（滑块实色、弹层玻璃底色与磨砂、卡片留白、横杠、Dock 留白与圆角公式），改一条就禁止发版；手册新增"只做被要求的那一件事"',
+  ]},
   { v: 'v6.94', d: '10-23', items: [
     '改：搜索里选中食物后，界面**直接切到左边「拍照」那边**（记录区在那里），搜索这边同时清空回初始状态（搜索词清空、列表回到最上面）—— 再点「搜索」就能重新挑，挑完又会跳过去',
   ]},
@@ -1735,7 +1739,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.94';
+const APP_VERSION = 'v6.95';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2847,7 +2851,6 @@ function openNutEdit(i) {
   const it = S.items[i];
   if (!it) return;
   nutEditIdx = i;
-  $('#nutTitle').textContent = (it.name || '这一项') + ' · 营养数据';
   $('#nutRef').value = 100;                       // 默认按每 100 克显示当前值
   $('#nutKcal').value = Math.round(Number(it.kcal_per_100g) || 0);
   $('#nutP').value = Number(it.protein_per_100g) || 0;
@@ -5319,7 +5322,7 @@ function init() {
   $('#textGo').onclick = runText;
   $('#saveItems').onclick = saveItems;
   $('#nutMask').onclick = closeNutEdit;
-  $('#nutClose').onclick = closeNutEdit;
+  wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);   // 和记录弹层同一套下滑退出
   $('#nutSave').onclick = saveNutEdit;
   // 记录区里点「继续选」→ 回到搜索，列表放出来，可以接着多选（不跳走）
   const rm = $('#resultMore');

@@ -38,6 +38,20 @@ function padSymmetric(sel) {
   return true;
 }
 
+// ---- 锁死的颜色 / 尺寸：用户明确说过"没让你改就别改"，这里逐条卡住 ----
+import { readFileSync as _rf } from 'node:fs';
+let _locked = [];
+try { _locked = JSON.parse(_rf(new URL('./locked.json', import.meta.url), 'utf8')); } catch (e) { _locked = []; }
+const lockedOk = () => {
+  const bad = [];
+  for (const L of _locked) {
+    const src = L.file === 'style.css' ? css : L.file === 'app.js' ? app : L.file === 'api.js' ? api : html;
+    if (!src.includes(L.find)) bad.push(L.why + '（' + L.file + ' 里找不到：' + L.find.slice(0, 40) + '…）');
+  }
+  return bad;
+};
+const lockedBad = lockedOk();
+
 const checks = [
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
   ['顶栏必须是 fixed', /\.topbar \{\n  position: fixed;/.test(css)],
@@ -59,6 +73,7 @@ const checks = [
   ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
   ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],
+  ['锁死的颜色/尺寸一个都不许改（tools/locked.json）', lockedBad.length === 0],
   ['卡片上下内边距必须相等（.card 不许 12/16 这种不等距）', padSymmetric('.card')],
   ['Dock 滑块四周留白必须同一个值（不然圆角没法同心）', /const PAD = \d+;/.test(app) && /cellW \+ 2 \* \(padL - PAD\)/.test(app) && /visH - PAD \* 2/.test(app)],
   ['Dock 滑块圆角与 Dock 同心：内圆 = Dock 圆角 − 留白 − 边框', /dockR - PAD - bT/.test(app)],

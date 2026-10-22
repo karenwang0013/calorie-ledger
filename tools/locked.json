@@ -1,0 +1,10 @@
+[
+  { "file": "style.css", "find": "--lens-solid: rgba(255, 255, 255, 0.085);", "why": "Dock 那格滑块停稳后的实色（用户认可的原始颜色）" },
+  { "file": "style.css", "find": "--lens-solid: rgba(255, 255, 255, 0.10);", "why": "7/30/90、减脂/维持/增肌 滑块的实色（原始颜色）" },
+  { "file": "style.css", "find": "linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);", "why": "记录弹层 / 营养面板的玻璃底色（原始材质）" },
+  { "file": "style.css", "find": "-webkit-backdrop-filter: blur(20px) saturate(150%);", "why": "记录弹层的磨砂强度（原始材质）" },
+  { "file": "style.css", "find": "padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */", "why": "卡片上下等距（用户要求的留白规矩）" },
+  { "file": "style.css", "find": "width: 66px; height: 4px; margin: 0; z-index: 3;", "why": "弹层横杠：浮层不占位（去掉横杠下面的切边）" },
+  { "file": "app.js", "find": "const PAD = 10;", "why": "Dock 滑块四周留白（圆角同心的前提）" },
+  { "file": "app.js", "find": "dockR - PAD - bT", "why": "Dock 滑块圆角同心公式" }
+]
