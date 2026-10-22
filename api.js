@@ -817,6 +817,7 @@ async function cloudPush() {
     cloudErr = (e && e.name === 'AbortError') ? '连不上 api.github.com（网络超时）' : (e.message || '上传失败');
     cloudFailUntil = Date.now() + 30000;
     try { localStorage.setItem('pending_push', '1'); } catch (e) {}
+    try { localStorage.setItem('pending_push_at', String(Date.now())); } catch (e) {}
     if (typeof logError === 'function') logError('err-push', '同步失败（上传）', cloudErr + ' @gitee');
     return false;
   } finally {
@@ -890,6 +891,25 @@ async function cloudPull(force) {
       cloudPulling = false;
       return 'pulled';
     }
+    // 本机时间更新：仍然合并云端的记录/体重/身体数据（按 id / 日期取并集），避免"明明云端有却看不到"
+    try {
+      const rd = remote.data || {};
+      const local2 = Store.load();
+      const byId = new Map();
+      for (const l of (local2.logs || [])) if (l && l.id) byId.set(l.id, l);
+      let added = 0;
+      for (const l of (rd.logs || [])) {
+        if (l && l.id && !byId.has(l.id)) { byId.set(l.id, l); added++; }
+      }
+      if (added) {
+        local2.logs = [...byId.values()].sort((a, b) => (a.ts || 0) - (b.ts || 0));
+        local2.body = Object.assign({}, rd.body || {}, local2.body || {});
+        local2.weights = Object.assign({}, rd.weights || {}, local2.weights || {});
+        localStorage.setItem(Store.KEY, JSON.stringify(local2));
+        cloudPulling = false;
+        return 'merged';
+      }
+    } catch (e) {}
     cloudPulling = false;
     return 'behind';
   } catch (e) {
