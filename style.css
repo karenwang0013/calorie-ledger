@@ -899,7 +899,7 @@ body.add-open .sheet-mask.on {
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.16),
     0 3px 12px rgba(0,0,0,.20);
-  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease, background .18s ease, box-shadow .18s ease;
+  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
 }
 /* 按下：横向撑开、纵向压扁，松手弹回去（只动这一层，不影响位置那层） */
@@ -912,7 +912,7 @@ body.add-open .sheet-mask.on {
 .lens-body::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: var(--lens-solid);
-  opacity: 0; transition: opacity .34s ease;
+  opacity: 0; transition: opacity .6s cubic-bezier(.33,.1,.28,1);
   pointer-events: none;
 }
 .dock-lens.settled .lens-body::after { opacity: 1; }
@@ -1256,7 +1256,7 @@ body.add-open .sheet-mask.on {
     inset 0 -2px 8px rgba(0,0,0,.16),
     0 2px 8px rgba(0,0,0,.18);
   /* 只动 transform：宽高一旦参与过渡，每一帧都要重新排版，iOS 上就会抖 */
-  transition: transform .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease, background .18s ease, box-shadow .18s ease;
+  transition: transform .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
   transform: translate3d(0,0,0);
   backface-visibility: hidden;
@@ -1269,7 +1269,7 @@ body.add-open .sheet-mask.on {
 .seg-lens::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: var(--lens-solid);
-  opacity: 0; transition: opacity .34s ease;
+  opacity: 0; transition: opacity .6s cubic-bezier(.33,.1,.28,1);
   pointer-events: none;
 }
 .seg-lens.settled::after { opacity: 1; }

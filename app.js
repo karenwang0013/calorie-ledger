@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.64', d: '10-22', items: [
+    '改：玻璃→实色的淡入再放柔（0.34 秒 → 0.6 秒，缓出曲线），边光和阴影也一起慢慢过渡',
+    '实测淡入过程：0.08 → 0.19 → 0.35 → 0.54 → 0.64 → 0.76 → 0.85 → 0.90 → 0.94 → 1.00，是连续渐亮而不是一跳',
+  ]},
   { v: 'v6.63', d: '10-22', items: [
     '修：停下时"玻璃→实色"是硬切（一下子从玻璃跳成实色）—— 因为渐变和纯色之间浏览器没法做过渡',
     '现在实色是一层单独的颜色层，用 0.34 秒淡入（实测 opacity 0 → 0.09 → 0.29 → 0.59 → 0.88 → 1，是渐变不是跳变）',
@@ -1608,7 +1612,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.63';
+const APP_VERSION = 'v6.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2108,7 +2112,7 @@ function initSegLens(wrap) {
   };
   const sync = () => {
     lens.classList.remove('press');
-    if (!pressedEl) settleSeg(420);
+    if (!pressedEl) settleSeg(330);
     const on = wrap.querySelector('button.on');
     const g = on && geoOf(on);
     if (!g) return;
@@ -2148,7 +2152,7 @@ function initSegLens(wrap) {
   const settle = () => {
     const el = pressedEl;
     pressedEl = null;
-    settleSeg(420);
+    settleSeg(330);
     if (!el) return;
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
@@ -4909,8 +4913,8 @@ function initDockLens() {
     clearTimeout(lens.__settleT);
     lens.__settleT = setTimeout(() => lens.classList.add('settled'), delay);
   };
-  const go = el => { if (!el) return; target = el; place(el); lit(el); settle(620); };
-  const reflow = () => { lens.classList.remove('press'); place(target || fabEl); settle(620); };
+  const go = el => { if (!el) return; target = el; place(el); lit(el); settle(520); };
+  const reflow = () => { lens.classList.remove('press'); place(target || fabEl); settle(520); };
   window.__dockLens = { go, reflow };
 
   inner.addEventListener('pointerdown', ev => {
