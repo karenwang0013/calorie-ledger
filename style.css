@@ -906,10 +906,26 @@ body.add-open .sheet-mask.on {
 /* 按下：横向撑开、纵向压扁（快，110ms 压到位），松手用上面那条过冲曲线弹回来
    —— 只动这一层（底），位置层不动，文字也不会被拉变形 */
 .dock-lens.press .lens-body {
-  transform: scale(.93, .90);          /* 明显缩一圈（看得见的"按下"） */
-  border-radius: calc(var(--lens-r, 36px) + 4px);
-  transition: transform .13s cubic-bezier(.3,.75,.4,1), border-radius .13s ease;
+  transform: scale(.90, .86);          /* 明显缩一圈（看得见的"按下"） */
+  border-radius: calc(var(--lens-r, 36px) + 5px);
+  transition: transform .09s cubic-bezier(.3,.75,.4,1), border-radius .09s ease;
 }
+
+/* 果冻回弹：松手后连弹三次（大 → 小 → 小大 → 落定），一次 transition 只抖一下，
+   所以这里用关键帧做"duang duang" */
+@keyframes jellyBounce {
+  0%   { transform: scale(.90, .86); }
+  22%  { transform: scale(1.055, 1.075); }
+  40%  { transform: scale(.972, .962); }
+  57%  { transform: scale(1.024, 1.032); }
+  72%  { transform: scale(.991, .989); }
+  86%  { transform: scale(1.006, 1.007); }
+  100% { transform: scale(1, 1); }
+}
+.dock-lens.jelly .lens-body { animation: jellyBounce .62s cubic-bezier(.3,.7,.3,1) both; }
+/* 按钮内容（图标 + 文字）同步做同样的缩放 —— 整块一起动，视觉上才是"按钮被按了一下" */
+.tabbar .tab.press-squash, .tabbar .fab.press-squash { transform: scale(.90, .86); transition: transform .09s cubic-bezier(.3,.75,.4,1); }
+.tabbar .tab.jelly, .tabbar .fab.jelly { animation: jellyBounce .62s cubic-bezier(.3,.7,.3,1) both; }
 /* 停稳（不再移动/按住）→ 实色层淡入盖住玻璃。
    不能直接给 background 做过渡：渐变和纯色之间浏览器没法插值，那就是硬切。 */
 .lens-body::after {

@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.85', d: '10-23', items: [
+    '改：果冻改成"整块"一起动 —— 按住时滑块和图标文字一起缩到 0.90（之前只缩底、图标不动，所以看不出变小）',
+    '改：松手用关键帧连弹三次（1.054 → 0.972 → 1.024 → 0.992 → 1.000），这才是 duang 的来回感',
+  ]},
   { v: 'v6.84', d: '10-23', items: [
     '改：Dock 果冻原来只是"横向撑开 + 纵向压扁"（面积几乎不变，所以看着像没动）→ 现在是整块缩一圈 0.93×0.90，松手鼓到 1.028×1.041 再落回 1.000（有明显 duang）',
   ]},
@@ -1696,7 +1700,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.84';
+const APP_VERSION = 'v6.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5063,6 +5067,8 @@ function initDockLens() {
     place(el, { press: true });
     lit(el);
     lens.classList.add('press');
+    lens.classList.remove('jelly');       // 重新按下时清掉上一次的回弹动画
+    el.classList.add('press-squash');     // 按钮本身（图标+文字）跟着一起缩，才像"整块按下"
     if (el.classList.contains('fab')) el.classList.add('pressed');
   }, { passive: true });
 
@@ -5070,6 +5076,16 @@ function initDockLens() {
     inner.querySelectorAll('.fab.pressed').forEach(f => f.classList.remove('pressed'));
     if (!lens.classList.contains('press')) return;
     lens.classList.remove('press');
+    // 松手：整块（滑块 + 按钮内容）弹一下 —— 关键帧里做了两三次来回，duang 才明显
+    const pressedEl = inner.querySelector('.tab.press-squash, .fab.press-squash');
+    if (pressedEl) pressedEl.classList.remove('press-squash');
+    [lens, pressedEl].forEach(n => {
+      if (!n) return;
+      n.classList.remove('jelly');
+      void n.offsetWidth;                 // 强制重排，保证同一个动画能重新播
+      n.classList.add('jelly');
+      setTimeout(() => n.classList.remove('jelly'), 700);
+    });
     // 松手后滑回当前选中的 Tab（点 Tab 的话此时已经切过去了，看起来就是原地弹一下）
     setTimeout(() => { if (!lens.classList.contains('press')) reflow(); }, 10);
   };
