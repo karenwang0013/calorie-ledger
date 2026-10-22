@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.02', d: '10-23', items: [
+    '改（只营养编辑卡）：内容上移（离卡片顶 61 → 45px），右上角叉号上移更多（30 → 16px），卡片随之更短（424.8 → 408.8）',
+    '修（只营养编辑卡）：下滑关闭卡住 —— 原因找到了：记录卡片关闭时会当场清掉拖拽写进去的 transform/opacity，营养卡片没清（只在 420ms 后才清），所以下次打开停在半路。现在和记录卡片完全一样的做法',
+  ]},
   { v: 'v7.01', d: '10-23', items: [
     '改：「已添加 / 继续选 / 重来」那一行落到虚线框和食物卡片之间的正中（实测上下各 10px）',
   ]},
@@ -1765,7 +1769,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.01';
+const APP_VERSION = 'v7.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2888,7 +2892,13 @@ function openNutEdit(i) {
 }
 function closeNutEdit() {
   $('#nutMask').classList.remove('on');
-  $('#nutSheet').classList.remove('on');
+  const sh = $('#nutSheet');
+  // 和 closeAdd 一样：下滑关闭时脚本写过 transform / opacity，这里必须当场清掉，
+  // 否则下次打开会停在半路 —— 这就是"营养卡片下滑卡住"的真正原因
+  sh.classList.remove('dragging');
+  sh.style.transform = '';
+  sh.style.opacity = '';
+  sh.classList.remove('on');
   nutEditIdx = -1;
 }
 function saveNutEdit() {
