@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.94', d: '10-23', items: [
+    '改：搜索里选中食物后，界面**直接切到左边「拍照」那边**（记录区在那里），搜索这边同时清空回初始状态（搜索词清空、列表回到最上面）—— 再点「搜索」就能重新挑，挑完又会跳过去',
+  ]},
   { v: 'v6.93', d: '10-23', items: [
     '新：记录区右上角加了「继续选」—— 点它直接回到搜索（列表放出、滚回顶部），选第 2、第 3 样时**不会再跳走**，可以连着多选',
     '修：搜索页上滑时"横杠下面像有一层东西盖住" —— 那层其实是横杠占了 9px 布局，滚动内容在横杠下沿被切掉；现在横杠改成浮在最上层、不占位，内容可以一直滚到弹层顶边',
@@ -1732,7 +1735,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.93';
+const APP_VERSION = 'v6.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2334,6 +2337,9 @@ function setAddMode(m) {
   if (m === 'search') {
     $('#searchList').hidden = false;              // 回到搜索就一定能继续挑
     runSearch($('#searchInput').value || '');
+    // 每次进来都回到列表最上面（相当于重新开始挑）
+    const sb = document.querySelector('#addSheet .sh-body');
+    if (sb) sb.scrollTop = 0;
   }
   if (window.__addTabsLens) requestAnimationFrame(() => window.__addTabsLens.sync());
 }
@@ -2699,18 +2705,16 @@ function runSearch(q) {
   });
 
   $$('.sitem', box).forEach(el => el.onclick = () => {
-    const firstPick = (S.items || []).length === 0;
     pushFood(list[Number(el.dataset.i)].f);
+    // 选中后：搜索这边清空回初始状态（清空搜索词、列表滚回顶部），
+    // 然后把界面切到左边的「拍照」—— 记录区在那边，加进来的都列在那里
     $('#searchInput').value = '';
     $('#searchInput').blur();
-    runSearch('');                                // 列表内容始终留着
-    if (firstPick) {
-      // 第一次选中：收列表 → 直接看到记录界面
-      syncSearchList();
-    } else {
-      // 已经在记录里加过东西了：留在搜索里，方便接着多选几样（不要再跳走）
-      $('#searchList').hidden = false;
-    }
+    $('#searchList').hidden = false;
+    runSearch('');
+    const sb = document.querySelector('#addSheet .sh-body');
+    if (sb) sb.scrollTop = 0;
+    setAddMode('photo');
   });
 }
 
