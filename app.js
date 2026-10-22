@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.57', d: '10-22', items: [
+    '改：7 天 / 30 天 / 90 天 重新独立成一张卡（和别的卡同宽、同圆角、同底色），夹在「实测每日消耗」和「每日热量平衡」中间',
+    '上下留白与卡片间距一致（都是 12px），不贴顶也不显得挤',
+  ]},
   { v: 'v6.56', d: '10-22', items: [
     '改：趋势页最上面那张卡不再贴着顶栏 —— 上方留白 = 卡片之间的留白（实测都是 12px，一致）',
     '改：7/30/90 收进「每日热量平衡」这张卡里（标题下面），不再单独占一条；删掉「数据明细」和那条看不清的横线',
@@ -2798,9 +2802,6 @@ function renderTrends() {
 
   const topBox = $('#trendTop');
   if (topBox) topBox.innerHTML = realCard;   // 状态卡（实测消耗）不受 7/30/90 影响，单独放上面
-  // 7/30/90 那颗"时间滑块"不单独占一行，塞进第一张明细卡里当它的开关（重绘前先把它摘出来，别跟着旧卡一起销毁）
-  const segEl = document.getElementById('trendSeg');
-  if (segEl) segEl.remove();
   box.innerHTML = `
     ${t.logged_days === 0 ? `
     <div class="card">
@@ -2833,14 +2834,6 @@ function renderTrends() {
             : '—'}</div></div>
       </div>
     </div>`;
-
-  // 放在第一张明细卡的标题下面（「每日热量平衡」→ 7/30/90 → 图），读起来是"这张卡的开关"
-  const firstCard = box.querySelector('.card');
-  if (segEl && firstCard) {
-    const h3 = firstCard.querySelector('h3');
-    if (h3 && h3.nextSibling) firstCard.insertBefore(segEl, h3.nextSibling);
-    else firstCard.appendChild(segEl);
-  }
 
   const gw = $('#goWeight') || $('#goWeight2');
   if (gw) {

@@ -946,8 +946,6 @@ body.add-open .sheet-mask.on {
 .view { display: none; animation: fade .22s ease; }
 #view-trends { padding-top: 12px; }   /* 第一张卡和顶栏之间，留出与卡片之间一样的距离 */
 /* 塞进卡片里的时间滑块：不再单独一条，融成卡片的一部分 */
-.card > .seg { margin: 0 0 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); }
-.card > .seg button { padding: 10px 6px; }
 .view.on { display: block; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -1029,8 +1027,8 @@ body.add-open .sheet-mask.on {
 .seg {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
-  background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06);
-  border-radius: 16px; margin: 0 18px 14px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 18px; margin: 0 18px 12px; padding: 6px;
   --seg-btn-r: 12px;
 }
 .seg button {
@@ -1679,8 +1677,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .meal .empty { padding: 0 16px 18px; font-size: 13px; }
 
   /* 趋势：还是手机的单列，只把卡片和图表放大 */
-  #view-trends .seg { margin: 14px 18px 16px; padding: 5px; border-radius: 16px; }
-  .card > .seg { margin: 2px 0 16px; }
+  #view-trends .seg { margin: 0 18px 16px; padding: 6px; border-radius: 18px; }
   #view-trends .seg button { padding: 12px 8px; font-size: 17px; }   /* iPad 也要比手机大一档，不能比手机还小 */
   .card { margin: 0 18px 14px; padding: 18px; border-radius: 20px; }
   .card h3 { font-size: 13px; }
