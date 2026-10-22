@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.92', d: '10-23', items: [
+    '修：搜索里选了一个食材后，就再也选不了第二个 —— 点「搜索」页签会重新把列表放出来；而且已经在记录里加过东西时，再选新的会**留在搜索里**（不跳走），可以连着多选几样',
+  ]},
   { v: 'v6.91', d: '10-23', items: [
     '回退：记录弹层的颜色/磨砂原样恢复（v6.90 我把底色改成实底是错的，这次一个数值都没留）',
     '修：搜索页上滑时按钮被遮住的真正原因 —— 弹层高度上限是 92dvh，顶边钻到了顶栏后面，一滑动就被顶栏盖住；现在高度上限会避让顶栏（实测弹层顶边离顶栏 20px，滑动时按钮是正常滚出去，不再被切）',
@@ -1725,7 +1728,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.91';
+const APP_VERSION = 'v6.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2324,7 +2327,10 @@ function setAddMode(m) {
   ['photo', 'search', 'text'].forEach(k => {
     $('#pane-' + k).hidden = k !== m;
   });
-  if (m === 'search') runSearch($('#searchInput').value || '');
+  if (m === 'search') {
+    $('#searchList').hidden = false;              // 回到搜索就一定能继续挑
+    runSearch($('#searchInput').value || '');
+  }
   if (window.__addTabsLens) requestAnimationFrame(() => window.__addTabsLens.sync());
 }
 
@@ -2689,12 +2695,18 @@ function runSearch(q) {
   });
 
   $$('.sitem', box).forEach(el => el.onclick = () => {
+    const firstPick = (S.items || []).length === 0;
     pushFood(list[Number(el.dataset.i)].f);
     $('#searchInput').value = '';
     $('#searchInput').blur();
-    // 列表内容要留着（清空会导致切回搜索是一片空白），但有结果时先收起来，
-    // 让"已添加"的结果区直接出现在搜索框下面 —— 选完就进记录界面，不用往下滚
-    syncSearchList();
+    runSearch('');                                // 列表内容始终留着
+    if (firstPick) {
+      // 第一次选中：收列表 → 直接看到记录界面
+      syncSearchList();
+    } else {
+      // 已经在记录里加过东西了：留在搜索里，方便接着多选几样（不要再跳走）
+      $('#searchList').hidden = false;
+    }
   });
 }
 
