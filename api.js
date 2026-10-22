@@ -1,3 +1,4 @@
+window.__ok = Object.assign(window.__ok || {}, { api: 1 });
 /* 本地数据层 + 计算
  *
  * 原来这些都跑在 Python 服务里。现在全部在浏览器里完成，

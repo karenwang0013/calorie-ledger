@@ -1,5 +1,6 @@
 /* 热量账本 —— 前端 */
 'use strict';
+window.__ok = Object.assign(window.__ok || {}, { app: 1 });
 
 /* ---------------- 工具 ---------------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -23,6 +24,16 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.76', d: '10-23', items: [
+    '修：点完 7/30/90、减脂/维持/增肌 一直是玻璃、不变回实色 —— 一个顺序写错把"松手后变实色"的定时器清掉了，已修',
+    '修：Dock 那格实色在"今日"页会显得比别人白 —— 实色改成"半透明暗底 + 一点白"，实测两格的实色现在是 rgb(81) / rgb(82)，差 1.5（之前差 10）',
+    '修：打开 App 时滑块默认停在中间的加号上，现在直接停在当前选中的 Tab',
+  ]},
+  { v: 'v6.75', d: '10-23', items: [
+    '修：关掉重开又卡在"全是破折号"的界面 —— 现在会自动补加载失败的脚本（补完正常显示，不用重开）',
+    '改：「强制更新」不再注销 Service Worker、不再清空缓存（那是"断网必崩"的根因），只带时间戳重新打开，照样拿最新版',
+    '新增：真起不来时顶部弹一条提示条，写明缺的是哪个脚本、在不在线，点一下重新加载',
+  ]},
   { v: 'v6.74', d: '10-23', items: [
     '修：进趋势页、进营养目标页时，没点按钮也会自己从玻璃淡成实色 —— 现在只有真的点过才播这段过渡；没碰过就一直是实色（切页、重画、刚插入都不许自己淡一遍）',
     '改：模式下面那行小字改成具体数值，例如「建议缺口 300 千卡 / 天，即比消耗少吃 300 千卡；蛋白 2.0 g/kg、脂肪约 25% 热量」，不再重复模式名',
@@ -1653,7 +1664,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.74';
+const APP_VERSION = 'v6.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2159,13 +2170,16 @@ function initSegLens(wrap) {
   // instant = 不播动画，直接是实色（用于"你根本没点过它"的场合：切页、重画、首次定位）
   let glassUntil = 0;                  // 正在"玻璃→实色"过渡中，到这个时刻为止
   const settleSeg = (delay, instant) => {
-    clearTimeout(lens.__settleT);
     if (instant) {
+      // 注意：这里**绝不能**先 clearTimeout —— 那会把"松手后加 settled"的定时器清掉，
+      // 结果就是按完一直停在玻璃状态（v6.74 的 bug 就是这个）
       if (Date.now() < glassUntil) return;                 // 正在淡入 → 让它走完，不插队
+      clearTimeout(lens.__settleT);
       lens.classList.remove('fadein', 'fadeout');
       lens.classList.add('settled');                       // 不过渡：直接就是实色
       return;
     }
+    clearTimeout(lens.__settleT);
     // 有意的操作：先关掉实色（fadeout 的快节奏），再等 delay 后用 fadein 慢慢亮回来
     lens.classList.remove('settled');
     glassUntil = Date.now() + delay + 2400;
@@ -4520,12 +4534,9 @@ function wireMe() {
 /* 强制更新：清掉 Service Worker 和缓存，带随机参数重开（绕开 Pages 的 CDN 缓存）
    右上角那个按钮和设置页里的按钮都调它 */
 async function hardReloadApp() {
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map(r => r.unregister()));
-    const keys = await caches.keys();
-    await Promise.all(keys.map(k => caches.delete(k)));
-  } catch (e) {}
+  // 只带时间戳重新打开，**不再**注销 Service Worker、也不再清空缓存：
+  // 注销 + 清缓存会让下一次打开完全依赖网络，网络一抖就停在"全是破折号"的死界面。
+  // SW 本来就是"先走网络、失败才用缓存"，带 ?r= 就能绕过 HTTP 缓存拿到最新版。
   toast('正在更新…', 1200);
   setTimeout(() => {
     const u = location.pathname + '?r=' + Date.now();
@@ -5028,10 +5039,10 @@ function initDockLens() {
   window.addEventListener('pointerup', release, { passive: true });
   window.addEventListener('pointercancel', release, { passive: true });
 
-  // 打开 App 时滑块默认停在中间的加号上（不播放入场动画），之后跟着点击跑
+  // 打开 App 时滑块直接落在当前选中的 Tab 上（不播放入场动画），之后跟着点击跑
   lens.classList.add('noanim');
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    go(fabEl);
+    go(activeTab() || fabEl);
     lens.classList.add('settled');       // 首帧就是实色，不播玻璃→实色的闪变
     requestAnimationFrame(() => lens.classList.remove('noanim'));
   }));
@@ -5041,6 +5052,8 @@ function initDockLens() {
 }
 
 function init() {
+  if (window.__inited) return;      // 脚本被补加载时可能被调用两次，只跑一次
+  window.__inited = true;
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭

@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v626';
+const CACHE = 'ledger-v628';
 const ASSETS = [
   './',
   './index.html',
@@ -17,7 +17,8 @@ const ASSETS = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
+      // 逐个缓存：某一个下载失败（网络抖动）也不会让整批都白装
+      .then(c => Promise.allSettled(ASSETS.map(a => c.add(a))))
       .then(() => self.skipWaiting())
   );
 });
@@ -44,7 +45,7 @@ self.addEventListener('fetch', e => {
   // 打开页面：先走网络拿最新版，断网了再用缓存
   if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put('./index.html', copy));

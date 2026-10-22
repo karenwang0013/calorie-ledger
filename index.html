@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=626">
+<link rel="stylesheet" href="style.css?v=628">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -360,53 +360,83 @@
   </div>
 </div>
 
-<script src="foods.js?v=626"></script>
-<script src="api.js?v=626"></script>
-<script src="app.js?v=626"></script>
+<script src="foods.js?v=628"></script>
+<script src="api.js?v=628"></script>
+<script src="app.js?v=628"></script>
 <script>
-/* 兜底：万一这次加载没完整（更新正好赶在部署中间，某个 js 没下下来），
-   不要停在"全是破折号"的死界面：
-   ① 第一次先自己自动重载一次（15 秒内只试一次，避免死循环）；
-   ② 还不行就弹一条可点重试的提示。
-   这段是内联的，所以就算 app.js 本身没下载下来也照样有效。 */
+/* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
+   顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
+   提示条上带着诊断信息（哪几个脚本没到位、在不在线），截图就能定位。 */
 (function () {
-  var K = 'boot-auto-retry';
-  function broken() {
+  var FILES = ['foods.js', 'api.js', 'app.js'];
+  var KEY = { 'foods.js': 'foods', 'api.js': 'api', 'app.js': 'app' };
+  var failing = {};
+  var repairing = false;
+
+  function ok(k) { return !!(window.__ok && window.__ok[k]); }
+  function missing() { return FILES.filter(function (f) { return !ok(KEY[f]); }); }
+  function bootBroken() {
+    if (window.__booted) return false;
     var el = document.getElementById('dateLabel');
     var t = el && el.textContent ? el.textContent.trim() : '';
     return !t || t === '—';
   }
-  function autoRetry() {
-    if (window.__booted) return false;
-    var last = 0;
-    try { last = +sessionStorage.getItem(K) || 0; } catch (e) {}
-    if (last && Date.now() - last < 15000) return false;
-    try { sessionStorage.setItem(K, Date.now()); } catch (e) {}
-    setTimeout(function () { location.reload(); }, 900);
+
+  function inject(list, done) {
+    if (!list.length) return done();
+    var f = list.shift();
+    var s = document.createElement('script');
+    s.src = f + '?r=' + Date.now();
+    s.onload = function () { setTimeout(function () { inject(list, done); }, 40); };
+    s.onerror = function () { setTimeout(function () { inject(list, done); }, 40); };
+    document.head.appendChild(s);
+  }
+
+  function repair() {
+    if (repairing || window.__booted) return false;
+    var miss = missing();
+    if (!miss.length) return false;
+    repairing = true;
+    inject(miss.slice(), function () {
+      repairing = false;
+      if (!window.__booted && typeof window.init === 'function') {
+        try { window.init(); } catch (e) {}
+      }
+      // 脚本补齐后 app 可能"初始化过一遍但用的是缺东西的状态" → 让它重新读一次当天数据
+      if (typeof window.loadDay === 'function') { try { window.loadDay(); } catch (e) {} }
+      setTimeout(function () { if (bootBroken()) show(); }, 1200);
+    });
     return true;
   }
-  function show(msg) {
+
+  function show() {
     if (window.__booted || document.getElementById('bootRetry')) return;
-    var box = document.querySelector('.app') || document.body;
+    var miss = missing().map(function (f) { return f.replace('.js', ''); });
+    var diag = '脚本 ' + (miss.length ? '缺 ' + miss.join(' / ') : '都在') +
+               ' · ' + (navigator.onLine ? '在线' : '离线') +
+               ' · ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? '有缓存' : '无缓存');
     var bar = document.createElement('div');
     bar.id = 'bootRetry';
     bar.className = 'boot-retry';
-    bar.innerHTML = '<span>' + msg + '</span><button>重新加载</button>';
+    bar.innerHTML = '<div class="bt-txt"><span>页面没加载完整</span><i>' + diag + '</i></div>' +
+                    '<button>重新加载</button>';
     bar.querySelector('button').onclick = function () { location.reload(); };
-    box.insertBefore(bar, box.firstChild);
+    document.body.appendChild(bar);
   }
   window.__showBootRetry = show;
-  window.__bootT = setTimeout(function () {
-    if (!broken()) return;
-    if (autoRetry()) return;
-    show('页面没加载完整');
-  }, 4500);
+
   window.addEventListener('error', function (e) {
-    if (e && e.target && e.target.tagName === 'SCRIPT') {
-      if (autoRetry()) return;
-      show('有个脚本没加载下来');
+    var t = e && e.target;
+    if (t && t.tagName === 'SCRIPT') {
+      var name = (t.getAttribute('src') || '').split('?')[0].split('/').pop();
+      if (name) failing[name] = 1;
+      setTimeout(repair, 300);
     }
   }, true);
+
+  // 2.5 秒还没渲染出内容：先补一遍脚本；补完还不行，就把提示条显示出来
+  setTimeout(function () { if (bootBroken()) repair(); }, 2500);
+  setTimeout(function () { if (bootBroken()) show(); }, 5200);
 })();
 </script>
 </body>

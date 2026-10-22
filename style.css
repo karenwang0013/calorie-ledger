@@ -880,7 +880,10 @@ body.add-open .sheet-mask.on {
    分成两层是因为：轻触时"位置"和"缩放"如果写在同一个 transform 上，
    第二次写会把还没走完的滑动过渡打断 → 看起来抖一下。 */
 .dock-lens {
-  --lens-solid: rgba(255, 255, 255, 0.085);   /* 停稳后的实色：比 Dock 底色亮一档，深色底上才看得见 */
+  /* 停稳后的实色 = 一层半透明暗底 + 一层白：暗底把"背后的辉光"压住，
+     这样无论停在哪一格、哪一页，实色看起来都是同一个颜色（之前今日那格会显得更白） */
+  --lens-solid: rgba(255, 255, 255, 0.27);
+  --lens-base: rgba(20, 22, 21, 0.92);
   position: absolute; left: 0; top: 0;
   width: var(--lens-w, 84px); height: var(--lens-h, 46px);
   border-radius: var(--lens-r, 36px);
@@ -910,7 +913,7 @@ body.add-open .sheet-mask.on {
    不能直接给 background 做过渡：渐变和纯色之间浏览器没法插值，那就是硬切。 */
 .lens-body::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--lens-solid);
+  background: linear-gradient(var(--lens-solid), var(--lens-solid)), var(--lens-base);
   opacity: 0; transition: none;   /* 默认不过渡，见下面 fadeout / fadein */
   pointer-events: none;
 }
@@ -965,7 +968,8 @@ body.add-open .sheet-mask.on {
   color: var(--orange); font-size: 12.5px;
   backdrop-filter: blur(12px);
 }
-.boot-retry span { flex: 1; }
+.boot-retry .bt-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.boot-retry .bt-txt i { font-style: normal; font-size: 10.5px; opacity: .75; }
 .boot-retry button {
   flex: 0 0 auto; padding: 6px 12px; border-radius: 10px;
   background: rgba(255,255,255,.10); color: var(--text); font-size: 12px; font-weight: 600;
@@ -1279,11 +1283,12 @@ body.add-open .sheet-mask.on {
 .seg-lens.on { opacity: 1; }
 /* 停稳后同样是实色（不是玻璃）——比所在卡片亮一档，保证深色卡上也看得见 */
 .seg-lens {
-  --lens-solid: rgba(255, 255, 255, 0.10);
+  --lens-solid: rgba(255, 255, 255, 0.26);
+  --lens-base: rgba(20, 22, 21, 0.90);
 }
 .seg-lens::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--lens-solid);
+  background: linear-gradient(var(--lens-solid), var(--lens-solid)), var(--lens-base);
   /* 默认**不**过渡：没被操作过就一直该是实色（切页、重画、刚插入都不许自己淡一遍） */
   opacity: 0; transition: none;
   pointer-events: none;
