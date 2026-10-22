@@ -1244,7 +1244,9 @@ body.add-open .sheet-mask.on {
   position: relative;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   padding: 6px; flex: 0 0 auto;
-  --seg-btn-r: calc(var(--dock-r, 26px) - 18px);          /* 卡片圆角 39 → 这一条 27 → 里面的按钮/滑块 21 */
+  /* 圆角同心：这一条 27（= dock-r − 12），按钮离这条边 6 padding + 1 border = 7，
+     所以按钮圆角 = 27 − 7 = 20 = dock-r − 19（之前写 18 差 1px，弧线对不齐） */
+  --seg-btn-r: calc(var(--dock-r, 26px) - 19px);
   margin: 4px 0 12px;                                     /* 不再外扩：和下面虚线框用同一个左右基准 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
