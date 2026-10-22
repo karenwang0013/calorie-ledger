@@ -995,12 +995,11 @@ body.add-open .sheet-mask.on {
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
 #nutSheet .sh-body { padding: 26px 22px 14px; }
-#nutSheet .sh-foot { padding-left: 22px; padding-right: 22px; }
-
-/* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉 */
+/* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉；
+   padding 和记录卡片完全一致（8/16/30）→ 按钮离卡片底边的距离同样是 31px */
 #nutSheet .sh-foot {
   background: transparent; border-top: 0;
-  padding: 8px 16px 16px;
+  padding: 8px 16px 30px;
 }
 
 /* 改营养数据的小面板 */

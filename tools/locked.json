@@ -48,5 +48,10 @@
     "file": "style.css",
     "find": ".ritem .meta .pen { width: 22px; height: 18px; }",
     "why": "营养行后面那个「…」的尺寸：和 10.5px 文字同高，中心线才对得上"
+  },
+  {
+    "file": "style.css",
+    "find": "padding: 8px 16px 30px;",
+    "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
   }
 ]
