@@ -1226,7 +1226,8 @@ body.add-open .sheet-mask.on {
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.16),
     0 2px 8px rgba(0,0,0,.18);
-  transition: transform .55s cubic-bezier(.33,1.06,.32,1), width .5s cubic-bezier(.33,1.06,.32,1), height .5s cubic-bezier(.33,1.06,.32,1), opacity .25s ease;
+  /* 不带回弹：分段控件的滑块只负责"滑到位"，多一下回弹就会被看成抖 */
+  transition: transform .42s cubic-bezier(.22,.85,.24,1), width .42s cubic-bezier(.22,.85,.24,1), height .42s cubic-bezier(.22,.85,.24,1), opacity .25s ease;
   will-change: transform;
 }
 .seg-lens.on { opacity: 1; }

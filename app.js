@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v6.26', d: '10-22', items: [
+    '修：饮食目标三格左右切换时那一点点抖动 —— 两个来源都去掉了：① 按住时滑块会"压扁再弹回"，模式切换要等接口，那一压一回就被看成抖；② 滑动曲线带一点回弹过冲',
+    '现在分段滑块只有"滑到位"这一个动作，曲线是单纯的减速落位（Dock 那颗仍然保留回弹，那颗你说好看）',
+  ]},
   { v: 'v6.25', d: '10-22', items: [
     '修：强制刷新后第一次点「趋势」，7 天/30 天/90 天那颗滑块会从屏幕顶部滑下来 —— 现在第一次定位直接落位、不播入场动画',
     '饮食目标那三格也同样是这个处理，滑块永远只在这一栏里左右滑',
@@ -1452,7 +1456,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v6.25';
+const APP_VERSION = 'v6.26';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -1959,8 +1963,7 @@ function initSegLens(wrap) {
     const b = ev.target.closest('button');
     if (!b) return;
     pressedEl = b;
-    lens.classList.add('press');
-    place(b, true, false);          // 按下去先滑到手指这一格（不记账）
+    place(b, false, false);         // 按下去就直接滑到手指这一格（不压扁、不记账）
   }, { passive: true });
 
   // 松手时不要立刻弹回原来的格子 —— 那样会"过去又回来"晃一下。
@@ -1968,7 +1971,6 @@ function initSegLens(wrap) {
   const settle = () => {
     const el = pressedEl;
     pressedEl = null;
-    lens.classList.remove('press');
     if (!el) return;
     setTimeout(() => {
       if (!wrap.isConnected) return;              // 整块已经被重画，新滑块自己会接上
