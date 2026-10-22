@@ -923,6 +923,13 @@ body.nlog-open .sheet-mask.on {
 .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted2); margin-top: 8px; }
 .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 4px; }
 
+/* 体重趋势下方那两行：点选那天的数值 + 体脂秤，字略大、白色，看得清 */
+.wlegend { font-size: 12.5px; align-items: center; }
+.wlegend > span:first-child { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wlegend > span:first-child i { width: 8px; height: 8px; border-radius: 50%; }
+.wlegend > span:last-child { color: var(--muted); }
+.hint.wbody { margin-top: 8px; font-size: 12.5px; color: rgba(255, 255, 255, .9); font-variant-numeric: tabular-nums; }
+
 .barchart {
   position: relative;
   height: 126px;

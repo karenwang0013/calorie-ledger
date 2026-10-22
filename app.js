@@ -23,6 +23,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.05', d: '10-22', items: [
+    '改：体重趋势图下面那两行（「10-22 · 64.3 kg」和「10-22 体脂秤：…」）字号加大、改成白色，不再灰得看不清',
+    '改：图上左边那两个数字加上「最高 / 最低」两个字，写清它们是这张图纵轴的刻度（这段时间体重的最高最低），不是某个点，点了本来就不会变',
+  ]},
   { v: 'v5.04', d: '10-22', items: [
     '修：在体重趋势图上点某个点后，一起跟着变的还有图上那三组数字 —— 第一组变成「所选那天」的体重、第二组是那天比上一次的增减、第三组变成「距上次」几天；不点还是原来的本页最新/本页区间',
     '修：点过点以后，趋势卡右上角会多一个「回到最新」，一下退回到看最新那几天；重新进这一页也会自动回到最新',
@@ -1295,7 +1299,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.04';
+const APP_VERSION = 'v5.05';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2317,11 +2321,11 @@ function renderTrends() {
     wChart = `<div class="card">
       <h3>体重趋势</h3>
       <div class="chartwrap" id="trWrap">${lineChart(weights, t.start, t.end, trSelDate)}</div>
-      <div class="legend">
+      <div class="legend wlegend">
         ${(() => {
           const sel = trSelDate ? weights.find(x => x.date === trSelDate) : null;
           return sel
-            ? `<span><i style="background:#6bff9a"></i>${sel.date.slice(5)} · ${sel.kg} kg</span>`
+            ? `<span class="onsel"><i style="background:#6bff9a"></i>${sel.date.slice(5)} · ${sel.kg} kg</span>`
             : `<span><i style="background:var(--blue)"></i>体重 kg</span>`;
         })()}
         <span style="margin-left:auto">${weights.length} 次记录</span>
@@ -2334,7 +2338,7 @@ function renderTrends() {
         const bits = [];
         if (b.bf) bits.push('体脂率 ' + b.bf + '%');
         if (b.bmi) bits.push('BMI ' + b.bmi);
-        return `<div class="hint" style="margin-top:8px">${last.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
+        return `<div class="hint wbody">${last.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
       })()}
     </div>`;
   } else {
@@ -2454,8 +2458,8 @@ function lineChart(points, start, end, selDate) {
     ${dots}
     <text x="${pl}" y="${H - 6}" style="font-size:9px">${first.date.slice(5)}</text>
     <text x="${W - pr}" y="${H - 6}" text-anchor="end" style="font-size:9px">${last.date.slice(5)}</text>
-    <text x="${pl}" y="${Y(max) + 10}" style="font-size:9px">${max.toFixed(1)}</text>
-    <text x="${pl}" y="${Y(min) - 2}" style="font-size:9px">${min.toFixed(1)}</text>
+    <text x="${pl}" y="${(Y(Math.max(...ys)) - 6).toFixed(1)}" style="font-size:9px;fill:var(--muted)">最高 ${Math.max(...ys).toFixed(1)}</text>
+    <text x="${pl}" y="${(Y(Math.min(...ys)) + 11).toFixed(1)}" style="font-size:9px;fill:var(--muted)">最低 ${Math.min(...ys).toFixed(1)}</text>
   </svg>`;
 }
 
