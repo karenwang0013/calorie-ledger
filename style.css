@@ -1274,6 +1274,15 @@ body.add-open .sheet-mask.on {
 /* 「估算热量」和「记入」两个按钮要一样大：文案栏左右内边距比底部窄 4px，这里补回来 */
 #textGo { width: calc(100% - 8px); margin-left: 4px; margin-right: 4px; align-self: center; }
 
+/* 结果行里"AI 估克数"的小按钮（只在克数空着时出现） */
+.ritem .aig {
+  flex: 0 0 auto; padding: 6px 9px; border-radius: 9px;
+  font-size: 11px; font-weight: 600;
+  background: rgba(214, 255, 75, 0.14); color: var(--lime);
+  border: 1px solid rgba(214, 255, 75, 0.28);
+}
+.ritem .aig[disabled] { opacity: .6; }
+
 /* 记录卡片顶部那三格：滚动时固定。
    材质**照抄 Dock 栏**（.tabbar .inner 那一段）：
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */

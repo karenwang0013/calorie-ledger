@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.53', d: '10-23', items: [
+    '新：认出来的实物 → 克数自动填好；**认不出来的 → 克数框旁边出现「AI 估克数」**，你先在名字里写上它是什么（或改名），点一下就按常见份量估出克数填进去',
+    '实测：有克数的条目不会出现这个按钮；克数空着时出现，点完自动填上',
+  ]},
   { v: 'v7.52', d: '10-23', items: [
     '改：搜索栏那三格的滑块改成和 Dock **同一套动作** —— 滑动时长/曲线从 .42s 改成 Dock 的 .24s，按下时同样横向撑开 1.055、纵向压扁 0.925，松手弹回；实色层仍是 2.2 秒渐变',
     '实测按压→松手：不透明度 0.56→0→0.01→…→1（2.4 秒平滑），缩放 1.04→1.055→1.00，没有跳变',
@@ -1961,7 +1965,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.52';
+const APP_VERSION = 'v7.53';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3084,6 +3088,7 @@ function renderResult() {
         <div class="meta"><span class="mtxt">每 100g ${Math.round(it.kcal_per_100g)} 千卡 · 蛋 ${it.protein_per_100g}/碳 ${it.carb_per_100g}/脂 ${it.fat_per_100g}${low ? ' · 不太确定' : ''}</span><button class="pen" data-nut="${i}" aria-label="改营养数据">${PEN_ICON}</button></div>
         <div class="gr">
           <input type="number" inputmode="decimal" value="${it.grams || ''}" placeholder="克" data-g="${i}">
+          ${it.grams ? '' : `<button class="aig" data-aig="${i}">AI 估克数</button>`}
           <span class="u">克</span>
           <div class="chips">${chips}</div>
           <span class="kc">${it.grams ? Math.round(kcal) : '—'}</span>
@@ -3117,6 +3122,29 @@ function renderResult() {
   $$('[data-nut]', box).forEach(b => b.onclick = ev => {
     ev.stopPropagation();
     openNutEdit(Number(b.dataset.nut));
+  });
+  $$('[data-aig]', box).forEach(b => b.onclick = async ev => {
+    ev.stopPropagation();
+    const it = S.items[Number(b.dataset.aig)];
+    if (!it) return;
+    const name = String(it.name || '').trim();
+    if (!name) return toast('先填这个食物叫什么', 2400);
+    b.disabled = true;
+    const oldTxt = b.textContent;
+    b.textContent = 'AI 估…';
+    try {
+      const r = await api('/api/ai/text', { text: `「${name}」一份（一人份 / 一份 / 一碗，按最常见的一份）通常多少克？只估克数` });
+      const g = Number(r && r.items && r.items[0] && r.items[0].grams) || 0;
+      if (!(g > 0)) throw new Error('没估出来');
+      it.grams = Math.round(g);
+      delete it._units;
+      renderResult();
+      toast(`AI 估「${name}」一份约 ${it.grams} 克，不对就直接改`, 3200);
+    } catch (e) {
+      b.disabled = false;
+      b.textContent = oldTxt;
+      toast('AI 没估出来，克数手动填一下', 3000);
+    }
   });
   $$('[data-u]', box).forEach(b => b.onclick = () => {
     S.items[Number(b.dataset.u)].grams = Number(b.dataset.g);
