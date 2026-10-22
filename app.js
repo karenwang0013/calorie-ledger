@@ -23,6 +23,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v5.08', d: '10-22', items: [
+    '修：在图上点 10-13，下面「10-13 · 66.2 kg」已经跟着变了，可再下一行却还写着 10-22 —— 现在那行体脂秤也跟着所选那天走（那天没有体脂秤记录就退回最新一条）',
+    '改：图上「最高 / 最低」两个刻度挪到图的右上角，不再压着左边那条折线',
+    '改：体脂秤那一行（「10-22 体脂秤：体脂率 … · BMI …」）的字号和粗细，和上一行所选那天的数字对齐（同样 12.5px、同样加粗、纯白）',
+  ]},
   { v: 'v5.07', d: '10-22', items: [
     '改：底部 Dock 中间的加号重画 —— 笔画更粗、四个端头的左右两个角带一点圆角（不是整个半圆），整体比上一版放大一些',
   ]},
@@ -1305,7 +1310,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v5.07';
+const APP_VERSION = 'v5.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2338,13 +2343,16 @@ function renderTrends() {
       </div>
       ${(() => {
         const body = (S.trend && S.trend.body) || {};
-        const last = Object.keys(body).sort().pop();
-        const b = last ? body[last] : null;
+        const datesB = Object.keys(body).sort();
+        const latestB = datesB.length ? datesB[datesB.length - 1] : null;
+        // 图上点了哪天，体脂秤那行就跟哪天走；那天没有体脂秤记录就退回最新一条（并写明是另一天）
+        const pickD = (trSelDate && body[trSelDate]) ? trSelDate : latestB;
+        const b = pickD ? body[pickD] : null;
         if (!b || (!b.bf && !b.bmi)) return '';
         const bits = [];
         if (b.bf) bits.push('体脂率 ' + b.bf + '%');
         if (b.bmi) bits.push('BMI ' + b.bmi);
-        return `<div class="hint wbody">${last.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
+        return `<div class="hint wbody">${pickD.slice(5)} 体脂秤：${bits.join(' · ')}</div>`;
       })()}
     </div>`;
   } else {
@@ -2464,8 +2472,8 @@ function lineChart(points, start, end, selDate) {
     ${dots}
     <text x="${pl}" y="${H - 6}" style="font-size:9px">${first.date.slice(5)}</text>
     <text x="${W - pr}" y="${H - 6}" text-anchor="end" style="font-size:9px">${last.date.slice(5)}</text>
-    <text x="${pl}" y="${(Y(Math.max(...ys)) - 6).toFixed(1)}" style="font-size:9px;fill:var(--muted)">最高 ${Math.max(...ys).toFixed(1)}</text>
-    <text x="${pl}" y="${(Y(Math.min(...ys)) + 11).toFixed(1)}" style="font-size:9px;fill:var(--muted)">最低 ${Math.min(...ys).toFixed(1)}</text>
+    <text x="${W - pr}" y="11" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最高 ${Math.max(...ys).toFixed(1)}</text>
+    <text x="${W - pr}" y="22" text-anchor="end" style="font-size:9px;fill:var(--muted);stroke:#15181b;stroke-width:2.6;paint-order:stroke">最低 ${Math.min(...ys).toFixed(1)}</text>
   </svg>`;
 }
 

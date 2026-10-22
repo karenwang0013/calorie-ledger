@@ -184,3 +184,18 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 - **v3.65（2026-10-21）**：用户确认「完美存档」的版本。此版本包含：容器滚动的键盘方案、真机手感通过、悬浮 Dock（按设备屏幕圆角计算）、磨砂玻璃卡片 + 渐变描边、圆环细边光、改名入口（三个点）、通知页（App 内总开关 + 五类提醒 + 锁屏真推送）、拍照两张图并排、跨设备记录同步、右上角强制更新按钮。
 - 锁屏推送已落地：Cloudflare Worker `ledger-push`（详见 `push/README.md` 顶部「当前状态」）。
 - 回退方式：`git revert <该提交>` 或 `git checkout v3.65-ok`（tag）。
+
+### 体重趋势两行小字 · 尺寸存档（tag `v5.07-ok`）
+
+用户要求「先把现在的尺寸备份一份，免得改完退不回去」。改之前的原始值锁在 tag `v5.07-ok`，具体是：
+
+| 元素 | 选择器 | 存档值（v5.07） |
+|---|---|---|
+| 所选那天那行（● 10-13 · 66.2 kg） | `.legend.wlegend > span:first-child` | 12.5px / 600 / `var(--text)`（纯白）/ 圆点 8px |
+| 右边「15 次记录」 | `.legend.wlegend > span:last-child` | 12.5px / 400 / `var(--muted)` |
+| 体脂秤那行（10-22 体脂秤：…） | `.hint.wbody` | 12.5px / 400 / `rgba(255,255,255,.9)` |
+| 整个图例条 | `.legend.wlegend` | 12.5px，`align-items: center` |
+| 图上「最高 / 最低」 | `lineChart()` 内 `<text>` | 9px，`var(--muted)`，原位置在图的**左上 / 左中** |
+
+v5.08 起：体脂秤那行改成 12.5px / 600 / `var(--text)`（和上一行一致）；最高最低挪到右上角。
+要退回 v5.07 的尺寸：`git checkout v5.07-ok -- style.css app.js`。
