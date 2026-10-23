@@ -2406,12 +2406,10 @@ function renderMeals() {
     ev.stopPropagation(); ev.preventDefault();
     const l = d.logs.find(x => String(x.id) === b.dataset.pen);
     if (!l) return;
-    const name = await askName({
-      title: '给这个食物改名', value: l.name || '',
-      hint: '改完名字，这条的营养会换成新食物的（克数不动）；改成同一个名字 = 重新查一次。'
-    });
+    const name = await askName('这个食物叫什么？', l.name || '');
     if (name === null) return;
     const v = name;
+    if (!v) return;
     const sameName = v === l.name;            // 改成同一个名字 = 再查一次营养（重试入口）
     try {
       if (!sameName) await api('/api/logs/rename', { ids: [l.id], name: v, item: true });
@@ -2426,10 +2424,7 @@ function renderMeals() {
     ev.stopPropagation(); ev.preventDefault();
     const g = groupsById.get(b.dataset.penG);
     if (!g) return;
-    const name = await askName({
-      title: '给这一份改名', value: g.name || '',
-      hint: '整组改名只是个标签，这一组里每一条的营养都不会变。'
-    });
+    const name = await askName('这份叫什么？（比如：沙县小吃）', g.name || '');
     if (name === null) return;
     const v = name;
     if (!v || v === g.name) return;
@@ -3277,10 +3272,7 @@ function renderResult() {
     ev.stopPropagation();
     const it = S.items[Number(b.dataset.ren)];
     if (!it) return;
-    const name = await askName({
-      title: '给这个食物改名', value: it.name || '',
-      hint: '改完名字，这一项的营养会换成新食物的（克数不动）。'
-    });
+    const name = await askName('这个食物叫什么？', it.name || '');
     if (name === null) return;
     const v = name;
     if (!v) return;
@@ -3918,54 +3910,40 @@ function closeGroup() {
   $('#grpSheet').classList.remove('on');
 }
 
-/* ---------------- 改名卡（App 自己画的） ----------------
-   以前用系统 prompt：它那层背景是 iOS 画的，改不了，和别处不统一。
-   现在用同一套磨砂遮罩 + 一张小卡（材质/尺寸照抄营养编辑卡）。
-   用法：const name = await askName({title, value, hint})；取消返回 null。 */
-let rnResolve = null;
-function askName(o) {
-  const opts = (typeof o === 'string') ? { title: o } : (o || {});
-  const mask = $('#rnMask'), sheet = $('#rnSheet'), inp = $('#rnInput');
-  if (!mask || !sheet || !inp) return Promise.resolve(prompt(opts.title || '改名字', opts.value || ''));
-  // 上一次还没关就再点：先把上一次当成取消收掉，避免 Promise 挂着
-  if (rnResolve) { const r = rnResolve; rnResolve = null; r(null); }
+/* ---------------- 系统自带的弹框 + 我们自己的磨砂背景 ----------------
+   输入框/确认框/提示框都保持 iOS 原生样式（不另画卡片）；只是在弹出来之前，
+   先把页面糊一层（和详情卡 / 营养卡后面同一套：#rnMask 20% 黑 + blur 5，并且让开顶栏），
+   框关掉后立刻收掉。必须等两帧再调原生方法，否则系统框先出来、背景还是原样。 */
+function frostedSystemCall(fn) {
+  const mask = $('#rnMask');
+  if (!mask) return Promise.resolve(fn());
   return new Promise(resolve => {
-    rnResolve = resolve;
-    $('#rnLabel').textContent = opts.title || '改名字';
-    inp.value = opts.value || '';
-    const hint = $('#rnHint');
-    if (opts.hint) { hint.textContent = opts.hint; hint.hidden = false; }
-    else { hint.textContent = ''; hint.hidden = true; }
+    mask.style.transition = 'none';          // 系统框是瞬间出来的，遮罩也要瞬间到位
     mask.classList.add('on');
-    sheet.classList.add('on');
-    setTimeout(() => {
-      try { inp.focus(); const n = inp.value.length; inp.setSelectionRange(n, n); } catch (e) {}
-    }, 130);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      let r;
+      try { r = fn(); } catch (e) { r = undefined; }
+      mask.classList.remove('on');
+      setTimeout(() => { mask.style.transition = ''; }, 300);
+      resolve(r);
+    }));
   });
 }
-function closeRename(val) {
-  const mask = $('#rnMask'), sheet = $('#rnSheet'), inp = $('#rnInput');
-  if (inp) inp.blur();
-  if (mask) mask.classList.remove('on');
-  if (sheet) sheet.classList.remove('on');
-  const r = rnResolve; rnResolve = null;
-  if (r) r(val);
+/* 改名：系统输入框（取消返回 null） */
+function askName(title, value) {
+  return frostedSystemCall(() => prompt(title || '改名字', value || ''))
+    .then(v => (v === null || v === undefined) ? null : String(v).trim().slice(0, 20));
 }
-function wireRename() {
-  const ok = $('#rnOk'), cancel = $('#rnCancel'), mask = $('#rnMask'), inp = $('#rnInput');
-  if (!ok || !inp) return;
-  const val = () => String(inp.value || '').trim().slice(0, 20);
-  ok.onclick = () => { const v = val(); if (!v) { toast('名字不能空着'); return; } closeRename(v); };
-  cancel.onclick = () => closeRename(null);
-  mask.onclick = () => closeRename(null);
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
-}
+/* 系统确认框 / 提示框，同样带磨砂背景 */
+const confirmFrosted = msg => frostedSystemCall(() => confirm(msg));
+const alertFrosted = msg => frostedSystemCall(() => alert(msg));
 async function renameGroup() {
   if (!S.detailIds) return;
   const isItem = !S.detailIsGroup;
-  const name = await askName(isItem
-    ? { title: '给这个食物改名', value: S.detailName || '', hint: '改完名字，这条的营养会换成新食物的（克数不动）。' }
-    : { title: '给这一份改名', value: S.detailName || '', hint: '整组改名只是个标签，这一组里每一条的营养都不会变。' });
+  const name = await askName(
+    isItem ? '这个食物叫什么？' : '这份叫什么？（比如：沙县小吃）',
+    S.detailName || ''
+  );
   if (name === null) return;
   const v = name;
   if (!v) return;
@@ -5371,7 +5349,7 @@ function wireMe() {
   };
   const rn = $('#resetNutri');
   if (rn) rn.onclick = async () => {
-    if (!confirm('恢复建议会把你自己填的目标缺口和营养值清掉，改回自动计算。确定吗？')) return;
+    if (!await confirmFrosted('恢复建议会把你自己填的目标缺口和营养值清掉，改回自动计算。确定吗？')) return;
     await api('/api/settings', { target_override: {} });
     toast('已恢复建议值');
     await loadDay();
@@ -5531,7 +5509,7 @@ function wireMe() {
     } catch (e) { out.push('带令牌读：❌ ' + (e.message || e)); }
     const box2 = $('#netCheckOut');
     if (box2) { box2.style.display = 'block'; box2.textContent = out.join('\n'); }
-    else alert('网络自检\n' + out.join('\n'));
+    else await alertFrosted('网络自检\n' + out.join('\n'));
   };
 
   const ghStop = $('#stopGh');
@@ -5631,7 +5609,7 @@ function wireMe() {
   const cfp = $('#cloudForcePull');
   if (cfp) cfp.onclick = async () => {
     if (!cloudToken()) return toast('先填 token 并保存');
-    if (!confirm('用云端那份数据覆盖这台设备？本机还没上传的改动会丢。')) return;
+    if (!await confirmFrosted('用云端那份数据覆盖这台设备？本机还没上传的改动会丢。')) return;
     const r = await busyBtn(cfp, '拉取中…', async () => await cloudPull(true));
     if (r === 'pulled') { await loadDay(); renderMe(); toast('✅ 已用云端覆盖本机', 2600); }
     else toast('❌ 拉取失败：' + ((typeof cloudLastError === 'function' ? cloudLastError() : '') || '检查网络/token'), 4000);
@@ -5640,7 +5618,7 @@ function wireMe() {
   const cfpush = $('#cloudForcePush');
   if (cfpush) cfpush.onclick = async () => {
     if (!cloudToken()) return toast('先填 token 并保存');
-    if (!confirm('用这台设备的记录覆盖云端？另一台设备上独有的记录会被清掉。')) return;
+    if (!await confirmFrosted('用这台设备的记录覆盖云端？另一台设备上独有的记录会被清掉。')) return;
     cloudLast = '';
     const r = await busyBtn(cfpush, '上传中…', async () => await cloudPush());
     if (!r) {
@@ -5701,8 +5679,8 @@ function wireMe() {
     } catch (e) { toast('备份失败：' + e.message, 4000); }
   };
   const ij = $('#importJson');
-  if (ij) ij.onclick = () => {
-    if (!confirm('恢复会用备份覆盖这台设备现在的全部数据，确定吗？')) return;
+  if (ij) ij.onclick = async () => {
+    if (!await confirmFrosted('恢复会用备份覆盖这台设备现在的全部数据，确定吗？')) return;
     $('#importFile').click();
   };
   const iff = $('#importFile');
@@ -6322,7 +6300,6 @@ function init() {
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
-  wireRename();    // 改名卡（App 自己的，磨砂背景）
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

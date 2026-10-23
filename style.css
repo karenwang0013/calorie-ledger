@@ -977,7 +977,7 @@ body.add-open .sheet-mask.on {
 }
 
 /* 改营养数据的小面板：比记录弹层小一圈，左右和底边与它等距 */
-#nutSheet, #rnSheet {
+#nutSheet {
   z-index: 62;                                   /* 浮在记录弹层之上 */
   left: calc(var(--dock-inset, 8px) + 18px);
   right: calc(var(--dock-inset, 8px) + 18px);
@@ -1025,16 +1025,7 @@ body.add-open .sheet-mask.on {
   padding: 8px 16px 30px;
 }
 
-/* 改名卡：材质、尺寸、按钮底距全部沿用营养编辑卡（同一个选择器），
-   差别只有「里面是一个输入框 + 两个按钮」。层级抬到最高，从任何卡片里点改名都盖得住 */
-#rnSheet { z-index: 64; min-height: 0; }
-#rnSheet .sh-body { padding: 24px 26px 12px; }
-#rnSheet .field { margin: 0; }
-#rnSheet input { width: 100%; }
-#rnSheet .sh-foot {
-  background: transparent; border-top: 0;
-  padding: 8px 16px 30px;
-}
+/* 改名用的输入框是系统自带的（不是我们画的卡），这里只留它背后那层遮罩 */
 
 /* 面板顶部：按食物名自动带出营养 */
 #nutSheet .nutfind { margin: 0 0 12px; }
