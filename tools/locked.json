@@ -66,8 +66,8 @@
   },
   {
     "file": "style.css",
-    "find": "backdrop-filter: blur(5px) saturate(115%);",
-    "why": "虚化遮罩必须整屏一层（不许用 top 裁掉顶栏）：裁一刀退出就会闪出那条边"
+    "find": "filter: blur(5px) saturate(115%);",
+    "why": "虚化强度 blur 5px：现在由内容层执行（遮罩只压暗），避免 iOS 在淡出首帧丢掉模糊导致闪"
   },
   {
     "file": "style.css",

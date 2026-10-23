@@ -1277,8 +1277,22 @@ body.add-open .sheet-mask.on {
 #grpMask.on,
 #rnMask.on {
   background: rgba(0, 0, 0, 0.20);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  backdrop-filter: blur(5px) saturate(115%);
+}
+
+/* 「糊」改由内容层自己做 —— 遮罩只负责压暗。
+   原因（iOS）：带 backdrop-filter 的层一旦 opacity 不再等于 1，Safari 会当场把模糊丢掉，
+   于是淡出刚起步的那一帧，画面"啪"地从糊变清楚 = 用户说的那下闪（时长调多长都没用）。
+   改成给内容层加 filter 做模糊：filter 可以跟着过渡一起渐变，不存在"丢掉"的那一帧。 */
+#scroller, .tabbar {
+  transition: filter .75s cubic-bezier(.22,.8,.3,1);
+}
+body:has(#nutMask.on) #scroller,
+body:has(#grpMask.on) #scroller,
+body:has(#rnMask.on) #scroller,
+body:has(#nutMask.on) .tabbar,
+body:has(#grpMask.on) .tabbar,
+body:has(#rnMask.on) .tabbar {
+  filter: blur(5px) saturate(115%);
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
