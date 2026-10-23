@@ -989,9 +989,9 @@ body.add-open .sheet-mask.on {
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--safe-b, 0px) - 24px);
   min-height: 0;                                 /* 按内容高度走，不再被 56dvh 撑高 */
   /* 只这一张卡片：比记录弹层更"实"一点（背后内容透上来会看着发灰），磨砂也更厚 */
-  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
-  -webkit-backdrop-filter: blur(26px) saturate(150%);
-  backdrop-filter: blur(26px) saturate(150%);
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
 }
 /* 横杠和记录弹层一样：浮在最上层、不占位（否则滚动时下沿会切出一条"遮挡"） */
 #nutSheet .grab {
@@ -2273,4 +2273,46 @@ input, textarea, select {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+
+/* ③ 个性化颜色选择：每一行照 Dock 卡牌材质 */
+.swatch {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+}
+
+/* ④ 通知页的每一行之间加横线（和设置外层一致） */
+.switchrow { position: relative; }
+.switchrow + .switchrow::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -9px; height: 1px;
+  background: var(--line);
+}
+
+/* ⑤ 记录卡三格（拍照 / 搜索 / 描述）：按钮也照 Dock 的按钮 */
+.tabs3 button {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* ⑥ 下拉选择框（如出生年份）：底色/描边和「目标缺口」那种小卡同一套，箭头保留 */
+select {
+  background-color: transparent;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b938c' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"),
+    linear-gradient(var(--btn-solid), var(--btn-solid)),
+    var(--edge-gloss);
+  background-position: right 14px center, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-origin: border-box, border-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
+  border: 1px solid transparent;
 }
