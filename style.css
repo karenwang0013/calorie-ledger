@@ -1324,12 +1324,16 @@ body.add-open .sheet-mask.on {
      不加 corner-shape: squircle —— iPad 上 squircle 会把圆角画得更鼓。 */
   border-radius: 22px;
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
+  /* 材质和 Dock 完全一致（用户要求「这张卡要和 Dock 栏一样」）：
+     同一组母版变量 --glass-fill-top/bot + --edge-gloss + --glass-blur-2。
+     改材质只改 :root，不要在这里写死颜色。 */
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: blur(26px) saturate(150%);
-  backdrop-filter: blur(26px) saturate(150%);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+  /* 外投影保留（这是浮在中间的对话框，需要比 Dock 更明确的"离层"），但顶边高光和 Dock 同一句 */
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transform: translateY(12px) scale(.97);
   opacity: 0; pointer-events: none;
   transition: transform .30s cubic-bezier(.22,.8,.3,1), opacity .22s ease-out;
@@ -2128,8 +2132,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   background-origin: border-box;
   background-clip: padding-box, border-box;
   /* 2026-10-23 用户反馈「打开就发烫」→ B′：页面里的卡片**不再做背景模糊**。
-     背后只是 html 上那片静态深色渐变，模糊几乎看不出差别，却让每块卡在滚动时每帧重算一次；
-     玻璃感由半透填充 + --edge-gloss 高光边 + 顶边内高光承担。弹层仍保留模糊。 */
+     原因：卡片背后只是 html 上那片静态深色渐变，模糊几乎看不出差别，
+     却让每一块卡在滚动时每帧重算一次；玻璃感由半透填充 + --edge-gloss 高光边 + 顶边内高光承担。
+     弹层（记录卡 / 营养卡 / 提醒卡）保留模糊 —— 那才是真的"后面有内容"。 */
   box-shadow: var(--glass-shadow-2);
 }
 /* 卡片里的小块（识别结果、拍照摘要）留在实底上，避免一层套一层地反复模糊 */
