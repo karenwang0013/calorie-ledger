@@ -295,7 +295,8 @@ function computeRealTdee(d) {
       // 有体重但没有一段覆盖够的：说清"再记几天饮食"
       const firstD = allDates[Math.max(0, allDates.length - 2)];
       const it = countIntake(firstD, lastD);
-      realMissing = { type: 'intake', span: it.span, logged: it.n, have: allDates.length, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
+      const winW = allDates.filter(k => k >= firstD && k <= lastD).length;
+      realMissing = { type: 'intake', span: it.span, logged: it.n, have: allDates.length, weigh_days: winW, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
     } else {
       realMissing = { type: 'weights', have: allDates.length };
     }
@@ -340,12 +341,8 @@ function computeTrends(days) {
   const _rt = computeRealTdee(d);
   const real = _rt.real, realMissing = _rt.missing;
 
-  // 累计称重天数（到今天为止、有体重记录的天数）：卡片上只显示这一个数
-  const weighDaysTotal = Object.keys(d.weights || {}).filter(k => k <= today).length;
-
   return {
     days, start, end: today, series,
-    weigh_days: weighDaysTotal,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
     avg_balance: avgIntake ? Math.round(avgExp - avgIntake) : null,

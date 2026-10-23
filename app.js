@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.64', d: '10-23', items: [
+    '改对：这个数指的是**这次统计窗口里**称了几天，不是全部历史 —— 现在写成「这 5 天里累计称了 3 天」',
+    '修：上一版我把这行单独做成一块白字，把小字排版弄变了；现在它回到原来那段小字里（同样的字号/颜色/行距），只是多一行',
+  ]},
   { v: 'v7.63', d: '10-23', items: [
     '改：趋势页第一张卡只留一句**「累计称了 N 天」**（N = 有体重记录的总天数），不再堆"跨度/覆盖/还差几天"那一串',
   ]},
@@ -2017,7 +2021,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.63';
+const APP_VERSION = 'v7.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3953,9 +3957,9 @@ function renderTrends() {
         <div class="hint">
           用你 ${real.span_days} 天的体重变化反推出来的真实消耗。<br>
           体重 ${real.slope_kg_per_week > 0 ? '增加' : '减少'} ${Math.abs(real.slope_kg_per_week)} kg/周，
-          期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。
+          期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。<br>
+          这 ${real.span_days} 天里累计称了 ${real.weigh_count || 1} 天
         </div>
-        <div class="hint" style="margin-top:6px;color:var(--text)">累计称了 ${t.weigh_days || 0} 天</div>
         <div class="grid2" style="margin-top:14px">
           <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
           <div class="mini"><div class="k">相对误差</div><div class="v">${
@@ -3978,9 +3982,8 @@ function renderTrends() {
         <h3>实测每日消耗</h3>
         <div class="hint" style="margin-top:0">
           ${lack}。补齐之后就能反推出来。<br>
-          <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span>
+          <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span>${miss.type === 'intake' ? `<br>这 ${miss.span} 天里累计称了 ${Number(miss.weigh_days) || 0} 天` : ''}
         </div>
-        <div class="hint" style="margin-top:6px;color:var(--text)">累计称了 ${t.weigh_days || 0} 天</div>
         <button class="btn sm" id="goWeight" style="margin-top:14px">${lackBtn}</button>
       </div>`;
   }
