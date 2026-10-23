@@ -2388,8 +2388,8 @@ select:focus {
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
 
 /* ===== 按钮只留两种：绿（主操作）+「透明灰」（其余全部） =====
-   用户要求：除了 .btn.primary 保持绿色不动，其它按钮（普通/顶栏/chip/分页/pickbtn 非选中）
-   统一成 3 号那种"透明灰"——没有底色、没有描边，只有文字和按下反馈。 */
+   除了 .btn.primary 保持绿色不动，其它按钮统一成"透明灰"：
+   里面透明（无填充），但**保留一圈描边**——框必须还在，否则看不出是按钮（v8.06 就是框没了）。 */
 .btn:not(.primary),
 .topbtn,
 .chip,
@@ -2398,7 +2398,7 @@ select:focus {
 #nutSheet .nutsug button {
   background-image: none;
   background-color: transparent;
-  border-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: none;
 }
 /* 按下时给一点点反馈（否则透明按钮点了没反应感） */
