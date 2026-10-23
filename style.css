@@ -203,8 +203,8 @@ html.kb .sc-body {
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar {
   border-bottom: 0;
-  /* 只留半像素发丝线，没有任何投影 */
-  box-shadow: 0 0.5px 0 rgba(255,255,255,.10);
+  /* 没有任何投影、也没有那条 0.5px 白线（用户要求删掉） */
+  box-shadow: none;
 }
 
 .brand {
@@ -1210,7 +1210,8 @@ body.add-open .sheet-mask.on {
   position: fixed; inset: 0; z-index: 60;
   background: rgba(0,0,0,.66);
   opacity: 0; pointer-events: none;
-  transition: opacity .25s;
+  /* 进出都放柔：0.25s 太快，退出时像"啪"一下（也是flash的来源之一）。0.42s 缓出 */
+  transition: opacity .42s cubic-bezier(.32,.72,0,1);
 }
 .sheet-mask.on { opacity: 1; pointer-events: auto; }
 
