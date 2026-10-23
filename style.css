@@ -1257,19 +1257,25 @@ body.add-open .sheet-mask.on {
    之前"通知关掉后下面全点不动"就是这个原因 */
 .sheet:not(.on) { pointer-events: none; }
 
-/* 营养编辑卡后面的遮罩：浅一点 + 磨砂模糊（原来 .66 太黑，看不出背后是什么） */
+/* 营养编辑卡后面的遮罩：浅一点 + 磨砂模糊（原来 .66 太黑，看不出背后是什么）
+   top 让开顶栏：遮罩压到顶栏上，顶栏会再暗 20%，而状态栏那一条是系统画的、遮罩碰不到，
+   两截颜色就对不上（v7.65）。不盖顶栏，顶部一点不变色。 */
 #nutMask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
+  top: var(--topbar-h, 64px);
 }
 
 /* 首页点某个食品弹出的详情卡（#grpSheet）背后的遮罩：照抄上面营养编辑卡后面那一层 ——
-   浅一点 + 磨砂模糊。原来这里吃的是默认的 rgba(0,0,0,.66)，背后一片死黑。 */
+   浅一点 + 磨砂模糊。原来这里吃的是默认的 rgba(0,0,0,.66)，背后一片死黑。
+   top 让开顶栏：遮罩盖到顶栏上会把顶栏再压暗 20%，和状态栏那条（系统画的、遮罩碰不到）
+   拼成两种颜色。不盖顶栏就一点不变色。 */
 #grpMask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
+  top: var(--topbar-h, 64px);
 }
 
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
