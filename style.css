@@ -2090,6 +2090,15 @@ input:focus, textarea:focus, select:focus {
   backdrop-filter: blur(22px) saturate(130%);
 }
 
+/* 「一组记录详情」那张卡（首页点某个食品跳出来的）：材质照抄营养编辑卡 #nutSheet ——
+   同一组底色（74% / 84%）+ 同一档磨砂（blur 26px）。
+   必须写在上面这条 .sheet/.modal 之后：同权重时后写的赢，写在前面会被它整条盖掉。 */
+#grpSheet {
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+}
+
 /* 底部 Dock：底色本来是渐变，填色层换回它自己的渐变 */
 /* 「从相册选」继续保持虚线（有光泽的那套描边会把虚线吃掉） */
 .pickbtn.ghost {
