@@ -1615,13 +1615,16 @@ body.add-open .sheet-mask.on {
   padding: 16px;
   box-shadow: 0 8px 22px rgba(214,255,75,.18);
 }
-/* 「从相册选择」：材质和「身体与目标 → 保存」那颗主操作按钮一致（黄绿实色），
-   去掉原来的虚线框；字号/内边距沿用这里原来的（13px / 11px） */
+/* 「从相册选择」：和 Dock 里的按钮同一套材质（白 8.5% + edge-gloss + 顶边高光），
+   不再是虚线、也不是黄绿主操作；字号/内边距沿用原来的（13px / 11px） */
 .pickbtn.ghost {
-  background: var(--lime); color: #0a0b0c;
-  border: 1px solid transparent;        /* 不再用 dashed */
-  font-weight: 600;
-  box-shadow: 0 8px 22px rgba(214,255,75,.18);
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 .pickbtn:active { transform: scale(.985); }
 .dropretake {
@@ -2193,14 +2196,15 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* 底部 Dock：底色本来是渐变，填色层换回它自己的渐变 */
-/* 「从相册选」：跟「身体与目标 → 保存」同一颗主操作按钮（黄绿实色），不再用虚线 */
+/* 「从相册选」：同 Dock 里的按钮材质，不用虚线、不用黄绿 */
 .pickbtn.ghost {
   border: 1px solid transparent;
-  background-image: none;
-  background-color: var(--lime);
-  color: #0a0b0c;
-  font-weight: 600;
-  box-shadow: 0 8px 22px rgba(214, 255, 75, 0.18);
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .tabbar .inner {
@@ -2382,3 +2386,27 @@ select:focus {
    真机上标题上方的空白比桌面预览小得多，负 margin 会直接把标题推进固定顶栏下面（v8.01 就翻车了）。 */
 #view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
+
+/* ===== 按钮只留两种：绿（主操作）+「透明灰」（其余全部） =====
+   用户要求：除了 .btn.primary 保持绿色不动，其它按钮（普通/顶栏/chip/分页/pickbtn 非选中）
+   统一成 3 号那种"透明灰"——没有底色、没有描边，只有文字和按下反馈。 */
+.btn:not(.primary),
+.topbtn,
+.chip,
+.pgbtn,
+.pickbtn:not(.on),
+#nutSheet .nutsug button {
+  background-image: none;
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+/* 按下时给一点点反馈（否则透明按钮点了没反应感） */
+.btn:not(.primary):active,
+.topbtn:active,
+.chip:active,
+.pgbtn:active,
+.pickbtn:not(.on):active,
+#nutSheet .nutsug button:active {
+  background-color: rgba(255, 255, 255, 0.06);
+}
