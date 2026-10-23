@@ -2402,3 +2402,16 @@ select:focus {
   background-clip: padding-box, border-box;
   background-color: transparent;
 }
+
+/* ===== 主操作（绿色）只在这一处定义 =====
+   改 --btn-primary-fill 这一个值，全 App 所有绿色按钮一起变（保存/备份文件/开启同步/拍照/强制更新…）。
+   尺寸、内边距、外发光各按原样，不属于"绿色"这个种类。 */
+:root { --btn-primary-fill: var(--lime); }
+.btn.primary,
+.pickbtn.on {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-primary-fill), var(--btn-primary-fill)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  color: #0a0b0c;
+}
