@@ -200,6 +200,11 @@ const checks = [
       && /drawImage\(img, sx, sy, s, s, 0, 0, side, side\)/.test(app)
       && /c\.toDataURL\('image\/jpeg', q\)/.test(app)
       && !/makeThumb\(dataUrl, max = 320/.test(app)],
+  ['静态资源缓存兜底：找不到带 ?v= 的就忽略版本号再找（不许 respondWith(undefined) 白屏）',
+    /ignoreSearch: true/.test(sw) && /caches\.match\(req\)\)\s*\n?\s*\|\| \(await caches\.match\(req, \{ ignoreSearch: true \}\)\)/.test(sw)
+      && /new Response\('', \{ status: 504/.test(sw)],
+  ['启动兜底：提示条出现后，页面起来了必须自己消失（不许一直挂着）',
+    /if \(repairing\) \{ setTimeout\(show, 1500\); return; \}/.test(html) && /el\.remove\(\);[\s\S]{0,80}700/.test(html)],
 ];
 
 let bad = 0;

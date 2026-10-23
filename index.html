@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=738">
+<link rel="stylesheet" href="style.css?v=739">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -424,9 +424,9 @@
   </div>
 </div>
 
-<script src="foods.js?v=738"></script>
-<script src="api.js?v=738"></script>
-<script src="app.js?v=738"></script>
+<script src="foods.js?v=739"></script>
+<script src="api.js?v=739"></script>
+<script src="app.js?v=739"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
@@ -475,6 +475,7 @@
 
   function show() {
     if (window.__booted || document.getElementById('bootRetry')) return;
+    if (repairing) { setTimeout(show, 1500); return; }   // 正在补脚本 → 别急着报"没加载完整"
     var miss = missing().map(function (f) { return f.replace('.js', ''); });
     var diag = '脚本 ' + (miss.length ? '缺 ' + miss.join(' / ') : '都在') +
                ' · ' + (navigator.onLine ? '在线' : '离线') +
@@ -486,6 +487,13 @@
                     '<button>重新加载</button>';
     bar.querySelector('button').onclick = function () { location.reload(); };
     document.body.appendChild(bar);
+    // 只要后来真的起来了，这条提示要自己消失（以前会一直挂着，看着像坏了）
+    var t = setInterval(function () {
+      if (!window.__booted) return;
+      clearInterval(t);
+      var el = document.getElementById('bootRetry');
+      if (el) el.remove();
+    }, 700);
   }
   window.__showBootRetry = show;
 
@@ -498,9 +506,10 @@
     }
   }, true);
 
-  // 2.5 秒还没渲染出内容：先补一遍脚本；补完还不行，就把提示条显示出来
+  // 2.5 秒还没渲染出内容：先补一遍脚本；5 秒再补一次；到 8 秒还不行才显示提示条
   setTimeout(function () { if (bootBroken()) repair(); }, 2500);
-  setTimeout(function () { if (bootBroken()) show(); }, 5200);
+  setTimeout(function () { if (bootBroken()) repair(); }, 5000);
+  setTimeout(function () { if (bootBroken()) show(); }, 8000);
 })();
 </script>
 </body>

@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v738';
+const CACHE = 'ledger-v739';
 const ASSETS = [
   './',
   './index.html',
@@ -57,17 +57,24 @@ self.addEventListener('fetch', e => {
   }
 
   // 其他静态资源：先走网络，失败再用缓存（保证 HTML 和 JS 版本一致）
-  e.respondWith(
-    fetch(req, { cache: 'no-store' })
-      .then(res => {
-        if (res && res.status === 200) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match(req))
-  );
+  e.respondWith((async () => {
+    try {
+      const res = await fetch(req, { cache: 'no-store' });
+      if (res && res.status === 200) {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+      }
+      return res;
+    } catch (err) {
+      // 关键兜底：index.html 里带的是 app.js?v=738，而缓存里可能存的是 app.js?v=737
+      // 或不带参数的 app.js —— 精确匹配会 miss，然后 respondWith(undefined) 就变成"脚本没加载"。
+      // 所以：① 原样 ② 忽略 ?v= ③ 按文件名 三层兜底。
+      const hit = (await caches.match(req))
+        || (await caches.match(req, { ignoreSearch: true }))
+        || (await caches.match(new URL(req.url).pathname, { ignoreSearch: true }));
+      return hit || new Response('', { status: 504, statusText: 'offline' });
+    }
+  })());
 });
 
 /* ---------- 锁屏推送 ---------- */

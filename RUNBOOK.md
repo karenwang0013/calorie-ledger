@@ -357,6 +357,22 @@
 
 ---
 
+### 31. 「页面没加载完整 / 脚本 缺 app」（v7.83）
+
+- **症状**：主屏 App 打开后顶栏版本正常显示，下面一条橙色提示「页面没加载完整 · 脚本 缺 app · 在线 · 有缓存」。
+- **真因（不是文件坏了）**：线上 `app.js` 422,407 字节、与本地 md5 一致、`node --check` 通过；`index.html` 要的是 `app.js?v=738`，
+  而 Service Worker 缓存里存的是旧版本（`?v=737` 或不带参数）。`sw.js` 原来只用 `caches.match(req)`（精确匹配）→ miss →
+  `respondWith(undefined)` → 浏览器报脚本加载失败；再叠加一次网络抖动，就白屏 + 提示条。
+- **修法（v7.83）**：
+  1. `sw.js` 静态资源兜底三层：原样 → `{ignoreSearch:true}` → 按 pathname 再找；全都没有才返回 504（不再 `undefined`）。
+  2. `index.html` 启动兜底：2.5s / 5s 各补加载一次；提示条 8s 后才出现；**显示期间 `__booted` 一旦为 true 就自动移除**（700ms 轮询）。
+- **验证**（headless Chrome + CDP 屏蔽请求，`cdp-sw-test.mjs`）：
+  ① 正常加载 booted；② 屏蔽 `*app.js?v=*`（复现真机场景）→ **仍 booted、无提示条**（缓存兜底生效）；
+  ③ 完全屏蔽 `app.js` → 提示条按预期出现、文案一致；④ 恢复网络 → booted 且提示条自动消失。
+- **别再做的**：别去怀疑"线上文件坏了/被截断"——先比 md5 和 `node --check`；也别用"删掉提示条"当解法，根因在缓存匹配。
+
+---
+
 ## 每次改完的固定动作（不用再问用户）
 
 1. `node tools/guard-check.mjs` —— 全绿才发
