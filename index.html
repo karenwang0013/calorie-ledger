@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=730">
+<link rel="stylesheet" href="style.css?v=731">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -415,15 +415,15 @@
     <button class="mx" id="grpClose">×</button>
   </div>
   <div class="mbody">
-    <div class="mnoshot" id="grpNoShot" hidden>这条是旧版本记的，当时没有存照片</div>
+    <div class="mnoshot" id="grpNoShot" hidden>这条没有留下照片（早期版本只存数据，或照片在同步时被裁掉过）</div>
     <div id="grpItems"></div>
     <div class="totalrow"><span>合计</span><b><span id="grpTotal">0</span> 千卡</b></div>
   </div>
 </div>
 
-<script src="foods.js?v=730"></script>
-<script src="api.js?v=730"></script>
-<script src="app.js?v=730"></script>
+<script src="foods.js?v=731"></script>
+<script src="api.js?v=731"></script>
+<script src="app.js?v=731"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
