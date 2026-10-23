@@ -1611,9 +1611,13 @@ body.add-open .sheet-mask.on {
   padding: 16px;
   box-shadow: 0 8px 22px rgba(214,255,75,.18);
 }
+/* 「从相册选择」：材质和「身体与目标 → 保存」那颗主操作按钮一致（黄绿实色），
+   去掉原来的虚线框；字号/内边距沿用这里原来的（13px / 11px） */
 .pickbtn.ghost {
-  background: transparent; color: var(--muted);
-  font-size: 13px; padding: 11px; border-style: dashed;
+  background: var(--lime); color: #0a0b0c;
+  border: 1px solid transparent;        /* 不再用 dashed */
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(214,255,75,.18);
 }
 .pickbtn:active { transform: scale(.985); }
 .dropretake {
@@ -2183,11 +2187,14 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* 底部 Dock：底色本来是渐变，填色层换回它自己的渐变 */
-/* 「从相册选」继续保持虚线（有光泽的那套描边会把虚线吃掉） */
+/* 「从相册选」：跟「身体与目标 → 保存」同一颗主操作按钮（黄绿实色），不再用虚线 */
 .pickbtn.ghost {
-  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border: 1px solid transparent;
   background-image: none;
-  background-color: transparent;
+  background-color: var(--lime);
+  color: #0a0b0c;
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(214, 255, 75, 0.18);
 }
 
 .tabbar .inner {
