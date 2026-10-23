@@ -3929,10 +3929,41 @@ function frostedSystemCall(fn) {
     }));
   });
 }
-/* 改名：系统输入框（取消返回 null） */
+/* 改名：App 自己的小输入卡（居中、两个按钮），背景和「营养编辑」用的是同一层遮罩。
+   不再用系统 prompt：iOS 会给自己那层压暗，盖住顶栏、盖不住状态栏，背景永远对不上基准。
+   取消返回 null。 */
+let rnRes = null;
 function askName(title, value) {
-  return frostedSystemCall(() => prompt(title || '改名字', value || ''))
-    .then(v => (v === null || v === undefined) ? null : String(v).trim().slice(0, 20));
+  const card = $('#rnSheet'), mask = $('#rnMask'), inp = $('#rnInput');
+  if (!card || !mask || !inp) return Promise.resolve(prompt(title || '改名字', value || ''));
+  if (rnRes) { const r = rnRes; rnRes = null; r(null); }   // 连点两下不会把上一次的 Promise 挂住
+  return new Promise(resolve => {
+    rnRes = resolve;
+    $('#rnLabel').textContent = title || '改名字';
+    inp.value = value || '';
+    mask.classList.add('on');
+    card.classList.add('on');
+    setTimeout(() => {
+      try { inp.focus(); const n = inp.value.length; inp.setSelectionRange(n, n); } catch (e) {}
+    }, 180);
+  });
+}
+function closeRename(v) {
+  const card = $('#rnSheet'), mask = $('#rnMask'), inp = $('#rnInput');
+  if (inp) inp.blur();
+  if (card) card.classList.remove('on');
+  if (mask) mask.classList.remove('on');
+  const r = rnRes; rnRes = null;
+  if (r) r(v);
+}
+function wireRename() {
+  const save = $('#rnSave'), cancel = $('#rnCancel'), mask = $('#rnMask'), inp = $('#rnInput');
+  if (!save || !inp) return;
+  const val = () => String(inp.value || '').trim().slice(0, 20);
+  save.onclick = () => { const v = val(); if (!v) { toast('名字不能空着'); return; } closeRename(v); };
+  cancel.onclick = () => closeRename(null);
+  mask.onclick = () => closeRename(null);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
 }
 /* 系统确认框 / 提示框，同样带磨砂背景 */
 const confirmFrosted = msg => frostedSystemCall(() => confirm(msg));
@@ -6300,6 +6331,7 @@ function init() {
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
+  wireRename();    // 改名小卡（和营养编辑共用同一层遮罩）
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

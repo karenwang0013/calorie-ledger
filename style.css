@@ -1279,6 +1279,37 @@ body.add-open .sheet-mask.on {
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
 #rnMask { z-index: 63; }
 
+/* 改名小卡：形态照系统弹框（居中、窄、两个按钮并排），材质用本 App 的玻璃。
+   它和营养编辑卡后面用的是同一层遮罩 → 两处背景一模一样（用户要求的唯一做法）。 */
+.rnalert {
+  position: fixed; left: 0; right: 0; top: 20vh; margin: 0 auto; z-index: 64;
+  width: min(84vw, 330px);
+  padding: 16px 16px 12px;
+  border: 1px solid transparent;
+  border-radius: 22px;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.74) 0%, rgba(20, 25, 29, 0.84) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+  transform: translateY(10px) scale(.97);
+  opacity: 0; pointer-events: none;
+  transition: transform .22s cubic-bezier(.32,.72,0,1), opacity .18s ease-out;
+}
+.rnalert.on { transform: none; opacity: 1; pointer-events: auto; }
+.rnalert-hd { font-size: 13.5px; font-weight: 600; margin: 0 2px 10px; }
+.rnalert input { width: 100%; }
+.rnalert-btns { display: flex; gap: 10px; margin-top: 12px; }
+.rnalert-btns button {
+  flex: 1 1 0; padding: 11px; border-radius: 13px; border: 0;
+  background: rgba(255, 255, 255, 0.08); color: var(--text);
+  font-size: 14px; font-weight: 600;
+}
+.rnalert-btns button.prim { background: var(--lime); color: #0a0b0c; }
+.rnalert-btns button:active { opacity: .75; }
+
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
 /* 只有"营养编辑"是居中卡片，进场原地浮起；提醒记录仍在底部，按原来的方式滑上来 */

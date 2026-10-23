@@ -373,8 +373,17 @@
   </div>
 </div>
 
-<!-- 只留遮罩：改名用的是系统自带的输入框，网页只负责把它背后的页面糊掉 -->
+<!-- 改名：App 自己的小输入卡。不用系统 prompt —— iOS 会给它加一层自己的压暗，
+     那层盖住顶栏、盖不住状态栏，背景永远和「营养编辑」那种不了一样 -->
 <div class="sheet-mask" id="rnMask"></div>
+<div class="rnalert" id="rnSheet">
+  <div class="rnalert-hd" id="rnLabel">改名字</div>
+  <input id="rnInput" type="text" maxlength="20" autocomplete="off" enterkeyhint="done">
+  <div class="rnalert-btns">
+    <button id="rnCancel">取消</button>
+    <button id="rnSave" class="prim">确定</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
