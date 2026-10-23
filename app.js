@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.68', d: '10-23', items: [
+    '修：营养表被读串行时（例：碳水读成 77.7、脂肪读成 59.4，三项加起来 150 克），App 会**自己拿你拍的那张表再读一遍**并改对，不用你去核对',
+    '修：重读还对不上时，会直说「已按你的照片重读过一次，多半是没拍清」—— 不再只丢一句"请照包装核对"',
+    '拍照识别完就当场自检，坏数据不会留到"保存并换算"那一步才报错；你要是自己手改过数字，就不会被自动覆盖',
+  ]},
   { v: 'v7.67', d: '10-23', items: [
     '改：营养卡里那四个数**直接照抄包装上「每 100 克」那一行**，不用自己算了 —— 以前填的是"这一份"的数，填包装上的千焦就会报「对不上」',
     '举例：燕麦片包装写 1597 千焦/100 克，你吃了 60 克 → 四格填 1597 / 13.1 / 59.4 / 7.7，左上角填 60，保存后自动算出这一份 229 千卡',
@@ -2036,7 +2041,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.67';
+const APP_VERSION = 'v7.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2902,6 +2907,22 @@ async function runPhoto() {
       hint,
     });
     S.items = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
+    // 读表读串了（比如碳水 77.7、脂肪 59.4，加起来超过 100 克）→ App 自己用营养表那张照片重读一次，
+    // 不让用户去核对数字（用户明确要求：你自己读出来的数，你自己得认）
+    if (S.items.length === 1) {
+      const one = S.items[0];
+      if (!nutSane(one.kcal_per_100g, one.protein_per_100g, one.carb_per_100g, one.fat_per_100g)) {
+        const re = await rereadLabelNutrition();
+        if (re && S.items[0] === one) {
+          one.kcal_per_100g = re.kcal_per_100g;
+          one.protein_per_100g = re.protein_per_100g;
+          one.carb_per_100g = re.carb_per_100g;
+          one.fat_per_100g = re.fat_per_100g;
+        } else if (S.items[0] === one) {
+          setTimeout(() => toast('这张营养成分表没读准（三项加起来超过 100 克），重拍一张更清楚的会更准', 5200), 400);
+        }
+      }
+    }
     // 填了克数就以它为准（包装营养表通常只有一条）
     if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
     // 识别完就把大图收起，结果区（左小图 + 右数值）直接露出来
@@ -3481,6 +3502,28 @@ function nutSane(kcal, p, c, f) {
   return !nutWhy(kcal, p, c, f);
 }
 
+/* 营养表那一行被读串了（例子：碳水读成 77.7、脂肪读成 59.4）→ 用你拍的**营养表那张照片**重读一次。
+   只在"数字明显不成立"时才多花这一次调用；重读还是不对就返回 null，由调用方决定怎么提示。
+   这一条是用户明确提出来的：「你自己读出来的数，你自己得认」。 */
+async function rereadLabelNutrition() {
+  const labelImg = S.photo2Data || S.photoData;
+  if (!labelImg) return null;
+  let r = null;
+  try {
+    r = await api('/api/ai/food', {
+      image: labelImg,
+      hint: '这张图只是包装上的营养成分表，不要按外观估算。请**逐行照抄**，只取这四行：蛋白质、脂肪、碳水化合物、能量。'
+        + '注意事项：①「脂肪」和「碳水化合物」两行绝对不许互换；②数字位数必须和标签完全一致（标签写 7.7 就不能写成 77.7，也不能多打一位）；'
+        + '③每行只取一个数，不许把 NRV% 那一列、或别行的数字混进来；④能量照标签原样（千焦就给千焦数）。'
+        + 'items 只返回一条，grams 填 100，四个 *_per_100g 按「每 100 克」那列的数值填。',
+    });
+  } catch (e) { return null; }
+  const it = r && r.items && r.items[0];
+  if (!it) return null;
+  if (!nutSane(it.kcal_per_100g, it.protein_per_100g, it.carb_per_100g, it.fat_per_100g)) return null;
+  return it;
+}
+
 /* 死规则：某个食物的营养参数一旦被改过，以后一律以"最后一次改的"为准。
    这里把一条待记录的食物按 foodHist 里的值覆盖（有记录才覆盖）。 */
 function applyKnownFood(it) {
@@ -3739,12 +3782,27 @@ async function saveNutEdit() {
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
   it.grams = +ref.toFixed(1);                     // 参考量就是"这一份吃多少克"，写回克数
   rememberGrams(newName, ref);                     // 记住这个食物的克数，下次直接用
-  const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡（四个数都是"每 100 克"）
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
-  const p100 = num('#nutP'), c100 = num('#nutC'), f100 = num('#nutF');
-  const why = nutWhy(kcalIn, p100, c100, f100);
-  if (why) { toast(why, 4600); return; }
-  it.kcal_per_100g = +kcalIn.toFixed(1);
+  let kc100 = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡（四个数都是"每 100 克"）
+  let p100 = num('#nutP'), c100 = num('#nutC'), f100 = num('#nutF');
+  let why = nutWhy(kc100, p100, c100, f100);
+  // 数字是 App 自己读出来的、却不合格 → 它得自己负责：用手上那张营养表照片重读一次，把格子改对再存
+  if (why && (S.photo2Data || S.photoData) && !(nutDirty.k || nutDirty.p || nutDirty.c || nutDirty.f)) {
+    const re = await rereadLabelNutrition();
+    if (re) {
+      kc100 = re.kcal_per_100g; p100 = re.protein_per_100g; c100 = re.carb_per_100g; f100 = re.fat_per_100g;
+      const put = (sel, v) => { const el = $(sel); if (el) el.value = v; };
+      put('#nutKcal', nutUnit === 'kJ' ? Math.round(kc100 * KJ_PER_KCAL) : Math.round(kc100));
+      put('#nutP', +p100.toFixed(1));
+      put('#nutC', +c100.toFixed(1));
+      put('#nutF', +f100.toFixed(1));
+      why = nutWhy(kc100, p100, c100, f100);
+      if (!why) toast(`刚才那行数字读串了，已按照片重读改正：每 100 克 ${Math.round(kc100)} 千卡 · 蛋 ${p100} / 碳 ${c100} / 脂 ${f100}`, 5200);
+    }
+    if (why) why += '（已按你的营养表照片自动重读过一次，还是对不上 —— 多半是照片没拍清）';
+  }
+  if (why) { toast(why, 5200); return; }
+  it.kcal_per_100g = +kc100.toFixed(1);
   it.protein_per_100g = +p100.toFixed(1);
   it.carb_per_100g = +c100.toFixed(1);
   it.fat_per_100g = +f100.toFixed(1);
@@ -3765,7 +3823,7 @@ async function saveNutEdit() {
       } : null;
       l.grams = +ref.toFixed(1);
       rememberGrams(newName, ref);
-      l.kcal = Math.round(kcalIn * share * 10) / 10;      // 记录里存的是"这一份"实际吃掉的
+      l.kcal = Math.round(kc100 * share * 10) / 10;      // 记录里存的是"这一份"实际吃掉的
       l.p = +(p100 * share).toFixed(1);
       l.c = +(c100 * share).toFixed(1);
       l.f = +(f100 * share).toFixed(1);
@@ -3780,7 +3838,7 @@ async function saveNutEdit() {
     const wasGroup = S.detailIsGroup, ids = (S.detailIds || []).slice(), tname = S.detailName;
     closeNutEdit();
     closeGroup();
-    toast(`已更新：${newName} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn * share)} 千卡${keepNote}`, keepNote ? 5200 : 2600);
+    toast(`已更新：${newName} ${l ? l.grams : ref} 克 · ${Math.round(kc100 * share)} 千卡${keepNote}`, keepNote ? 5200 : 2600);
     loadDay().then(() => {
       if (wasGroup || ids.length) {
         const fresh = (Store.load().logs || []).filter(x => ids.includes(x.id));
