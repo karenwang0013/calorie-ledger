@@ -3535,8 +3535,8 @@ function setNutUnit(u, convert) {
     const shown = Number(kEl2 && kEl2.value) || 0;
     if (shown > 0) nutBase = Object.assign({}, nutBase, { k: u === 'kJ' ? shown / KJ_PER_KCAL : shown });
   }
-  const now = $('#nutUnitNow');
-  if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
+  const seg = $('#nutUnitTog');
+  if (seg) seg.querySelectorAll('span').forEach(sp => sp.classList.toggle('on', sp.dataset.u === (u === 'kJ' ? 'kj' : 'kcal')));
   if (inp) inp.placeholder = u === 'kJ' ? '8904' : '2128';
 }
 

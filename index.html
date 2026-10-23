@@ -343,10 +343,13 @@
         <input id="nutRef" type="number" inputmode="decimal" step="0.1" placeholder="100">
       </div>
       <div class="field">
-        <label>热量（<span id="nutUnitNow">千焦</span>）<b class="req">*</b>
-          <button type="button" id="nutUnitTog" aria-label="切换千卡/千焦">⇄</button>
-        </label>
-        <input id="nutKcal" type="number" inputmode="decimal" placeholder="2128">
+        <label>热量<b class="req">*</b></label>
+        <div class="inwrap">
+          <input id="nutKcal" type="number" inputmode="decimal" placeholder="2128">
+          <button type="button" id="nutUnitTog" class="unitseg" aria-label="切换千卡/千焦">
+            <span data-u="kcal">千卡</span><span data-u="kj">千焦</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="nutgrid three">

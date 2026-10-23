@@ -1010,17 +1010,6 @@ body.add-open .sheet-mask.on {
 }
 /* 括号里的单位 g：拉丁字母的小写 g 带降部，行框对齐时墨迹会看着偏低，往上补一点才在括号正中 */
 #nutSheet .nutgrid .field > label .u { position: relative; top: -1px; }
-/* 单位切换：和标签同一行，一个很小的亮色 ⇄ 胶囊；
-   标签里直接写清楚当前填的是千卡还是千焦 */
-#nutSheet #nutUnitTog {
-  position: relative; top: -2px;                 /* 往上挪一点（用户要求） */
-  height: 18px; min-width: 22px; padding: 0 5px; border-radius: 9px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; line-height: 1;
-  background: rgba(214, 255, 75, 0.16);
-  color: var(--lime);
-  border: 1px solid rgba(214, 255, 75, 0.32);
-}
 
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
@@ -1034,6 +1023,23 @@ body.add-open .sheet-mask.on {
 }
 
 /* 改名用的输入框是系统自带的（不是我们画的卡），这里只留它背后那层遮罩 */
+
+/* 热量那一格：单位开关嵌在输入框里（右侧），做成双段：千卡 ｜ 千焦，当前项高亮 */
+#nutSheet .inwrap { position: relative; }
+#nutSheet .inwrap #nutKcal { padding-right: 92px; }
+#nutSheet .unitseg {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; padding: 2px;
+  border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.30);
+}
+#nutSheet .unitseg span {
+  padding: 3px 6px; border-radius: 7px;
+  font-size: 10.5px; font-weight: 600; line-height: 1;
+  color: var(--muted);
+}
+#nutSheet .unitseg span.on { background: rgba(214, 255, 75, 0.18); color: var(--lime); }
+#nutSheet .unitseg:active span.on { opacity: .7; }
 
 /* 面板顶部：按食物名自动带出营养 */
 #nutSheet .nutfind { margin: 0 0 12px; }
