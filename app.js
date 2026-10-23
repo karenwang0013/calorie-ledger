@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.65', d: '10-23', items: [
+    '改：那行缩成两个字——**「累计 3 天」**（数字=这次统计窗口里称了几天）',
+    '把上一版删掉的评估加回来：**「再称 2 天就能到「中等」」**（偏低 → 7 天中等 → 21 天较高；天数够了但饮食覆盖不够时，会改说"这几天把饮食记上"）',
+  ]},
   { v: 'v7.64', d: '10-23', items: [
     '改对：这个数指的是**这次统计窗口里**称了几天，不是全部历史 —— 现在写成「这 5 天里累计称了 3 天」',
     '修：上一版我把这行单独做成一块白字，把小字排版弄变了；现在它回到原来那段小字里（同样的字号/颜色/行距），只是多一行',
@@ -2021,7 +2025,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.64';
+const APP_VERSION = 'v7.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3947,6 +3951,18 @@ function renderTrends() {
 
   const real = t.real_tdee;
   let realCard = '';
+  // 下一档还差几天（门槛和 api.js 的 computeRealTdee 一致）
+  const tierTip = (r) => {
+    const span = Number(r.span_days) || 0;
+    const cov = Number(r.coverage) || 0;
+    const table = { 偏低: { name: '中等', span: 7, cov: 50 }, 中等: { name: '较高', span: 21, cov: 70 } };
+    const next = table[r.confidence];
+    if (!next) return '';
+    const d = Math.max(0, next.span - span);
+    if (d > 0) return `再称 ${d} 天就能到「${next.name}」`;
+    // 天数够了但覆盖率不够 → 说清差在哪
+    return `这几天把饮食记上（覆盖要到 ${next.cov}%，现在 ${cov}%）就能到「${next.name}」`;
+  };
   if (real) {
     const conf = real.confidence;
     const confColor = conf === '较高' ? 'var(--lime)' : conf === '中等' ? 'var(--orange)' : 'var(--muted)';
@@ -3958,7 +3974,7 @@ function renderTrends() {
           用你 ${real.span_days} 天的体重变化反推出来的真实消耗。<br>
           体重 ${real.slope_kg_per_week > 0 ? '增加' : '减少'} ${Math.abs(real.slope_kg_per_week)} kg/周，
           期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。<br>
-          这 ${real.span_days} 天里累计称了 ${real.weigh_count || 1} 天
+          累计 ${real.weigh_count || 1} 天${tierTip(real) ? `<br>${tierTip(real)}` : ''}
         </div>
         <div class="grid2" style="margin-top:14px">
           <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
@@ -3982,7 +3998,8 @@ function renderTrends() {
         <h3>实测每日消耗</h3>
         <div class="hint" style="margin-top:0">
           ${lack}。补齐之后就能反推出来。<br>
-          <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span>${miss.type === 'intake' ? `<br>这 ${miss.span} 天里累计称了 ${Number(miss.weigh_days) || 0} 天` : ''}
+          <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span><br>
+          累计 ${Number(miss.type === 'intake' ? miss.weigh_days : miss.have) || 0} 天
         </div>
         <button class="btn sm" id="goWeight" style="margin-top:14px">${lackBtn}</button>
       </div>`;
