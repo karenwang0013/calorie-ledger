@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>热量账本 · 框框色样（用 App 真实 style.css 渲染）</title>
+<!-- 关键：直接加载 App 自己的样式表，不抄任何颜色 -->
+<link rel="stylesheet" href="style.css?v=767">
+<style>
+  /* 只改这张"样品页"的排版，不碰任何材质 */
+  html, body { overflow: auto !important; height: auto !important; }
+  body { padding: 26px 22px 40px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; color: var(--text); letter-spacing: .3px; }
+  h1 b { color: var(--lime); }
+  .lead { color: var(--muted); font-size: 12.5px; margin: 0 0 22px; line-height: 1.7; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .cell { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .cap { font-size: 13px; font-weight: 700; color: var(--text); }
+  .cap i { font-style: normal; font-weight: 500; color: var(--muted2); font-size: 11.5px; margin-left: 6px; }
+  .vals { font-size: 10.5px; line-height: 1.75; color: var(--muted2); font-family: ui-monospace, Menlo, monospace;
+          white-space: pre-wrap; word-break: break-all; }
+  .box { min-height: 118px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+  /* 样品页里把"固定定位"的东西改成正常流，材质不变 */
+  .demo-fixed { position: relative !important; left: auto !important; right: auto !important;
+                top: auto !important; bottom: auto !important; transform: none !important;
+                width: 100% !important; max-width: none !important; margin: 0 !important; }
+  .dockbox { padding: 6px 0; }
+  #maskHost { position: relative; overflow: hidden; border-radius: 24px; height: 118px;
+              background: linear-gradient(180deg,#1b1f23,#12161a); display:flex; align-items:center; justify-content:center; }
+  #maskHost > #nutMask { position: absolute !important; inset: 0 !important; border-radius: 24px; }
+  #maskHost .behind { color: #7d857f; font-size: 12.5px; }
+  .swrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 26px; }
+  .swcard { border-radius: 12px; border: 1px solid var(--line); padding: 9px 10px; font-size: 10.5px;
+            color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+  .swcard s { display: block; height: 22px; border-radius: 6px; margin-bottom: 6px; text-decoration: none; }
+  .note { margin-top: 24px; font-size: 11.5px; color: var(--muted2); line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>热量账本 · <b>框框色样</b></h1>
+  <p class="lead">这张页直接加载 App 的 <code>style.css</code>，样品用的也是 App 自己的类名。
+  每块下面那行小字是浏览器**实时算出来的**取值（getComputedStyle），不是我手抄的。</p>
+
+  <div class="grid">
+    <div class="cell">
+      <div class="cap">① 玻璃卡 <i>.card</i></div>
+      <div class="card box" id="s-card"><span style="color:var(--muted);font-size:13px">半透 + 磨砂</span></div>
+      <div class="vals" data-for="s-card"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">② Dock 本体 <i>.tabbar .inner</i></div>
+      <div class="dockbox">
+        <div class="tabbar demo-fixed" style="z-index:1">
+          <div class="inner" id="s-dock">
+            <div class="tab" style="pointer-events:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/></svg></div>
+            <div class="fab" style="pointer-events:none"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+            <div class="tab" style="pointer-events:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="vals" data-for="s-dock"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">③ 弹层卡 <i>#nutSheet / 营养编辑</i></div>
+      <div class="box" style="overflow:hidden">
+        <div id="s-sheet" style="position:relative;inset:auto;width:100%;border-radius:24px;bottom:auto;left:auto;right:auto;max-width:none;max-height:none">
+          <div class="sh-body" style="padding:18px 20px">
+            <div class="field"><label>吃了多少克<b class="req">*</b></label><input value="60"></div>
+          </div>
+        </div>
+      </div>
+      <div class="vals" data-for="s-sheet"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">④ 输入框 <i>.field input</i></div>
+      <div class="card box"><div class="field" style="width:100%;margin:0"><label>蛋白质（g）</label><input id="s-input" value="13"></div></div>
+      <div class="vals" data-for="s-input"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑤ 滑块 玻璃态 <i>.dock-lens .lens-body</i></div>
+      <div class="card box" style="position:relative">
+        <div class="dock-lens on" style="position:relative;width:130px;height:54px;transform:none">
+          <div class="lens-body" id="s-lens" style="position:absolute;inset:0"></div>
+        </div>
+      </div>
+      <div class="vals" data-for="s-lens"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑥ 滑块 停稳态 <i>.dock-lens.settled</i></div>
+      <div class="card box" style="position:relative">
+        <div class="dock-lens on settled" style="position:relative;width:130px;height:54px;transform:none">
+          <div class="lens-body" id="s-lens2" style="position:absolute;inset:0"></div>
+        </div>
+      </div>
+      <div class="vals" data-for="s-lens2"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑦ 遮罩 <i>#nutMask.on</i></div>
+      <div id="maskHost"><span class="behind">下面的卡片内容</span><div id="nutMask" class="on"></div></div>
+      <div class="vals" data-for="nutMask"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑧ 分段卡 <i>.seg</i></div>
+      <div class="box" style="padding:8px 0">
+        <div class="seg" style="margin:0;width:100%" id="s-seg">
+          <button class="on">减脂</button><button>维持</button><button>增肌</button>
+        </div>
+      </div>
+      <div class="vals" data-for="s-seg"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑨ 选中 chip <i>.chip / .chip.on</i></div>
+      <div class="card box" style="gap:10px">
+        <button class="chip on" id="s-chipon">减脂</button><button class="chip" id="s-chip">维持</button>
+      </div>
+      <div class="vals" data-for="s-chipon"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑩ 提示条 <i>.toast.on</i></div>
+      <div class="card box">
+        <div class="toast on demo-fixed" id="s-toast" style="bottom:auto;left:auto">已更新：这一份 60 克 · 229 千卡</div>
+      </div>
+      <div class="vals" data-for="s-toast"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑪ 启动失败条 <i>.boot-retry</i></div>
+      <div class="box"><div class="boot-retry demo-fixed" id="s-boot"><div class="bt-txt"><span>页面没加载完整</span><i>脚本 缺 app · 在线 · 有缓存</i></div><button>重新加载</button></div></div>
+      <div class="vals" data-for="s-boot"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑫ 警告行 <i>.warnline / .hard</i></div>
+      <div class="box" style="flex-direction:column;gap:8px">
+        <div class="warnline" id="s-warn" style="width:100%;margin:0">缺口偏大，建议不超过 22%</div>
+        <div class="warnline hard" id="s-warn2" style="width:100%;margin:0">这个缺口太快了</div>
+      </div>
+      <div class="vals" data-for="s-warn"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑬ 列表行 <i>.setgroup / .srow</i></div>
+      <div class="setgroup" style="margin:0"><button class="srow" id="s-row"><span>身体与目标</span><em>165cm · 60kg</em><i>›</i></button></div>
+      <div class="vals" data-for="s-row"></div>
+    </div>
+
+    <div class="cell">
+      <div class="cap">⑭ 蓝色 <i>var(--blue)，只有点缀</i></div>
+      <div class="card box" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:10px">
+        <span style="color:var(--blue);font-size:12px;font-weight:700">AI</span>
+        <div class="bar p" style="width:100%;margin:0"><i style="width:62%"></i></div>
+      </div>
+      <div class="vals" data-for="s-14"></div>
+    </div>
+  </div>
+
+  <div class="swrow" id="swrow"></div>
+  <div class="note">所有色块都由 style.css 的 CSS 变量生成；下面色卡读的是 getComputedStyle(:root) 的真实值。</div>
+</div>
+
+<script>
+/* 实时取值：把每个样品算出来的样式写进它下面那行小字 */
+window.__report = {};
+function grab(el) {
+  if (!el) return null;
+  const c = getComputedStyle(el);
+  return {
+    'background-color': c.backgroundColor,
+    'background-image': c.backgroundImage === 'none' ? 'none' : c.backgroundImage.replace(/rgba?\([^)]*\)/g, m => m.replace(/\s+/g, ' ')).slice(0, 200),
+    'border': c.borderTopWidth + ' ' + c.borderTopStyle + ' ' + c.borderTopColor,
+    'backdrop-filter': c.backdropFilter || c.webkitBackdropFilter || 'none',
+    'box-shadow': c.boxShadow === 'none' ? 'none' : c.boxShadow.replace(/\s+/g, ' ').slice(0, 160),
+    'border-radius': c.borderTopLeftRadius,
+    'opacity': c.opacity
+  };
+}
+function paint(sel, el, extra) {
+  const box = document.querySelector('[data-for="' + sel + '"]');
+  if (!box) return;
+  const d = grab(el);
+  if (!d) { box.textContent = '（没找到样品）'; return; }
+  window.__report[sel] = d;
+  const lines = [];
+  if (extra) lines.push(extra);
+  lines.push('background: ' + (d['background-image'] !== 'none' ? d['background-image'] : d['background-color']));
+  if (d['background-image'] !== 'none') lines.push('基色: ' + d['background-color']);
+  lines.push('border: ' + d.border);
+  if (d['backdrop-filter'] !== 'none') lines.push('模糊: ' + d['backdrop-filter']);
+  if (d['box-shadow'] !== 'none') lines.push('阴影: ' + d['box-shadow']);
+  lines.push('圆角: ' + d['border-radius']);
+  box.textContent = lines.join('\n');
+}
+
+window.addEventListener('load', () => {
+  paint('s-card', document.getElementById('s-card'), '① 玻璃卡 .card');
+  paint('s-dock', document.getElementById('s-dock'), '② Dock .tabbar .inner');
+  paint('s-sheet', document.getElementById('s-sheet'), '③ 弹层 #nutSheet');
+  paint('s-input', document.getElementById('s-input'), '④ 输入框 .field input');
+  paint('s-lens', document.getElementById('s-lens'), '⑤ 滑块玻璃态 .lens-body');
+  paint('s-lens2', document.getElementById('s-lens2'), '⑥ 滑块停稳态（含 ::after 实色层 白 .085）');
+  paint('nutMask', document.getElementById('nutMask'), '⑦ 遮罩 #nutMask.on');
+  paint('s-seg', document.getElementById('s-seg'), '⑧ 分段卡 .seg');
+  paint('s-chipon', document.getElementById('s-chipon'), '⑨ 选中 chip .chip.on');
+  paint('s-toast', document.getElementById('s-toast'), '⑩ 提示条 .toast');
+  paint('s-boot', document.getElementById('s-boot'), '⑪ 启动失败条 .boot-retry');
+  paint('s-warn', document.getElementById('s-warn'), '⑫ 警告行 .warnline（下面那条是 .hard）');
+  paint('s-row', document.getElementById('s-row'), '⑬ 列表行 .srow');
+
+  // ⑭ 蓝色：读出来给个说明
+  const root = getComputedStyle(document.documentElement);
+  const blue = root.getPropertyValue('--blue').trim();
+  document.querySelector('[data-for="s-14"]').textContent = '--blue: ' + blue + '\n只用于「AI」标签文字 + 蛋白质进度条填充（没有蓝色边框的框）';
+  window.__report['blue'] = blue;
+
+  // 底部色卡：全部从 CSS 变量读
+  const vars = [['--bg','背景'],['--bg2','弹层底'],['--card','卡片底'],['--card2','次底'],['--field','输入框'],
+                ['--lime','主色'],['--blue','蓝'],['--orange','橙'],['--red','红']];
+  const row = document.getElementById('swrow');
+  row.innerHTML = vars.map(([k,label]) => {
+    const v = root.getPropertyValue(k).trim();
+    return '<div class="swcard"><s style="background:' + v + '"></s>' + k + ' ' + v + '<br><span style="color:var(--muted2)">' + label + '</span></div>';
+  }).join('');
+  // 玻璃母版变量也读出来
+  const gv = [['--glass-fill-top','玻璃上'],['--glass-fill-bot','玻璃下'],['--btn-solid','滑块实色'],['--glass-bg2','弹层母版']];
+  row.insertAdjacentHTML('beforeend', gv.map(([k,label]) => {
+    const v = root.getPropertyValue(k).trim();
+    return '<div class="swcard"><s style="background:' + v + '"></s>' + k + '<br><span style="color:var(--muted2)">' + v + '</span></div>';
+  }).join(''));
+
+  window.__ready = true;
+});
+</script>
+</body>
+</html>

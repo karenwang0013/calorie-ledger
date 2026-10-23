@@ -2386,31 +2386,3 @@ select:focus {
    真机上标题上方的空白比桌面预览小得多，负 margin 会直接把标题推进固定顶栏下面（v8.01 就翻车了）。 */
 #view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
-
-/* ===== 按钮只留两种：绿（主操作）+「透明灰」（其余全部） =====
-   除了 .btn.primary 保持绿色不动，其它按钮统一成"透明灰"：
-   里面透明（无填充），但**保留一圈描边**——框必须还在，否则看不出是按钮（v8.06 就是框没了）。 */
-.btn:not(.primary),
-.topbtn,
-.chip,
-.pgbtn,
-.pickbtn:not(.on),
-#nutSheet .nutsug button {
-  /* 里面完全透明，外面用**同一条 edge-gloss 玻璃渐变**做描边（不是一条硬的 14% 白线）——
-     硬白线看着就是"里面漆黑、外面一圈白"，没有质感。 */
-  background-color: transparent;
-  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1px solid transparent;
-  box-shadow: none;
-}
-/* 按下时给一点点反馈（否则透明按钮点了没反应感） */
-.btn:not(.primary):active,
-.topbtn:active,
-.chip:active,
-.pgbtn:active,
-.pickbtn:not(.on):active,
-#nutSheet .nutsug button:active {
-  background-color: rgba(255, 255, 255, 0.06);
-}
