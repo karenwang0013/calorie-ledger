@@ -1208,6 +1208,7 @@ body.add-open .sheet-mask.on {
   background: rgba(0,0,0,.66);
   opacity: 0; pointer-events: none;
   transition: opacity .25s;
+  will-change: opacity;      /* 单独一层，淡出时不要重排重绘，避免闪边 */
 }
 .sheet-mask.on { opacity: 1; pointer-events: auto; }
 
@@ -1275,7 +1276,10 @@ body.add-open .sheet-mask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
-  top: var(--topbar-h, 64px);
+  /* +2px：顶栏底部有一条 0.5px 的白色发丝线，遮罩正好贴着它开始的话，
+     这一行会被 blur 抹成一亮条，退出的那一瞬间就闪出一个"分割的框框"。
+     往下让 2px 就完全绕过它，顶栏（含那条发丝线）一根像素都不碰。 */
+  top: calc(var(--topbar-h, 64px) + 2px);
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
