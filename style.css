@@ -1260,16 +1260,20 @@ body.add-open .sheet-mask.on {
 .sheet:not(.on) { pointer-events: none; }
 
 /* ---------- 卡片背后的磨砂虚化（一处定义，所有虚化场景共用） ----------
-   基准 = 营养编辑卡背后那一层，原样照抄：
-     背景 rgba(0,0,0,0.20) + backdrop-filter blur(5px) saturate(115%)，整屏盖（含顶栏）。
-   食品详情卡（#grpMask）、改名/系统框（#rnMask）都用这一份，谁都不许另写一套。
-   要改就改这里，三处一起变 —— 用户要的就是"所有虚化场景长得一模一样"。 */
+   基准 = 营养编辑卡背后那一层：background rgba(0,0,0,0.20) + backdrop-filter blur(5px) saturate(115%)。
+   食品详情卡（#grpMask）、改名/系统框（#rnMask）用的都是这一份，谁都不许另写。
+
+   top 必须让开顶栏（= 从顶栏下沿才开始）：
+   1) 顶栏不被糊也不被压暗 → 颜色一个值都不变（实测 13,15,14 → 13,15,14），
+      状态栏那条（系统画的，在视口外，遮罩永远碰不到）和顶栏保持同一块颜色，不会分层；
+   2) 退出时顶栏也没有任何东西要淡出 → 不会闪一下变成两个颜色（v7.70 修）。 */
 #nutMask.on,
 #grpMask.on,
 #rnMask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
+  top: var(--topbar-h, 64px);
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
