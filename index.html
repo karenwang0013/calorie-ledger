@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=719">
+<link rel="stylesheet" href="style.css?v=720">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -339,11 +339,11 @@
     </div>
     <div class="nutgrid">
       <div class="field">
-        <label>参考量（克）<b class="req">*</b></label>
+        <label>吃了多少克<b class="req">*</b></label>
         <input id="nutRef" type="number" inputmode="decimal" step="0.1" placeholder="100">
       </div>
       <div class="field">
-        <label>热量（<span id="nutUnitNow">千焦</span>）<b class="req">*</b>
+        <label>每100克热量（<span id="nutUnitNow">千焦</span>）<b class="req">*</b>
           <button type="button" id="nutUnitTog" aria-label="切换千卡/千焦">⇄</button>
         </label>
         <input id="nutKcal" type="number" inputmode="decimal" placeholder="2128">
@@ -364,8 +364,8 @@
       </div>
     </div>
     <div class="hint">
-      填的是「参考量这么多克」的营养（这一份吃多少克），不是每 100 克。<br>
-      千卡/千焦照包装选（点 ⇄ 切换，1 千卡 = 4.184 千焦）；<b class="req">*</b> 必填。
+      四项都照抄包装上「每 100 克」那一行，不用自己算。<br>
+      上面填你实际吃了多少克，保存时自动按比例算出这一份多少千卡；千卡/千焦点 ⇄ 切换（1 千卡 = 4.184 千焦）。
     </div>
   </div>
   <div class="sh-foot">
@@ -421,9 +421,9 @@
   </div>
 </div>
 
-<script src="foods.js?v=719"></script>
-<script src="api.js?v=719"></script>
-<script src="app.js?v=719"></script>
+<script src="foods.js?v=720"></script>
+<script src="api.js?v=720"></script>
+<script src="app.js?v=720"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

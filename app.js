@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.67', d: '10-23', items: [
+    '改：营养卡里那四个数**直接照抄包装上「每 100 克」那一行**，不用自己算了 —— 以前填的是"这一份"的数，填包装上的千焦就会报「对不上」',
+    '举例：燕麦片包装写 1597 千焦/100 克，你吃了 60 克 → 四格填 1597 / 13.1 / 59.4 / 7.7，左上角填 60，保存后自动算出这一份 229 千卡',
+    '改：改克数时那四个数**不再跟着变**（它们就是包装上的数）；报错时也会说清是哪一项不对、差多少千卡',
+  ]},
   { v: 'v7.66', d: '10-23', items: [
     '修：体脂数据（体重/体脂率/BMI/去脂体重）的日期不再靠"猜" —— 快捷指令写出来的那份文件里日期字段一直是空的，以前 App 是"数值变了就当今天"，所以旧数据会被记成今天',
     '现在改成用**那份文件在仓库里的最后提交时间**当日期（也就是快捷指令真正写入的时刻），对不上的话才退回原来的猜法',
@@ -2031,7 +2036,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.66';
+const APP_VERSION = 'v7.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3335,16 +3340,15 @@ function openNutEdit(i, fake) {
   if (!it) return;
   nutEditIdx = fake ? -1 : i;
   if (!fake) nutLogId = null;
-  // 预填成"这一份"的实际数值（参考量 = 当前克数），保存时再换算回每 100 克
+  // 四个数字都预填「每 100 克」（照抄包装上那一行），参考量 = 你实际吃了多少克
   const g = Number(it.grams) || 0;
-  const share = g / 100;
   setNutUnit('kJ', false);                        // 默认按千焦（包装上绝大多数写的是千焦）
-  const kcalOfPortion = (Number(it.kcal_per_100g) || 0) * share;
+  const k100 = Number(it.kcal_per_100g) || 0;
   $('#nutRef').value = g ? +g.toFixed(1) : '';     // 没填过克数就留空，不默认 100
-  $('#nutKcal').value = g ? (nutUnit === 'kJ' ? Math.round(kcalOfPortion * KJ_PER_KCAL) : Math.round(kcalOfPortion)) : '';
-  $('#nutP').value = g ? +(((Number(it.protein_per_100g) || 0) * share).toFixed(1)) : '';
-  $('#nutC').value = g ? +(((Number(it.carb_per_100g) || 0) * share).toFixed(1)) : '';
-  $('#nutF').value = g ? +(((Number(it.fat_per_100g) || 0) * share).toFixed(1)) : '';
+  $('#nutKcal').value = k100 ? (nutUnit === 'kJ' ? Math.round(k100 * KJ_PER_KCAL) : Math.round(k100)) : '';
+  $('#nutP').value = k100 ? +((Number(it.protein_per_100g) || 0).toFixed(1)) : '';
+  $('#nutC').value = k100 ? +((Number(it.carb_per_100g) || 0).toFixed(1)) : '';
+  $('#nutF').value = k100 ? +((Number(it.fat_per_100g) || 0).toFixed(1)) : '';
   nutNameTyped = false;
   const nq0 = $('#nutNameQ'); if (nq0) nq0.value = it.name || '';
   const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
@@ -3364,11 +3368,10 @@ function openNutEdit(i, fake) {
   nutBase = base;
   nutDirty = { k: false, p: false, c: false, f: false };
   if (fixedFrom) {
-    const sh2 = Number(it.grams) || 100, share2 = sh2 / 100;
-    $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? base.k * share2 * KJ_PER_KCAL : base.k * share2);
-    $('#nutP').value = +(base.p * share2).toFixed(1);
-    $('#nutC').value = +(base.c * share2).toFixed(1);
-    $('#nutF').value = +(base.f * share2).toFixed(1);
+    $('#nutKcal').value = nutUnit === 'kJ' ? Math.round(base.k * KJ_PER_KCAL) : Math.round(base.k);
+    $('#nutP').value = +(base.p).toFixed(1);
+    $('#nutC').value = +(base.c).toFixed(1);
+    $('#nutF').value = +(base.f).toFixed(1);
     setTimeout(() => toast(`这条原来的营养数据对不上（三大项超过 100 克），已按${fixedFrom}里的正确值改好，保存前请核对`, 4200), 350);
   }
   paintNutPreview();
@@ -3449,12 +3452,11 @@ function setNutUnit(u, convert) {
     inp.value = u === 'kJ' ? Math.round(v * KJ_PER_KCAL) : Math.round(v / KJ_PER_KCAL);
   }
   nutUnit = u;
-  // 切换单位时把已经显示的数值按新单位写回基准（这样之后改克数仍然按每 100 克等比）
-  const curRef = Number($('#nutRef').value) || 0;
-  if (convert && curRef > 0) {
+  // 切换单位时把已经显示的数值按新单位写回基准（基准永远是「每 100 克」）
+  if (convert) {
     const kEl2 = $('#nutKcal');
     const shown = Number(kEl2 && kEl2.value) || 0;
-    if (shown > 0) nutBase = Object.assign({}, nutBase, { k: u === 'kJ' ? (shown / KJ_PER_KCAL) * 100 / curRef : shown * 100 / curRef });
+    if (shown > 0) nutBase = Object.assign({}, nutBase, { k: u === 'kJ' ? shown / KJ_PER_KCAL : shown });
   }
   const now = $('#nutUnitNow');
   if (now) now.textContent = u === 'kJ' ? '千焦' : '千卡';
@@ -3462,14 +3464,21 @@ function setNutUnit(u, convert) {
 }
 
 /* 边填边算：让用户当场看到「这一份 = 每 100 克多少」 */
-/* 这组"每 100 克"数据是否讲得通：三大项不超过 100g，且热量和 4p+4c+9f 差得不太远 */
-function nutSane(kcal, p, c, f) {
+/* 这组"每 100 克"数据哪里讲不通：返回一句具体的说明，讲得通就返回 ''。
+   以前只说"对不上"，用户不知道是三大项超了还是热量差了，所以拆开说。 */
+function nutWhy(kcal, p, c, f) {
   const mass = (Number(p) || 0) + (Number(c) || 0) + (Number(f) || 0);
-  if (mass > 105) return false;                       // 蛋白+碳水+脂肪 加起来比 100 克还多 → 不可能
-  const calc = 4 * (Number(p) || 0) + 4 * (Number(c) || 0) + 9 * (Number(f) || 0);
+  if (mass > 105) return `蛋白+碳水+脂肪 加起来 ${mass.toFixed(1)} 克，比 100 克还多 —— 这三格填的是每 100 克的数，请照包装核对`;
   const k = Number(kcal) || 0;
-  if (k <= 0) return true;                            // 没热量就不判
-  return Math.abs(calc - k) <= Math.max(70, k * 0.4); // 允许 40% 误差（膳食纤维/糖醇等）
+  if (k <= 0) return '';                              // 没热量就不判
+  const calc = 4 * (Number(p) || 0) + 4 * (Number(c) || 0) + 9 * (Number(f) || 0);
+  const diff = Math.abs(calc - k);
+  if (diff <= Math.max(70, k * 0.4)) return '';       // 允许 40% 误差（膳食纤维/糖醇等）
+  return `热量 ${Math.round(k)} 千卡，和 蛋白/碳水/脂肪 算出来的 ${Math.round(calc)} 千卡差 ${Math.round(diff)} 千卡 —— 四格都要填「每 100 克」，请照包装核对`;
+}
+/* 这组"每 100 克"数据是否讲得通（内部用） */
+function nutSane(kcal, p, c, f) {
+  return !nutWhy(kcal, p, c, f);
 }
 
 /* 死规则：某个食物的营养参数一旦被改过，以后一律以"最后一次改的"为准。
@@ -3628,7 +3637,7 @@ function sanitizeFoodHist() {
   if (changed) Store.save({ silent: true });
 }
 
-/* 面板里按食物名找库/历史，找到就把"这一份"的营养填进来（用户只知道克数、不知道千焦时用） */
+/* 面板里按食物名找库/历史，找到就把「每 100 克」的营养填进来（用户只知道克数、不知道千焦时用） */
 function nutFindFoods(q) {
   const key = String(q || '').trim();
   if (!key) return [];
@@ -3644,13 +3653,11 @@ function nutFindFoods(q) {
 }
 
 function applyNutFood(f) {
-  const ref = Number($('#nutRef').value) || 100;
-  const share = ref / 100;
   const k = Number(f.kcal) || 0;
-  $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? k * share * KJ_PER_KCAL : k * share);
-  $('#nutP').value = +(((Number(f.p) || 0) * share).toFixed(1));
-  $('#nutC').value = +(((Number(f.c) || 0) * share).toFixed(1));
-  $('#nutF').value = +(((Number(f.f) || 0) * share).toFixed(1));
+  $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? k * KJ_PER_KCAL : k);
+  $('#nutP').value = +((Number(f.p) || 0).toFixed(1));
+  $('#nutC').value = +((Number(f.c) || 0).toFixed(1));
+  $('#nutF').value = +((Number(f.f) || 0).toFixed(1));
   // 换了个食物 → 新的每 100 克就是"基准"。不更新 nutBase 的话，
   // 之后一改参考量/克数，四个格子会按**旧食物**的值重算，看着像"刚填好又变回去了"
   nutBase = { k, p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0 };
@@ -3668,10 +3675,11 @@ function paintNutPreview() {
   const ref = Number($('#nutRef').value) || 0;
   const raw = $('#nutKcal').value.trim();
   const kcal = raw === '' ? NaN : Number(raw);
-  if (!(ref > 0) || !isFinite(kcal)) { box.textContent = '填了参考量和热量，这里会显示换算结果'; return; }
-  const per100 = nutUnit === 'kJ' ? (kcal / KJ_PER_KCAL) * 100 / ref : kcal * 100 / ref;
+  if (!(ref > 0) || !isFinite(kcal)) { box.textContent = '填了克数和热量，这里会显示换算结果'; return; }
+  const per100kcal = nutUnit === 'kJ' ? kcal / KJ_PER_KCAL : kcal;
+  const portion = per100kcal * ref / 100;
   const unit = nutUnit === 'kJ' ? '千焦' : '千卡';
-  box.innerHTML = `这 ${+ref.toFixed(1)} 克 = <b>${Math.round(kcal)} ${unit}</b>　→　每 100 克 = <b>${Math.round(per100)} 千卡</b>`;
+  box.innerHTML = `包装每 100 克 = <b>${Math.round(kcal)} ${unit}</b>　→　你吃的 ${+ref.toFixed(1)} 克 = <b>${Math.round(portion)} 千卡</b>`;
 }
 
 /* 营养面板里：本地库/历史一条都没命中时，后台自动问一次 AI 并把四个格子填好。
@@ -3701,7 +3709,7 @@ async function saveNutEdit() {
   const it = logTarget ? { name: logTarget.name } : S.items[nutEditIdx];
   if (!it) return closeNutEdit();
   const ref = Number($('#nutRef').value);
-  if (!(ref > 0)) return toast('参考量必须填（这份多少克）', 2600);
+  if (!(ref > 0)) return toast('先填你吃了多少克', 2600);
 
   // 面板顶部那一格名字：改了就等于"把这一条改成另一个食物"——
   // 名字要改、营养也要跟着换成新食物的（不然就是"巧克力 + 西瓜的营养"）
@@ -3716,11 +3724,10 @@ async function saveNutEdit() {
       let r = null;
       try { r = await api('/api/food/nutrition', { name: newName }); } catch (e) { r = { found: false, why: 'net' }; }
       if (r && r.found) {
-        const share = ref / 100;
-        $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? r.per.k * share * KJ_PER_KCAL : r.per.k * share);
-        $('#nutP').value = +(r.per.p * share).toFixed(1);
-        $('#nutC').value = +(r.per.c * share).toFixed(1);
-        $('#nutF').value = +(r.per.f * share).toFixed(1);
+        $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? r.per.k * KJ_PER_KCAL : r.per.k);
+        $('#nutP').value = +(r.per.p).toFixed(1);
+        $('#nutC').value = +(r.per.c).toFixed(1);
+        $('#nutF').value = +(r.per.f).toFixed(1);
       } else {
         keepNote = `（「${newName}」的营养没查到，数字还是原来那个；要手动改就改完再保存）`;
       }
@@ -3730,19 +3737,18 @@ async function saveNutEdit() {
   // 注意：kcalRaw 必须在"改名换营养"之后才读，否则读到的是上一个食物的热量
   const kcalRaw = $('#nutKcal').value.trim();
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
-  const k = 100 / ref;                            // 换算到每 100 克
   it.grams = +ref.toFixed(1);                     // 参考量就是"这一份吃多少克"，写回克数
   rememberGrams(newName, ref);                     // 记住这个食物的克数，下次直接用
-  const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
+  const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡（四个数都是"每 100 克"）
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
-  if (!nutSane(kcalIn * k, num('#nutP') * k, num('#nutC') * k, num('#nutF') * k)) {
-    toast(`这组数据对不上：蛋白+碳水+脂肪 加起来比 100 克还多（或和热量差太多），请照包装核对`, 4200);
-    return;
-  }
-  it.kcal_per_100g = +(kcalIn * k).toFixed(1);
-  it.protein_per_100g = +(num('#nutP') * k).toFixed(1);
-  it.carb_per_100g = +(num('#nutC') * k).toFixed(1);
-  it.fat_per_100g = +(num('#nutF') * k).toFixed(1);
+  const p100 = num('#nutP'), c100 = num('#nutC'), f100 = num('#nutF');
+  const why = nutWhy(kcalIn, p100, c100, f100);
+  if (why) { toast(why, 4600); return; }
+  it.kcal_per_100g = +kcalIn.toFixed(1);
+  it.protein_per_100g = +p100.toFixed(1);
+  it.carb_per_100g = +c100.toFixed(1);
+  it.fat_per_100g = +f100.toFixed(1);
+  const share = ref / 100;                        // 每 100 克 → 这一份（记录里存的是实际吃掉的）
   const idx = nutEditIdx;
   // 改的是"已经记过的一条"：直接改那条记录，然后重算当天
   if (nutLogId) {
@@ -3759,10 +3765,10 @@ async function saveNutEdit() {
       } : null;
       l.grams = +ref.toFixed(1);
       rememberGrams(newName, ref);
-      l.kcal = Math.round(kcalIn * 10) / 10;
-      l.p = +(num('#nutP')).toFixed(1);
-      l.c = +(num('#nutC')).toFixed(1);
-      l.f = +(num('#nutF')).toFixed(1);
+      l.kcal = Math.round(kcalIn * share * 10) / 10;      // 记录里存的是"这一份"实际吃掉的
+      l.p = +(p100 * share).toFixed(1);
+      l.c = +(c100 * share).toFixed(1);
+      l.f = +(f100 * share).toFixed(1);
       l.nutSrc = 'user';                 // 手改过的：以后同名重试、AI 都不许覆盖
       if (renamed) l.name = newName;     // 面板里改了名字 = 这一条改成另一个食物（整组的标签不动）
       Store.save();
@@ -3774,7 +3780,7 @@ async function saveNutEdit() {
     const wasGroup = S.detailIsGroup, ids = (S.detailIds || []).slice(), tname = S.detailName;
     closeNutEdit();
     closeGroup();
-    toast(`已更新：${newName} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn)} 千卡${keepNote}`, keepNote ? 5200 : 2600);
+    toast(`已更新：${newName} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn * share)} 千卡${keepNote}`, keepNote ? 5200 : 2600);
     loadDay().then(() => {
       if (wasGroup || ids.length) {
         const fresh = (Store.load().logs || []).filter(x => ids.includes(x.id));
@@ -6395,21 +6401,9 @@ function init() {
   wireSheetDrag($('#nutSheet'), $('#nutSheet .sh-body'), closeNutEdit);
   const ut = $('#nutUnitTog');
   if (ut) ut.onclick = ev => { ev.preventDefault(); setNutUnit(nutUnit === 'kJ' ? 'kcal' : 'kJ', true); };
-  // 改克数：把"这一份"的四项按每 100 克等比换算（12.5 → 25 克，数值翻倍；反过来减半）。
-  // 只动用户还没手改过的格子，手填过的保持原样（避免覆盖刚输入的数）。
+  // 改克数：四个数字是「每 100 克」，**不动它们**（用户照抄包装，App 只在保存时按比例算这一份）
   const refEl = $('#nutRef');
-  if (refEl) refEl.oninput = () => {
-    const ref = Number(refEl.value) || 0;
-    const share = ref / 100;
-    if (ref > 0) {
-      const put = (sel, v) => { const el = $(sel); if (el) el.value = v; };
-      if (!nutDirty.k) put('#nutKcal', Math.round(nutUnit === 'kJ' ? nutBase.k * share * KJ_PER_KCAL : nutBase.k * share));
-      if (!nutDirty.p) put('#nutP', +((nutBase.p * share).toFixed(1)));
-      if (!nutDirty.c) put('#nutC', +((nutBase.c * share).toFixed(1)));
-      if (!nutDirty.f) put('#nutF', +((nutBase.f * share).toFixed(1)));
-    }
-    paintNutPreview();
-  };
+  if (refEl) refEl.oninput = paintNutPreview;
   const kEl = $('#nutKcal');
   if (kEl) kEl.oninput = () => { nutDirty.k = true; paintNutPreview(); };
   ['#nutP', '#nutC', '#nutF'].forEach(sel => {
