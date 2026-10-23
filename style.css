@@ -2386,3 +2386,10 @@ select:focus {
    真机上标题上方的空白比桌面预览小得多，负 margin 会直接把标题推进固定顶栏下面（v8.01 就翻车了）。 */
 #view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
+
+/* 按钮再压暗一档：白色覆盖从 8.5% → 3.5%（描边、顶边高光、尺寸都不动） */
+.btn, .chip, .pgbtn, .topbtn, .pickbtn, #nutSheet .nutsug button {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.035)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
