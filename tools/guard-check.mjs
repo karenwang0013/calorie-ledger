@@ -158,6 +158,9 @@ const checks = [
     /!\(nutDirty\.k \|\| nutDirty\.p \|\| nutDirty\.c \|\| nutDirty\.f\)/.test(app) && /const fromThisRead = /.test(app) && /delete one\._suspect;/.test(app)],
   ['营养成分表那四项必须是「每 100 克」口径（改克数不许再缩放四格）',
     /每100克热量/.test(html) && /if \(refEl\) refEl\.oninput = paintNutPreview;/.test(app) && !/nutBase\.p \* share/.test(app) && !/nutBase\.k \* share/.test(app)],
+  ['没包装的菜（拉面/沙县/盖饭）必须拆到食材级 + 自己估克数（食物照那条链路的核心）',
+    /混合菜（兰州拉面、米粉、盖浇饭/.test(api) && /必须拆到食材级/.test(api) && /按\*\*煮熟后\*\*的重量估/.test(api)
+      && /汤：单独一条/.test(api) && /必须给出一个具体数字/.test(api) && /混合菜（兰州拉面、米粉、盖浇饭、套餐、沙县小吃）\*\*必须拆到食材级\*\*/.test(api)],
 ];
 
 let bad = 0;
