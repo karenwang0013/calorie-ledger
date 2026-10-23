@@ -1027,19 +1027,19 @@ body.add-open .sheet-mask.on {
 /* 热量那一格：单位开关嵌在输入框里（右侧），竖排：上「千焦」下「千卡」。
    控件四周与输入框内边等距（上/下/右各 5px），内圆角 = 输入框圆角 12 − 留白 5 = 7，和外框同心 */
 #nutSheet .inwrap { position: relative; }
-#nutSheet .inwrap #nutKcal { padding-right: 64px; }
+#nutSheet .inwrap #nutKcal { padding-right: 74px; }
 #nutSheet .unitseg {
-  position: absolute; right: 5px; top: 5px; bottom: 5px; width: 52px;
+  position: absolute; right: 4px; top: 4px; bottom: 4px; width: 62px;
   display: flex; flex-direction: column; justify-content: center; gap: 3px;
-  padding: 3px; border-radius: 7px;
+  padding: 3px; border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(0, 0, 0, 0.30);
 }
 #nutSheet .unitseg span {
   flex: 1 1 0; display: flex; align-items: center; justify-content: center;
-  /* 圆角同心：外框 12 → 开关 7（12−5 留白）→ 选项 3（7−1 描边−3 内边距） */
-  border-radius: 3px;
-  font-size: 10.5px; font-weight: 600; line-height: 1;
+  /* 圆角同心：外框 12 → 开关 8（12−4 留白）→ 选项 4（8−1 描边−3 内边距） */
+  border-radius: 4px;
+  font-size: 11.5px; font-weight: 600; line-height: 1;
   color: var(--muted);
 }
 #nutSheet .unitseg span.on { background: rgba(214, 255, 75, 0.18); color: var(--lime); }
