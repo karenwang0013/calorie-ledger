@@ -126,6 +126,20 @@ const checks = [
     const seg = app.slice(i, i + 1200);
     return seg.includes('paintNutriValues()') && !seg.includes('renderMe()');
   })()],
+  ['改名后营养必须跟着换：首页单条 / 详情卡 / 识别结果草稿 三处都要触发', (app.match(/renutrifyLogs\(/g) || []).length >= 2 && /renutrifyDraftItem\(it\)/.test(app) && /\/api\/logs\/renutrify/.test(api) && /\/api\/food\/nutrition/.test(api)],
+  ['整组改名只是标签，不许触发营养联动（一组可能是 5 种不同食物）', (() => {
+    const i = app.indexOf("$$('[data-pen-g]', box).forEach");
+    if (i < 0) return false;
+    return !/renutrify/.test(app.slice(i, i + 1100));
+  })()],
+  ['改名联动只许改四项营养，克数一个字都不许动', (() => {
+    const i = api.indexOf("pathname === '/api/logs/renutrify'");
+    if (i < 0) return false;
+    const blk = api.slice(i, i + 1800);
+    return !/l\.grams\s*=/.test(blk) && /l\.kcal = [\s\S]{0,400}?l\.p = [\s\S]{0,400}?l\.c = [\s\S]{0,400}?l\.f =/.test(blk);
+  })()],
+  ['手改营养要记进"这个食物"的记忆（rememberNut：每 100 克 + 改过几次 + 上次 AI 值）', /function rememberNut\(name, per, aiPer\)/.test(app) && /rememberNut\(l\.name/.test(app) && /cnt: \(\(old && Number\(old\.cnt\)\) \|\| 0\) \+ 1/.test(app)],
+  ['营养面板不许加新按钮：本地查不到就后台自动填（data-ainut 不许回来）', !/data-ainut/.test(app + html) && /async function nutAutoFill/.test(app)],
 ];
 
 let bad = 0;

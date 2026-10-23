@@ -567,6 +567,94 @@ async function analyzeText(text) {
   return cleanItems(extractJson(await callModel(content)));
 }
 
+/* ---------------- 按名字查营养（改名后联动用） ----------------
+   取值顺序，越靠前越可信：
+     1) 食物历史里**不是 AI 来的**那份（你手改的 / 以前真实记过的 / 食物库落过的）
+     2) 食物库（118 条，先精确再包含）
+     3) 食物历史里 AI 缓存过的那份（省一次请求）
+     4) 问 AI
+   AI 的结果会写进食物历史（src:'ai'），下次同名不再花钱；
+   但它是"最低优先级"，所以以后命中食物库、或你手改过一次，都会自动被更可信的值顶掉。 */
+const NUT_PROMPT = `你是营养师。给出下面这个食物**每 100 克可食部分**的热量和三大营养素。
+口径按《中国食物成分表》，取最常见的吃法（能生吃的不按煮熟算；品牌零食按包装营养表）。
+食物：`;
+
+function normName(s) {
+  return String(s || '').trim().toLowerCase()
+    .replace(/[\s\u3000]+/g, '')
+    .replace(/[·・,，。.、:：;；"'“”]/g, '');
+}
+/* 去掉括号里的备注再比一次：库里写「巧克力(牛奶)」，你只写「巧克力」也能命中 */
+function normBare(s) {
+  return normName(s).replace(/[（(][^）)]*[）)]/g, '');
+}
+
+/* 和 app.js 的 nutSane 同一套判断；这里多挡两条（每 100 克不可能超 900 千卡、单项不超 100 克） */
+function nutNumbersSafe(k, p, c, f) {
+  if (!(k >= 0) || k > 900) return false;
+  if (!(p >= 0) || !(c >= 0) || !(f >= 0)) return false;
+  if (p > 100 || c > 100 || f > 100) return false;
+  if (p + c + f > 105) return false;
+  const calc = 4 * p + 4 * c + 9 * f;
+  if (k > 0 && Math.abs(calc - k) > Math.max(70, k * 0.4)) return false;
+  return true;
+}
+
+async function lookupNutrition(rawName) {
+  const name = String(rawName || '').trim().slice(0, 20);
+  if (!name) return { found: false, why: 'empty' };
+  const key = normName(name);
+  const d = Store.load();
+  const hist = Array.isArray(d.foodHist) ? d.foodHist : [];
+  const pick = x => ({ k: num(x.k), p: num(x.p), c: num(x.c), f: num(x.f) });
+  const same = x => normName(x.n) === key || normBare(x.n) === normBare(name);
+  const okRec = x => nutNumbersSafe(num(x.k), num(x.p), num(x.c), num(x.f));
+
+  // 1) 历史里非 AI 的那份
+  const h1 = hist.find(x => same(x) && x.src !== 'ai' && okRec(x));
+  if (h1) return { found: true, src: 'hist', name: h1.n, per: pick(h1) };
+
+  // 2) 食物库：精确 → 去括号精确 → 别名精确。
+  //    这里**故意不做"包含"模糊匹配**：否则"牛肉面"会命中"牛肉"、"宇宙汉堡"会命中"汉堡"，
+  //    数字就悄悄按错的食物算了（这种错比"没查到"危险得多）。查不到就交给 AI。
+  const bare = normBare(name);
+  const lib = FOODS.find(f => normName(f.name) === key)
+    || FOODS.find(f => normBare(f.name) === bare)
+    || FOODS.find(f => (f.alias || []).some(a => normName(a) === key || normBare(a) === bare));
+  if (lib && nutNumbersSafe(num(lib.kcal), num(lib.p), num(lib.c), num(lib.f))) {
+    return { found: true, src: 'db', name: lib.name, per: { k: num(lib.kcal), p: num(lib.p), c: num(lib.c), f: num(lib.f) } };
+  }
+
+  // 3) 之前 AI 查过的缓存（单独一张表，不塞进"食物历史"，免得你从没记过的食物跑进搜索历史）
+  const cache = Array.isArray(d.nutCache) ? d.nutCache : [];
+  const c1 = cache.find(x => normName(x.n) === key && okRec(x));
+  if (c1) return { found: true, src: 'ai', name: c1.canon || c1.n, per: pick(c1) };
+
+  // 4) 问 AI
+  let obj;
+  try {
+    obj = extractJson(await callModel([{ type: 'text', text: NUT_PROMPT + name +
+      '\n只输出 JSON，不要解释：{"name":"最接近的标准食物中文名","kcal":每100克千卡,"p":每100克蛋白质,"c":每100克碳水,"f":每100克脂肪,"note":"不确定之处，没有就填空"}' }]));
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    return { found: false, why: /API Key/i.test(msg) ? 'no-key' : 'no-net', detail: msg.slice(0, 80) };
+  }
+  const it = (obj && (obj.item || obj)) || {};
+  const k = num(it.kcal, NaN), p = num(it.p, NaN), c = num(it.c, NaN), f = num(it.f, NaN);
+  if (isNaN(k) || isNaN(p) || isNaN(c) || isNaN(f)) return { found: false, why: 'ai-miss' };
+  if (!nutNumbersSafe(k, p, c, f)) return { found: false, why: 'bad-data' };
+  const canon = String(it.name || '').trim().slice(0, 20) || name;
+  const per = { k: Math.round(k), p: +p.toFixed(1), c: +c.toFixed(1), f: +f.toFixed(1) };
+  try {
+    const dd = Store.load();
+    dd.nutCache = (Array.isArray(dd.nutCache) ? dd.nutCache : []).filter(x => x.n !== name);
+    dd.nutCache.push({ n: name, canon, k: per.k, p: per.p, c: per.c, f: per.f, at: Date.now() });
+    if (dd.nutCache.length > 200) dd.nutCache = dd.nutCache.slice(-200);
+    Store.save();
+  } catch (e) { /* 缓存失败不影响这次结果 */ }
+  return { found: true, src: 'ai', name: canon, per };
+}
+
 
 /* ---------------- 路由：保持和原来一样的接口形状 ---------------- */
 
@@ -738,6 +826,37 @@ async function api(path, body, method) {
   }
   if (pathname === '/api/ai/text' && m === 'POST') {
     return Object.assign({ ok: true }, await analyzeText(body.text || ''));
+  }
+  // 按名字查"每 100 克"（改名 / 营养面板用；不写任何记录）
+  if (pathname === '/api/food/nutrition' && m === 'POST') {
+    const r = await lookupNutrition(body.name || '');
+    return Object.assign({ ok: true }, r);
+  }
+  // 改名之后：把这几条记录的营养换成新食物的（每 100 克 × 各自的克数）。克数一律不动。
+  if (pathname === '/api/logs/renutrify' && m === 'POST') {
+    const ids = (body.ids || []).map(Number);
+    const name = String(body.name || '').trim().slice(0, 20);
+    const r = await lookupNutrition(name);
+    if (!r.found) return { ok: true, found: false, why: r.why || 'unknown' };
+    const d = Store.load();
+    const touched = [];
+    let skippedManual = 0;
+    (d.logs || []).forEach(l => {
+      if (!ids.includes(l.id)) return;
+      // 同名重试时，你手改过的那条不许被覆盖（保住"改过的以最后一次为准"）
+      if (body.sameName && l.nutSrc === 'user') { skippedManual++; return; }
+      const grams = Number(l.grams) || 0;
+      if (!(grams > 0)) return;                       // 没克数就没法换算绝对值，原样留着
+      l.prevNut = { kcal: l.kcal, p: l.p, c: l.c, f: l.f };
+      l.kcal = Math.round(r.per.k * grams / 100 * 10) / 10;
+      l.p = Math.round(r.per.p * grams / 100 * 10) / 10;
+      l.c = Math.round(r.per.c * grams / 100 * 10) / 10;
+      l.f = Math.round(r.per.f * grams / 100 * 10) / 10;
+      l.nutSrc = r.src === 'ai' ? 'ai' : r.src === 'db' ? 'db' : 'user';
+      touched.push({ id: l.id, grams, kcal: l.kcal });
+    });
+    if (touched.length) Store.save();
+    return { ok: true, found: true, src: r.src, canon: r.name, per: r.per, touched, skippedManual };
   }
   throw new Error('未知操作：' + pathname);
 }

@@ -24,6 +24,14 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.60', d: '10-23', items: [
+    '新增：**改了食物名，下面的营养就跟着换成新食物的**（热量/蛋白/碳水/脂肪一起换，**克数一个字都不动**）—— 首页每一条、点开某一条的详情卡、以及还没记入的识别结果，这三处都生效',
+    '取值顺序：你手改过的 > 食物库（含"西红柿→番茄"这类别名）> 之前 AI 查过的缓存 > 问 AI。命中就不花钱，问过 AI 的也会被记住',
+    '新增记忆：你**手改**某条的营养时，按"每 100 克"记进这个食物（还记了改过几次、上次 AI 说的是多少）—— 下次同名直接用你的值，不再问 AI，也不再覆盖',
+    '营养面板里输名字、本地一条都没查到 → **后台自己填好四个格子**（没有加任何按钮）；填之前不会覆盖你正在输的数字',
+    '整组改名（"沙县小吃"这种）只是标签，营养一律不动 —— 一组里可能是 5 种不同的食物',
+    '改完一次名字 = 再查一次营养（这就是重试入口）；没认出来 / 没网 / 没填 Key / AI 给的数对不上 → 数字保持原样，提示条说清是哪种情况',
+  ]},
   { v: 'v7.59', d: '10-23', items: [
     '修：**多点几次就"1 马上变 2"** 的真因找到了 —— 上一轮"把过渡关掉"的定时器没作废，它会在下一轮淡入走到一半时把过渡掐断，那一帧直接跳到全实色。所以头几下（间隔长、没撞上）是好的，连点几次就会犯',
     '实测：连点 7 次（每 0.6 秒一下）逐帧采样，淡入再没有被截断（0.00 → 0.09 → 0.42 → 0.74 → 0.89 → 0.97 → 1.00）',
@@ -1996,7 +2004,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.59';
+const APP_VERSION = 'v7.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2374,12 +2382,15 @@ function renderMeals() {
     const name = prompt('这个食物叫什么？', l.name || '');
     if (name === null) return;
     const v = name.trim().slice(0, 20);
-    if (!v || v === l.name) return;
+    if (!v) return;
+    const sameName = v === l.name;            // 改成同一个名字 = 再查一次营养（重试入口）
     try {
-      await api('/api/logs/rename', { ids: [l.id], name: v, item: true });
+      if (!sameName) await api('/api/logs/rename', { ids: [l.id], name: v, item: true });
       await loadDay();
       if (S.view === 'trends') loadTrends();
-      toast('已改名：' + v, 1800);
+      // 改名立刻生效；营养异步换成本新食物的（查不到就原样留着 + 提示）
+      renutrifyLogs([l.id], v, sameName,
+        sameName ? `重新查「${v}」的营养…` : `已改名：${v} · 正在查营养…`);
     } catch (e) { toast(e.message); }
   });
   $$('[data-pen-g]', box).forEach(b => b.onclick = async ev => {
@@ -2391,6 +2402,7 @@ function renderMeals() {
     const v = name.trim().slice(0, 20);
     if (!v || v === g.name) return;
     try {
+      // 整组改名只是给这一组起个标签，**不动营养**（一组里可能是 5 种不同的食物）
       await api('/api/logs/rename', { ids: g.logs.map(l => l.id), name: v, item: false });
       await loadDay();
       toast('已改名：' + v, 1800);
@@ -2987,6 +2999,40 @@ function rememberGrams(name, grams) {
   Store.save();
 }
 
+/* 记忆：你手改过的营养，按"每 100 克"记进这个食物（src:'user'，以后一律以它为准）。
+   顺手记下"改过几次"和"上次 AI 给的是多少"——这两个只在后台用，不显示。
+   次数多了就能看出 AI 对这类食物是偏高还是偏低（以后可以用它纠偏）。 */
+function rememberNut(name, per, aiPer) {
+  const n = String(name || '').trim();
+  if (!n || !per) return;
+  const k = Number(per.k) || 0, p = Number(per.p) || 0, c = Number(per.c) || 0, f = Number(per.f) || 0;
+  if (!nutSane(k, p, c, f)) return;                 // 手填的也过一遍，别把错的记成标准
+  const st = Store.load();
+  if (!Array.isArray(st.foodHist)) st.foodHist = [];
+  const i = st.foodHist.findIndex(x => x.n === n);
+  const old = i >= 0 ? st.foodHist[i] : null;
+  const rec = Object.assign({}, old, {
+    n,
+    k: Math.round(k), p: +p.toFixed(1), c: +c.toFixed(1), f: +f.toFixed(1),
+    src: 'user',
+    cnt: ((old && Number(old.cnt)) || 0) + 1,        // 改过几次
+    at: Date.now(),
+  });
+  if (!(rec.g > 0) && old && old.g) rec.g = old.g;    // 克数记忆不归这里管，别动
+  if (!rec.cat) rec.cat = '你改过';
+  if (aiPer) {
+    rec.ai = {
+      k: Math.round(Number(aiPer.k) || 0),
+      p: +(Number(aiPer.p) || 0).toFixed(1),
+      c: +(Number(aiPer.c) || 0).toFixed(1),
+      f: +(Number(aiPer.f) || 0).toFixed(1),
+    };
+  }
+  if (i >= 0) st.foodHist[i] = rec; else st.foodHist.push(rec);
+  st.foodHistDel = (st.foodHistDel || []).filter(x => x !== n);   // 手改过 = 重新加回名单
+  Store.save();
+}
+
 function forgetFood(name) {
   const st = Store.load();
   st.foodHist = (st.foodHist || []).filter(x => x.n !== name);
@@ -3205,6 +3251,8 @@ function renderResult() {
     if (!v) return;
     it.name = v;
     renderResult();
+    // 还没记入，改了只影响这一项：把营养换成新食物的（克数不动）；同名再确认一次 = 重查
+    renutrifyDraftItem(it);
   });
   $$('[data-nut]', box).forEach(b => b.onclick = ev => {
     ev.stopPropagation();
@@ -3419,6 +3467,68 @@ function nutKnownFood(name) {
   return all.find(x => x.name === key) || null;
 }
 
+/* ---------------- 改名 → 营养跟着换（v7.60） ----------------
+   用户定的规则：
+   - 只换"每 100 克"那四项；**克数一个字都不动**
+   - 四项要么全换、要么全不换（查不到/数据不合理 → 原样留着，只提示原因）
+   - 组名（batchName）只是标签，不触发
+   - 改成同一个名字 = 再查一次（这就是重试入口）；但你手改过的那条不许被覆盖 */
+const NUT_WHY = {
+  'no-key': '没填 API Key，营养没动（设置 → 我的 → AI）',
+  'no-net': '没网或请求失败，营养没动',
+  'net': '没网或请求失败，营养没动',
+  'ai-miss': 'AI 没认出这个食物，营养没动',
+  'bad-data': 'AI 给的数对不上，没敢用，营养没动',
+  'empty': '没有名字，营养没动',
+  'unknown': '营养没查成，还是原来的数',
+};
+
+/* 已记录的一条（或几条）：查新名字的每 100 克，乘它自己的克数写回去 */
+async function renutrifyLogs(ids, name, sameName, startMsg) {
+  if (!ids || !ids.length) return null;
+  if (startMsg) toast(startMsg, 2000);
+  let r = null;
+  try { r = await api('/api/logs/renutrify', { ids, name, sameName: !!sameName }); }
+  catch (e) { r = { found: false, why: 'net' }; }
+  await loadDay();
+  if (S.view === 'trends') { try { loadTrends(); } catch (e) {} }
+  if (!r || !r.found) {
+    toast(`「${name}」${NUT_WHY[(r && r.why) || 'unknown'] || NUT_WHY.unknown}`, 4800);
+    return r;
+  }
+  if (!(r.touched || []).length) {
+    toast(r.skippedManual
+      ? `「${name}」这条是你手改过的，没覆盖`
+      : `「${name}」没有克数，营养没法换算，原样留着`, 4200);
+    return r;
+  }
+  const t = r.touched[0];
+  const shortMsg = `已按「${r.canon || name}」更新：${Math.round(r.per.k)} 千卡/100g`;
+  toast(`${shortMsg} · 这条 ${t.grams} 克 = ${Math.round(t.kcal)} 千卡`, 3400, shortMsg);
+  return r;
+}
+
+/* 还没记入的草稿行：只改这一项的"每 100 克"，克数不动 */
+async function renutrifyDraftItem(it) {
+  const name = String((it && it.name) || '').trim();
+  if (!name) return;
+  toast(`「${name}」正在查营养…`, 1600);
+  let r = null;
+  try { r = await api('/api/food/nutrition', { name }); }
+  catch (e) { r = { found: false, why: 'net' }; }
+  if (!r || !r.found) {
+    toast(`「${name}」${NUT_WHY[(r && r.why) || 'unknown'] || NUT_WHY.unknown}`, 4800);
+    return;
+  }
+  it.kcal_per_100g = r.per.k;
+  it.protein_per_100g = r.per.p;
+  it.carb_per_100g = r.per.c;
+  it.fat_per_100g = r.per.f;
+  it.nutSrc = r.src === 'ai' ? 'ai' : r.src === 'db' ? 'db' : 'user';
+  renderResult();
+  toast(`已按「${r.canon || name}」更新：${Math.round(r.per.k)} 千卡/100g`, 3000);
+}
+
 /* 历史里如果有被算坏的数据（三大项合计 > 100 克）：
    不删掉（删了这个食物就从搜索里消失了），而是尽量修回来：
    ① 用同名的记账反推 → ② 把当初多乘的 100/克数 除掉 → ③ 用食物库的数据 */
@@ -3512,6 +3622,10 @@ function applyNutFood(f) {
   $('#nutP').value = +(((Number(f.p) || 0) * share).toFixed(1));
   $('#nutC').value = +(((Number(f.c) || 0) * share).toFixed(1));
   $('#nutF').value = +(((Number(f.f) || 0) * share).toFixed(1));
+  // 换了个食物 → 新的每 100 克就是"基准"。不更新 nutBase 的话，
+  // 之后一改参考量/克数，四个格子会按**旧食物**的值重算，看着像"刚填好又变回去了"
+  nutBase = { k, p: Number(f.p) || 0, c: Number(f.c) || 0, f: Number(f.f) || 0 };
+  nutDirty = { k: false, p: false, c: false, f: false };
   const sug = $('#nutSug');
   if (sug) { sug.hidden = true; sug.innerHTML = ''; }
   const q = $('#nutNameQ');
@@ -3529,6 +3643,27 @@ function paintNutPreview() {
   const per100 = nutUnit === 'kJ' ? (kcal / KJ_PER_KCAL) * 100 / ref : kcal * 100 / ref;
   const unit = nutUnit === 'kJ' ? '千焦' : '千卡';
   box.innerHTML = `这 ${+ref.toFixed(1)} 克 = <b>${Math.round(kcal)} ${unit}</b>　→　每 100 克 = <b>${Math.round(per100)} 千卡</b>`;
+}
+
+/* 营养面板里：本地库/历史一条都没命中时，后台自动问一次 AI 并把四个格子填好。
+   零按钮：你只管输名字，数字自己出来；失败就说一句原因。
+   只在你还没手动填过数字时才会自动填（nutDirty 全 false），不会覆盖你正在输的值。 */
+async function nutAutoFill(q) {
+  const name = String(q || '').trim();
+  if (!name) return;
+  let r = null;
+  try { r = await api('/api/food/nutrition', { name }); }
+  catch (e) { r = { found: false, why: 'net' }; }
+  if (!r || !r.found) {
+    toast(`「${name}」${NUT_WHY[(r && r.why) || 'unknown'] || NUT_WHY.unknown}`, 4200);
+    return;
+  }
+  // 这期间你又改了名字或数字 → 不填了
+  const box = $('#nutNameQ');
+  if (!box || box.value.trim() !== name) return;
+  if (nutDirty.k || nutDirty.p || nutDirty.c || nutDirty.f) return;
+  applyNutFood({ name: r.canon || name, kcal: r.per.k, p: r.per.p, c: r.per.c, f: r.per.f });
+  toast(`已按「${r.canon || name}」填好：${Math.round(r.per.k)} 千卡/100g（保存前请核对）`, 3600);
 }
 
 function saveNutEdit() {
@@ -3559,13 +3694,26 @@ function saveNutEdit() {
     const d = Store.load();
     const l = (d.logs || []).find(x => x.id === nutLogId);
     if (l) {
+      const prevG = Number(l.grams) || 0;
+      // 这一条原来是 AI 给的才算"AI 说多少"（用来记偏差）
+      const prevAi = (l.nutSrc === 'ai' && prevG > 0) ? {
+        k: (Number(l.kcal) || 0) * 100 / prevG,
+        p: (Number(l.p) || 0) * 100 / prevG,
+        c: (Number(l.c) || 0) * 100 / prevG,
+        f: (Number(l.f) || 0) * 100 / prevG,
+      } : null;
       l.grams = +ref.toFixed(1);
       rememberGrams(l.name, ref);
       l.kcal = Math.round(kcalIn * 10) / 10;
       l.p = +(num('#nutP')).toFixed(1);
       l.c = +(num('#nutC')).toFixed(1);
       l.f = +(num('#nutF')).toFixed(1);
+      l.nutSrc = 'user';                 // 手改过的：以后同名重试、AI 都不许覆盖
       Store.save();
+      // 记进"这个食物"的记忆（每 100 克）——次数越多越可信，下次同名直接用
+      rememberNut(l.name, {
+        k: it.kcal_per_100g, p: it.protein_per_100g, c: it.carb_per_100g, f: it.fat_per_100g,
+      }, prevAi);
     }
     const wasGroup = S.detailIsGroup, ids = (S.detailIds || []).slice(), tname = S.detailName;
     closeNutEdit();
@@ -3710,10 +3858,18 @@ async function renameGroup() {
   if (name === null) return;
   const v = name.trim().slice(0, 20);
   if (!v) return;
+  const isItem = !S.detailIsGroup;
+  const sameName = v === S.detailName;
+  const ids = (S.detailIds || []).slice();
   try {
-    await api('/api/logs/rename', { ids: S.detailIds, name: v, item: !S.detailIsGroup });
+    if (!sameName) await api('/api/logs/rename', { ids, name: v, item: isItem });
     closeGroup();
     await loadDay();
+    // 整组改名 = 只是标签，不动营养；单条改名才联动
+    if (isItem) {
+      renutrifyLogs(ids, v, sameName,
+        sameName ? `重新查「${v}」的营养…` : `已改名：${v} · 正在查营养…`);
+    }
   } catch (e) { toast(e.message); }
 }
 
@@ -6097,9 +6253,10 @@ function init() {
   // 顶部「食物名」：边输入边给候选，点一下就带出这一份的营养
   const nq = $('#nutNameQ'), sug = $('#nutSug');
   if (nq && sug) {
-    let t = null;
+    let t = null, tAI = null, lastAI = '';
     nq.oninput = () => {
       clearTimeout(t);
+      clearTimeout(tAI);
       t = setTimeout(() => {
         const list = nutFindFoods(nq.value);
         const q = nq.value.trim();
@@ -6108,6 +6265,11 @@ function init() {
           + (q ? `<button data-ai="1">AI 查「${esc(q)}」一份多少克</button>` : '');
         sug.hidden = !(list.length || q);
         $$('[data-food]', sug).forEach(b => b.onclick = ev => { ev.preventDefault(); applyNutFood(list[Number(b.dataset.food)]); });
+        // 本地一条都没查到 → 后台自己问一次 AI 把四个格子填好（不加按钮、不用点）
+        if (!list.length && q.length >= 2 && q !== lastAI && !nutDirty.k && !nutDirty.p && !nutDirty.c && !nutDirty.f) {
+          lastAI = q;
+          tAI = setTimeout(() => nutAutoFill(q), 700);
+        }
         const ab = $('[data-ai]', sug);
         if (ab) ab.onclick = async ev => {
           ev.preventDefault();
