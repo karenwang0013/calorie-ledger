@@ -2423,3 +2423,15 @@ select:focus {
   background-clip: padding-box, border-box;
   color: #0a0b0c;
 }
+
+/* ===== 「全透」按钮的顶部高光：1px 硬线 → 贴顶柔光（U1c，12%）=====
+   原来的 1px 内高光会被 1px 边框挤下去，看着有缝；改成 6px 柔光、贴在最上沿、被圆角裁住。
+   绿色主操作不受影响。 */
+.btn:not(.primary),
+.chip,
+.pgbtn,
+.topbtn,
+.pickbtn:not(.on),
+#nutSheet .nutsug button {
+  box-shadow: inset 0 6px 10px -6px rgba(255, 255, 255, 0.12);
+}
