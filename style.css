@@ -2453,3 +2453,13 @@ select:focus {
 #nutSheet .nutsug button {
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-lite);
 }
+
+/* ===== F2：全透按钮加一层白 5% 的底（能看出是可点的块，但仍透）===== */
+.btn:not(.primary),
+.chip,
+.pgbtn,
+.topbtn,
+.pickbtn:not(.on),
+#nutSheet .nutsug button {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), var(--edge-lite);
+}
