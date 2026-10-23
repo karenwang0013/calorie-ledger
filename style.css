@@ -202,6 +202,10 @@ html.kb .sc-body {
   border-bottom: 0;
   /* 只留半像素发丝线，没有任何投影 */
   box-shadow: 0 0.5px 0 rgba(255,255,255,.10);
+  /* 让顶栏自己单独一层、常驻：下面那层带 backdrop-filter 的遮罩一消失，
+     浏览器要重画"背后那层"，顶栏会被单独重画一帧 → 看着像整个框闪一下。
+     常驻一层就不会被重画。（注意：这里不是 transform 位移补偿，顶栏位置一点没动） */
+  will-change: transform;
 }
 
 .brand {
@@ -1281,6 +1285,13 @@ body.add-open .sheet-mask.on {
      往下让 2px 就完全绕过它，顶栏（含那条发丝线）一根像素都不碰。 */
   top: calc(var(--topbar-h, 64px) + 2px);
 }
+
+/* 退出时不要淡出：这三层带 backdrop-filter，淡出的每一帧都要重算"背后那层"，
+   最后一帧会把顶栏那块单独重画一次 —— 肉眼就是"顶栏整个框框闪一下"（不足 1 秒）。
+   进场照样淡入（transition 取的是目标状态的 .25s），退出瞬间收掉，只有一帧、没有中间帧。 */
+#nutMask:not(.on),
+#grpMask:not(.on),
+#rnMask:not(.on) { transition: none; }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
 #rnMask { z-index: 63; }
