@@ -1006,7 +1006,10 @@ body.add-open .sheet-mask.on {
 #nutSheet .nutgrid .field > label {
   display: flex; align-items: center; gap: 6px;
   height: 20px; line-height: 1;
+  white-space: nowrap;            /* 标签一律不换行（"热量"那格以前会把"千焦"折到下一行） */
 }
+/* 括号里的单位 g：拉丁字母的小写 g 带降部，行框对齐时墨迹会看着偏低，往上补一点才在括号正中 */
+#nutSheet .nutgrid .field > label .u { position: relative; top: -1px; }
 /* 单位切换：和标签同一行，一个很小的亮色 ⇄ 胶囊；
    标签里直接写清楚当前填的是千卡还是千焦 */
 #nutSheet #nutUnitTog {

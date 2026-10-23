@@ -343,7 +343,7 @@
         <input id="nutRef" type="number" inputmode="decimal" step="0.1" placeholder="100">
       </div>
       <div class="field">
-        <label>每100克热量（<span id="nutUnitNow">千焦</span>）<b class="req">*</b>
+        <label>热量（<span id="nutUnitNow">千焦</span>）<b class="req">*</b>
           <button type="button" id="nutUnitTog" aria-label="切换千卡/千焦">⇄</button>
         </label>
         <input id="nutKcal" type="number" inputmode="decimal" placeholder="2128">
@@ -351,20 +351,20 @@
     </div>
     <div class="nutgrid three">
       <div class="field">
-        <label>蛋白质（g）</label>
+        <label>蛋白质（<span class="u">g</span>）</label>
         <input id="nutP" type="number" inputmode="decimal" step="0.1" placeholder="7.7">
       </div>
       <div class="field">
-        <label>碳水（g）</label>
+        <label>碳水（<span class="u">g</span>）</label>
         <input id="nutC" type="number" inputmode="decimal" step="0.1" placeholder="53.1">
       </div>
       <div class="field">
-        <label>脂肪（g）</label>
+        <label>脂肪（<span class="u">g</span>）</label>
         <input id="nutF" type="number" inputmode="decimal" step="0.1" placeholder="23.8">
       </div>
     </div>
     <div class="hint">
-      四项都照抄包装上「每 100 克」那一行，不用自己算。<br>
+      四项都照抄包装上「每100克热量」那一行，不用自己算。<br>
       上面填你实际吃了多少克，保存时自动按比例算出这一份多少千卡；千卡/千焦点 ⇄ 切换（1 千卡 = 4.184 千焦）。
     </div>
   </div>
