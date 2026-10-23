@@ -340,8 +340,12 @@ function computeTrends(days) {
   const _rt = computeRealTdee(d);
   const real = _rt.real, realMissing = _rt.missing;
 
+  // 累计称重天数（到今天为止、有体重记录的天数）：卡片上只显示这一个数
+  const weighDaysTotal = Object.keys(d.weights || {}).filter(k => k <= today).length;
+
   return {
     days, start, end: today, series,
+    weigh_days: weighDaysTotal,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
     avg_balance: avgIntake ? Math.round(avgExp - avgIntake) : null,
