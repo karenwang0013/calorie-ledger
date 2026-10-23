@@ -2084,7 +2084,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   /* ---- 玻璃母版：Dock / 卡牌 / 按钮共用这一套（改这里，三处一起变）---- */
   --glass-fill-top: rgba(13, 15, 14, 0.46);
   --glass-fill-bot: rgba(13, 15, 14, 0.58);
-  --glass-blur-2: blur(20px) saturate(150%);
+  /* 2026-10-23 用户反馈「打开就发烫」：全局磨砂 20px → 10px。
+     模糊半径越小，iOS 每帧重算的成本越低（首屏同时有 3 块卡在用这个变量）。 */
+  --glass-blur-2: blur(10px) saturate(150%);
   --glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
   --btn-solid: rgba(255, 255, 255, 0.085);   /* 按钮/滑块停稳后的实色（Dock 那颗为准） */
   --glass-card: rgba(21, 24, 27, 0.70);
