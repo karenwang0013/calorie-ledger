@@ -2364,8 +2364,8 @@ select:focus {
   box-shadow: none;
 }
 
-/* ===== 「设置」的大标题 / 子页标题：在顶栏与第一张卡之间垂直居中 =====
-   实测原来：设置 上 63 / 下 16；身体与目标 上 69 / 下 16 —— 都是"离顶栏远、离卡片近"。
-   做法：把上方多余的间距挪到下方，卡片位置不变，只让标题落在正中。 */
-#view-me .pagetitle { margin-top: -24px; padding-bottom: 40px; }
-#view-me .mehead { margin-top: -26px; padding-bottom: 36px; }
+/* ===== 「设置」大标题 / 子页标题：顶栏与首卡之间居中 =====
+   ⚠️ 只能用「正的 padding」调，绝不能用负 margin：
+   真机上标题上方的空白比桌面预览小得多，负 margin 会直接把标题推进固定顶栏下面（v8.01 就翻车了）。 */
+#view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
+#view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
