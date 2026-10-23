@@ -373,6 +373,22 @@
 
 ---
 
+### 32. 通知（锁屏推送）到底有没有发 / 怎么自己验证
+
+- **结构**：`.github/workflows/push.yml`（cron `30 0 * * *` = 北京 08:30 早班、`0 14 * * *` = 22:00 晚班）+ `push/send.mjs` 决定发什么 + `push-subs.json` 存订阅（每台设备一条）。
+- **早班**：只有 `flags.weight`（通知页「早上提醒上秤」）开着**且今天还没称**才发 `⚖️ 上秤时间`。晚班只管补记 / 小结，不发称重。
+- **开关链路**：通知页 `[data-nfy]` → `notify_flags` → `syncPushConfig()` 写仓库 `push-config.json` → `send.mjs` 读 `flags`。所以改名/换文案不影响生效，**但 key 必须还是 `weight`**。
+- **验证方法（不用问用户）**：
+  ```bash
+  gh run list --workflow=push.yml --limit 5
+  gh run view <run-id> --log | sed -n '/node push\/send.mjs/,/Cleaning up/p'
+  ```
+  看到 `发送完成（morning）：成功 N，失效 0` 就说明服务端真发出去了；`失效`>0 表示该设备的订阅已过期（要在 App 里把锁屏通知关再开一次）。
+  手动测一条：`gh workflow run push.yml -f event=watch`（watch 不受"今天称过"影响）。
+- **已知缺陷**：GitHub 的 cron 会延迟，10-23 那次早班实际 13:10 才跑（延迟 4 小时 40 分）。要准时只能换成 Cloudflare Worker 的 cron（仓库里已有 `push/worker.js`，未接定时）。
+
+---
+
 ## 每次改完的固定动作（不用再问用户）
 
 1. `node tools/guard-check.mjs` —— 全绿才发
