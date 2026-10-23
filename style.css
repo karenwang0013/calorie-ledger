@@ -1264,6 +1264,14 @@ body.add-open .sheet-mask.on {
   backdrop-filter: blur(5px) saturate(115%);
 }
 
+/* 首页点某个食品弹出的详情卡（#grpSheet）背后的遮罩：照抄上面营养编辑卡后面那一层 ——
+   浅一点 + 磨砂模糊。原来这里吃的是默认的 rgba(0,0,0,.66)，背后一片死黑。 */
+#grpMask.on {
+  background: rgba(0, 0, 0, 0.20);
+  -webkit-backdrop-filter: blur(5px) saturate(115%);
+  backdrop-filter: blur(5px) saturate(115%);
+}
+
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
 /* 只有"营养编辑"是居中卡片，进场原地浮起；提醒记录仍在底部，按原来的方式滑上来 */
