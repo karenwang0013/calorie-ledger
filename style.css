@@ -372,14 +372,14 @@ html.kb .sc-body {
    （位置 / 尺寸 / 材质 / 透明度全部一致，只有里面的内容不一样） */
 #nlogSheet,
 #addSheet {
-  /* 材质跟 Dock 一样：半透磨砂玻璃 */
+  /* 材质跟 Dock 一样（同一组母版变量） */
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(38, 44, 49, 0.46) 0%, rgba(20, 25, 29, 0.58) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
   /* 位置和尺寸 */
   position: fixed;
   left: var(--dock-inset); right: var(--dock-inset);
@@ -852,10 +852,7 @@ body.add-open .sheet-mask.on {
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--dock-r);
   /* 浮起来的那一层：底部投影 + 顶边一道细高光。阴影按用户要求缩小（原 0 12 30 / 0 2 8） */
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.35),
-    0 1px 3px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--glass-shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .tab {
   position: relative; z-index: 1;   /* 图标永远在液态滑块上面 */
@@ -900,7 +897,7 @@ body.add-open .sheet-mask.on {
    分成两层是因为：轻触时"位置"和"缩放"如果写在同一个 transform 上，
    第二次写会把还没走完的滑动过渡打断 → 看起来抖一下。 */
 .dock-lens {
-  --lens-solid: rgba(255, 255, 255, 0.085);   /* 停稳后的实色：比 Dock 底色亮一档（这是 v6.70 那一版的原色） */
+  --lens-solid: var(--btn-solid);   /* 停稳后的实色：取按钮母版（Dock 那颗） */
   position: absolute; left: 0; top: 0;
   width: var(--lens-w, 84px); height: var(--lens-h, 46px);
   border-radius: var(--lens-r, 36px);
@@ -1377,11 +1374,15 @@ body.add-open .sheet-mask.on {
   position: sticky; top: 0; z-index: 3;
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
-  border: 1px solid rgba(255, 255, 255, 0.035);
-  background-image: linear-gradient(180deg, #2b3035 0%, #23282c 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    inset 0 14px 20px -14px rgba(255, 255, 255, 0.10);
+  /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符） */
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
@@ -1507,7 +1508,7 @@ body.add-open .sheet-mask.on {
    按下去那一下会把还没走完的滑动打断 → 看着就是"跳"（原来这里就是单层的）。 */
 .seg-lens {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
-  --lens-solid: rgba(255, 255, 255, 0.10);
+  --lens-solid: var(--btn-solid);   /* 和 Dock 那颗同源 */
   border-radius: var(--seg-btn-r, 12px); z-index: 0; pointer-events: none; opacity: 0;
   transform: translate3d(0, 0, 0);
   /* 和 Dock 那颗同一组数：位置 .62s 过冲、淡入淡出 .25s */
@@ -1731,15 +1732,7 @@ body.add-open .sheet-mask.on {
   bottom: calc(var(--dock-bottom) + var(--dock-h) + 24px + var(--safe-b));
   transform: translate(-50%, 12px);
   z-index: 90;
-  /* 材质照抄 Dock（同一组值：底色 / edge-gloss 描边 / blur / 阴影），尺寸和圆角不动 */
-  border: 1px solid transparent;
-  background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(13, 15, 14, 0.46) 0%, rgba(13, 15, 14, 0.58) 100%), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  backdrop-filter: blur(20px) saturate(150%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
+  background: #24292e;
   color: var(--text);
   padding: 11px 18px;
   border-radius: 12px;
@@ -2080,6 +2073,12 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    ================================================================== */
 :root {
   /* 磨砂玻璃：底色略微透一点（不是全透），配合 backdrop-filter 才像一层薄玻璃 */
+  /* ---- 玻璃母版：Dock / 卡牌 / 按钮共用这一套（改这里，三处一起变）---- */
+  --glass-fill-top: rgba(13, 15, 14, 0.46);
+  --glass-fill-bot: rgba(13, 15, 14, 0.58);
+  --glass-blur-2: blur(20px) saturate(150%);
+  --glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
+  --btn-solid: rgba(255, 255, 255, 0.085);   /* 按钮/滑块停稳后的实色（Dock 那颗为准） */
   --glass-card: rgba(21, 24, 27, 0.70);
   --glass-card2: rgba(27, 31, 35, 0.66);
   --glass-bg2: rgba(15, 17, 19, 0.76);
@@ -2108,14 +2107,16 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 /* 底色是 --card 的框
    ⚠️ 质感锁死：所有卡片的玻璃质感只能由下面这一处定义（--glass-card + --edge-gloss + --glass-blur），
       新做卡片请直接复用 .card 类，不要另写 background / backdrop-filter，guard-check 会拦住。 */
+/* 卡片 = Dock 同一块玻璃（尺寸/圆角/内边距一律不动，只同步材质）。改材质只改 :root 那 5 个变量 */
 .card, .stats, .macros, .meal, .seg, .setgroup {
   border: 1px solid transparent;
   background-color: transparent;
-  background-image: linear-gradient(var(--glass-card), var(--glass-card)), var(--edge-gloss);
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+  box-shadow: var(--glass-shadow-2);
 }
 /* 卡片里的小块（识别结果、拍照摘要）留在实底上，避免一层套一层地反复模糊 */
 .shotrow, .ritem, .chip {
@@ -2194,12 +2195,11 @@ input:focus, textarea:focus, select:focus {
   background-color: transparent;
   /* 颜色用顶栏那个 #0D0F0E（13,15,14），但保留原来的 46%/58% 透明度和 blur ——
      既是要的色号，又是玻璃。半透明层最终像素会随背后内容浮动 1~2 阶，这是玻璃的物理代价。 */
-  background-image: linear-gradient(180deg, rgba(13, 15, 14, 0.46) 0%, rgba(13, 15, 14, 0.58) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  /* 模糊再强一点，透出来才像磨砂玻璃（不是一块半透明塑料） */
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
 }
 
 /* 覆盖按钮：iPhone 窄屏分两行（本机 / 覆盖云端），iPad 宽屏仍一行 */
@@ -2207,4 +2207,70 @@ input:focus, textarea:focus, select:focus {
 @media (max-width: 520px) {
   .btn.btntwo { display: block; text-align: center; line-height: 1.3; padding: 9px 4px; }
   .btn.btntwo .brk { display: inline; }
+}
+
+/* ================= 按钮 / 输入框 = Dock 那颗按钮的同一套材质 =================
+   尺寸、圆角、内边距一律不动，只同步「底色 + 描边 + 顶边高光」。
+   改材质只改 :root 的 --btn-solid / --edge-gloss。 */
+.btn, .chip, .pgbtn, .topbtn, .pickbtn, #nutSheet .nutsug button {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+/* 输入框：按钮那套太暗，输入时不好认；保持 --field 深色底 + 强描边（更舒服，也和整体协调） */
+input, textarea, select {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--field), var(--field)), var(--edge-gloss-strong);
+  background-position: 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* 卡片里的「按下 / 选中」也用 Dock 那颗按钮的玻璃（原来 .srow 按下是实色 card2、chip 选中是黄绿底） */
+.srow:active { background: var(--btn-solid); }
+.chip.on {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  color: var(--lime);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* 卡内小卡（目标消耗 / 相对误差 / 区间统计四格 / 模式建议）：同一套玻璃 */
+.mini, .rec-card {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* 弹层卡片（食品详情 / 营养卡 / 其它 sheet）：跟 Dock 同一套卡片材质 */
+.sheet, .modal {
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+}
+
+/* 应用内提示条：同 Dock（含阴影） */
+.toast {
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
 }
