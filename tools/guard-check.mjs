@@ -174,6 +174,10 @@ const checks = [
   ['没包装的菜（拉面/沙县/盖饭）必须拆到食材级 + 自己估克数（食物照那条链路的核心）',
     /混合菜（兰州拉面、米粉、盖浇饭/.test(api) && /必须拆到食材级/.test(api) && /按\*\*煮熟后\*\*的重量估/.test(api)
       && /汤：单独一条/.test(api) && /必须给出一个具体数字/.test(api) && /混合菜（兰州拉面、米粉、盖浇饭、套餐、沙县小吃）\*\*必须拆到食材级\*\*/.test(api)],
+  ['云端拉取不许删掉本机已有的照片（shots 只合并，不许整份覆盖）',
+    (api.match(/shots = Object\.assign\(\{\}, rd0?\.shots \|\| \{\}, local0?\.shots \|\| \{\}\)/g) || []).length >= 2
+      && /const rd = remote\.data \|\| \{\};[\s\S]{0,900}?local\.shots = Object\.assign/.test(api)
+      && /const rd0 = remote0\.data \|\| \{\};[\s\S]{0,900}?local0\.shots = Object\.assign/.test(api)],
 ];
 
 let bad = 0;
