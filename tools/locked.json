@@ -53,5 +53,20 @@
     "file": "style.css",
     "find": "padding: 8px 16px 30px;",
     "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
+  },
+  {
+    "file": "style.css",
+    "find": "background: rgba(0, 0, 0, 0.20);",
+    "why": "卡片背后那层磨砂遮罩的底色（20% 黑）：详情卡 #grpMask / 营养卡 #nutMask / 改名卡 #rnMask 三处共用，用户认可的值"
+  },
+  {
+    "file": "style.css",
+    "find": "backdrop-filter: blur(5px) saturate(115%);",
+    "why": "卡片背后那层遮罩的磨砂强度（blur 5px）：三处必须一致"
+  },
+  {
+    "file": "style.css",
+    "find": "  top: var(--topbar-h, 64px);",
+    "why": "遮罩必须让开顶栏：盖到顶栏上会被再压暗 20%，和系统画的状态栏拼成两种颜色"
   }
 ]

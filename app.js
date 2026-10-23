@@ -2400,10 +2400,12 @@ function renderMeals() {
     ev.stopPropagation(); ev.preventDefault();
     const l = d.logs.find(x => String(x.id) === b.dataset.pen);
     if (!l) return;
-    const name = prompt('这个食物叫什么？', l.name || '');
+    const name = await askName({
+      title: '给这个食物改名', value: l.name || '',
+      hint: '改完名字，这条的营养会换成新食物的（克数不动）；改成同一个名字 = 重新查一次。'
+    });
     if (name === null) return;
-    const v = name.trim().slice(0, 20);
-    if (!v) return;
+    const v = name;
     const sameName = v === l.name;            // 改成同一个名字 = 再查一次营养（重试入口）
     try {
       if (!sameName) await api('/api/logs/rename', { ids: [l.id], name: v, item: true });
@@ -2418,9 +2420,12 @@ function renderMeals() {
     ev.stopPropagation(); ev.preventDefault();
     const g = groupsById.get(b.dataset.penG);
     if (!g) return;
-    const name = prompt('这份叫什么？（比如：沙县小吃）', g.name || '');
+    const name = await askName({
+      title: '给这一份改名', value: g.name || '',
+      hint: '整组改名只是个标签，这一组里每一条的营养都不会变。'
+    });
     if (name === null) return;
-    const v = name.trim().slice(0, 20);
+    const v = name;
     if (!v || v === g.name) return;
     try {
       // 整组改名只是给这一组起个标签，**不动营养**（一组里可能是 5 种不同的食物）
@@ -3262,13 +3267,16 @@ function renderResult() {
     if (!S.items.length) resetPhotoUI();
     renderResult();
   });
-  $$('[data-ren]', box).forEach(b => b.onclick = ev => {
+  $$('[data-ren]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     const it = S.items[Number(b.dataset.ren)];
     if (!it) return;
-    const name = prompt('这个食物叫什么？', it.name || '');
+    const name = await askName({
+      title: '给这个食物改名', value: it.name || '',
+      hint: '改完名字，这一项的营养会换成新食物的（克数不动）。'
+    });
     if (name === null) return;
-    const v = name.trim().slice(0, 20);
+    const v = name;
     if (!v) return;
     it.name = v;
     renderResult();
@@ -3903,13 +3911,58 @@ function closeGroup() {
   $('#grpMask').classList.remove('on');
   $('#grpSheet').classList.remove('on');
 }
+
+/* ---------------- 改名卡（App 自己画的） ----------------
+   以前用系统 prompt：它那层背景是 iOS 画的，改不了，和别处不统一。
+   现在用同一套磨砂遮罩 + 一张小卡（材质/尺寸照抄营养编辑卡）。
+   用法：const name = await askName({title, value, hint})；取消返回 null。 */
+let rnResolve = null;
+function askName(o) {
+  const opts = (typeof o === 'string') ? { title: o } : (o || {});
+  const mask = $('#rnMask'), sheet = $('#rnSheet'), inp = $('#rnInput');
+  if (!mask || !sheet || !inp) return Promise.resolve(prompt(opts.title || '改名字', opts.value || ''));
+  // 上一次还没关就再点：先把上一次当成取消收掉，避免 Promise 挂着
+  if (rnResolve) { const r = rnResolve; rnResolve = null; r(null); }
+  return new Promise(resolve => {
+    rnResolve = resolve;
+    $('#rnLabel').textContent = opts.title || '改名字';
+    inp.value = opts.value || '';
+    const hint = $('#rnHint');
+    if (opts.hint) { hint.textContent = opts.hint; hint.hidden = false; }
+    else { hint.textContent = ''; hint.hidden = true; }
+    mask.classList.add('on');
+    sheet.classList.add('on');
+    setTimeout(() => {
+      try { inp.focus(); const n = inp.value.length; inp.setSelectionRange(n, n); } catch (e) {}
+    }, 130);
+  });
+}
+function closeRename(val) {
+  const mask = $('#rnMask'), sheet = $('#rnSheet'), inp = $('#rnInput');
+  if (inp) inp.blur();
+  if (mask) mask.classList.remove('on');
+  if (sheet) sheet.classList.remove('on');
+  const r = rnResolve; rnResolve = null;
+  if (r) r(val);
+}
+function wireRename() {
+  const ok = $('#rnOk'), cancel = $('#rnCancel'), mask = $('#rnMask'), inp = $('#rnInput');
+  if (!ok || !inp) return;
+  const val = () => String(inp.value || '').trim().slice(0, 20);
+  ok.onclick = () => { const v = val(); if (!v) { toast('名字不能空着'); return; } closeRename(v); };
+  cancel.onclick = () => closeRename(null);
+  mask.onclick = () => closeRename(null);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
+}
 async function renameGroup() {
   if (!S.detailIds) return;
-  const name = prompt(S.detailIsGroup ? '这份叫什么？（比如：沙县小吃）' : '这个食物叫什么？', S.detailName || '');
-  if (name === null) return;
-  const v = name.trim().slice(0, 20);
-  if (!v) return;
   const isItem = !S.detailIsGroup;
+  const name = await askName(isItem
+    ? { title: '给这个食物改名', value: S.detailName || '', hint: '改完名字，这条的营养会换成新食物的（克数不动）。' }
+    : { title: '给这一份改名', value: S.detailName || '', hint: '整组改名只是个标签，这一组里每一条的营养都不会变。' });
+  if (name === null) return;
+  const v = name;
+  if (!v) return;
   const sameName = v === S.detailName;
   const ids = (S.detailIds || []).slice();
   try {
@@ -3958,10 +4011,11 @@ function renderTrends() {
     const table = { 偏低: { name: '中等', span: 7, cov: 50 }, 中等: { name: '较高', span: 21, cov: 70 } };
     const next = table[r.confidence];
     if (!next) return '';
+    const nm = `<b style="color:var(--lime)">${next.name}</b>`;
     const d = Math.max(0, next.span - span);
-    if (d > 0) return `再称 ${d} 天就能到「${next.name}」`;
+    if (d > 0) return `再称 ${d} 天就能到「${nm}」`;
     // 天数够了但覆盖率不够 → 说清差在哪
-    return `这几天把饮食记上（覆盖要到 ${next.cov}%，现在 ${cov}%）就能到「${next.name}」`;
+    return `这几天把饮食记上（覆盖要到 ${next.cov}%，现在 ${cov}%）就能到「${nm}」`;
   };
   if (real) {
     const conf = real.confidence;
@@ -3974,7 +4028,7 @@ function renderTrends() {
           用你 ${real.span_days} 天的体重变化反推出来的真实消耗。<br>
           体重 ${real.slope_kg_per_week > 0 ? '增加' : '减少'} ${Math.abs(real.slope_kg_per_week)} kg/周，
           期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。<br>
-          累计 ${real.weigh_count || 1} 天${tierTip(real) ? `<br>${tierTip(real)}` : ''}
+          <span style="display:inline-block;margin-top:4px;color:var(--text);font-size:13.5px;font-weight:600">累计 ${real.weigh_count || 1} 天${tierTip(real) ? `<br>${tierTip(real)}` : ''}</span>
         </div>
         <div class="grid2" style="margin-top:14px">
           <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
@@ -3999,7 +4053,7 @@ function renderTrends() {
         <div class="hint" style="margin-top:0">
           ${lack}。补齐之后就能反推出来。<br>
           <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span><br>
-          累计 ${Number(miss.type === 'intake' ? miss.weigh_days : miss.have) || 0} 天
+          <span style="display:inline-block;margin-top:4px;color:var(--text);font-size:13.5px;font-weight:600">累计 ${Number(miss.type === 'intake' ? miss.weigh_days : miss.have) || 0} 天</span>
         </div>
         <button class="btn sm" id="goWeight" style="margin-top:14px">${lackBtn}</button>
       </div>`;
@@ -5048,6 +5102,8 @@ function renderMe() {
     h = meBackBar('身体数据') + `
       <div class="card">
         <h3 class="bh">${showDate && showDate !== last ? '所选那天' : '最近一次'}${showDate ? ` <span class="datechip">${showDate.slice(5)}</span>` : ''}</h3>
+        ${showDate && showDate !== todayISO() && showDate === last ? `
+          <div class="hint" style="margin:8px 0 0">今天还没收到称重数据（最新 ${showDate.slice(5)}）· 站上体脂秤后跑一次「健康采集」</div>` : ''}
         ${showDate ? `
           <div class="bstats">
             <div><div class="k">体重 <em>kg</em></div><div class="v">${w || '—'}</div></div>
@@ -5905,6 +5961,36 @@ async function pullBodyHistory() {
   } catch (e) { return 0; }
 }
 
+/* body.json 里没有日期时（快捷指令的"格式化日期"变量在导入后会失效，写出来是空字符串），
+   就用这份文件在仓库里的**最后一次提交时间**当日期 —— 那正是快捷指令写入的时刻。
+   比"数值变了就记成今天"靠猜准得多，也不会再出现"称了一样的体重就不记"。
+   5 分钟缓存一次，避免每次拉数据都多打一次 API。 */
+let _bodCdAt = 0, _bodCd = '';
+async function bodyCommitDate() {
+  if (Date.now() - _bodCdAt < 300000) return _bodCd;
+  _bodCdAt = Date.now();
+  _bodCd = '';
+  try {
+    const h = { Accept: 'application/vnd.github+json' };
+    const tk = (setting('gh_token', '') || '').trim();
+    if (tk) h.Authorization = 'Bearer ' + tk;
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch('https://api.github.com/repos/' + GH_REPO + '/commits?path=body.json&per_page=1',
+      { headers: h, signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(to);
+    if (!r.ok) return '';
+    const j = await r.json();
+    const c = (j && j[0] && j[0].commit) || {};
+    const iso = (c.committer && c.committer.date) || (c.author && c.author.date) || '';
+    if (!iso) return '';
+    const bj = new Date(new Date(iso).getTime() + 8 * 3600 * 1000);   // 北京时间
+    if (isNaN(bj.getTime())) return '';
+    _bodCd = bj.toISOString().slice(0, 10);
+  } catch (e) { /* 拿不到就退回原来的猜法 */ }
+  return _bodCd;
+}
+
 async function pullBodyJson(forceFresh) {
   try {
     const needFresh = !!forceFresh || Date.now() - freshAt.body > 300000;
@@ -5979,6 +6065,7 @@ async function pullBodyJson(forceFresh) {
     d.body = d.body || {}; d.weights = d.weights || {};
     const explicit = (String(j.d || '').match(/\d{4}-\d{2}-\d{2}/) || [])[0];
     let date = explicit;
+    if (!date) date = await bodyCommitDate();     // 文件没写日期 → 用它的提交时间（= 快捷指令写入的时刻）
     if (!date) {
       // 快捷指令没给日期：如果这次的数值和「最近一次」完全一样，说明没有新称重 —— 不新增日期
       const latestD = Object.keys(d.body).concat(Object.keys(d.weights)).sort().pop();
@@ -6229,6 +6316,7 @@ function init() {
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
+  wireRename();    // 改名卡（App 自己的，磨砂背景）
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -373,6 +373,25 @@
   </div>
 </div>
 
+<!-- ============ 改名（App 自己的卡片：系统弹窗的背景改不了，用这张才有磨砂背景） ============ -->
+<div class="sheet-mask" id="rnMask"></div>
+<div class="sheet" id="rnSheet">
+  <div class="grab"></div>
+  <div class="sh-body">
+    <div class="field">
+      <label id="rnLabel">改名字</label>
+      <input id="rnInput" type="text" maxlength="20" autocomplete="off" enterkeyhint="done" placeholder="输入新名字">
+    </div>
+    <div class="hint" id="rnHint" hidden></div>
+  </div>
+  <div class="sh-foot">
+    <div class="btnrow">
+      <button class="btn ghost" id="rnCancel">取消</button>
+      <button class="btn primary" id="rnOk">保存</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="sheet-mask" id="helpMask"></div>

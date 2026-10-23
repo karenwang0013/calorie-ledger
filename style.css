@@ -977,7 +977,7 @@ body.add-open .sheet-mask.on {
 }
 
 /* 改营养数据的小面板：比记录弹层小一圈，左右和底边与它等距 */
-#nutSheet {
+#nutSheet, #rnSheet {
   z-index: 62;                                   /* 浮在记录弹层之上 */
   left: calc(var(--dock-inset, 8px) + 18px);
   right: calc(var(--dock-inset, 8px) + 18px);
@@ -1021,6 +1021,17 @@ body.add-open .sheet-mask.on {
 /* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉；
    padding 和记录卡片完全一致（8/16/30）→ 按钮离卡片底边的距离同样是 31px */
 #nutSheet .sh-foot {
+  background: transparent; border-top: 0;
+  padding: 8px 16px 30px;
+}
+
+/* 改名卡：材质、尺寸、按钮底距全部沿用营养编辑卡（同一个选择器），
+   差别只有「里面是一个输入框 + 两个按钮」。层级抬到最高，从任何卡片里点改名都盖得住 */
+#rnSheet { z-index: 64; min-height: 0; }
+#rnSheet .sh-body { padding: 24px 26px 12px; }
+#rnSheet .field { margin: 0; }
+#rnSheet input { width: 100%; }
+#rnSheet .sh-foot {
   background: transparent; border-top: 0;
   padding: 8px 16px 30px;
 }
@@ -1272,6 +1283,16 @@ body.add-open .sheet-mask.on {
    top 让开顶栏：遮罩盖到顶栏上会把顶栏再压暗 20%，和状态栏那条（系统画的、遮罩碰不到）
    拼成两种颜色。不盖顶栏就一点不变色。 */
 #grpMask.on {
+  background: rgba(0, 0, 0, 0.20);
+  -webkit-backdrop-filter: blur(5px) saturate(115%);
+  backdrop-filter: blur(5px) saturate(115%);
+  top: var(--topbar-h, 64px);
+}
+
+/* 改名卡背后的遮罩：和上面两处一模一样（20% 黑 + blur 5），同样让开顶栏。
+   z-index 抬到 63：从详情卡里点改名时，这层要盖在详情卡的遮罩（60）之上 */
+#rnMask { z-index: 63; }
+#rnMask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
