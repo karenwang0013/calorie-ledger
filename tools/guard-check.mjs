@@ -55,6 +55,19 @@ const lockedBad = lockedOk();
 const checks = [
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
   ['顶栏必须是 fixed', /\.topbar \{\n  position: fixed;/.test(css)],
+  ['顶栏颜色锁死 #0d0f0e（任何情况下都不许改）', /\.topbar \{[\s\S]{0,400}?background: #0d0f0e;/.test(css) && !/\.topbar \{[\s\S]{0,400}?background: #(?!0d0f0e)/.test(css)],
+  ['顶栏必须在虚化层之上（z-index ≥ 70），否则虚化会把它压暗', (() => {
+    const i = css.indexOf('.topbar {');
+    const seg = css.slice(i, i + 400);
+    const m = seg.match(/z-index: (\d+);/);
+    return !!m && Number(m[1]) >= 70;
+  })()],
+  ['虚化遮罩必须整屏一层，不许用 top 裁掉顶栏（裁一刀退出就闪）', (() => {
+    const i = css.indexOf('#nutMask.on,');
+    if (i < 0) return false;
+    const seg = css.slice(i, i + 300);
+    return !/top:\s*calc?\(var\(--topbar-h/.test(seg) && !/\n  top: var\(--topbar-h/.test(seg);
+  })()],
   ['顶栏不许有任何 transform 位移', !/topbar\.style\.transform|tbEl\.style\.transform/.test(app)],
   ['内容层不许是独立合成层', !/backface-visibility: hidden/.test(css.split('.sc-body')[1] || '')],
   ['键盘态用"有输入框在编辑"判定', /classList\.add\('kb'\)/.test(app)],

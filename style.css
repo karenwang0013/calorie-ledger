@@ -189,7 +189,10 @@ html.kb .sc-body {
 .topbar {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 30;
+  /* 顶栏在虚化层（60/63）之上 —— 遮罩整屏盖住也压不到它，
+     颜色永远是 #0D0F0E；遮罩顶边藏在顶栏不透明底色后面，退出也没有"切口"可闪。
+     锁死：guard-check 会验这一条，改小直接禁止发版。 */
+  z-index: 70;
   display: flex;
   align-items: center;
   justify-content: space-between;

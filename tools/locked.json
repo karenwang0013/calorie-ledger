@@ -73,5 +73,15 @@
     "file": "style.css",
     "find": "#nutMask.on,\n#grpMask.on,\n#rnMask.on {",
     "why": "所有虚化场景必须共用这一份（基准 = 营养编辑卡后面那层）；不许某个场景单独另写一套"
+  },
+  {
+    "file": "style.css",
+    "find": "background: #0d0f0e;",
+    "why": "顶栏底色锁死 #0D0F0E（13,15,14）：用户明确要求任何情况下都不许变"
+  },
+  {
+    "file": "style.css",
+    "find": "  z-index: 70;",
+    "why": "顶栏必须在虚化层之上（≥70）：否则虚化会把它压暗成 #0A0C0B"
   }
 ]
