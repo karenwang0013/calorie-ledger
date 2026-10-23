@@ -91,7 +91,7 @@
   },
   {
     "file": "style.css",
-    "find": "background-image: linear-gradient(#0D0F0E, #0D0F0E), var(--edge-gloss);",
-    "why": "Dock 底色 = 顶栏同色 #0D0F0E（13,15,14），用户指定；其余材质参数不许动"
+    "find": "linear-gradient(180deg, rgba(13, 15, 14, 0.46) 0%, rgba(13, 15, 14, 0.58) 100%)",
+    "why": "Dock 底色 = 顶栏同色 #0D0F0E（13,15,14），保留 46%/58% 透明度做玻璃（用户要求既有色号又有玻璃）"
   }
 ]
