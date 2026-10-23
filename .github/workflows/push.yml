@@ -29,4 +29,7 @@ jobs:
         env:
           VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
-          EVENT: ${{ github.event.client_payload.type || github.event.inputs.event || '' }}
+          # 定时触发时用 github.event.schedule 认"是哪一个 cron"，
+          # 不能靠"北京时间几点"去猜：GitHub 的定时经常延迟几小时，
+          # 昨晚 22:00 那次就是延迟到凌晨 02:12 才跑，被当成"早上"发了上秤提醒（v7.62 修）
+          EVENT: ${{ github.event.client_payload.type || github.event.inputs.event || (github.event.schedule == '30 0 * * *' && 'morning') || (github.event.schedule == '0 14 * * *' && 'evening') || '' }}

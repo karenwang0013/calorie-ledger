@@ -33,9 +33,12 @@ const ws = Object.keys(store.weights || {}).sort();
 const lastW = ws[ws.length - 1];
 const daysW = lastW ? Math.floor((Date.now() - new Date(lastW + 'T00:00:00').getTime()) / 86400000) : 999;
 
-const event = process.env.EVENT || '';       // '' = 定时；morning/watch/goal/fail = 事件
+const event = process.env.EVENT || '';       // morning/evening/watch/goal/fail；'' = 手动或未知
 const bjHour = new Date(Date.now() + 8 * 3600 * 1000).getUTCHours();
-const isMorning = event === 'morning' || (event === '' && bjHour < 12);
+// 定时那次发什么，看 workflow 传进来的"是哪个 cron"（EVENT=morning/evening）。
+// 以前是按"北京时间几点"猜，GitHub 一延迟就猜错：22:00 那次延迟到 02:12，
+// 结果凌晨发了"上秤提醒"、22:00 的补记反而没发（v7.62 修）
+const isMorning = event === 'morning' || (event === '' && bjHour < 10);
 let body = '';
 
 if (isMorning) {

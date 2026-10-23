@@ -284,6 +284,7 @@ function computeRealTdee(d) {
         slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
         r2: Math.round(r2 * 100) / 100,
         span_days: pick.span,
+        weigh_count: pick.pts.length,
         logged_days: pick.it.n,
         coverage: Math.round(pick.coverage * 100),
         avg_intake: Math.round(meanIntake),
@@ -294,7 +295,7 @@ function computeRealTdee(d) {
       // 有体重但没有一段覆盖够的：说清"再记几天饮食"
       const firstD = allDates[Math.max(0, allDates.length - 2)];
       const it = countIntake(firstD, lastD);
-      realMissing = { type: 'intake', span: it.span, logged: it.n, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
+      realMissing = { type: 'intake', span: it.span, logged: it.n, have: allDates.length, coverage: Math.round(it.n / it.span * 100), need: Math.max(1, Math.ceil(it.span * 0.5) - it.n) };
     } else {
       realMissing = { type: 'weights', have: allDates.length };
     }

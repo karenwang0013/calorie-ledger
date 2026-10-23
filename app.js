@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.62', d: '10-23', items: [
+    '改：趋势页第一张「实测每日消耗」现在直接写着**你称了几次、跨度几天、记了几天饮食**，以及**再攒几天能升级到下一档**（偏低 → 7 天「中等」→ 21 天「较高」）',
+    '同一个卡在"还算不出来"时也会说清差什么：只称了 1 次 / 记了 0 天饮食，各自缺几天',
+    '修推送：GitHub 的定时任务会延迟好几个小时（昨晚 22:00 那次实际是凌晨 02:12 才跑），而代码是按"北京时间几点"猜发哪条的 → 结果凌晨发了"上秤提醒"。现在改成按"是哪一个定时"认，早上只发上秤、晚上只发补记',
+  ]},
   { v: 'v7.61', d: '10-23', items: [
     '补上一处：**整组里单独一条**也能改名了 —— 点那一行数字后面的「⋯」打开营养面板，把顶部「食物名」改成别的食物，保存后这一条的名字和营养一起换（整组的标签不动，同组其它条也不动）',
     '注意区分：在面板顶部**自己打**名字 = 把这条改成那个食物（名字+营养一起换）；**点候选**只是帮你填营养，不会把这条改名',
@@ -2009,7 +2014,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.61';
+const APP_VERSION = 'v7.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3935,6 +3940,26 @@ function renderTrends() {
 
   const real = t.real_tdee;
   let realCard = '';
+  // 这一段的"进度条"：称了几次、跨度几天、还差几天到下一档（用户要求看得见"称了几天/还剩几天"）
+  // 门槛和 api.js 的 computeRealTdee 一致：中等 = 跨度≥7 且覆盖≥50%；较高 = 跨度≥21 且覆盖≥70% 且曲线够直
+  const nextTier = (r) => {
+    if (!r) return '';
+    const span = Number(r.span_days) || 0;
+    const cov = Number(r.coverage) || 0;
+    const tiers = [
+      { name: '中等', span: 7, cov: 50 },
+      { name: '较高', span: 21, cov: 70 },
+    ];
+    const now = r.confidence;
+    const next = now === '较高' ? null : (now === '中等' ? tiers[1] : tiers[0]);
+    const spanLeft = next ? Math.max(0, next.span - span) : 0;
+    const covLeft = next ? Math.max(0, next.cov - cov) : 0;
+    if (!next) return `已经是最准的一档了（跨度 ${span} 天），继续保持每天称、每天记。`;
+    const bits = [];
+    if (spanLeft > 0) bits.push(`再攒 ${spanLeft} 天`);
+    if (covLeft > 0) bits.push(`这几天把一日三餐记上（现在覆盖 ${cov}%，要到 ${next.cov}%）`);
+    return (bits.length ? bits.join('，') + ' ' : '') + `就能升到「${next.name}」`;
+  };
   if (real) {
     const conf = real.confidence;
     const confColor = conf === '较高' ? 'var(--lime)' : conf === '中等' ? 'var(--orange)' : 'var(--muted)';
@@ -3945,7 +3970,9 @@ function renderTrends() {
         <div class="hint">
           用你 ${real.span_days} 天的体重变化反推出来的真实消耗。<br>
           体重 ${real.slope_kg_per_week > 0 ? '增加' : '减少'} ${Math.abs(real.slope_kg_per_week)} kg/周，
-          期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。
+          期间平均摄入 ${real.avg_intake} 千卡（覆盖 ${real.coverage}% 的天数）。<br>
+          <span style="color:var(--text)">称了 ${real.weigh_count || 1} 次 · 跨度 ${real.span_days} 天 · 记了 ${real.logged_days} 天饮食</span><br>
+          ${nextTier(real)}
         </div>
         <div class="grid2" style="margin-top:14px">
           <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
@@ -3964,11 +3991,16 @@ function renderTrends() {
       ? `这几天只记了 ${miss.logged} 天饮食，再记 ${Math.max(1, miss.need || 1)} 天就能算出你每天烧多少千卡`
       : `再称一次体重（隔两三天称一次就行），就能算出你每天烧多少千卡`;
     const lackBtn = miss.type === 'intake' ? '记一餐' : '记录体重';
+    const haveW = Number(miss.have) || 0;
+    const doneTxt = miss.type === 'intake'
+      ? `已称 ${haveW} 次 · 跨度 ${miss.span} 天 · 只记了 ${miss.logged} 天饮食（覆盖 ${miss.coverage}%）`
+      : `到现在只称了 ${haveW} 次（至少要 2 次、跨度 3 天以上才能算）`;
     realCard = `
       <div class="card">
         <h3>实测每日消耗</h3>
         <div class="hint" style="margin-top:0">
           ${lack}。补齐之后就能反推出来。<br>
+          <span style="color:var(--text)">${doneTxt}</span><br>
           <span style="color:var(--muted2);font-size:11px">原理：7700 千卡 ≈ 1kg 脂肪。体重掉的速率，就是你的真实缺口。</span>
         </div>
         <button class="btn sm" id="goWeight" style="margin-top:14px">${lackBtn}</button>
