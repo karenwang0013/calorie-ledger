@@ -2393,9 +2393,12 @@ select:focus {
 #view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
 
-/* 按钮再压暗一档：白色覆盖从 8.5% → 3.5%（描边、顶边高光、尺寸都不动） */
+/* ===== 按钮只有两种：绿（主操作）+ 全透（其余全部）=====
+   只改「填充层」：白 3.5% → 完全透明；描边 edge-gloss、顶边高光、按下反馈、尺寸全部不动。
+   这样「从文件恢复」和「导出 CSV」长得一模一样。 */
 .btn, .chip, .pgbtn, .topbtn, .pickbtn, #nutSheet .nutsug button {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.035)), var(--edge-gloss);
+  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  background-color: transparent;
 }
