@@ -1374,11 +1374,15 @@ body.add-open .sheet-mask.on {
   position: sticky; top: 0; z-index: 3;
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
-  border: 1px solid rgba(255, 255, 255, 0.035);
-  background-image: linear-gradient(180deg, #2b3035 0%, #23282c 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    inset 0 14px 20px -14px rgba(255, 255, 255, 0.10);
+  /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符） */
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
 }
 
 /* 弹层"先落位再出现"：定位那一帧不要有过渡，否则会先出现在原位再跳到目标位置（顿挫） */
@@ -2203,4 +2207,35 @@ input:focus, textarea:focus, select:focus {
 @media (max-width: 520px) {
   .btn.btntwo { display: block; text-align: center; line-height: 1.3; padding: 9px 4px; }
   .btn.btntwo .brk { display: inline; }
+}
+
+/* ================= 按钮 / 输入框 = Dock 那颗按钮的同一套材质 =================
+   尺寸、圆角、内边距一律不动，只同步「底色 + 描边 + 顶边高光」。
+   改材质只改 :root 的 --btn-solid / --edge-gloss。 */
+.btn, .chip, .srow, .pgbtn, .modes button, .swatch {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+input, textarea, select {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}
+
+/* 卡片里的「按下 / 选中」也用 Dock 那颗按钮的玻璃（原来 .srow 按下是实色 card2、chip 选中是黄绿底） */
+.srow:active { background: var(--btn-solid); }
+.chip.on {
+  background-color: transparent;
+  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border-color: transparent;
+  color: var(--lime);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
