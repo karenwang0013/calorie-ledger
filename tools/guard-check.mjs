@@ -182,8 +182,18 @@ const checks = [
     /const CLOUD_LIMIT_MAX_KB = 2048/.test(api) && /function cloudLimitKB\(/.test(api) && /function setCloudLimitKB\(/.test(api)
       && /const limit = cloudLimitKB\(\) \* 1024;/.test(api)
       && /res\.status === 413/.test(api) && /setCloudLimitKB\(kb \/ 2\)/.test(api) && !/const limit = 400 \* 1024/.test(api)],
-  ['本机照片要有总量上限（不许撑爆 localStorage），存满时必须报错不许静默丢数据',
-    /3\.2 \* 1024 \* 1024/.test(api) && /err-quota/.test(api)],
+  ['本机存储写满时必须报错（不许静默丢数据）；照片已不在 localStorage，不再有 3.2MB 裁剪',
+    /err-quota/.test(api) && !/3\.2 \* 1024 \* 1024/.test(api)],
+  /* ---- A 方案（v7.80）：照片搬进 IndexedDB + 云端每张一个文件 ---- */
+  ['照片必须存 IndexedDB（不许再写回 localStorage.shots）',
+    /indexedDB\.open\(PHOTO_DB/.test(api) && /photoIdbPut\(/.test(api) && /function shotUrl\(/.test(api)
+      && !/d\.shots\[body\.batch\] = /.test(api) && !/d\.shots\[k\] = /.test(api)],
+  ['老照片搬迁必须"全部成功才清空"（禁止先删后搬）',
+    /if \(ok !== keys\.length\) return 0;/.test(api) && /async function absorbLegacyShots\(/.test(api)],
+  ['云端照片必须每张单独一个文件（photos/<batch>.jpg）',
+    /const PHOTO_DIR = 'photos'/.test(api) && /\$\{PHOTO_DIR\}\/\$\{batch\}\.jpg/.test(api) && /cloudPutPhoto\(/.test(api) && /cloudDeletePhoto\(/.test(api)],
+  ['换设备后照片要能按需拉回来（ensurePhoto + 详情页自动补图）',
+    /async function ensurePhoto\(/.test(api) && /ensurePhoto\(batchKey\)/.test(app) && /cloudGetPhoto\(/.test(api)],
 ];
 
 let bad = 0;

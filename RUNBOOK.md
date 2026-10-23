@@ -326,6 +326,25 @@
 
 ---
 
+### 29. 照片会不会丢 / 会不会传不上去（v7.80 A 方案）
+
+- **用户要求**：记录时照片不能传不上去、不能弄丢。**判断标准 = 不用他管，也不会丢。**
+- **真正的瓶颈**：不是手机空间，是 iOS 给网页的 `localStorage` 只有约 5MB。照片塞在里面 → 60 张就满 → 从最旧开始扔。云端的 2MB 也是同一个文件里挤照片造成的。
+- **现在（v7.80）**：
+  - 本机：照片进 **IndexedDB**（`ledger-photos` / store `shots`，key = batch）。`localStorage` 里只留记录本身 + `shotIds`。
+    启动时 `photoInit()` → `absorbLegacyShots()` 把老照片搬走，**全部写成功才清旧的**（`if (ok !== keys.length) return 0;`）。
+  - 云端：照片从 `data.json` 拆出来，**每张一个文件** `photos/<batch>.jpg`（同一个数据仓库 `karen228/calorie-ledger-data`）。
+    存：`cloudPutPhoto()`（已存在则取 sha 再 PUT）；删：`cloudDeletePhoto()`（GET sha → DELETE）。
+  - 换设备/重装：`ensurePhoto(batch)` 本地没有就按需 `cloudGetPhoto()` 拉回来并写进 IndexedDB；详情卡和当天列表都会自动补图（最多 4 张/次）。
+  - 渲染仍然是同步的：`shotUrl(batch)` 读内存镜像 `photoMem`（启动时从 IDB 全量读入），所以现有同步渲染代码不用改成 async。
+- **数据校验**（headless Chrome，`cdp-idb-test.mjs`）：老照片搬迁 2 张、localStorage 里 shots 清零、字节数降到 9,533；
+  新记一条 → localStorage 无照片、IDB 有、云端发出 `POST photos/bNew1.jpg`；模拟换设备 → `GET photos/bNew1.jpg` 拉回；
+  删记录 → 本地删 + `GET/DELETE photos/bNew1.jpg`。
+- **仍未做**：导出的备份文件里不含照片（靠云端单独文件恢复）；iOS 删掉主屏图标仍会清空本机 IDB（照片可从云端按需拉回）。
+- **锁**：guard-check 四条（IDB 存照片 / 搬迁不许先删后搬 / 云端每张一个文件 / 按需拉回）。
+
+---
+
 ## 每次改完的固定动作（不用再问用户）
 
 1. `node tools/guard-check.mjs` —— 全绿才发
