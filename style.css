@@ -1320,9 +1320,9 @@ body.add-open .sheet-mask.on {
   height: max-content;
   padding: 18px 18px 14px;
   border: 1px solid transparent;
-  /* 小卡不用 --card-r（46px 在小框上太圆）。22px：比按钮圆一点，但不再刻意相呼应。
+  /* 圆角：用户要求「以营养卡（#nutSheet）为基准」→ 46px（原来 22px）。
      不加 corner-shape: squircle —— iPad 上 squircle 会把圆角画得更鼓。 */
-  border-radius: 22px;
+  border-radius: 46px;
   background-color: transparent;
   /* 材质和 Dock 完全一致（用户要求「这张卡要和 Dock 栏一样」）：
      同一组母版变量 --glass-fill-top/bot + --edge-gloss + --glass-blur-2。
@@ -1333,7 +1333,7 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
   /* 外投影保留（这是浮在中间的对话框，需要比 Dock 更明确的"离层"），但顶边高光和 Dock 同一句 */
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);    /* 以营养卡为基准：去掉那条 inset 内高光 */
   transform: translateY(12px) scale(.97);
   opacity: 0; pointer-events: none;
   transition: transform .30s cubic-bezier(.22,.8,.3,1), opacity .22s ease-out;
