@@ -194,6 +194,12 @@ const checks = [
     /const PHOTO_DIR = 'photos'/.test(api) && /\$\{PHOTO_DIR\}\/\$\{batch\}\.jpg/.test(api) && /cloudPutPhoto\(/.test(api) && /cloudDeletePhoto\(/.test(api)],
   ['换设备后照片要能按需拉回来（ensurePhoto + 详情页自动补图）',
     /async function ensurePhoto\(/.test(api) && /ensurePhoto\(batchKey\)/.test(app) && /cloudGetPhoto\(/.test(api)],
+  ['照片只存 160×160 小图（不许存大图，一张约 5KB）',
+    /async function makeThumb\(dataUrl, side = 160, q = 0\.5\)/.test(app)
+      && /const s = Math\.min\(img\.width, img\.height\)/.test(app)
+      && /drawImage\(img, sx, sy, s, s, 0, 0, side, side\)/.test(app)
+      && /c\.toDataURL\('image\/jpeg', q\)/.test(app)
+      && !/makeThumb\(dataUrl, max = 320/.test(app)],
 ];
 
 let bad = 0;

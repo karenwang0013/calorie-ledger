@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.81', d: '10-23', items: [
+    '改：存下来/上传的照片**只保留小图**——160×160 方形，约 **5KB 一张**（原来 320px 非方形约 20KB），同一块空间能放 4 倍照片',
+    '送 AI 识别的那张大图（1280）本来就不保存，现在也一样；首页那个 40×40 的小图标和详情页 44×44 的图，用 160 完全够清楚',
+    '说明：已经存过的老照片不动（还是原来那张），新记的才用新的小图',
+  ]},
   { v: 'v7.80', d: '10-23', items: [
     '改：照片不再存在 App 那个「5MB 小抽屉」（localStorage）里，搬到 **IndexedDB**（容量大得多）—— 本机不再有"满 60 张就丢最旧"的规则',
     '改：云端也拆开了：**每张照片单独一个文件**（`photos/<批次>.jpg`），不再挤在 `data.json` 里 → 换手机、重装后，点开哪条就把那张拉回来，全部照片都能找回',
@@ -2073,7 +2078,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.80';
+const APP_VERSION = 'v7.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3018,18 +3023,21 @@ async function fillMissingGrams() {
 }
 
 /* 存一张小图（约 10~20KB），之后点开这一组还能看到当时拍的 */
-async function makeThumb(dataUrl, max = 320, q = 0.55) {
+/* 缩略图：只留"首页/详情那个 40 多像素的小图"够用的分辨率 —— 160×160 居中裁方形。
+   用户明确「不会点开看大图，能认出是什么就行」，所以原来 320px 非方形（约 20KB）改成
+   160px 方形（约 5KB），同一块空间能放 4 倍照片。送 AI 识别用的那张大图不走这里。 */
+async function makeThumb(dataUrl, side = 160, q = 0.5) {
   const img = await new Promise((res, rej) => {
     const i = new Image();
     i.onload = () => res(i);
     i.onerror = rej;
     i.src = dataUrl;
   });
-  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const s = Math.min(img.width, img.height);          // 居中裁成正方形（首页也是按方形显示的）
+  const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
   const c = document.createElement('canvas');
-  c.width = Math.round(img.width * scale);
-  c.height = Math.round(img.height * scale);
-  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  c.width = side; c.height = side;
+  c.getContext('2d').drawImage(img, sx, sy, s, s, 0, 0, side, side);
   return c.toDataURL('image/jpeg', q);
 }
 
