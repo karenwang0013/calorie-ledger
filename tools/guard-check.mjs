@@ -205,6 +205,10 @@ const checks = [
       && /new Response\('', \{ status: 504/.test(sw)],
   ['启动兜底：提示条出现后，页面起来了必须自己消失（不许一直挂着）',
     /if \(repairing\) \{ setTimeout\(show, 1500\); return; \}/.test(html) && /el\.remove\(\);[\s\S]{0,80}700/.test(html)],
+  ['目标只有一个入口：设置页不许再出现「目标速度 / 蛋白系数」输入框（会和饮食目标页打架）',
+    !/id="fGoalRate"/.test(app) && !/id="fProt"/.test(app)
+      && /goal_rate: Store\.load\(\)\.profile\.goal_rate/.test(app)
+      && /protein_per_kg: Store\.load\(\)\.profile\.protein_per_kg/.test(app)],
 ];
 
 let bad = 0;

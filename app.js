@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 
 const RELEASES = [
   { v: 'v8.05', d: '10-23', items: [
+    '改：设置 →「身体与目标」里**删掉「目标速度」和「蛋白质目标」两行** —— 它们和「饮食目标」页重复，而且点一下「减脂/维持/增肌」就会被静默覆盖（你以为在用、其实早失效了）',
+    '现在目标只有一处能改：**饮食目标页**（那页显示的缺口 / 可吃 / 三大营养素就是当前真正生效的值）',
+    '身体页只留：性别、出生年份、身高、体重、日常活动量（这些是算基础代谢必需的）',
+    '你之前填过的那两个数不会被清零，只是不再有入口；想调整就切模式，或在饮食目标页直接改数字',
+  ]},
+  { v: 'v8.05', d: '10-23', items: [
     '降发烫：全局磨砂从 blur(20px) 降到 blur(10px) —— 这是唯一被每帧重算的模糊（首屏同时有 3 块卡在用），背景还是能透出来，只是没以前那么糊',
     '说明：关着的弹层/遮罩本来就不耗 GPU（opacity 0 不绘制），所以只动这一处；要是还烫，下一步把首页那 3 块卡改成实色',
   ]},
@@ -4922,11 +4928,8 @@ function renderMe() {
   if (!d) return;
   const p = d.profile || {};
   const acts = d.activity_labels || {};
-  const sugGoal = Math.round(-(Number(p.weight_kg || 60) * 0.005) * 20) / 20 || -0.3;
-  const sugKcal = Math.round(Math.abs(sugGoal) * 7700 / 7);
   const opt = Object.entries(acts).map(([k, v]) =>
     `<option value="${k}" ${p.activity === k ? 'selected' : ''}>${esc(v)}</option>`).join('');
-  const g = Math.abs(p.goal_rate ?? -0.25);
 
   let h = '';
 
@@ -5014,16 +5017,6 @@ function renderMe() {
           <label>日常活动量</label>
           <select id="fAct">${opt}</select>
           <div class="hint">没有手表数据时用来估算日常消耗。有手表的话会被覆盖。</div>
-        </div>
-        <div class="field">
-          <label>目标速度（kg / 周）</label>
-          <input id="fGoalRate" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="0.5" value="${g}">
-          <div class="hint">填 <b>0.5</b> = 每周减 0.5 公斤；<b>0</b> = 维持；负数 = 增肌。<br>按你 ${p.weight_kg || 60}kg 算，<b style="color:var(--lime)">建议 ${Math.abs(sugGoal)}</b>（≈ 每天 ${sugKcal} 千卡缺口）。</div>
-        </div>
-        <div class="field">
-          <label>蛋白质目标（g / kg 体重）</label>
-          <input id="fProt" type="number" inputmode="decimal" step="0.1" value="${p.protein_per_kg || 1.6}">
-          <div class="hint">减脂期建议 1.6–2.2。肌肉量越大、练得越狠，取越高。</div>
         </div>
         <button class="btn primary" id="saveProfile">保存</button>
         <button class="btn ghost sm" id="openWeight2" style="margin-top:10px">记录今天的体重</button>
@@ -5605,13 +5598,10 @@ function wireMe() {
         height_cm: Number($('#fHeight').value),
         weight_kg: Number($('#fWeight').value),
         activity: $('#fAct').value,
-        goal_rate: (() => {
-          const raw = $('#fGoalRate').value.trim();
-          if (raw === '') return -0.25;
-          const v = Number(raw);
-          return isFinite(v) ? -v : -0.25;
-        })(),
-        protein_per_kg: Number($('#fProt').value),
+        // 目标速度 / 蛋白系数这两个输入框已经从这里删掉（它们和饮食目标页重复、还会被模式按钮静默覆盖）。
+        // 这里原样带回旧值，不许清零，否则自动建议会突然变化。
+        goal_rate: Store.load().profile.goal_rate,
+        protein_per_kg: Store.load().profile.protein_per_kg,
       });
       const sv = Store.load().profile;
       toast(`已保存：${sv.sex === 'male' ? '男' : '女'} · ${sv.height_cm}cm · ${sv.weight_kg}kg`, 2800);
