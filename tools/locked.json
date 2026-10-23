@@ -66,8 +66,8 @@
   },
   {
     "file": "style.css",
-    "find": "top: calc(var(--topbar-h, 64px) + 2px);",
-    "why": "虚化遮罩必须让开顶栏（含顶栏底部那条发丝线，+2px 绕过它）：顶栏不被糊/压暗 → 和状态栏同一块颜色，退出也不闪"
+    "find": "top: var(--topbar-h, 64px);",
+    "why": "虚化遮罩紧贴顶栏下沿开始（不留缝）：顶栏不参与虚化，也不留亮缝"
   },
   {
     "file": "style.css",
