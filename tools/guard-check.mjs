@@ -209,6 +209,9 @@ const checks = [
     !/id="fGoalRate"/.test(app) && !/id="fProt"/.test(app)
       && /goal_rate: Store\.load\(\)\.profile\.goal_rate/.test(app)
       && /protein_per_kg: Store\.load\(\)\.profile\.protein_per_kg/.test(app)],
+  ['营养卡说明文字上下等距（上 10 / 下 10，文字在间隙正中）',
+    /#nutSheet \.hint \{ line-height: 1\.5; margin: 10px 0 0; \}/.test(css)
+      && /#nutSheet \.sh-body \{ padding: 24px 26px 2px; \}/.test(css)],
 ];
 
 let bad = 0;

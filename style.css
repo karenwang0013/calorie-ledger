@@ -1010,8 +1010,8 @@ body.add-open .sheet-mask.on {
 
 /* 内容整体往下移一点：横杠是浮层，不往下让的话内容会顶到卡片最上面；
    左右也再往里收一点，看着更居中 */
-#nutSheet .sh-body { padding: 24px 26px 12px; }
-#nutSheet .hint { line-height: 1.5; }             /* 这张卡的说明文字收紧一点，整体更短 */
+#nutSheet .sh-body { padding: 24px 26px 2px; }   /* 底部 2px + 按钮区 8px = 说明文字下方 10px，与上方对齐 */
+#nutSheet .hint { line-height: 1.5; margin: 10px 0 0; }   /* 说明文字：上下各留 10px（等距，见下） */
 /* 底部按钮下面那条黑边（.sheet .sh-foot 的底色+描边）去掉；
    padding 和记录卡片完全一致（8/16/30）→ 按钮离卡片底边的距离同样是 31px */
 #nutSheet .sh-foot {
