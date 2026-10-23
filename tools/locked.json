@@ -86,7 +86,7 @@
   },
   {
     "file": "style.css",
-    "find": "transition: opacity .42s cubic-bezier(.32,.72,0,1);",
-    "why": "虚化的进出速度（0.42s 缓出）：所有虚化场景共用，用户要求退出要柔和"
+    "find": "transition: opacity .75s cubic-bezier(.22,.8,.3,1);",
+    "why": "虚化的进出速度（0.75s 长缓出）：所有虚化场景共用，用户要求更柔和"
   }
 ]

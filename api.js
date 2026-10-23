@@ -1162,6 +1162,8 @@ async function cloudPull(force) {
             Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) });
             local0.body = Object.assign({}, lb0, rd0.body || {});
             local0.weights = Object.assign({}, lw0, rd0.weights || {});
+            // 照片：云端为了体积会裁掉最旧的缩略图，本机**已有的绝不删**（v7.71）
+            local0.shots = Object.assign({}, rd0.shots || {}, local0.shots || {});
             local0.settings.updatedAt = rAt0;
             localStorage.setItem(Store.KEY, JSON.stringify(local0));
             setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
@@ -1188,6 +1190,9 @@ async function cloudPull(force) {
       // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
       local.body = Object.assign({}, lBody, rd.body || {});
       local.weights = Object.assign({}, lWts, rd.weights || {});
+      // 照片：云端超过体积上限时会按"最旧优先"裁掉缩略图；本机已有的照片**绝不许被云端删掉**。
+      // （2026-10-23 就是这里整份覆盖，把 10-20 那几条的照片从本机一起删了，界面显示"这条是旧版本记的"）
+      local.shots = Object.assign({}, rd.shots || {}, local.shots || {});
       // 食物历史：按名字取并集（云端没有的保留本机），删掉的按名字记进 foodHistDel
       const fh = new Map();
       for (const f of (rd.foodHist || [])) if (f && f.n) fh.set(f.n, f);
