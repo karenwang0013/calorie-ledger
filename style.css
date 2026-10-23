@@ -2316,3 +2316,41 @@ select {
   background-clip: padding-box, padding-box, border-box;
   border: 1px solid transparent;
 }
+
+/* ================= 输入框 / 下拉框：B2 玻璃（比 Dock 卡片亮一档） =================
+   B2 = rgba(34,38,36,.52) → rgba(24,28,26,.62) + var(--edge-gloss) 描边。
+   取消绿色聚焦环：聚焦时外观不变（只有光标闪烁）。
+   尺寸、圆角、内边距、下拉箭头（12×8，距右 14px）都不动。 */
+input, textarea, select {
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%), var(--edge-gloss);
+  background-position: 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-size: auto, auto;
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+}
+select {
+  padding-right: 38px;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b938c' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"),
+    linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%),
+    var(--edge-gloss);
+  background-position: right 14px center, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 12px 8px, auto, auto;
+  background-origin: border-box, border-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
+}
+input:focus, textarea:focus {
+  border-color: transparent;
+  background-image: linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%), var(--edge-gloss);
+}
+select:focus {
+  border-color: transparent;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%238b938c' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"),
+    linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%),
+    var(--edge-gloss);
+}
