@@ -138,8 +138,9 @@ const checks = [
     const blk = api.slice(i, i + 1800);
     return !/l\.grams\s*=/.test(blk) && /l\.kcal = [\s\S]{0,400}?l\.p = [\s\S]{0,400}?l\.c = [\s\S]{0,400}?l\.f =/.test(blk);
   })()],
-  ['手改营养要记进"这个食物"的记忆（rememberNut：每 100 克 + 改过几次 + 上次 AI 值）', /function rememberNut\(name, per, aiPer\)/.test(app) && /rememberNut\(l\.name/.test(app) && /cnt: \(\(old && Number\(old\.cnt\)\) \|\| 0\) \+ 1/.test(app)],
+  ['手改营养要记进"这个食物"的记忆（rememberNut：每 100 克 + 改过几次 + 上次 AI 值）', /function rememberNut\(name, per, aiPer\)/.test(app) && /rememberNut\((newName|l\.name)/.test(app) && /cnt: \(\(old && Number\(old\.cnt\)\) \|\| 0\) \+ 1/.test(app)],
   ['营养面板不许加新按钮：本地查不到就后台自动填（data-ainut 不许回来）', !/data-ainut/.test(app + html) && /async function nutAutoFill/.test(app)],
+  ['营养面板里改名字 = 连这条的名字一起改（组里单独一条也能改），但点候选只查营养、不改名', /const renamed = !!nameBox && nameBox !== it\.name && nutNameTyped/.test(app) && /if \(renamed\) l\.name = newName/.test(app) && /if \(renamed\) it\.name = newName/.test(app) && /nutNameTyped = false;                  \/\/ 点候选只是/.test(app)],
 ];
 
 let bad = 0;

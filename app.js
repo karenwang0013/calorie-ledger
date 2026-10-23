@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.61', d: '10-23', items: [
+    '补上一处：**整组里单独一条**也能改名了 —— 点那一行数字后面的「⋯」打开营养面板，把顶部「食物名」改成别的食物，保存后这一条的名字和营养一起换（整组的标签不动，同组其它条也不动）',
+    '注意区分：在面板顶部**自己打**名字 = 把这条改成那个食物（名字+营养一起换）；**点候选**只是帮你填营养，不会把这条改名',
+    '没手动填数字、只改了名字时，会先按新名字把四个格子换好再保存；万一新名字查不到，会明确告诉你"营养没查到、数字还是原来的"',
+  ]},
   { v: 'v7.60', d: '10-23', items: [
     '新增：**改了食物名，下面的营养就跟着换成新食物的**（热量/蛋白/碳水/脂肪一起换，**克数一个字都不动**）—— 首页每一条、点开某一条的详情卡、以及还没记入的识别结果，这三处都生效',
     '取值顺序：你手改过的 > 食物库（含"西红柿→番茄"这类别名）> 之前 AI 查过的缓存 > 问 AI。命中就不花钱，问过 AI 的也会被记住',
@@ -2004,7 +2009,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.60';
+const APP_VERSION = 'v7.61';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3318,6 +3323,7 @@ function openNutEdit(i, fake) {
   $('#nutP').value = g ? +(((Number(it.protein_per_100g) || 0) * share).toFixed(1)) : '';
   $('#nutC').value = g ? +(((Number(it.carb_per_100g) || 0) * share).toFixed(1)) : '';
   $('#nutF').value = g ? +(((Number(it.fat_per_100g) || 0) * share).toFixed(1)) : '';
+  nutNameTyped = false;
   const nq0 = $('#nutNameQ'); if (nq0) nq0.value = it.name || '';
   const sug0 = $('#nutSug'); if (sug0) { sug0.hidden = true; sug0.innerHTML = ''; }
   let base = {
@@ -3411,6 +3417,7 @@ function closeNutEdit() {
 }
 let nutUnit = 'kcal';
 let nutBase = { k: 0, p: 0, c: 0, f: 0 };   // 上面那格记住"每 100 克"的原始值
+let nutNameTyped = false;                    // 名字是"自己打的"还是"点了候选带出来的"（只有自己打的才算改名）
 let nutDirty = { k: false, p: false, c: false, f: false };   // 用户手改过的格子，改克数时不被覆盖
 const KJ_PER_KCAL = 4.184;
 function setNutUnit(u, convert) {
@@ -3666,18 +3673,44 @@ async function nutAutoFill(q) {
   toast(`已按「${r.canon || name}」填好：${Math.round(r.per.k)} 千卡/100g（保存前请核对）`, 3600);
 }
 
-function saveNutEdit() {
+async function saveNutEdit() {
   // 两种目标：草稿里的一项（S.items）或已经记过的一条（nutLogId）
   const logTarget = nutLogId ? (Store.load().logs || []).find(x => x.id === nutLogId) : null;
   const it = logTarget ? { name: logTarget.name } : S.items[nutEditIdx];
   if (!it) return closeNutEdit();
   const ref = Number($('#nutRef').value);
-  const kcalRaw = $('#nutKcal').value.trim();
   if (!(ref > 0)) return toast('参考量必须填（这份多少克）', 2600);
+
+  // 面板顶部那一格名字：改了就等于"把这一条改成另一个食物"——
+  // 名字要改、营养也要跟着换成新食物的（不然就是"巧克力 + 西瓜的营养"）
+  const nameBox = String(($('#nutNameQ') && $('#nutNameQ').value) || '').trim().slice(0, 20);
+  const newName = nameBox || it.name;
+  const renamed = !!nameBox && nameBox !== it.name && nutNameTyped;
+  const dirtyAny = nutDirty.k || nutDirty.p || nutDirty.c || nutDirty.f;
+  let keepNote = '';
+  if (renamed) {
+    if (!dirtyAny) {
+      // 你没手动改数字 → 以新名字的营养为准（本地库/记忆/AI 缓存都不花钱）
+      let r = null;
+      try { r = await api('/api/food/nutrition', { name: newName }); } catch (e) { r = { found: false, why: 'net' }; }
+      if (r && r.found) {
+        const share = ref / 100;
+        $('#nutKcal').value = Math.round(nutUnit === 'kJ' ? r.per.k * share * KJ_PER_KCAL : r.per.k * share);
+        $('#nutP').value = +(r.per.p * share).toFixed(1);
+        $('#nutC').value = +(r.per.c * share).toFixed(1);
+        $('#nutF').value = +(r.per.f * share).toFixed(1);
+      } else {
+        keepNote = `（「${newName}」的营养没查到，数字还是原来那个；要手动改就改完再保存）`;
+      }
+    }
+  }
+
+  // 注意：kcalRaw 必须在"改名换营养"之后才读，否则读到的是上一个食物的热量
+  const kcalRaw = $('#nutKcal').value.trim();
   if (kcalRaw === '' || !(Number(kcalRaw) >= 0)) return toast('热量必须填（千卡）', 2600);
   const k = 100 / ref;                            // 换算到每 100 克
   it.grams = +ref.toFixed(1);                     // 参考量就是"这一份吃多少克"，写回克数
-  rememberGrams(it.name, ref);                     // 记住这个食物的克数，下次直接用
+  rememberGrams(newName, ref);                     // 记住这个食物的克数，下次直接用
   const kcalIn = nutUnit === 'kJ' ? (Number(kcalRaw) / KJ_PER_KCAL) : Number(kcalRaw);   // 千焦先换成千卡
   const num = (sel) => { const v = $(sel).value.trim(); return v === '' ? 0 : Number(v) || 0; };
   if (!nutSane(kcalIn * k, num('#nutP') * k, num('#nutC') * k, num('#nutF') * k)) {
@@ -3703,22 +3736,23 @@ function saveNutEdit() {
         f: (Number(l.f) || 0) * 100 / prevG,
       } : null;
       l.grams = +ref.toFixed(1);
-      rememberGrams(l.name, ref);
+      rememberGrams(newName, ref);
       l.kcal = Math.round(kcalIn * 10) / 10;
       l.p = +(num('#nutP')).toFixed(1);
       l.c = +(num('#nutC')).toFixed(1);
       l.f = +(num('#nutF')).toFixed(1);
       l.nutSrc = 'user';                 // 手改过的：以后同名重试、AI 都不许覆盖
+      if (renamed) l.name = newName;     // 面板里改了名字 = 这一条改成另一个食物（整组的标签不动）
       Store.save();
       // 记进"这个食物"的记忆（每 100 克）——次数越多越可信，下次同名直接用
-      rememberNut(l.name, {
+      rememberNut(newName, {
         k: it.kcal_per_100g, p: it.protein_per_100g, c: it.carb_per_100g, f: it.fat_per_100g,
       }, prevAi);
     }
     const wasGroup = S.detailIsGroup, ids = (S.detailIds || []).slice(), tname = S.detailName;
     closeNutEdit();
     closeGroup();
-    toast(`已更新：${it.name} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn)} 千卡`, 2600);
+    toast(`已更新：${newName} ${l ? l.grams : ref} 克 · ${Math.round(kcalIn)} 千卡${keepNote}`, keepNote ? 5200 : 2600);
     loadDay().then(() => {
       if (wasGroup || ids.length) {
         const fresh = (Store.load().logs || []).filter(x => ids.includes(x.id));
@@ -3727,6 +3761,7 @@ function saveNutEdit() {
     });
     return;
   }
+  if (renamed) it.name = newName;                 // 草稿：面板里改的名字就是这一行的新名字
   closeNutEdit();
   renderResult();                                 // 热量、合计当场重算
   // 双保险：外面那一项的克数框 / 每 100 克那行 / 热量，全部直接写成新值
@@ -6255,6 +6290,7 @@ function init() {
   if (nq && sug) {
     let t = null, tAI = null, lastAI = '';
     nq.oninput = () => {
+      nutNameTyped = true;                       // 自己打进来的名字：保存时会一起改名
       clearTimeout(t);
       clearTimeout(tAI);
       t = setTimeout(() => {
@@ -6264,7 +6300,11 @@ function init() {
           `<button data-food="${i}">${esc(f.name)} · ${f.kcal} 千卡/100g</button>`).join('')
           + (q ? `<button data-ai="1">AI 查「${esc(q)}」一份多少克</button>` : '');
         sug.hidden = !(list.length || q);
-        $$('[data-food]', sug).forEach(b => b.onclick = ev => { ev.preventDefault(); applyNutFood(list[Number(b.dataset.food)]); });
+        $$('[data-food]', sug).forEach(b => b.onclick = ev => {
+          ev.preventDefault();
+          nutNameTyped = false;                  // 点候选只是"帮我填营养"，不把这条改名
+          applyNutFood(list[Number(b.dataset.food)]);
+        });
         // 本地一条都没查到 → 后台自己问一次 AI 把四个格子填好（不加按钮、不用点）
         if (!list.length && q.length >= 2 && q !== lastAI && !nutDirty.k && !nutDirty.p && !nutDirty.c && !nutDirty.f) {
           lastAI = q;
