@@ -195,7 +195,7 @@ html.kb .sc-body {
   justify-content: space-between;
   /* safe-t 异常大时兜底，最多 88px，避免顶部出现一大块空白 */
   padding: min(calc(3px + var(--safe-t)), 82px) 18px 13px;
-  background: #0A0C0B;      /* 用户指定：和虚化后的顶栏颜色一致 */
+  background: #0d0f0e;
 }
 /* 顶栏下沿一条实线分界，不做任何渐隐 */
 .topbar {
