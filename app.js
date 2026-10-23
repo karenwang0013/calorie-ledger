@@ -4174,10 +4174,13 @@ function renderTrends() {
     const next = table[r.confidence];
     if (!next) return '';
     const nm = `<b style="color:var(--lime)">${next.name}</b>`;
+    // 「中等」整段不许拆行（以前会出现「中"在这行、等」掉到下一行）
+    const target = `<span style="white-space:nowrap">「${nm}」</span>`;
     const d = Math.max(0, next.span - span);
-    if (d > 0) return `再称 ${d} 天就能到「${nm}」`;
-    // 天数够了但覆盖率不够 → 说清差在哪
-    return `这几天把饮食记上（覆盖要到 ${next.cov}%，现在 ${cov}%）就能到「${nm}」`;
+    if (d > 0) return `再称 ${d} 天就能到${target}`;
+    // 天数够了但覆盖率不够 → 主句说人话，数字另起一行小字，不再塞一长串括号
+    return `这几天把饮食记上就能到${target}
+      <br><span style="color:var(--muted);font-size:12px;font-weight:400">饮食覆盖 ${cov}% → 需要 ${next.cov}%</span>`;
   };
   if (real) {
     const conf = real.confidence;
