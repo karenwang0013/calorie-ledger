@@ -141,6 +141,23 @@ const checks = [
   ['手改营养要记进"这个食物"的记忆（rememberNut：每 100 克 + 改过几次 + 上次 AI 值）', /function rememberNut\(name, per, aiPer\)/.test(app) && /rememberNut\((newName|l\.name)/.test(app) && /cnt: \(\(old && Number\(old\.cnt\)\) \|\| 0\) \+ 1/.test(app)],
   ['营养面板不许加新按钮：本地查不到就后台自动填（data-ainut 不许回来）', !/data-ainut/.test(app + html) && /async function nutAutoFill/.test(app)],
   ['营养面板里改名字 = 连这条的名字一起改（组里单独一条也能改），但点候选只查营养、不改名', /const renamed = !!nameBox && nameBox !== it\.name && nutNameTyped/.test(app) && /if \(renamed\) l\.name = newName/.test(app) && /if \(renamed\) it\.name = newName/.test(app) && /nutNameTyped = false;                  \/\/ 点候选只是/.test(app)],
+  /* ---- 营养表识别（用户死命令：给了食物照 + 成分表 + 克数，就必须算对，不许把核对推给用户）---- */
+  ['读表必须整表逐行照抄（label_rows：name/value/unit/nrv），不许让模型自己判断哪行是碳水/脂肪',
+    /label_rows/.test(api) && /"name":"蛋白质"/.test(api) && /nrv/.test(api) && /不许自己判断哪一行是碳水、哪一行是脂肪/.test(api)],
+  ['App 自己按行名取数（pickRows + ROW_RULES 里必须有 蛋白质/脂肪/碳水化合物/能量）',
+    /function pickRows\(/.test(api) && /function rowsToPer100\(/.test(api) && /const ROW_RULES = \[/.test(api)
+      && /蛋白质/.test(api) && /\^\(脂肪\|总脂肪\|脂肪总量\)/.test(api) && /碳水化合物\|碳水/.test(api) && /能量\|热量/.test(api)],
+  ['必须用标签自己的 NRV% 反算核对（nrvConflict + 蛋白/脂肪 60g、碳水 300g、能量 8400kJ）',
+    /function nrvConflict\(/.test(api) && /NRV_REF_G = \{ protein: 60, fat: 60, carb: 300 \}/.test(api) && /NRV_REF_KJ = 8400/.test(api)
+      && /nrvConflict\(R\.protein/.test(api) && /nrvConflict\(R\.carb/.test(api) && /nrvConflict\(R\.energy/.test(api)],
+  ['读表不合格必须自动重读一次（识别完 + 保存前都要兜），且两处规则一致（105 克 / 40% 误差）',
+    /async function rereadLabelNutrition\(/.test(app) && /const re = await rereadLabelNutrition\(\);/.test(app)
+      && (app.match(/await rereadLabelNutrition\(\)/g) || []).length >= 2
+      && /if \(mass > 105\)/.test(app) && /Math\.max\(70, k \* 0\.4\)/.test(app) && /if \(p \+ c \+ f > 105\) return false;/.test(api) && /Math\.max\(70, kcal \* 0\.4\)/.test(api)],
+  ['用户手改过的数字绝不许被自动重读覆盖（nutDirty 判断 + 与本次读数逐项比对）',
+    /!\(nutDirty\.k \|\| nutDirty\.p \|\| nutDirty\.c \|\| nutDirty\.f\)/.test(app) && /const fromThisRead = /.test(app) && /delete one\._suspect;/.test(app)],
+  ['营养成分表那四项必须是「每 100 克」口径（改克数不许再缩放四格）',
+    /每100克热量/.test(html) && /if \(refEl\) refEl\.oninput = paintNutPreview;/.test(app) && !/nutBase\.p \* share/.test(app) && !/nutBase\.k \* share/.test(app)],
 ];
 
 let bad = 0;
