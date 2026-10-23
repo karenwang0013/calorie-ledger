@@ -1262,23 +1262,19 @@ body.add-open .sheet-mask.on {
 .sheet:not(.on) { pointer-events: none; }
 
 /* ---------- 卡片背后的磨砂虚化（一处定义，所有虚化场景共用） ----------
-   基准 = 营养编辑卡背后那一层：background rgba(0,0,0,0.20) + backdrop-filter blur(5px) saturate(115%)。
-   食品详情卡（#grpMask）、改名/系统框（#rnMask）用的都是这一份，谁都不许另写。
+   基准 = 营养编辑卡背后那一层，原样照抄（这是用户确认"退出不闪"的那一版）：
+     background rgba(0,0,0,0.20) + backdrop-filter blur(5px) saturate(115%)，整屏盖住（inset: 0）。
 
-   top 必须让开顶栏（= 从顶栏下沿才开始）：
-   1) 顶栏不被糊也不被压暗 → 颜色一个值都不变（实测 13,15,14 → 13,15,14），
-      状态栏那条（系统画的，在视口外，遮罩永远碰不到）和顶栏保持同一块颜色，不会分层；
-   2) 退出时顶栏也没有任何东西要淡出 → 不会闪一下变成两个颜色（v7.70 修）。 */
-/* 以前这层自己带 backdrop-filter：它一消失，iOS 要把"背后那层"整块重画一次，
-   顶栏那块就被单独重画 → 退出时闪出一个整框（用户反复报的那个）。
-   现在遮罩只负责压暗，「糊」改由内容层自己做（下面那两条）—— 顶栏从头到尾不参与任何模糊层。 */
+   ⚠️ 绝对不要给它加 top 偏移（别把顶栏切出去）：
+   一旦在顶栏下沿裁掉一块，退出淡出时那条"切口"就成了看得见的一条边 —— 就是用户反复报的"闪一下"。
+   整屏一层、只改 opacity，浏览器没有任何东西要重建，退出才是干净的。
+   （2026-10-23 试过 top: var(--topbar-h) / +2px / 拆两层 / 改内容层 filter，全部会闪，已全部回退。） */
 #nutMask.on,
 #grpMask.on,
 #rnMask.on {
   background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
-  top: var(--topbar-h, 64px);
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */

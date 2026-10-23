@@ -66,8 +66,8 @@
   },
   {
     "file": "style.css",
-    "find": "top: var(--topbar-h, 64px);",
-    "why": "虚化遮罩紧贴顶栏下沿开始（不留缝）：顶栏不参与虚化，也不留亮缝"
+    "find": "backdrop-filter: blur(5px) saturate(115%);",
+    "why": "虚化遮罩必须整屏一层（不许用 top 裁掉顶栏）：裁一刀退出就会闪出那条边"
   },
   {
     "file": "style.css",
