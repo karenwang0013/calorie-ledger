@@ -61,8 +61,8 @@
   },
   {
     "file": "style.css",
-    "find": "backdrop-filter: blur(5px) saturate(115%);",
-    "why": "卡片背后那层遮罩的磨砂强度（blur 5px）：三处必须一致"
+    "find": "filter: blur(5px) saturate(115%);",
+    "why": "虚化的强度（blur 5px）：基准仍是营养编辑卡那层，但现在由内容层执行（顶栏永不参与模糊）"
   },
   {
     "file": "style.css",

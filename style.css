@@ -1274,24 +1274,31 @@ body.add-open .sheet-mask.on {
    1) 顶栏不被糊也不被压暗 → 颜色一个值都不变（实测 13,15,14 → 13,15,14），
       状态栏那条（系统画的，在视口外，遮罩永远碰不到）和顶栏保持同一块颜色，不会分层；
    2) 退出时顶栏也没有任何东西要淡出 → 不会闪一下变成两个颜色（v7.70 修）。 */
+/* 以前这层自己带 backdrop-filter：它一消失，iOS 要把"背后那层"整块重画一次，
+   顶栏那块就被单独重画 → 退出时闪出一个整框（用户反复报的那个）。
+   现在遮罩只负责压暗，「糊」改由内容层自己做（下面那两条）—— 顶栏从头到尾不参与任何模糊层。 */
 #nutMask.on,
 #grpMask.on,
 #rnMask.on {
   background: rgba(0, 0, 0, 0.20);
-  -webkit-backdrop-filter: blur(5px) saturate(115%);
-  backdrop-filter: blur(5px) saturate(115%);
   /* +2px：顶栏底部有一条 0.5px 的白色发丝线，遮罩正好贴着它开始的话，
      这一行会被 blur 抹成一亮条，退出的那一瞬间就闪出一个"分割的框框"。
      往下让 2px 就完全绕过它，顶栏（含那条发丝线）一根像素都不碰。 */
   top: calc(var(--topbar-h, 64px) + 2px);
 }
 
-/* 退出时不要淡出：这三层带 backdrop-filter，淡出的每一帧都要重算"背后那层"，
-   最后一帧会把顶栏那块单独重画一次 —— 肉眼就是"顶栏整个框框闪一下"（不足 1 秒）。
-   进场照样淡入（transition 取的是目标状态的 .25s），退出瞬间收掉，只有一帧、没有中间帧。 */
-#nutMask:not(.on),
-#grpMask:not(.on),
-#rnMask:not(.on) { transition: none; }
+/* 虚化：糊的是"内容本身"，不是整屏盖一层模糊。这样没有任何一层需要重画顶栏。 */
+#scroller, .tabbar {
+  transition: filter .22s ease-out;
+}
+body:has(#nutMask.on) #scroller,
+body:has(#grpMask.on) #scroller,
+body:has(#rnMask.on) #scroller,
+body:has(#nutMask.on) .tabbar,
+body:has(#grpMask.on) .tabbar,
+body:has(#rnMask.on) .tabbar {
+  filter: blur(5px) saturate(115%);
+}
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
 #rnMask { z-index: 63; }
