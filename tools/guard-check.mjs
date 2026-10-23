@@ -178,6 +178,12 @@ const checks = [
     (api.match(/shots = Object\.assign\(\{\}, rd0?\.shots \|\| \{\}, local0?\.shots \|\| \{\}\)/g) || []).length >= 2
       && /const rd = remote\.data \|\| \{\};[\s\S]{0,900}?local\.shots = Object\.assign/.test(api)
       && /const rd0 = remote0\.data \|\| \{\};[\s\S]{0,900}?local0\.shots = Object\.assign/.test(api)],
+  ['云端容量上限不许再退回 400KB（默认 ≥1MB），且传不动要自动折半重试',
+    /const CLOUD_LIMIT_MAX_KB = 2048/.test(api) && /function cloudLimitKB\(/.test(api) && /function setCloudLimitKB\(/.test(api)
+      && /const limit = cloudLimitKB\(\) \* 1024;/.test(api)
+      && /res\.status === 413/.test(api) && /setCloudLimitKB\(kb \/ 2\)/.test(api) && !/const limit = 400 \* 1024/.test(api)],
+  ['本机照片要有总量上限（不许撑爆 localStorage），存满时必须报错不许静默丢数据',
+    /3\.2 \* 1024 \* 1024/.test(api) && /err-quota/.test(api)],
 ];
 
 let bad = 0;

@@ -844,6 +844,11 @@ async function api(path, body, method) {
           d.shots[body.batch] = String(body.shot);
           const keys = Object.keys(d.shots);
           if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete d.shots[k]);
+          // 本机也不能撑爆 localStorage（iOS 大约 5MB）：照片总量超过 3.2MB 就从最旧的开始丢
+          let guard = 0;
+          while (Object.keys(d.shots).length > 1 && JSON.stringify(d.shots).length > 3.2 * 1024 * 1024 && guard++ < 200) {
+            delete d.shots[Object.keys(d.shots)[0]];
+          }
           Store.save();
         } catch (e) { /* 图存不下也不能把记账搞失败 */ }
       }
@@ -1011,7 +1016,10 @@ function cloudToken() {
 function setCloudTokenSilently(token) {
   const d = Store.load();
   d.settings.gitee_token = token;
-  try { localStorage.setItem(Store.KEY, JSON.stringify(d)); } catch (e) { /* 存储满时忽略 */ }
+  try { localStorage.setItem(Store.KEY, JSON.stringify(d)); } catch (e) {
+    // 以前这里静默忽略 → 存储满了会"记了但没存进去"，必须让用户知道
+    try { logError('err-quota', '本机存储满了', 'E12 这条没写进本机：删几条老记录或清掉旧照片再试'); } catch (e2) {}
+  }
 }
 function b64encode(str) {
   return btoa(unescape(encodeURIComponent(str)));
@@ -1047,7 +1055,22 @@ function cloudReadUrl() {
   return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?t=${Date.now()}` + (tk ? `&access_token=${tk}` : '');
 }
 
-/* 体积控制：超过 ~900KB 就丢最旧的缩略图，避免超 GitHub 单文件限制 */
+/* 云端负载上限（数据 + 照片缩略图整份上传）：默认 2MB（约 80 张照片）。
+   10-20 曾因查 409（sha 冲突，跟大小无关）顺手把上限降到 400KB，结果只能存十几张照片。
+   Gitee 的请求体上限没有公开数值 → 传失败（400/413）会自动折半重试一次，
+   并把"这台设备实测能过的上限"记在本机（cloud_limit_kb），下次直接用。 */
+const CLOUD_LIMIT_MAX_KB = 2048;
+function cloudLimitKB() {
+  let v = 0;
+  try { v = Number(localStorage.getItem('cloud_limit_kb')) || 0; } catch (e) {}
+  return (v >= 400 && v <= CLOUD_LIMIT_MAX_KB) ? v : CLOUD_LIMIT_MAX_KB;
+}
+function setCloudLimitKB(kb) {
+  const v = Math.max(400, Math.min(CLOUD_LIMIT_MAX_KB, Math.round(kb)));
+  try { localStorage.setItem('cloud_limit_kb', String(v)); } catch (e) {}
+  return v;
+}
+
 function cloudPayload() {
   const data = JSON.parse(JSON.stringify(Store.load()));
   // 密钥绝不进仓库：GitHub 的 secret scanning 会直接拒绝，而且本来就不该上传
@@ -1056,7 +1079,7 @@ function cloudPayload() {
     delete data.settings.gitee_token;
     delete data.settings.dashscope_key;
   }
-  const limit = 400 * 1024;
+  const limit = cloudLimitKB() * 1024;
   let json = JSON.stringify({ v: 1, updatedAt: data.settings.updatedAt || new Date().toISOString(), data });
   if (json.length > limit && data.shots) {
     const keys = Object.keys(data.shots);
@@ -1100,6 +1123,16 @@ async function cloudPush() {
       } catch (e) {}
       if (!ok) { cloudSha = null; method = 'POST'; delete body.sha; }
       res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
+    }
+    if (!res.ok && (res.status === 400 || res.status === 413)) {
+      // 可能是请求体太大（Gitee 的上限没公开）→ 把上限折半、重新裁好再传一次；学到的值记在本机
+      const kb = cloudLimitKB();
+      if (kb > 400) {
+        const nk = setCloudLimitKB(kb / 2);
+        body.content = b64encode(cloudPayload());
+        res = await fetchT(cloudUrl(), { method, headers: cloudHeaders(), body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`上传失败 ${res.status}（已把云端容量降到 ${nk}KB 再试；照片会少存一些）`);
+      }
     }
     if (!res.ok) {
       let detail = '';
