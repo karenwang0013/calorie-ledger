@@ -1024,17 +1024,20 @@ body.add-open .sheet-mask.on {
 
 /* 改名用的输入框是系统自带的（不是我们画的卡），这里只留它背后那层遮罩 */
 
-/* 热量那一格：单位开关嵌在输入框里（右侧），做成双段：千卡 ｜ 千焦，当前项高亮 */
+/* 热量那一格：单位开关嵌在输入框里（右侧），竖排：上「千焦」下「千卡」。
+   控件四周与输入框内边等距（上/下/右各 5px），内圆角 = 输入框圆角 12 − 留白 5 = 7，和外框同心 */
 #nutSheet .inwrap { position: relative; }
-#nutSheet .inwrap #nutKcal { padding-right: 92px; }
+#nutSheet .inwrap #nutKcal { padding-right: 64px; }
 #nutSheet .unitseg {
-  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
-  display: inline-flex; align-items: center; padding: 2px;
-  border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.10);
+  position: absolute; right: 5px; top: 5px; bottom: 5px; width: 52px;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  padding: 3px; border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(0, 0, 0, 0.30);
 }
 #nutSheet .unitseg span {
-  padding: 3px 6px; border-radius: 7px;
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center;
+  border-radius: 5px;
   font-size: 10.5px; font-weight: 600; line-height: 1;
   color: var(--muted);
 }
