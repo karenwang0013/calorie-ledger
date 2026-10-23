@@ -2078,7 +2078,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.81';
+const APP_VERSION = 'v7.82';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7293,7 +7293,12 @@ function init() {
   wireNotifyDrag();
 
   const hrTop = $('#hardReloadTop');
-  if (hrTop) hrTop.onclick = () => hardReloadApp();
+  if (hrTop) hrTop.onclick = () => {
+    // 先转起来：和数据同步那颗按钮同一套动画（.topbtn.spin svg → rot 0.9s linear infinite）
+    hrTop.classList.add('spin');
+    setTimeout(() => hrTop.classList.remove('spin'), 1000);
+    hardReloadApp();
+  };
 
   const bodyDate = consumeBodyLink();
   loadDay();
