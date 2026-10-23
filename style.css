@@ -2354,3 +2354,12 @@ select:focus {
     linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%),
     var(--edge-gloss);
 }
+
+/* 记录卡顶部三格：按钮本身必须透明（选中只靠那颗滑块），
+   否则三个都带底色 → 看着"三个都是亮的"（v7.98 的 bug）。 */
+.tabs3 button {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  box-shadow: none;
+}
