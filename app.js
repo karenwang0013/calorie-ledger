@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.59', d: '10-23', items: [
+    '修：**多点几次就"1 马上变 2"** 的真因找到了 —— 上一轮"把过渡关掉"的定时器没作废，它会在下一轮淡入走到一半时把过渡掐断，那一帧直接跳到全实色。所以头几下（间隔长、没撞上）是好的，连点几次就会犯',
+    '实测：连点 7 次（每 0.6 秒一下）逐帧采样，淡入再没有被截断（0.00 → 0.09 → 0.42 → 0.74 → 0.89 → 0.97 → 1.00）',
+    'Dock 那颗同一段代码也有这个隐患，一起修了（正常连点 Dock 也不会再有一帧跳变）',
+  ]},
   { v: 'v7.58', d: '10-23', items: [
     '修：三格滑块停稳的那一下**不再是硬切**。停稳时滑块内部的顶边高光会收掉，这条以前是瞬间换掉的（所以看着像"颜色啪一下变成实色"），现在和 Dock 一样用 0.5 秒渐变过去',
     '这一条是 v7.57 重构时漏掉的（旧代码里阴影本来就有 0.5 秒过渡）；现在整条时间线里没有任何一帧是硬切的：按住 0.25 秒回玻璃 → 停稳那一刻阴影 0.5 秒收 → 实色 2.2 秒渗进来',
@@ -1991,7 +1996,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.58';
+const APP_VERSION = 'v7.59';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2545,15 +2550,20 @@ function initSegLens(wrap) {
   let glassUntil = 0;                  // 正在"玻璃→实色"过渡中，到这个时刻为止
   const settle = (delay, instant) => {
     if (instant) {
-      // 注意：这里**绝不能**先 clearTimeout —— 那会把"松手后加 settled"的定时器清掉，
+      // 注意：这里**绝不能**先 clearTimeout(__settleT) —— 那会把"松手后加 settled"的定时器清掉，
       // 结果就是按完一直停在玻璃状态
       if (Date.now() < glassUntil) return;                 // 正在淡入 → 让它走完，不插队
       clearTimeout(lens.__settleT);
+      clearTimeout(lens.__fadeT);
       lens.classList.remove('fadein', 'fadeout');
       lens.classList.add('settled');                       // 不过渡：直接就是实色
       return;
     }
     clearTimeout(lens.__settleT);
+    // 关键：上一轮"摘掉 fadein"的定时器必须作废。
+    // 否则它会在这一轮淡入走到一半时把 fadein 摘掉 → 过渡立刻消失 → 1 帧跳到全实色
+    // （表现就是"多按几次以后，颜色又啪一下变成实色"，v7.59 查到的真因）
+    clearTimeout(lens.__fadeT);
     // 有意的操作：先关掉实色（fadeout 的快节奏），再等 delay 后用 fadein 慢慢亮回来
     lens.classList.remove('settled');
     glassUntil = Date.now() + delay + 2400;
@@ -2561,7 +2571,7 @@ function initSegLens(wrap) {
       lens.classList.add('fadein');
       void lens.offsetWidth;                               // 先让 2.2s 的过渡生效，再改 opacity
       lens.classList.add('settled');
-      setTimeout(() => lens.classList.remove('fadein'), 2400);
+      lens.__fadeT = setTimeout(() => lens.classList.remove('fadein'), 2600);
     }, delay);
   };
 
@@ -2596,7 +2606,8 @@ function initSegLens(wrap) {
     target = b;                        // 按下去就认这一格，松手不会弹回原来那格
     lens.classList.add('fadeout');     // 按住/滑动中是玻璃（0.25 秒，跟手）
     lens.classList.remove('settled', 'fadein');
-    setTimeout(() => lens.classList.remove('fadeout'), 320);
+    clearTimeout(lens.__fadeoutT);     // 连点时上一轮的"摘 fadeout"不能提前取消这一轮的过渡
+    lens.__fadeoutT = setTimeout(() => lens.classList.remove('fadeout'), 320);
     place(b, false);                   // 按下去就直接滑到手指这一格（不记账）
     lens.classList.add('press');       // 压扁只动内层，不打断还没走完的滑动
   }, { passive: true });
@@ -5940,11 +5951,14 @@ function initDockLens() {
   const settle = (delay) => {
     lens.classList.remove('settled');
     clearTimeout(lens.__settleT);
+    // 上一轮"摘掉 fadein"的定时器必须作废：它若在下一轮淡入中途触发，
+    // 过渡会被立刻取消 → 1 帧跳到全实色（"多按几次就啪一下变实色"的真因）
+    clearTimeout(lens.__fadeT);
     lens.__settleT = setTimeout(() => {
       lens.classList.add('fadein');
       void lens.offsetWidth;
       lens.classList.add('settled');
-      setTimeout(() => lens.classList.remove('fadein'), 2400);
+      lens.__fadeT = setTimeout(() => lens.classList.remove('fadein'), 2600);
     }, delay);
   };
   const go = el => { if (!el) return; target = el; place(el); lit(el); settle(520); };
@@ -5958,7 +5972,8 @@ function initDockLens() {
     target = el;                  // 按下去就认这一格，松手不会跳回原来那格
     lens.classList.add('fadeout');      // 按住时是玻璃，不是实色（0.25 秒回玻璃）
     lens.classList.remove('settled', 'fadein');
-    setTimeout(() => lens.classList.remove('fadeout'), 320);
+    clearTimeout(lens.__fadeoutT);      // 连点时上一轮的"摘 fadeout"不能提前取消这一轮的过渡
+    lens.__fadeoutT = setTimeout(() => lens.classList.remove('fadeout'), 320);
     place(el, { press: true });
     lit(el);
     lens.classList.add('press');

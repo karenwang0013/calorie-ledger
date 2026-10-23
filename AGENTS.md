@@ -251,6 +251,7 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 | **动画只动 transform** | 滑块/指示器/浮层的过渡里**只允许 transform 和 opacity**；宽高一次性量好写死 | 把 width/height 放进 transition —— 每帧重新排版，iPhone 上掉帧，看起来就是"抖"（v6.27 才查出来的真因） |
 | **滑块必须分两层** | 外层只放**位置**（`translate3d`，`.62s cubic-bezier(.33,1.06,.32,1)`），内层 `.lens-body` 只放**按压压扁**（`scale(1.055,.925)`，`.24s`）。记录卡片三格 / 趋势页 7/30/90 / 目标模式三格都走这一套（`.seg-lens` + `initSegLens()`），和 Dock 完全同源 | 位置和缩放写在同一条 transform 上 → 一按下去就打断还没走完的滑动，看着"跳"、也不跟手（v7.57 才彻底改成两层） |
 | **按下认手指，松手不回弹** | `pointerdown` 就 `target = 按下的那一格`，松手 10ms 后回 `place(target)` | 松手时 `place(button.on)` —— 那一刻 `.on` 还没切过去，滑块会先弹回旧格再滑过来（"过去又回来"，v7.57 前就是这样） |
+| **滑动里的定时器要存下来** | 摘 `fadein`/`fadeout` 的 `setTimeout` 存成 `lens.__fadeT` / `__fadeoutT`，下一轮开始先 `clearTimeout` | 不存 → 连点几次后上一轮的定时器把这一轮的 `fadein` 掐掉，过渡消失、一帧跳到全实色（"多点几次就 1 马上变 2"，v7.59） |
 | **分段控件不重绘** | 点一个选项只切 `.on` + 局部刷新数值；整页 `renderMe()` 会把滑块连皮一起重建 → 必跳 | 点一下整页重绘，再想办法"让新滑块从旧位置滑"（治不了） |
 | **首次定位不播动画** | 滑块第一次算好位置要用 `transition: none` 直接落位 | 让它从 (0,0) 过渡到目标 → 看起来是从屏幕顶上滑下来 |
 
