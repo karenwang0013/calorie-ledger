@@ -202,10 +202,6 @@ html.kb .sc-body {
   border-bottom: 0;
   /* 只留半像素发丝线，没有任何投影 */
   box-shadow: 0 0.5px 0 rgba(255,255,255,.10);
-  /* 让顶栏自己单独一层、常驻：下面那层带 backdrop-filter 的遮罩一消失，
-     浏览器要重画"背后那层"，顶栏会被单独重画一帧 → 看着像整个框闪一下。
-     常驻一层就不会被重画。（注意：这里不是 transform 位移补偿，顶栏位置一点没动） */
-  will-change: transform;
 }
 
 .brand {
@@ -1212,7 +1208,6 @@ body.add-open .sheet-mask.on {
   background: rgba(0,0,0,.66);
   opacity: 0; pointer-events: none;
   transition: opacity .25s;
-  will-change: opacity;      /* 单独一层，淡出时不要重排重绘，避免闪边 */
 }
 .sheet-mask.on { opacity: 1; pointer-events: auto; }
 
@@ -1281,22 +1276,9 @@ body.add-open .sheet-mask.on {
 #grpMask.on,
 #rnMask.on {
   background: rgba(0, 0, 0, 0.20);
-  /* 紧贴顶栏下沿开始，不留缝。当初 +2px 是为了躲顶栏底部那条 0.5px 发丝线（怕被 blur 抹成亮带），
-     现在遮罩里已经没有 blur（改由内容层自己糊），那 2px 就成了手机上一眼能看见的亮缝，去掉。 */
+  -webkit-backdrop-filter: blur(5px) saturate(115%);
+  backdrop-filter: blur(5px) saturate(115%);
   top: var(--topbar-h, 64px);
-}
-
-/* 虚化：糊的是"内容本身"，不是整屏盖一层模糊。这样没有任何一层需要重画顶栏。 */
-#scroller, .tabbar {
-  transition: filter .22s ease-out;
-}
-body:has(#nutMask.on) #scroller,
-body:has(#grpMask.on) #scroller,
-body:has(#rnMask.on) #scroller,
-body:has(#nutMask.on) .tabbar,
-body:has(#grpMask.on) .tabbar,
-body:has(#rnMask.on) .tabbar {
-  filter: blur(5px) saturate(115%);
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
