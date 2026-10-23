@@ -1437,8 +1437,10 @@ body.add-open .sheet-mask.on {
   box-shadow:
     inset 0 1px 6px rgba(255,255,255,.20),
     inset 0 -2px 8px rgba(0,0,0,.10);
-  /* 和 Dock 完全一样的按压曲线：按下快（.24s 压到位），松手用同一条过冲曲线弹回来 */
-  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease;
+  /* 和 Dock 完全同一组：按压曲线 .24s、圆角 .24s、背景 .18s、**阴影 .5s**
+     —— 阴影这条不能少：停稳时那一层会换成"只留顶边高光"的阴影，
+     没有 .5s 过渡的话，那一帧就是硬切，看着就是"颜色突然变成实色的"（v7.57 漏了这条） */
+  transition: transform .24s cubic-bezier(.32,.9,.28,1), border-radius .24s ease, background .18s ease, box-shadow .5s ease;
   will-change: transform;
 }
 .seg-lens.press .lens-body {

@@ -79,7 +79,8 @@ const checks = [
   ['Dock 滑块圆角与 Dock 同心：内圆 = Dock 圆角 − 留白 − 边框', /dockR - PAD - bT/.test(app)],
   ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', Math\.round\(\(visH - h\) \/ 2\)/.test(app)],
   ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein\s+\.lens-body::after/.test(css) && /\.seg-lens \.lens-body::after \{[\s\S]{0,240}?transition: none;/.test(css)],
-  ['分段滑块和 Dock 是同一套两层结构：外层只走位置（.62s 过冲），内层 .lens-body 管压扁（.24s）', /\.seg-lens \{[\s\S]{0,700}?transform \.62s cubic-bezier\(\.33, 1\.06, \.32, 1\)/.test(css) && /\.seg-lens \.lens-body \{[\s\S]{0,700}?transform \.24s cubic-bezier\(\.32,\.9,\.28,1\)/.test(css) && /\.seg-lens\.press \.lens-body \{[\s\S]{0,140}?scale\(1\.055, \.925\)/.test(css)],
+  ['分段滑块和 Dock 是同一套两层结构：外层只走位置（.62s 过冲），内层 .lens-body 管压扁（.24s）', /\.seg-lens \{[\s\S]{0,700}?transform \.62s cubic-bezier\(\.33, 1\.06, \.32, 1\)/.test(css) && /\.seg-lens \.lens-body \{[\s\S]{0,900}?transform \.24s cubic-bezier\(\.32,\.9,\.28,1\)/.test(css) && /\.seg-lens\.press \.lens-body \{[\s\S]{0,140}?scale\(1\.055, \.925\)/.test(css)],
+  ['分段滑块停稳时阴影必须渐变（.5s），否则那一帧硬切 = "颜色突然变成实色的"', /\.seg-lens \.lens-body \{[\s\S]{0,900}?box-shadow \.5s ease/.test(css)],
   ['分段滑块是两层 DOM（.seg-lens > .lens-body），按压形变走内层', /lens\.className = 'seg-lens';[\s\S]{0,220}?className = 'lens-body'/.test(app)],
   ['分段滑块的位移里不许再带缩放（位置/压扁混在一条 transform 上 → 一按就跳）', (() => {
     const i = app.indexOf('const apply = (g) => {');
