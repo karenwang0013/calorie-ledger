@@ -1260,26 +1260,15 @@ body.add-open .sheet-mask.on {
 .sheet:not(.on) { pointer-events: none; }
 
 /* ---------- 卡片背后的磨砂虚化（营养编辑卡 / 食品详情卡 / 改名框 共用一套） ----------
-   做法：遮罩本身只负责「糊」（blur 5px），整屏都糊，连顶栏一起糊 —— 顶部就不会有一条
-   "清晰 / 虚化"的硬分界。压暗（20% 黑）单独交给 ::after，而且只从顶栏下沿往下压。
-   这样顶栏只是被糊（纯色被糊还是同一个颜色），一点都不会变暗，也就不会和系统画的状态栏
-   那条拼成两种颜色。 */
+   基准 = 营养编辑卡后面那层（用户指定的唯一标准），三处用的就是这一份，一字不差：
+   rgba(0,0,0,.20) + blur(5px) saturate(115%)，整屏覆盖（顶栏一起盖）。
+   不要给某一张卡单独写 top / ::after / 别的透明度 —— 一分开就"不一样"了。 */
 #nutMask.on,
 #grpMask.on,
 #rnMask.on {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
-  top: 0;
-}
-#nutMask.on::after,
-#grpMask.on::after,
-#rnMask.on::after {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: 0;
-  top: var(--topbar-h, 64px);         /* 压暗从顶栏下沿开始：顶栏不参与压暗 */
-  background: rgba(0, 0, 0, 0.20);
-  pointer-events: none;
 }
 
 /* 改名框那层要盖在详情卡遮罩（60）之上 */
