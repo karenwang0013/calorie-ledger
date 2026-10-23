@@ -1027,9 +1027,9 @@ body.add-open .sheet-mask.on {
 /* 热量那一格：单位开关嵌在输入框里（右侧），竖排：上「千焦」下「千卡」。
    控件四周与输入框内边等距（上/下/右各 5px），内圆角 = 输入框圆角 12 − 留白 5 = 7，和外框同心 */
 #nutSheet .inwrap { position: relative; }
-#nutSheet .inwrap #nutKcal { padding-right: 82px; }
+#nutSheet .inwrap #nutKcal { padding-right: 72px; }
 #nutSheet .unitseg {
-  position: absolute; right: 3px; top: 3px; bottom: 3px; width: 68px;
+  position: absolute; right: 3px; top: 3px; bottom: 3px; width: 58px;
   display: flex; flex-direction: column; justify-content: center; gap: 3px;
   padding: 3px; border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.10);
