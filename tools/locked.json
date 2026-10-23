@@ -56,8 +56,8 @@
   },
   {
     "file": "style.css",
-    "find": "background: rgba(0, 0, 0, 0.20);",
-    "why": "卡片背后那层磨砂遮罩的底色（20% 黑）：详情卡 / 营养卡 / 改名框三处共用同一份，以营养卡为基准"
+    "find": "background-color: rgba(0, 0, 0, 0.20);",
+    "why": "虚化遮罩的压暗值（20% 黑）：三处虚化共用（现在淡的是这个背景色，不是整体 opacity）"
   },
   {
     "file": "style.css",
@@ -86,7 +86,7 @@
   },
   {
     "file": "style.css",
-    "find": "transition: opacity .6s cubic-bezier(.22,.8,.3,1);",
-    "why": "虚化的进出速度（0.6s 缓出）：所有虚化场景共用"
+    "find": "background-color .6s cubic-bezier(.22,.8,.3,1),",
+    "why": "虚化的进出速度（0.6s 缓出）：所有遮罩共用，淡的是背景色+模糊强度"
   }
 ]

@@ -406,7 +406,7 @@ html.kb .sc-body {
 /* 提醒记录 / 记录卡片打开时，遮罩浅一点，别把页面压得死黑（玻璃才透得出来） */
 body.nlog-open .sheet-mask.on,
 body.add-open .sheet-mask.on {
-  background: rgba(0,0,0,.28);
+  background-color: rgba(0,0,0,.28);
   top: var(--topbar-h, 64px);   /* 不盖住顶栏，顶栏一点都不变色 */
 }
 /* 标题行：× 距右边一个半径；文字和它同一中心线，跟着它走 */
@@ -1208,12 +1208,17 @@ body.add-open .sheet-mask.on {
 /* ---------- 弹出卡片 ---------- */
 .sheet-mask {
   position: fixed; inset: 0; z-index: 60;
-  background: rgba(0,0,0,.66);
-  opacity: 0; pointer-events: none;
-  /* 进出都放柔：0.6s 缓出（全局共用这一条） */
-  transition: opacity .6s cubic-bezier(.22,.8,.3,1);
+  background-color: rgba(0,0,0,0);
+  /* 不再用整体 opacity 做淡入淡出：iOS 上这一层的 opacity 一旦不是 1，
+     会立刻丢掉 backdrop-filter（模糊），退出时就"啪"地由糊变清 —— 那一下就是用户看到的闪。
+     改成：元素始终 opacity:1，淡的是背景色（和模糊强度），模糊就不会被丢掉。 */
+  opacity: 1; pointer-events: none;
+  transition:
+    background-color .6s cubic-bezier(.22,.8,.3,1),
+    -webkit-backdrop-filter .6s cubic-bezier(.22,.8,.3,1),
+    backdrop-filter .6s cubic-bezier(.22,.8,.3,1);
 }
-.sheet-mask.on { opacity: 1; pointer-events: auto; }
+.sheet-mask.on { background-color: rgba(0,0,0,.66); pointer-events: auto; }
 
 /* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
@@ -1273,10 +1278,17 @@ body.add-open .sheet-mask.on {
    一旦在顶栏下沿裁掉一块，退出淡出时那条"切口"就成了看得见的一条边 —— 就是用户反复报的"闪一下"。
    整屏一层、只改 opacity，浏览器没有任何东西要重建，退出才是干净的。
    （2026-10-23 试过 top: var(--topbar-h) / +2px / 拆两层 / 改内容层 filter，全部会闪，已全部回退。） */
+/* 关着的时候也要给一个"零模糊"的值，才能从 5px 平滑过渡到 0（不能写 none，那是突变） */
+#nutMask,
+#grpMask,
+#rnMask {
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  backdrop-filter: blur(0px) saturate(100%);
+}
 #nutMask.on,
 #grpMask.on,
 #rnMask.on {
-  background: rgba(0, 0, 0, 0.20);
+  background-color: rgba(0, 0, 0, 0.20);
   -webkit-backdrop-filter: blur(5px) saturate(115%);
   backdrop-filter: blur(5px) saturate(115%);
 }
