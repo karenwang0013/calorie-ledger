@@ -685,16 +685,18 @@ body.add-open .sheet-mask.on {
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 /* 列表/明细里紧跟在营养文字后面的「…」：和文字共用一条中心线（行内弹性居中，不用 baseline 对齐） */
 .mitem .sub, .gitem .sub {
-  display: inline-flex; align-items: center; gap: 2px;
+  display: inline-flex; align-items: center; gap: 5px;   /* 和食品名那行一样：离字 5px */
   line-height: 14px;                       /* 文字行高和三点的盒子同高，中心线才对得死 */
 }
+/* 全 App 的「⋯」统一成食品名后面那个：盒子 26×24、图标 20×20、离字 5px。
+   营养行 / 明细行的小「⋯」也一样 —— 用户要求"只要后面带三个点，都是这个大小这个宽度这个距离" */
 .pen.inl {
-  width: 20px; height: 14px; margin: 0 0 0 2px; padding: 0;
+  width: 26px; height: 24px; margin: 0; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   vertical-align: middle;
-  position: relative; top: -1.5px;        /* 文字墨迹比行框略偏下，这里补回来，中线才重合 */
+  position: static;
 }
-.pen.inl svg { width: 15px; height: 15px; display: block; }
+.pen.inl svg { width: 20px; height: 20px; display: block; }
 
 .mitem.ghead { cursor: pointer; }
 .mitem.ghead .sub { color: var(--muted2); }
@@ -1635,12 +1637,10 @@ body.add-open .sheet-mask.on {
 }
 /* 营养那一行：文字和后面的「…」共用一条中心线（之前「…」是贴顶的） */
 .ritem .meta {
-  display: flex; align-items: center; gap: 2px;
+  display: flex; align-items: center; gap: 5px;      /* 离字 5px，和食品名那行一致 */
   font-size: 10.5px; color: var(--muted2); margin-top: 5px;
 }
 .ritem .meta .mtxt { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }   /* 文字多长就多长，三点紧跟其后 */
-.ritem .meta .pen { width: 22px; height: 18px; }     /* 和 10.5px 的文字同高，中心线才对得上 */
-.ritem .meta .pen svg { width: 18px; height: 18px; }
 .ritem .gr {
   display: flex; align-items: center; gap: 8px; margin-top: 10px;
 }

@@ -46,8 +46,8 @@
   },
   {
     "file": "style.css",
-    "find": ".ritem .meta .pen { width: 22px; height: 18px; }",
-    "why": "营养行后面那个「…」的尺寸：和 10.5px 文字同高，中心线才对得上"
+    "find": "width: 26px; height: 24px; margin: 0; padding: 0;",
+    "why": "所有「⋯」统一成食品名后面那个的尺寸（盒子 26×24、图标 20×20、离字 5px）—— 用户要求全部一致"
   },
   {
     "file": "style.css",
