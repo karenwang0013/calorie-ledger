@@ -2170,8 +2170,17 @@ function defaultMeal() {
 }
 
 /* ---------------- 加载 ---------------- */
+/* 照片仓库：第一次用到时初始化（把老 localStorage 照片搬进 IndexedDB + 读进内存镜像）。
+   渲染要同步拿图，所以必须在第一次 loadDay 之前跑完 —— 统一在这里等一个 promise。 */
+let photoReadyPromise = null;
+function photosReady() {
+  if (!photoReadyPromise) photoReadyPromise = photoInit().catch(() => ({}));
+  return photoReadyPromise;
+}
+
 async function loadDay() {
   try {
+    await photosReady();
     const d = await api('/api/bootstrap?date=' + S.date);
     S.day = d;
     S.foods = d.foods || [];
@@ -2346,6 +2355,15 @@ function renderToday() {
   $('#fBar').style.width = w(ft, t.fat_g);
 
   renderMeals();
+  // 换过设备 / 照片只在云端时：把当天缺的小图按需拉回来（最多 4 张，拉完重画一次列表）
+  try {
+    const miss = [...new Set((d.logs || []).map(l => l.batch).filter(b => b && !shotUrl(b)))].slice(0, 4);
+    if (miss.length) {
+      Promise.all(miss.map(b => ensurePhoto(b))).then(list => {
+        if (list.some(Boolean)) renderMeals();
+      }).catch(() => {});
+    }
+  } catch (e) {}
 }
 
 /* 营养克数的显示：小于 10 保留一位小数，别把 0.3g 显示成 0 */
@@ -3966,17 +3984,28 @@ function openDetail(logs, isGroup, title) {
   const sum = k => Math.round(logs.reduce((a, b) => a + (b[k] || 0), 0));
   const kcal = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
   const batchKey = logs[0].batch || '';
-  const shot = (S.day && S.day.shots && S.day.shots[batchKey]) || '';
+  let shot = (S.day && S.day.shots && S.day.shots[batchKey]) || shotUrl(batchKey) || '';
   $('#grpNameTxt').textContent = title || logs[0].name;
   $('#grpMeta').textContent = isGroup
     ? `${logs.length} 项 · 蛋${sum('p')} / 碳${sum('c')} / 脂${sum('f')}`
     : `${Math.round(logs[0].grams)}g`;
-  const img = $('#grpShot');
-  if (shot) { img.src = shot; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; }
-  // 拍照记的却没有图 → 说明是旧版本记的，说清楚免得以为丢了
-  const noShot = !shot && logs.some(l => l.source === 'photo');
   const tip = $('#grpNoShot');
-  if (tip) tip.hidden = !noShot;
+  const applyShot = (u) => {
+    const el = $('#grpShot'); if (!el) return;
+    if (u) { el.src = u; el.hidden = false; if (tip) tip.hidden = true; return; }
+    el.removeAttribute('src'); el.hidden = true;
+    // 拍照记的却没有图 → 说清楚（早期版本只存数据 / 或云端裁掉过）
+    if (tip) tip.hidden = !logs.some(l => l.source === 'photo');
+  };
+  applyShot(shot);
+  // 本机没有这张（换过设备 / 被裁过）→ 从云端那个单独的图片文件拉回来，拉到就当场补上
+  if (!shot && batchKey) {
+    ensurePhoto(batchKey).then(u => {
+      if (!u) return;
+      shot = u;
+      applyShot(u);
+    }).catch(() => {});
+  }
   $('#grpItems').innerHTML = logs.map(l => `
     <div class="gitem">
       <div class="n">${esc(l.name)}<span class="sub">${g1(l.grams)}g · 蛋${g1(l.p)}·碳${g1(l.c)}·脂${g1(l.f)}<button class="pen inl" data-nutlog="${l.id}" aria-label="改营养数据">${PEN_ICON}</button></span></div>
@@ -6425,6 +6454,7 @@ function initDockLens() {
 function init() {
   if (window.__inited) return;      // 脚本被补加载时可能被调用两次，只跑一次
   window.__inited = true;
+  photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭

@@ -79,6 +79,190 @@ const Store = {
   },
 };
 
+/* ---------------- 照片仓库（IndexedDB） ----------------
+   为什么换成 IndexedDB：localStorage 只有约 5MB（iOS 给网页的配额），照片塞在里面，
+   60 张就把抽屉塞满 → 从最旧的开始扔。用户明确要求「照片不许弄丢」，所以照片全部搬到
+   IndexedDB（配额大得多），localStorage 里只留记录本身；云端也从 data.json 拆出来，
+   每张照片单独一个文件（photos/<batch>.jpg），不再挤在一个 2MB 的文件里。 */
+const PHOTO_DB = 'ledger-photos';
+const PHOTO_STORE = 'shots';
+const PHOTO_DIR = 'photos';                 // 云端目录（和数据仓库里的 data.json 同级）
+let photoMem = new Map();                   // batch → dataURL（内存镜像，渲染要同步拿到）
+let photoDBP = null;
+let photoMigrated = 0;
+
+function photoDB() {
+  if (photoDBP) return photoDBP;
+  photoDBP = new Promise((res, rej) => {
+    let req = null;
+    try { req = indexedDB.open(PHOTO_DB, 1); } catch (e) { rej(e); return; }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(PHOTO_STORE)) db.createObjectStore(PHOTO_STORE, { keyPath: 'batch' });
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error || new Error('IndexedDB 打不开'));
+  });
+  return photoDBP;
+}
+async function photoIdbAll() {
+  const db = await photoDB();
+  return new Promise((res, rej) => {
+    const rq = db.transaction(PHOTO_STORE, 'readonly').objectStore(PHOTO_STORE).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function photoIdbPut(batch, url) {
+  return photoDB().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(PHOTO_STORE, 'readwrite');
+    tx.objectStore(PHOTO_STORE).put({ batch: String(batch), url: String(url), at: Date.now() });
+    tx.oncomplete = () => res(true);
+    tx.onerror = () => rej(tx.error);
+  }));
+}
+function photoIdbDel(batch) {
+  return photoDB().then(db => new Promise((res) => {
+    const tx = db.transaction(PHOTO_STORE, 'readwrite');
+    tx.objectStore(PHOTO_STORE).delete(String(batch));
+    tx.oncomplete = () => res(true);
+    tx.onerror = () => res(false);
+  }));
+}
+
+/* 渲染用：同步拿内存镜像里的图（拿不到就返回空，由 ensurePhoto 异步补） */
+function shotUrl(batch) {
+  return (batch && photoMem.get(String(batch))) || '';
+}
+
+/* 把老的 localStorage shots 搬进 IndexedDB；全部搬成功才清空，绝不先删后搬 */
+async function absorbLegacyShots() {
+  const d = Store.load();
+  const old = d.shots || {};
+  const keys = Object.keys(old);
+  if (!keys.length) return 0;
+  let ok = 0;
+  for (const k of keys) {
+    try { await photoIdbPut(k, old[k]); ok++; } catch (e) {}
+  }
+  if (ok !== keys.length) return 0;         // 有几张没搬成功 → 这次先不动 localStorage
+  keys.forEach(k => photoMem.set(String(k), old[k]));
+  d.shots = {};
+  d.shotIds = Array.from(new Set([...(d.shotIds || []), ...keys])).slice(-2000);
+  Store.save({ silent: true });
+  photoMigrated += keys.length;
+  return keys.length;
+}
+
+/* 启动时：先搬旧数据，再把 IndexedDB 全读进内存 */
+async function photoInit() {
+  try { await absorbLegacyShots(); } catch (e) {}
+  try {
+    const rows = await photoIdbAll();
+    rows.forEach(r => { if (r && r.batch && r.url) photoMem.set(String(r.batch), r.url); });
+  } catch (e) {}
+  return { migrated: photoMigrated, count: photoMem.size };
+}
+
+/* 存一张照片：内存 + IndexedDB + 云端单独一个文件（云端失败不影响记账） */
+async function photoSave(batch, dataUrl) {
+  if (!batch || !dataUrl) return false;
+  photoMem.set(String(batch), String(dataUrl));
+  try { await photoIdbPut(batch, dataUrl); } catch (e) { /* 内存里还有，先不让记账失败 */ }
+  try {
+    const d = Store.load();
+    d.shotIds = Array.from(new Set([...(d.shotIds || []), String(batch)])).slice(-2000);
+    Store.save({ silent: true });
+  } catch (e) {}
+  cloudPutPhoto(batch, dataUrl).catch(() => {});
+  return true;
+}
+
+async function photoRemove(batch) {
+  if (!batch) return;
+  photoMem.delete(String(batch));
+  try { await photoIdbDel(batch); } catch (e) {}
+  try {
+    const d = Store.load();
+    d.shotIds = (d.shotIds || []).filter(x => x !== String(batch));
+    Store.save({ silent: true });
+  } catch (e) {}
+  cloudDeletePhoto(batch).catch(() => {});
+}
+
+/* 本地没有、云端有 → 按需拉回来（懒加载，不一次拉全部） */
+async function ensurePhoto(batch) {
+  const b = String(batch || '');
+  if (!b) return '';
+  const local = shotUrl(b);
+  if (local) return local;
+  return await cloudGetPhoto(b);
+}
+
+/* ---------------- 云端：照片单独一个文件 ---------------- */
+function cloudPhotoApi(path) {
+  return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${path}`;
+}
+function cloudPhotoRead(path) {
+  const tk = encodeURIComponent(cloudToken());
+  return `${cloudPhotoApi(path)}?t=${Date.now()}` + (tk ? `&access_token=${tk}` : '');
+}
+
+async function cloudPutPhoto(batch, dataUrl) {
+  if (!cloudToken()) return false;
+  const b64 = String(dataUrl).split(',')[1] || '';
+  if (b64.length < 40) return false;
+  const path = `${PHOTO_DIR}/${batch}.jpg`;
+  const body = { access_token: cloudToken(), message: `photo ${batch}`, content: b64, branch: CLOUD.branch };
+  let res = null;
+  try { res = await fetchT(cloudPhotoApi(path), { method: 'POST', headers: cloudHeaders(), body: JSON.stringify(body) }, 20000); } catch (e) { return false; }
+  if (res && (res.status === 400 || res.status === 409 || res.status === 422)) {
+    // 文件已存在 → 取 sha 再覆盖
+    try {
+      const cur = await fetchT(cloudPhotoRead(path), { headers: cloudHeaders() }, 15000);
+      if (cur.ok) {
+        const j = await cur.json();
+        if (j && j.sha) {
+          body.sha = j.sha;
+          res = await fetchT(cloudPhotoApi(path), { method: 'PUT', headers: cloudHeaders(), body: JSON.stringify(body) }, 20000);
+        }
+      }
+    } catch (e) {}
+  }
+  return !!(res && res.ok);
+}
+
+async function cloudDeletePhoto(batch) {
+  if (!cloudToken() || !batch) return false;
+  const path = `${PHOTO_DIR}/${batch}.jpg`;
+  try {
+    const cur = await fetchT(cloudPhotoRead(path), { headers: cloudHeaders() }, 12000);
+    if (!cur.ok) return false;
+    const j = await cur.json();
+    if (!j || !j.sha) return false;
+    const res = await fetchT(cloudPhotoApi(path), {
+      method: 'DELETE', headers: cloudHeaders(),
+      body: JSON.stringify({ access_token: cloudToken(), message: `del photo ${batch}`, sha: j.sha, branch: CLOUD.branch }),
+    }, 15000);
+    return !!(res && res.ok);
+  } catch (e) { return false; }
+}
+
+async function cloudGetPhoto(batch) {
+  if (!cloudToken()) return '';
+  try {
+    const res = await fetchT(cloudPhotoRead(`${PHOTO_DIR}/${batch}.jpg`), { headers: cloudHeaders() }, 15000);
+    if (!res.ok) return '';
+    const j = await res.json();
+    const b64 = String((j && j.content) || '').replace(/\s/g, '');
+    if (b64.length < 40) return '';
+    const url = 'data:image/jpeg;base64,' + b64;
+    photoMem.set(String(batch), url);
+    try { await photoIdbPut(batch, url); } catch (e) {}
+    return url;
+  } catch (e) { return ''; }
+}
+
 function setting(k, def) {
   const v = Store.load().settings[k];
   return v === undefined || v === null ? def : v;
@@ -192,10 +376,11 @@ function daySummary(date) {
   const carb = logs.reduce((a, b) => a + (Number(b.c) || 0), 0);
   const fat = logs.reduce((a, b) => a + (Number(b.f) || 0), 0);
   const [exp, src, detail] = tdeeOf(p, watch, latestWeight());
-  // 只把当天这几条记录的小图带出来，不整库塞给前端
+  // 只把当天这几条记录的小图带出来（现在图在 IndexedDB 的内存镜像里，不占 localStorage）
   const shots = {};
   logs.forEach(l => {
-    if (l.batch && d.shots && d.shots[l.batch]) shots[l.batch] = d.shots[l.batch];
+    const u = (l.batch && photoMem.get(String(l.batch))) || (l.batch && d.shots && d.shots[l.batch]) || '';
+    if (l.batch && u) shots[l.batch] = u;
   });
 
   return {
@@ -795,9 +980,10 @@ async function api(path, body, method) {
       const id = Number(mm[1]);
       const gone = d.logs.find(l => l.id === id);
       d.logs = d.logs.filter(l => l.id !== id);
-      // 这一组的记录都删光了，顺带删掉它的照片，避免云端残留
-      if (gone && gone.batch && d.shots && !d.logs.some(l => l.batch === gone.batch)) {
-        delete d.shots[gone.batch];
+      // 这一组的记录都删光了，顺带删掉它的照片（本机 IndexedDB + 云端那个文件）
+      if (gone && gone.batch && !d.logs.some(l => l.batch === gone.batch)) {
+        if (d.shots) delete d.shots[gone.batch];
+        try { await photoRemove(gone.batch); } catch (e) {}
       }
       Store.save();
       return { ok: true };
@@ -838,19 +1024,8 @@ async function api(path, body, method) {
       const ids = body.items.map(it => addLog(date, meal, it, body.source || 'manual', body.batch, body.batchName));
       // 顺手存一张小图，之后点开这一组还能看到当时拍的照片
       if (body.batch && body.shot) {
-        try {
-          const d = Store.load();
-          d.shots = d.shots || {};
-          d.shots[body.batch] = String(body.shot);
-          const keys = Object.keys(d.shots);
-          if (keys.length > 60) keys.slice(0, keys.length - 60).forEach(k => delete d.shots[k]);
-          // 本机也不能撑爆 localStorage（iOS 大约 5MB）：照片总量超过 3.2MB 就从最旧的开始丢
-          let guard = 0;
-          while (Object.keys(d.shots).length > 1 && JSON.stringify(d.shots).length > 3.2 * 1024 * 1024 && guard++ < 200) {
-            delete d.shots[Object.keys(d.shots)[0]];
-          }
-          Store.save();
-        } catch (e) { /* 图存不下也不能把记账搞失败 */ }
+        // 照片进 IndexedDB（不再塞 localStorage），云端单独存一个文件；失败也不影响记账
+        try { await photoSave(body.batch, String(body.shot)); } catch (e) { /* 图存不下也不能把记账搞失败 */ }
       }
       return { ok: true, ids, day: daySummary(date) };
     }
@@ -1199,6 +1374,7 @@ async function cloudPull(force) {
             local0.shots = Object.assign({}, rd0.shots || {}, local0.shots || {});
             local0.settings.updatedAt = rAt0;
             localStorage.setItem(Store.KEY, JSON.stringify(local0));
+            if (typeof absorbLegacyShots === 'function') absorbLegacyShots().catch(() => {});
             setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
             cloudPulling = false;
             return 'pulled';
@@ -1250,6 +1426,7 @@ async function cloudPull(force) {
       if (Object.keys(daily).length) local.daily = daily;
       local.settings.updatedAt = rAt;
       localStorage.setItem(Store.KEY, JSON.stringify(local));
+      if (typeof absorbLegacyShots === 'function') absorbLegacyShots().catch(() => {});
       setSetting('cloud_synced_at', new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }));
       if (typeof clearErr === 'function') clearErr('err-pull');
       cloudPulling = false;
@@ -1270,6 +1447,7 @@ async function cloudPull(force) {
         local2.body = Object.assign({}, rd.body || {}, local2.body || {});
         local2.weights = Object.assign({}, rd.weights || {}, local2.weights || {});
         localStorage.setItem(Store.KEY, JSON.stringify(local2));
+        if (typeof absorbLegacyShots === 'function') absorbLegacyShots().catch(() => {});
         if (typeof clearErr === 'function') clearErr('err-pull');
         cloudPulling = false;
         return 'merged';
@@ -1324,4 +1502,6 @@ function importJson(text) {
     settings: obj.settings || {},
   });
   Store.save();
+  // 备份里的照片（老格式）也搬进 IndexedDB
+  if (typeof absorbLegacyShots === 'function') absorbLegacyShots().catch(() => {});
 }
