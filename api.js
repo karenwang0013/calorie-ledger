@@ -407,8 +407,12 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
    宁可估得贴近常见份量，不要给 100 这种默认值。
 3. 给出每 100 克的热量和蛋白质/碳水/脂肪。优先使用中国食物成分表的数值。
 4. 如果图里有包装食品的营养成分表，按标签精确读数：
-   - **优先**把标签原样抄到 label 字段（不要自己换算）：label.basis_grams = 标签上「每 X 克」的 X（如每份 12.5 克就填 12.5），label.unit = "kJ" 或 "kcal"，label.energy / protein / carb / fat = 那一份对应的数字。App 会用这些数字自己换算，不用你算
-   - 同时仍按你的理解填 *_per_100g（每 100 克），但 **label 字段必须原样照抄，不许改写单位**
+   - **最重要：把整张表逐行照抄到 label_rows** —— 一行一个对象，name 用标签上那一行的原文，value 取「每 100 克」那一列的数字，
+     unit 照标签（g / kJ / kcal / mg），nrv 填 NRV% 那一列的数字（没有就不写）。
+     **只做照抄：不许自己判断哪一行是碳水、哪一行是脂肪，不许合并行、不许挪列、不许补零或多打一位。**
+     格式：[{"name":"能量","value":1597,"unit":"kJ","nrv":19},{"name":"蛋白质","value":13.1,"unit":"g","nrv":22},{"name":"脂肪","value":7.7,"unit":"g","nrv":13},{"name":"碳水化合物","value":59.4,"unit":"g","nrv":20},{"name":"膳食纤维","value":10.0,"unit":"g","nrv":40},{"name":"钠","value":12,"unit":"mg","nrv":1}]
+     （上例是抄写格式示范，不是让你套用这些数）
+   - 再把同样四个数按你的理解填到 label 与 *_per_100g：label.basis_grams = 标签上「每 X 克」的 X（如每份 12.5 克就填 12.5），label.unit = "kJ" 或 "kcal"，label.energy / protein / carb / fat = 那一份对应的数字
    - 如果包装上能看到克数：净含量（如「净含量 125 克」）填到 items[].net_grams；标签写「每份 12.5 克」就填到 label.basis_grams。两者都能看到时 net_grams 优先
    - 如果包装上**任何克数都没有**：grams 填 0（App 会把这一项标成必填，让用户自己补）
    - 用户明确说了吃多少克，就以用户说的为准
@@ -424,8 +428,9 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 只输出一个 JSON 对象，不要 markdown 代码块，不要任何解释文字：
 
 {"items":[{"name":"食物中文名","grams":180,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8,
- "label":{"basis_grams":12.5,"unit":"kJ","energy":266,"protein":1.0,"carb":6.6,"fat":3.7}}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
-（label 只在图里真的有营养成分表时才给；没有就省略整个 label 字段）`;
+ "label":{"basis_grams":12.5,"unit":"kJ","energy":266,"protein":1.0,"carb":6.6,"fat":3.7},
+ "label_rows":[{"name":"蛋白质","value":1.0,"unit":"g","nrv":2}]}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
+（label / label_rows 只在图里真的有营养成分表时才给；没有就都省略）`;
 
 const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃了什么，请估算热量。
 
@@ -511,6 +516,73 @@ function num(v, def = 0) {
   return isNaN(n) ? def : n;
 }
 
+/* ---------------- 营养成分表：整表逐行照抄，App 自己对着行名取数 ----------------
+   为什么这么绕：一旦让模型"自己说哪个数是碳水"，它就会把行/列读串（实测：碳水 59.4 读成 77.7、
+   脂肪 7.7 读成 59.4）。现在模型只负责**照抄整张表**，由这里按行名对应；
+   再用标签自己印的 NRV% 反算一遍，对不上就判"可疑"，让上层重读。 */
+const ROW_RULES = [
+  ['energy', /^(能量|热量)/],
+  ['protein', /蛋白质/],
+  ['fat', /^(脂肪|总脂肪|脂肪总量)/],
+  ['carb', /^(碳水化合物|碳水|糖类)/],
+  ['fiber', /^膳食纤维|^纤维/],
+  ['sodium', /^钠/],
+];
+const NRV_REF_G = { protein: 60, fat: 60, carb: 300 };   // 中国 NRV 参考值（g）
+const NRV_REF_KJ = 8400;                                 // 能量 NRV 参考值（kJ）
+
+function rowNameOf(r) {
+  return String((r && (r.name ?? r.n)) || '').replace(/[\s　]/g, '').replace(/[（(].*?[)）]/g, '');
+}
+function rowVal(r) { return num(r && (r.value ?? r.v ?? r.per100), NaN); }
+function rowNrv(r) { return num(r && (r.nrv ?? r.NRV ?? r.nrv_percent), NaN); }
+
+function pickRows(rows) {
+  const out = {};
+  (Array.isArray(rows) ? rows : []).forEach(r => {
+    const nm = rowNameOf(r);
+    if (!nm) return;
+    for (const [key, re] of ROW_RULES) {
+      if (out[key] === undefined && re.test(nm)) { out[key] = r; return; }
+    }
+  });
+  return out;
+}
+
+/* 标签自己印的 NRV% 和数值必须对得上（±25%）。对不上 = 这一行被读串了。 */
+function nrvConflict(r, refValue) {
+  const v = rowVal(r), nrv = rowNrv(r);
+  if (!isFinite(v) || !isFinite(nrv) || nrv <= 0) return false;
+  const expect = nrv / 100 * refValue;
+  return Math.abs(v - expect) > Math.max(expect * 0.25, refValue * 0.02);
+}
+
+/* 每 100 克这组数是否物理上讲得通（和 app.js 的 nutWhy 同一条规则，两边必须一致） */
+function nutritionOk(kcal, p, c, f) {
+  if (p + c + f > 105) return false;
+  if (!(kcal > 0)) return true;
+  const calc = 4 * p + 4 * c + 9 * f;
+  return Math.abs(calc - kcal) <= Math.max(70, kcal * 0.4);
+}
+
+/* label_rows → 每 100 克四项；三行关键项（蛋白/碳水/脂肪）拿不齐就返回 null */
+function rowsToPer100(rows, basis) {
+  const R = pickRows(rows);
+  if (!R.protein || !R.carb || !R.fat) return null;
+  const per = (basis > 0 && basis !== 100) ? 100 / basis : 1;
+  const p = rowVal(R.protein) * per, c = rowVal(R.carb) * per, f = rowVal(R.fat) * per;
+  if (![p, c, f].every(v => isFinite(v) && v >= 0)) return null;
+  let k = NaN;
+  if (R.energy) {
+    const e = rowVal(R.energy) * per;
+    if (isFinite(e)) {
+      const u = String(R.energy.unit || '');
+      k = /kcal|千卡|大卡/i.test(u) ? e : e / 4.184;   // 国内标签默认千焦
+    }
+  }
+  return { k, p, c, f, rows: R };
+}
+
 function cleanItems(obj, opt) {
   const items = [];
   const hint = String((opt && opt.hint) || '');
@@ -543,6 +615,25 @@ function cleanItems(obj, opt) {
       if (!isNaN(num(lb.carb, NaN))) c100 = num(lb.carb) * per;
       if (!isNaN(num(lb.fat, NaN))) f100 = num(lb.fat) * per;
     }
+    // 更稳的一路：模型把整张表逐行照抄（label_rows），App 按行名取数 + NRV% 反算核对。
+    // 行对照能取到就以它为准；核对不过就挂 _suspect，让 app.js 立刻重读一次。
+    let suspect = false;
+    const rows = it.label_rows || it.labelRows || (lb && (lb.rows || lb.rows_list));
+    const basisForRows = num(lb && lb.basis_grams, 0);
+    const fromRows = rowsToPer100(rows, basisForRows);
+    if (fromRows) {
+      if (isFinite(fromRows.k)) k100 = fromRows.k;
+      p100 = fromRows.p; c100 = fromRows.c; f100 = fromRows.f;
+      const R = fromRows.rows;
+      if (!nutritionOk(k100, p100, c100, f100)) suspect = true;
+      if (nrvConflict(R.protein, NRV_REF_G.protein)
+        || nrvConflict(R.fat, NRV_REF_G.fat)
+        || nrvConflict(R.carb, NRV_REF_G.carb)) suspect = true;
+      if (R.energy && nrvConflict(R.energy, NRV_REF_KJ)) suspect = true;
+    } else if (rows || lb) {
+      // 有表但行名没对上：至少查一遍"物理上讲不讲得通"
+      if (!nutritionOk(k100, p100, c100, f100)) suspect = true;
+    }
     items.push({
       name,
       grams: Math.round(grams * 10) / 10,
@@ -551,6 +642,7 @@ function cleanItems(obj, opt) {
       carb_per_100g: Math.round(c100 * 10) / 10,
       fat_per_100g: Math.round(f100 * 10) / 10,
       confidence: Math.min(1, Math.max(0, num(it.confidence, 0.6))),
+      ...(suspect ? { _suspect: 1 } : {}),
     });
   });
   if (!items.length) throw new Error('没认出图里的食物，换个角度或拍近一点再试。');

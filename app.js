@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v7.69', d: '10-23', items: [
+    '改：读营养成分表不再让 AI 自己判断"哪个数是碳水、哪个是脂肪" —— 改成**整张表逐行照抄**（行名 + 数值 + NRV%），由 App 按行名对应，行/列读串这种错从根上没了',
+    '改：再用包装自己印的 **NRV%** 反算核对（碳水、脂肪、蛋白质、能量各一行）；对不上、或三项加起来超过 100 克、或热量和三大项差太多 → 自动拿营养表那张照片**重读一次**',
+    '适用范围是所有「食物照片 + 营养成分表照片 + 吃多少克」的识别，不是某一款产品；每张表都走同一套核对',
+  ]},
   { v: 'v7.68', d: '10-23', items: [
     '修：营养表被读串行时（例：碳水读成 77.7、脂肪读成 59.4，三项加起来 150 克），App 会**自己拿你拍的那张表再读一遍**并改对，不用你去核对',
     '修：重读还对不上时，会直说「已按你的照片重读过一次，多半是没拍清」—— 不再只丢一句"请照包装核对"',
@@ -2041,7 +2046,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v7.68';
+const APP_VERSION = 'v7.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2907,19 +2912,25 @@ async function runPhoto() {
       hint,
     });
     S.items = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
-    // 读表读串了（比如碳水 77.7、脂肪 59.4，加起来超过 100 克）→ App 自己用营养表那张照片重读一次，
-    // 不让用户去核对数字（用户明确要求：你自己读出来的数，你自己得认）
-    if (S.items.length === 1) {
-      const one = S.items[0];
-      if (!nutSane(one.kcal_per_100g, one.protein_per_100g, one.carb_per_100g, one.fat_per_100g)) {
+    // 读表读串了（碳水/脂肪串行、数字多一位）→ App 自己用营养表那张照片重读一次，
+    // 不让用户去核对数字（用户明确要求：你自己读出来的数，你自己得认）。
+    // 只在"当前显示的就是这次读出来的数"时才自检/重读：要是历史里你手改过的值赢了，绝不许覆盖。
+    if (S.items.length === 1 && r.items.length === 1) {
+      const one = S.items[0], src = r.items[0];
+      const fromThisRead = one.kcal_per_100g === src.kcal_per_100g
+        && one.protein_per_100g === src.protein_per_100g
+        && one.carb_per_100g === src.carb_per_100g
+        && one.fat_per_100g === src.fat_per_100g;
+      if (fromThisRead && (src._suspect || !nutSane(one.kcal_per_100g, one.protein_per_100g, one.carb_per_100g, one.fat_per_100g))) {
         const re = await rereadLabelNutrition();
         if (re && S.items[0] === one) {
           one.kcal_per_100g = re.kcal_per_100g;
           one.protein_per_100g = re.protein_per_100g;
           one.carb_per_100g = re.carb_per_100g;
           one.fat_per_100g = re.fat_per_100g;
+          delete one._suspect;
         } else if (S.items[0] === one) {
-          setTimeout(() => toast('这张营养成分表没读准（三项加起来超过 100 克），重拍一张更清楚的会更准', 5200), 400);
+          setTimeout(() => toast('这张营养成分表没读准，重拍一张更清楚的会更准', 5200), 400);
         }
       }
     }
@@ -3512,14 +3523,16 @@ async function rereadLabelNutrition() {
   try {
     r = await api('/api/ai/food', {
       image: labelImg,
-      hint: '这张图只是包装上的营养成分表，不要按外观估算。请**逐行照抄**，只取这四行：蛋白质、脂肪、碳水化合物、能量。'
-        + '注意事项：①「脂肪」和「碳水化合物」两行绝对不许互换；②数字位数必须和标签完全一致（标签写 7.7 就不能写成 77.7，也不能多打一位）；'
+      hint: '这张图只是包装上的营养成分表，不要按外观估算。请**整张表逐行照抄到 label_rows**（每行 name / value / unit / nrv），'
+        + '再按标签填 label 与四个 *_per_100g。注意事项：①「脂肪」和「碳水化合物」两行绝对不许互换；'
+        + '②数字位数必须和标签完全一致（标签写 7.7 就不能写成 77.7，也不能多打一位）；'
         + '③每行只取一个数，不许把 NRV% 那一列、或别行的数字混进来；④能量照标签原样（千焦就给千焦数）。'
-        + 'items 只返回一条，grams 填 100，四个 *_per_100g 按「每 100 克」那列的数值填。',
+        + 'items 只返回一条，grams 填 100。',
     });
   } catch (e) { return null; }
   const it = r && r.items && r.items[0];
   if (!it) return null;
+  if (it._suspect) return null;                       // 重读自己都判不过（NRV% 对不上）→ 当作没读成
   if (!nutSane(it.kcal_per_100g, it.protein_per_100g, it.carb_per_100g, it.fat_per_100g)) return null;
   return it;
 }
