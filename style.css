@@ -2463,3 +2463,14 @@ select:focus {
 #nutSheet .nutsug button {
   background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), var(--edge-lite);
 }
+
+/* ===== 回到 v8.00 的按钮质感（用户要求）=====
+   全透 + edge-gloss 外圈 + inset 0 1px 0 白 10% 顶部高光；
+   之前试过的淡外圈(edge-lite)、贴顶柔光、白 5% 底全部在这里被覆盖回原样。 */
+.btn, .chip, .pgbtn, .topbtn, .pickbtn, #nutSheet .nutsug button {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-gloss);
+  background-origin: padding-box, padding-box;
+  background-clip: border-box, border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
