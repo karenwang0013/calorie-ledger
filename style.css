@@ -2127,8 +2127,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
-  -webkit-backdrop-filter: var(--glass-blur-2);
-  backdrop-filter: var(--glass-blur-2);
+  /* 2026-10-23 用户反馈「打开就发烫」→ B′：页面里的卡片**不再做背景模糊**。
+     背后只是 html 上那片静态深色渐变，模糊几乎看不出差别，却让每块卡在滚动时每帧重算一次；
+     玻璃感由半透填充 + --edge-gloss 高光边 + 顶边内高光承担。弹层仍保留模糊。 */
   box-shadow: var(--glass-shadow-2);
 }
 /* 卡片里的小块（识别结果、拍照摘要）留在实底上，避免一层套一层地反复模糊 */
