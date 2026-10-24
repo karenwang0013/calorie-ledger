@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.74', d: '10-24', items: [
+    '改：「描述」输入框里那行示例（比如：一碗牛肉面…）从左上角挪到框的正中间；一打字自动收起，清空后又出现',
+  ] },
   { v: 'v8.73', d: '10-24', items: [
     '改：搜索结果「消失的那条线」挪到搜索栏与常用词之间的正中（各让一半），不再贴着搜索栏',
   ] },
@@ -2370,7 +2373,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.73';
+const APP_VERSION = 'v8.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3093,6 +3096,7 @@ function setAddMode(m) {
   ['photo', 'search', 'text'].forEach(k => {
     $('#pane-' + k).hidden = k !== m;
   });
+  if (m === 'text') syncTextPh();
   if (m === 'search') {
     $('#searchList').hidden = false;              // 回到搜索就一定能继续挑
     runSearch($('#searchInput').value || '');
@@ -3101,6 +3105,13 @@ function setAddMode(m) {
     if (sb) sb.scrollTop = 0;
   }
   if (window.__addTabsLens) requestAnimationFrame(() => window.__addTabsLens.sync());
+}
+
+/* 「描述」框中间那层示例文字：框里有字就隐藏，空着就显示 */
+function syncTextPh() {
+  const ta = $('#textInput'), ph = $('#textPh');
+  if (!ta || !ph) return;
+  ph.hidden = !!String(ta.value || '').trim();
 }
 
 function renderMealPick() {
