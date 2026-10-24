@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.24', d: '10-24', items: [
+    '修：「设置 → 身体数据」点过「数据同步」还是不刷新、要杀进程重开才变 —— 现在进入这页/打开设置时会顺手拉一次最新体重体脂并立刻重画',
+    '这一拉走网页镜像，不占 Gitee 额度',
+  ] },
   { v: 'v8.22', d: '10-24', items: [
     '补：两台设备互相同步时，用「这一天的数是什么时候从秤上拿到的」来比新旧 —— 上一版只比文件时间，别的设备一推数据，刚称的数还是可能被云端那份旧的盖回去',
     '补：云端体重文件里日期写成空的时候（米家偶尔这样），按今天算，不再被镜像里的旧日期压住',
@@ -2155,7 +2159,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.23';
+const APP_VERSION = 'v8.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5481,6 +5485,10 @@ function wireMe() {
     mePage = b.dataset.page;
     if (mePage === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
     renderMe();
+    // v8.24：进「身体数据」时顺手拉一次最新的体重/体脂（走镜像，不占 Gitee 额度），拿到就重画
+    if (mePage === 'bodydata') {
+      pullBodyJson(false, true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
+    }
   });
 
   $$('.swatch').forEach(b => b.onclick = async () => {
@@ -6043,7 +6051,11 @@ function switchView(v) {
   document.body.classList.toggle('view-trends', v === 'trends');
   if (window.scTop) window.scTop();
   if (v === 'trends') { renderTrends(); loadTrends(); initTrendSegLens(); const sg = $('#trendSeg'); if (sg && sg.__lensSync) setTimeout(sg.__lensSync, 30); }
-  if (v === 'me') { mePage = null; renderMe(); }
+  if (v === 'me') {
+    mePage = null; renderMe();
+    // v8.24：打开「设置」也顺手拉一次身体数据，列表行上的体重/体脂跟着更新
+    pullBodyJson(false, true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
+  }
 }
 
 /* ---------------- 自动同步帮助 ---------------- */
