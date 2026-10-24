@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=837">
+<link rel="stylesheet" href="style.css?v=839">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -255,7 +255,7 @@
     <!-- 描述 -->
     <div class="pane" id="pane-text" hidden>
       <textarea id="textInput" rows="4" placeholder="比如：一碗牛肉面，加了两个卤蛋，一杯冰美式"></textarea>
-      <button class="btn primary" id="textGo" style="margin-top:10px">估算热量</button>
+      <button class="btn primary" id="textGo" style="margin-top:10px"><svg data-icn="btn.text" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm450 230-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70Z"/></svg>估算热量</button>
       <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.5;text-align:center">
         用「碗 / 个 / 份」就行，自动换算成克。
       </div>
@@ -447,10 +447,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=837"></script>
-<script src="icons.js?v=836"></script>
-<script src="api.js?v=837"></script>
-<script src="app.js?v=837"></script>
+<script src="foods.js?v=839"></script>
+<script src="icons.js?v=839"></script>
+<script src="api.js?v=839"></script>
+<script src="app.js?v=839"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
