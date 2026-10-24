@@ -1,3 +1,6 @@
+## v8.40 · 2026-10-24
+- 按用户 23 条清单：3 bodydata monitor_weight→speed；5 theme brush→palette；7 data database→cloud_upload；8 about system_update→info；23 描述 subject→article；22 未选 → 保持 travel_explore
+
 ## v8.39 · 2026-10-24
 - 「数据备份」图标 backup → database（Material `database` 圆柱）；backup 与 cloud_upload 视觉几乎相同，用户反馈「等于没换」
 
