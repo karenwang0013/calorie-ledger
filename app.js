@@ -2155,7 +2155,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.22';
+const APP_VERSION = 'v8.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4709,6 +4709,7 @@ async function disablePush() {
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
 let freshAt = { health: 0, body: 0 };
 let bodyVer = 0;   // v8.21：身体数据每写进本机一次就 +1，定时轮询靠它判断要不要重画页面
+let _giteeLightAt = 0;   // v8.23：镜像都读不到时，回退问 Gitee 的最低间隔（省额度）
 let lastHealthFrom = '';   // 最近一次热量数据是从哪一路读到的（镜像/GitHub/Gitee），排查用   // 上次直接读 Gitee 源的时间（5 分钟内不重复读）
 const _gtCache = {};
 let giteeBlockedUntil = 0;
@@ -6228,6 +6229,20 @@ async function pullBodyJson(forceFresh, light) {
     const jobs = [getText('body.json?t=' + stamp), getText(GH_RAW + 'body.json?t=' + stamp)];
     jobs.push(light ? Promise.resolve('') : ((needFresh || giteeBlockedUntil < Date.now()) ? giteeFresh('body.json') : Promise.resolve('')));
     const got = await Promise.all(jobs);
+    // v8.23：GitHub 全挂了（国内网络/代理抽风）时，同源镜像和 raw 两路都是空 → 回退问一次 Gitee。
+    // 至少隔 120 秒问一次，匿名额度（60/小时）不至于被打光。
+    if (light && !got.some(t => {
+      try {
+        const j = JSON.parse(t);
+        return Array.isArray(j.items) || ['w', 'bf', 'bmi', 'ffm'].some(k => String(j[k] == null ? '' : j[k]).trim() !== '');
+      } catch (e) { return false; }
+    }) && Date.now() - _giteeLightAt > 120000 && giteeBlockedUntil < Date.now()) {
+      _giteeLightAt = Date.now();
+      try {
+        const gf = await giteeFresh('body.json');
+        if (gf) { got.push(gf); jobs.push('gitee'); }
+      } catch (e) { /* 限流/没网，下一轮再说 */ }
+    }
     // v8.21 到底用哪一份（以前是「字符串日期大的赢，一样大就后者赢」，Gitee 是第 3 路，永远输）：
     // ① Gitee 有值 → 直接用 Gitee（它是源；同源镜像和 GitHub raw 都可能落后几小时）
     // ② 没有 Gitee（定时轮询 / 被限流）→ 看文件里的写入时刻 t，谁的 t 新用谁
