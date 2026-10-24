@@ -1,3 +1,6 @@
+## v8.39 · 2026-10-24
+- 「数据备份」图标 backup → database（Material `database` 圆柱）；backup 与 cloud_upload 视觉几乎相同，用户反馈「等于没换」
+
 ## v8.38 · 2026-10-24
 - 按用户复制提交的 23 条（全 Material）落地：`#addTabs` 三格 → photo_camera / travel_explore / subject
 - 用户点名「没换」的四行（1/5/7/8）：其「推荐」本来就等于现有图标 → 改用形状不同的备选：accessibility_new / brush / backup / system_update
