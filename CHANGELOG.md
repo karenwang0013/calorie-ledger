@@ -1,3 +1,7 @@
+## v8.42 · 2026-10-24
+- 记录卡按钮加图标：`#pickCamera`=add_a_photo、`#pickAlbum`=photo_library、`#saveItems`=check（Material fill1 内联），CSS 加 `#addSheet` 内 svg 18px + 同中心线
+- 选图页扩到 26 个位置 / 133 个候选（新增 24 拍照按钮、25 从相册选、26 记入）
+
 ## v8.41 · 2026-10-24
 - 4 AI 识别 → psychology（大脑+电路）；5 个性化 → brush；7 数据备份 → database；8 关于与更新 → system_update
 - 原因：v8.40 完全照用户提交清单执行，但清单里这 4 项填的正是原图标（auto_awesome/palette/cloud_upload/info）→ 视觉无变化；选图页把「当前」重复列为候选是诱因

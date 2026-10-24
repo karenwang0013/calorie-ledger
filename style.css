@@ -2727,3 +2727,8 @@ body.set-open .toast, body.nlog-open .toast {
   top: calc(var(--topbar-h, 64px) + 8px);
   bottom: auto;
 }
+
+/* 记录卡里的按钮也带图标：和文字同一中心线，尺寸固定 18，圆角和间距不动 */
+#addSheet .prow-pick .pickbtn svg,
+#addSheet .sh-foot .btn svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#addSheet .prow-pick .pickbtn, #addSheet .sh-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
