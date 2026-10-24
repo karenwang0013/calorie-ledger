@@ -2643,6 +2643,11 @@ body.nlog-open .bellbtn { color: var(--lime); }
   --set-inner-r: 22px;
   border-radius: var(--set-inner-r);
   clip-path: inset(0 round var(--set-inner-r));
+  /* iOS Safari：滚动容器只写 border-radius 常常不裁（滚动时的内容会露方角），
+     这个 -webkit-mask 是强制裁剪的老办法；放在滚动区这一层，不影响卡片的玻璃模糊 */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
 }
 
 :root {
