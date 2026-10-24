@@ -2577,8 +2577,8 @@ body.nlog-open .bellbtn { color: var(--lime); }
 #setBody { padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block; }   /* .sheet .sh-body 是 column flex，这里必须回成 block，否则行卡会被压扁裁掉 */
 
 :root {
-  /* 卡里行卡的底色：黑 62%，但仍透（背后圆环会隐约透上来）。只改这一处 */
-  --setrow-fill: rgba(2, 4, 3, .62);
+  /* 卡里行卡的底色：只改这一处。当前 = 原来的「白 8.5%」（和 --btn-solid 同值，外观与 v8.31 一模一样） */
+  --setrow-fill: rgba(255, 255, 255, .085);
 }
 /* 子页在卡里就地渲染：标题已在卡头，页面自己那条返回栏藏掉 */
 #setBody .mehead { display: none; }
