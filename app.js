@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.20', d: '10-24', items: [
+    '修：体重称了却不进云端 —— 真原因是 App 每 30 秒同步一次都在调 Gitee 的接口，一小时把这套接口的额度（60 次）用光，手机上的「健康采集」快捷指令想写数据时被拒',
+    '改：自动同步只读网页镜像（不占额度），Gitee 实时读取最多 10 分钟一次；手动点「数据同步」仍然立刻读最新',
+  ]},
   { v: 'v8.19', d: '10-24', items: [
     '修：体脂秤有时候只把体脂率/去脂体重写进「健康」、漏掉体重，账本就整份不更新 —— 现在缺体重时按「去脂体重 ÷ (1−体脂率)」自己算出来，数据照常记上',
     '加：云端身体数据这次什么都没取到时，会记一条可见的错误（设置 → 关于与更新 → 错误记录），不再悄悄不动',
@@ -2142,7 +2146,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.19';
+const APP_VERSION = 'v8.20';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4707,7 +4711,7 @@ async function giteeGetText(path, force) {
     throw new Error('HTTP 403（限流冷却中）');
   }
   const hit = _gtCache[path];
-  if (!force && hit && now - hit.at < 300000) return hit.txt;   // 5 分钟内复用
+  if (!force && hit && now - hit.at < 900000) return hit.txt;   // 15 分钟内复用（Gitee 每小时只有 60 次额度，省给快捷指令）
   let r = null, err = null;
   for (let i = 0; i < 2; i++) {
     try {

@@ -1238,6 +1238,13 @@ function downloadCsv() {
 const CLOUD = { owner: 'karen228', repo: 'calorie-ledger-data', path: 'data.json', branch: 'master' };
 const CLOUD_RAW = `https://gitee.com/${CLOUD.owner}/${CLOUD.repo}/raw/${CLOUD.branch}`;
 let cloudTimer = null, cloudBusy = false, cloudPulling = false, cloudSha = null, cloudLast = '';
+/* Gitee 的 Contents API 额度只有每小时 60 次。App 开着时每 30 秒同步一次，
+   每次都走 API 读取 → 一小时 120 次，直接把额度打爆；
+   结果手机上的「健康采集」快捷指令写 body.json 时被 403 限流，
+   人明明称了体重，云端却没有（2026-10-24 就是这个原因，查了一圈才发现）。
+   所以自动同步只读同源镜像（GitHub Pages 的 data.json，没有额度），
+   API 实时读取最多 10 分钟一次；手动点「数据同步」不受限制。 */
+let cloudApiAt = 0;
 let cloudErr = '', cloudFailUntil = 0;
 function cloudLastError() { return cloudErr; }
 
@@ -1442,6 +1449,13 @@ async function cloudPull(force) {
         }
       }
     } catch (e) {}
+    // 额度节流：同源镜像已经是 5 分钟内的，就别再打 Gitee API（省额度给快捷指令写数据）
+    if (!force && Date.now() - cloudApiAt < 10 * 60 * 1000) {
+      cloudPulling = false;
+      if (typeof clearErr === 'function') clearErr('err-pull');
+      return 'behind';
+    }
+    cloudApiAt = Date.now();
     res = await fetchRetry(cloudReadUrl(), { headers: { 'Accept': 'application/json' } }, 8000, 1);
     if (res.status === 404) { cloudPulling = false; return cloudPush(); }
     if (!res.ok) throw new Error('读取失败 ' + res.status);
