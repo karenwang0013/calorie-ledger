@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.57', d: '10-24', items: [
+    '补：记录卡、提醒记录卡的滚动区也一起改成 22px 圆弧（同一套 iOS 强制裁剪），三张卡一致',
+  ] },
   { v: 'v8.56', d: '10-24', items: [
     '改：记录卡顶部「拍照 / 搜索 / 描述」那条椭圆框更透了（黑 46%/58% → 26%/38%），只改这一条，Dock 和别的卡没动',
   ] },
@@ -2308,7 +2311,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.56';
+const APP_VERSION = 'v8.57';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

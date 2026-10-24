@@ -2811,3 +2811,13 @@ body.set-open .toast, body.nlog-open .toast {
 .icopt svg { width: 22px; height: 22px; fill: currentColor; display: block; margin: 0 auto; }
 .icopt span { display: block; font-size: 8px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .icopt.on { color: var(--lime); border-color: rgba(214,255,75,.5); }
+
+/* 其余卡片里的滚动区也按同一套裁（记录卡列表 / 提醒记录列表）：
+   22px 圆角 + iOS 强制裁剪，滑动时不出方角 */
+#addSheet .sh-body, #nlogList {
+  border-radius: 22px;
+  clip-path: inset(0 round 22px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+}
