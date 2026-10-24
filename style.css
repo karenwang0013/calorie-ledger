@@ -1491,20 +1491,22 @@ body.add-open .sheet-mask.on {
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
 
-/* ---- 记录卡里「装东西的框」统一用「描述」下方那个输入框的玻璃质感（B2）----
-   用户 2026-10-24：① 拍照/从相册选下面的大框、② 识别热量下面的小框、
-   ③ 实物照片 + 营养成分这两个框，全部换成和 textarea 一样的质感。
-   B2 = linear-gradient(180deg, rgba(34,38,36,.52) → rgba(24,28,26,.62)) + var(--edge-gloss) 描边
-   （照抄 style.css 里 input/textarea 那段的同值写法；圆角与尺寸各自不动，
-    搜索框本来就是 input，已经是这套，不用改。） */
+/* ---- 记录卡里「装东西的框」统一换成「设置」里那张行卡的材质（--setrow-fill 那套）----
+   用户 2026-10-24 点名四处：① 拍照/从相册选下面的大卡 ② 实物照片 + 营养成分两张小卡
+   ③ 描述下面的大框 ④ 识别热量/食材/克数/补充说明那张卡。
+   照抄 .setrows：黑 40% 实底 + var(--edge-gloss) 描边 + inset 顶部高光 10% + 圆角 22，
+   不加模糊（设置里的行卡本来就没有模糊）。圆角也按这套走。 */
 .drop.photobox,
 #photoActions,
-.pslot-empty {
+.pslot-empty,
+#textInput {
   background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%), var(--edge-gloss);
-  background-origin: border-box, border-box;
+  background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
+  background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
