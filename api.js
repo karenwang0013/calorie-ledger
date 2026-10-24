@@ -1428,7 +1428,11 @@ function _keepFreshBody(local, rd, cloudAt) {
       if (!mine) continue;
       // 云端这一天的数也必须是从体脂秤来的、而且比本机这份新，才许盖
       // （没带 bodyAt = 那台设备没从体脂秤拿到过这天的数，它那份多半是旧 data.json 里的残留）
-      const okOverwrite = theirs[k] && theirs[k] > mine;
+      let okOverwrite = theirs[k] && theirs[k] > mine;
+      // v8.25：云端文件里带了自己声明的时刻 t（Mac 写 body.json 时会带）→ 比它更旧就不许盖
+      const mt = (local.bodyT || {})[k] || 0;
+      const rt = (rd.bodyT || {})[k] || 0;
+      if (okOverwrite && mt && rt && rt < mt) okOverwrite = false;
       if (!okOverwrite) {
         if (rd.weights) delete rd.weights[k];
         if (rd.body) delete rd.body[k];

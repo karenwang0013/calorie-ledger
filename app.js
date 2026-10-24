@@ -24,6 +24,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.25', d: '10-24', items: [
+    '修：刚收到最新体重，过一会儿又自己退回上一个重量 —— 现在会比对云端文件自带的写入时刻，比手机这份更旧的一律不认，旧镜像盖不回来',
+  ] },
   { v: 'v8.24', d: '10-24', items: [
     '修：「设置 → 身体数据」点过「数据同步」还是不刷新、要杀进程重开才变 —— 现在进入这页/打开设置时会顺手拉一次最新体重体脂并立刻重画',
     '这一拉走网页镜像，不占 Gitee 额度',
@@ -2159,7 +2162,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.24';
+const APP_VERSION = 'v8.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6318,9 +6321,12 @@ async function pullBodyJson(forceFresh, light) {
       const d0 = Store.load();
       d0.body = d0.body || {}; d0.weights = d0.weights || {};
       let n = 0;
+      d0.bodyT = d0.bodyT || {};
       for (const it of j.items) {
         const dd = String(it.d || '').slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
+        const itT = Number(it.t) || Number(j.t) || 0;
+        if (itT && d0.bodyT[dd] && itT < d0.bodyT[dd]) continue;   // v8.25：旧的不许盖新的
         const w = Number(it.w) || 0, bf = Number(it.bf) || 0;
         const bmi = Number(it.bmi) || null, ffm = Number(it.ffm) || null;
         if (!w && !bf && !bmi && !ffm) continue;
@@ -6328,6 +6334,7 @@ async function pullBodyJson(forceFresh, light) {
         d0.body[dd] = { bf: bf || null, bmi, ffm };
         d0.bodyAt = d0.bodyAt || {};
         d0.bodyAt[dd] = Date.now();   // v8.21：见下面单条分支的说明
+        if (itT) d0.bodyT[dd] = itT;
         n++;
       }
       if (!n) return null;
@@ -6380,6 +6387,13 @@ async function pullBodyJson(forceFresh, light) {
       if (same) return { d: latestD, n: 0, same: true };
       date = todayISO();
     }
+    // v8.25：这份文件里带的写入时刻 t 比本机记的更旧 → 直接拒绝。
+    // 起因：刚收到最新体重后，60 秒轮询又读到还没发布完的旧镜像，把界面退回了旧数。
+    const jt = Number(j.t) || 0;
+    d.bodyT = d.bodyT || {};
+    if (jt && d.bodyT[date] && jt < d.bodyT[date]) {
+      return { d: date, n: 0, stale: true };
+    }
     const cur = (d.body && d.body[date]) || {};
     if (d.weights[date] === w && cur.bf === bf) {
       // v8.21：数没变也要记下「这份是从秤上来的、什么时候来的」（跨设备防回退靠它）
@@ -6388,6 +6402,9 @@ async function pullBodyJson(forceFresh, light) {
         d.bodyAt[date] = Date.now();
         Store.save({ silent: true });
       }
+      if (jt && (!d.bodyT[date] || jt > d.bodyT[date])) {
+        d.bodyT[date] = jt; Store.save({ silent: true });
+      }
       return j;
     }
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
@@ -6395,6 +6412,8 @@ async function pullBodyJson(forceFresh, light) {
     // 两台设备互相同步时（api.js cloudPull），比它旧的云端记录不许再把这一天盖回去。
     d.bodyAt = d.bodyAt || {};
     d.bodyAt[date] = Date.now();
+    d.bodyT = d.bodyT || {};
+    d.bodyT[date] = jt || Date.now();   // v8.25：记下这份数据自己声明的时刻，用来挡住旧镜像
     bodyVer++;
     let bmi = jbmi || cur.bmi || null;
     if (!bmi && w) {
