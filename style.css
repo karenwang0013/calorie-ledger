@@ -2492,3 +2492,22 @@ select:focus {
   border: 1px solid transparent;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
+
+/* ===== 设置行按下态：铺满整行、圆角跟卡片，不再有缝 =====
+   原因：.srow:active 原来带 transform: scale(.99)，按下时整行缩了一圈，
+   白色底色跟着缩 → 和卡片圆角之间露出缝。
+   现在：行不缩（只改底色 + 文字亮度），底色铺满整行；首末行的圆角由卡片的 overflow:hidden 裁出来。 */
+.srow:active {
+  transform: none;
+  background: var(--btn-solid);
+}
+/* 按下色左右各外扩 1px，贴住卡片内沿（内边距不会留细缝） */
+.srow { position: relative; }
+.srow:active::after {
+  content: '';
+  position: absolute;
+  left: -1px; right: -1px; top: 0; bottom: 0;
+  background: var(--btn-solid);
+  z-index: -1;
+  pointer-events: none;
+}
