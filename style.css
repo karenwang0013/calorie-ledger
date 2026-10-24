@@ -1517,10 +1517,11 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
 }
-/* 两个照片小框：单色黑 15%（无渐变） */
+/* v8.72 用户定稿：两个照片格用「大框渐变的中间值」做**不透明实色**，彻底没有上下明暗差。
+   #111412 = 大框渐变中点（黑 32%）叠在卡底色上的等效色；描边仍走 edge-gloss。 */
 .pslot-empty {
-  background-color: transparent;
-  background-image: linear-gradient(rgba(13, 15, 14, .15), rgba(13, 15, 14, .15)), var(--edge-gloss);
+  background-color: #111412;
+  background-image: var(--edge-gloss);
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
