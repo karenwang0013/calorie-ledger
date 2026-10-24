@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=840">
+<link rel="stylesheet" href="style.css?v=842">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -255,7 +255,7 @@
     <!-- 描述 -->
     <div class="pane" id="pane-text" hidden>
       <textarea id="textInput" rows="4" placeholder="比如：一碗牛肉面，加了两个卤蛋，一杯冰美式"></textarea>
-      <button class="btn primary" id="textGo" style="margin-top:10px"><svg data-icn="btn.text" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm450 230-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70Z"/></svg>估算热量</button>
+      <button class="btn primary" id="textGo" style="margin-top:10px"><svg data-icn="btn.text" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M160-400q0-113 67-217t184-182q22-15 45.5-1.5T480-760v52q0 34 23.5 57t57.5 23q17 0 32.5-7.5T621-657q8-10 20.5-12.5T665-664q63 45 99 115t36 149q0 88-43 160.5T644-125q17-24 26.5-52.5T680-238q0-40-15-75.5T622-377L480-516 339-377q-29 29-44 64t-15 75q0 32 9.5 60.5T316-125q-70-42-113-114.5T160-400Zm320-4 85 83q17 17 26 38t9 45q0 49-35 83.5T480-120q-50 0-85-34.5T360-238q0-23 9-44.5t26-38.5l85-83Z"/></svg>估算热量</button>
       <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.5;text-align:center">
         用「碗 / 个 / 份」就行，自动换算成克。
       </div>
@@ -447,10 +447,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=840"></script>
-<script src="icons.js?v=840"></script>
-<script src="api.js?v=840"></script>
-<script src="app.js?v=840"></script>
+<script src="foods.js?v=842"></script>
+<script src="icons.js?v=841"></script>
+<script src="api.js?v=842"></script>
+<script src="app.js?v=842"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

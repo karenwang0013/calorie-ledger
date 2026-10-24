@@ -453,14 +453,8 @@ window.ICON_SLOTS = [
  {
   "k": "btn.text",
   "label": "按钮·估算热量",
-  "def": "auto_awesome",
-  "opts": [
-   "auto_awesome",
-   "calculate",
-   "psychology",
-   "bolt",
-   "query_stats"
-  ]
+  "def": "local_fire_department",
+  "opts": []
  }
 ];
-window.ICON_DEFAULT = {"set.body": "accessibility_new", "set.goal": "track_changes", "set.weight": "insights", "set.ai": "auto_awesome", "set.theme": "palette", "set.notify": "notifications_active", "set.backup": "cloud_upload", "set.about": "info", "nlog.weight": "monitor_weight", "nlog.goal": "local_fire_department", "nlog.day": "sticky_note_2", "nlog.watch": "watch", "nlog.fail": "dangerous", "st.sync": "cached", "st.reload": "refresh", "st.bell": "notifications", "st.gear": "settings", "dk.today": "calendar_today", "dk.add": "edit_note", "dk.trend": "bar_chart", "tab.photo": "photo_camera", "tab.search": "travel_explore", "tab.text": "description", "btn.cam": "photo_camera", "btn.album": "collections", "btn.save": "bookmark_added", "btn.go": "bolt", "btn.text": "auto_awesome"};
+window.ICON_DEFAULT = {"set.body": "accessibility_new", "set.goal": "track_changes", "set.weight": "insights", "set.ai": "auto_awesome", "set.theme": "palette", "set.notify": "notifications_active", "set.backup": "cloud_upload", "set.about": "info", "nlog.weight": "monitor_weight", "nlog.goal": "local_fire_department", "nlog.day": "sticky_note_2", "nlog.watch": "watch", "nlog.fail": "dangerous", "st.sync": "cached", "st.reload": "refresh", "st.bell": "notifications", "st.gear": "settings", "dk.today": "calendar_today", "dk.add": "edit_note", "dk.trend": "bar_chart", "tab.photo": "photo_camera", "tab.search": "travel_explore", "tab.text": "description", "btn.cam": "photo_camera", "btn.album": "collections", "btn.save": "bookmark_added", "btn.go": "bolt", "btn.text": "local_fire_department"};
