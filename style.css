@@ -2611,7 +2611,7 @@ html.kb #setSheet {
 .setrows.last { margin-bottom: 0; }
 .setrow {
   display: flex; align-items: center; gap: 13px;
-  width: 100%; height: 54px; padding: 0 15px; position: relative;
+  width: 100%; min-height: 54px; padding: 6px 15px; position: relative;
   background: none; border: 0; color: var(--text); text-align: left;
   font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: .1px;
 }
@@ -2628,6 +2628,21 @@ html.kb #setSheet {
   text-align: right; white-space: nowrap;
 }
 .setrow i { color: #5b625c; font-style: normal; font-size: 17px; line-height: 1; margin-left: 2px; transform: translateY(-1px); }
+/* 行里的文字：标题一行 / 说明一行（说明只在提醒记录里出现），右侧时间等宽 */
+.setrow .ttl { font-size: 15px; font-weight: 500; letter-spacing: .1px; line-height: 1.3; }
+.setrow .sub {
+  font-size: 11.5px; color: var(--muted2); margin-top: 2px; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px;
+}
+.setrow .when {
+  flex: 0 0 auto; margin-left: auto; font-size: 13.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+}
+/* 危险动作的胶囊：只用红字，不新增颜色（和「危险操作用红字」那条一致） */
+.setpill.danger {
+  margin-left: auto; color: #ff7b7b;
+  background-image: linear-gradient(rgba(255,93,93,.10), rgba(255,93,93,.10)), var(--edge-gloss);
+}
 /* 版本行：没图标、没箭头，右侧一颗荧光绿胶囊 */
 .setrow.ver { padding-left: 15px; }
 .setrow.ver em { margin-right: 12px; }
@@ -2638,3 +2653,26 @@ html.kb #setSheet {
   background-origin: border-box; background-clip: padding-box, border-box;
   border: 1px solid transparent;
 }
+
+/* ==================================================================
+   提醒记录卡：外形 / 材质 / 位置 / 圆角 / 底边 / 高度 全部照设置卡
+   （材质仍由上面 #nlogSheet,#addSheet 那条母版定义，这里只管布局）
+   ================================================================== */
+#nlogSheet { min-height: 0; padding: 18px 0 20px; }
+#nlogSheet .sh-hd {
+  position: static; display: flex; align-items: center; gap: 9px;
+  padding: 14px 22px 15px; min-height: 0;
+}
+#nlogSheet .sh-hd h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: .3px; text-align: left; }
+#nlogSheet .sh-hd .done {
+  margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--text);
+  padding: 8px 15px; border-radius: 13px;
+  background-image: linear-gradient(rgba(255,255,255,.085), rgba(255,255,255,.085)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}
+#nlogSheet .sh-body { padding: 0; display: block; overflow: hidden; }
+#nlogList { max-height: none; flex: 1 1 auto; height: 100%; padding: 0; display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#nlogFoot { background: transparent; border-top: 0; padding: 0 0 0; flex: 0 0 auto; }
+#nlogEmpty { padding: 18px 20px 22px; font-size: 13px; color: var(--muted2); line-height: 1.6; }
+#nlogEmpty span { display: block; font-size: 12px; margin-top: 4px; color: var(--muted2); opacity: .8; }

@@ -1,3 +1,9 @@
+## v8.31 · 2026-10-24
+- 改：`#nlogSheet` 换成设置卡外形 —— 头 24/700 + 「完成」胶囊；列表改为 `.setlabel`（今天/更早）+ `.setrows/.setrow`（21px 荧光绿 Material 图标 + 15/500 标题 + 11.5 说明 + 13.5 右侧时间）；底部固定「共 N 条 + 红色清空胶囊」
+- 改：提醒记录卡高度锁成设置卡同一值（`ensureSetCardH()` → `#setSheet.offsetHeight`，实测两张卡都是 678 / top 152 / bottom 830）
+- 改：`.setrow` 由 `height:54px` 改 `min-height:54px; padding:6px 15px`，两行内容也压在 54 内（设置卡 9 行实测仍全 54）
+- 加：`iconOf(kind, ok)` 图标映射（body/weight→秤，watch→云，goal→目标，day→铃铛，失败→橙色 info）
+
 ## v8.30 · 2026-10-24
 - 改：设置卡 `#setSheet` 的 `padding-top` 18px（卡上沿抬高，内容不动；锁定高度机制自动跟着变 678）
 - 改：`.setrows` / `#setBody .card` 改用「清空记录」按钮那套材质（`--btn-solid` 8.5% + `--edge-gloss` + `inset 0 1px 0 rgba(255,255,255,.10)`）

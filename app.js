@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.31', d: '10-24', items: [
+    '改：提醒记录卡换成设置卡的样子 —— 同一个头（提醒记录 + 完成）、同样的行卡（图标 + 标题 + 小字说明 + 右侧时间）、分成「今天 / 更早」两组',
+    '改：提醒记录的尺寸和设置卡完全一样（同一高度、同一底边），记录多了在卡里滑，底部「共 N 条 + 清空记录」一直看得见',
+    '改：失败那条的图标用橙色，一眼分得清',
+  ] },
   { v: 'v8.30', d: '10-24', items: [
     '改：设置卡的顶部再抬高 18px（内容一个字没动）',
     '改：设置卡里每一块信息条换成「清空记录」那颗按钮的玻璃质感（白 8.5% + 亮边 + 顶边高光）',
@@ -2188,7 +2193,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.30';
+const APP_VERSION = 'v8.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2220,7 +2225,7 @@ let toastTimer = null;
         closeX: true, showTitle: true, titleCenter: false
       这样标题会回到左上、和 ×（距顶 0.52 个圆角半径）同一条中心线、16px。
       注意：横杠宽度（66px）和卡片玻璃质感【不要】跟着回退，保持现状。 */
-const NLOG_UI = { closeX: false, grab: true, titleCenter: false, showTitle: false };
+const NLOG_UI = { closeX: true, grab: true, titleCenter: false, showTitle: true };   // v8.31：和设置卡一样，固定「标题 + 完成」
 let bodyTrendPage = 0;     // 体重趋势第几页（0 = 最新的 7 次记录）
 let trSelDate = null;      // 趋势页体重图上点选的日期
 let bodySelDate = null;    // 图上点选的那一天（不点 = 最近一次）
@@ -4862,6 +4867,7 @@ function nlogOn() {
 }
 function openNotifyLog() {
   closeSetCard();   // 两张卡不要叠在一起：先收设置卡
+  ensureSetCardH(); // 和设置卡同高（这时设置卡是关着的，量的就是标准尺寸）
   // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
   let all = notifyLogGet();
   if (!all.length && !localStorage.getItem('notify_demo_seeded')) {
@@ -4876,14 +4882,45 @@ function openNotifyLog() {
   }
   const list = all.slice().sort((a, b) => b.ts - a.ts);
   const box = $('#nlogList');
+  // 和设置卡同一套行式布局：荧光绿 Material 图标 + 标题 + 小字说明 + 右侧时间
+  const isoOf = (ts) => {
+    const t = new Date(ts), p2 = n => String(n).padStart(2, '0');
+    return t.getFullYear() + '-' + p2(t.getMonth() + 1) + '-' + p2(t.getDate());
+  };
+  const labelOf = (ts) => {
+    const iso = isoOf(ts), t = new Date(ts), p2 = n => String(n).padStart(2, '0');
+    return iso === todayISO() ? p2(t.getHours()) + ':' + p2(t.getMinutes()) : iso.slice(5);
+  };
+  const iconOf = (k, ok) => {
+    if (ok === false) return 'info';            // 失败那条：橙色信息图标
+    const s = String(k || '');
+    if (s.includes('body') || s.includes('weight')) return 'weight';
+    if (s.includes('goal')) return 'goal';
+    if (s.includes('watch')) return 'cloud';
+    return 'bell';
+  };
+  const rowOf = x => `
+    <div class="setrow">
+      <span class="ico"${x.ok === false ? ' style="color:var(--orange)"' : ''}><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${SET_ICONS[iconOf(x.k, x.ok)]}"/></svg></span>
+      <span><div class="ttl">${esc(x.t || '提醒')}</div>${x.b ? `<div class="sub">${esc(x.b)}</div>` : ''}</span>
+      <span class="when">${labelOf(x.ts)}</span>
+    </div>`;
   if (box) {
-    box.innerHTML = list.length ? list.map(x => `
-      <div class="ncard">
-        <div class="nt"><i class="nicon ${x.ok === false ? 'bad' : 'ok'}">${x.ok === false ? '⚠️' : '✓'}</i>${esc(x.t || '提醒')}<span class="nw">${new Date(x.ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
-        <div class="nb">${esc(x.b || '')}</div>
-      </div>`).join('')
-      : `<div class="ncard nempty">还没有提醒记录<br><span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div>`;
+    if (list.length) {
+      const today = list.filter(x => isoOf(x.ts) === todayISO());
+      const older = list.filter(x => isoOf(x.ts) !== todayISO());
+      box.innerHTML = [['今天', today], ['更早', older]]
+        .filter(g => g[1].length)
+        .map(([label, arr]) => `<div class="setlabel">${label}</div><div class="setrows">${arr.map(rowOf).join('')}</div>`)
+        .join('');
+    } else {
+      box.innerHTML = `<div class="setrows"><div id="nlogEmpty">还没有提醒记录<span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div></div>`;
+    }
   }
+  const cnt = $('#nlogCount');
+  if (cnt) cnt.textContent = '共 ' + list.length + ' 条';
+  // 尺寸和设置卡一致（同一张卡，内容多了在卡里滚）
+  const nlogH = ensureSetCardH();
   localStorage.setItem('notify_seen_ts', String(Date.now()));
   renderNotifyDot();
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
@@ -4894,6 +4931,7 @@ function openNotifyLog() {
     sheet.classList.toggle('hide-title', !NLOG_UI.showTitle);
   }
   document.body.classList.add('nlog-open');
+  if (sheet && nlogH) sheet.style.height = nlogH + 'px';
   raiseSheet(sheet);                         // 最后打开的放在最上面
   // 位置：恢复原来的底部位置（居中会和 Dock 栏重叠）
   if (sheet) { sheet.style.top = ''; sheet.style.bottom = ''; }
@@ -4903,7 +4941,7 @@ function openNotifyLog() {
 function closeNotifyLog() {
   document.body.classList.remove('nlog-open');
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
-  if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; }
+  if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; sheet.style.height = ''; }
   if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.remove('on');
   // 临时定位（top/bottom）也要清掉，否则下次的"关闭位置"会落在屏幕里
@@ -5134,6 +5172,16 @@ function refreshSetBody() {
   } else if (setCardH) {
     sheet.style.height = setCardH + 'px';       // 子页：尺寸不变，装不下就在卡里上下滑
   }
+}
+
+/* 设置卡那张卡的标准高度：提醒记录卡也要用同一个值（两张卡同一尺寸） */
+function ensureSetCardH() {
+  if (setCardH) return setCardH;
+  const s = $('#setSheet');
+  if (!s || !S.day || mePage) return 0;
+  if (!s.querySelector('.setrow[data-page]')) renderSetCard();
+  setCardH = s.offsetHeight;
+  return setCardH;
 }
 
 /* 量一次首页卡高（进子页前必须先有这个值） */
