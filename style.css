@@ -2839,3 +2839,7 @@ body.set-open .toast, body.nlog-open .toast {
 /* 「估算热量」按钮的图标：18px、和文字同一中心线（与「识别热量」同一套） */
 #textGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
 #textGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+
+/* 「描述」页的「识别热量」按钮：字号/字重/内边距/圆角跟拍照页那颗完全一样
+   （拍照页 #photoGo 实测 16px / 600 / padding 16 / radius 15；原来这里是 14/550/14/14） */
+#textGo { font-size: 16px; font-weight: 600; padding: 16px; border-radius: 15px; }
