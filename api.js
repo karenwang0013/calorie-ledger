@@ -1422,15 +1422,21 @@ function _keepFreshBody(local, rd, cloudAt) {
   try {
     const at = (local && local.bodyAt) || {};
     if (!Object.keys(at).length || !rd) return;
-    const cAt = Date.parse(String(cloudAt || '')) || 0;
+    const theirs = (rd.bodyAt || {});
     for (const k of Object.keys(at)) {
-      if (!at[k] || (cAt && at[k] <= cAt)) continue;
-      if (rd.weights) delete rd.weights[k];
-      if (rd.body) delete rd.body[k];
+      const mine = at[k] || 0;
+      if (!mine) continue;
+      // 云端这一天的数也必须是从体脂秤来的、而且比本机这份新，才许盖
+      // （没带 bodyAt = 那台设备没从体脂秤拿到过这天的数，它那份多半是旧 data.json 里的残留）
+      const okOverwrite = theirs[k] && theirs[k] > mine;
+      if (!okOverwrite) {
+        if (rd.weights) delete rd.weights[k];
+        if (rd.body) delete rd.body[k];
+      }
     }
-    // 最近一次称重就是被保护的那天 → 顺带别让 profile.weight_kg 回头
+    // 被保护的是最近一次称重那天 → 顺带别让 profile.weight_kg 回头
     const lastD = Object.keys(at).sort().pop();
-    if (lastD && at[lastD] && (!cAt || at[lastD] > cAt) && rd.profile && local.weights && local.weights[lastD]) {
+    if (lastD && at[lastD] && !(theirs[lastD] > at[lastD]) && local.weights && local.weights[lastD] && rd.profile) {
       rd.profile.weight_kg = local.weights[lastD];
     }
   } catch (e) {}

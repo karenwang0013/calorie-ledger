@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.22', d: '10-24', items: [
+    '补：两台设备互相同步时，用「这一天的数是什么时候从秤上拿到的」来比新旧 —— 上一版只比文件时间，别的设备一推数据，刚称的数还是可能被云端那份旧的盖回去',
+    '补：云端体重文件里日期写成空的时候（米家偶尔这样），按今天算，不再被镜像里的旧日期压住',
+  ]},
   { v: 'v8.21', d: '10-24', items: [
     '修：称完体重后，设置 → 身体数据 有时还是上一回的重量 —— 数据其实已经取到手机上了，只是那一页打开时停在旧数、不会自己更新；现在取到新数就立刻重画，不用退出再进',
     '加：开着 App 的时候每 60 秒悄悄看一眼体重有没有更新（只读网页镜像，不占数据接口额度），有新数就自己换上',
@@ -2151,7 +2155,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.21';
+const APP_VERSION = 'v8.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6128,7 +6132,7 @@ function consumeBodyLink() {
     if (w === null && bf === null) return null;
     const date = u.searchParams.get('d') || todayISO();
     const d = Store.load();
-    if (w !== null) { d.weights[date] = w; d.profile.weight_kg = w; }
+    if (w !== null) { d.weights[date] = w; d.profile.weight_kg = w; d.bodyAt = d.bodyAt || {}; d.bodyAt[date] = Date.now(); }
     // BMI 没传就自己算（身高在「身体与目标」里）
     let bmiVal = bmi;
     if (!bmiVal && w) {
@@ -6224,11 +6228,11 @@ async function pullBodyJson(forceFresh, light) {
     const jobs = [getText('body.json?t=' + stamp), getText(GH_RAW + 'body.json?t=' + stamp)];
     jobs.push(light ? Promise.resolve('') : ((needFresh || giteeBlockedUntil < Date.now()) ? giteeFresh('body.json') : Promise.resolve('')));
     const got = await Promise.all(jobs);
-    // v8.21 到底用哪一份（以前是"字符串日期大的赢，一样大就后者赢"，Gitee 是第 3 路，永远输）：
-    // ① 文件里带写入时间 t（Mac 兜底脚本会写）→ 谁的 t 新用谁
-    // ② 没 t → 比日期，日期新的优先
-    // ③ 日期一样 → Gitee 那份优先（它是源，另外两份是镜像/缓存）
-    // ④ d 是空的但有数值 → 当作今天（这种以前会被镜像里的旧日期压住）
+    // v8.21 到底用哪一份（以前是「字符串日期大的赢，一样大就后者赢」，Gitee 是第 3 路，永远输）：
+    // ① Gitee 有值 → 直接用 Gitee（它是源；同源镜像和 GitHub raw 都可能落后几小时）
+    // ② 没有 Gitee（定时轮询 / 被限流）→ 看文件里的写入时刻 t，谁的 t 新用谁
+    // ③ 都没有 t → 比日期，日期新的优先
+    // ④ 日期一样 → 同源镜像优先（跟网页同源、最不容易被 CDN 缓存坑）
     const infoOf = t => {
       if (!t) return null;
       let j = null;
@@ -6245,14 +6249,18 @@ async function pullBodyJson(forceFresh, light) {
     got.forEach((t, i) => { const inf = infoOf(t); if (inf) { inf.i = i; cands.push(inf); } });
     let bodyText = '';
     if (cands.length) {
-      const eff = c => c.d || (c.hasVal ? todayISO() : '');
-      cands.sort((a, b) => {
-        if (a.t || b.t) return (b.t || 0) - (a.t || 0);          // 有写入时间就按它
-        const da = eff(a), db = eff(b);
-        if (da !== db) return da < db ? 1 : -1;                   // 日期新的优先
-        return (b.i === 2 ? 1 : 0) - (a.i === 2 ? 1 : 0);         // 同一天：Gitee 优先
-      });
-      bodyText = got[cands[0].i];
+      const gitee = cands.find(c => c.i === 2 && c.hasVal);
+      if (gitee) bodyText = got[gitee.i];
+      else {
+        const eff = c => c.d || (c.hasVal ? todayISO() : '');
+        cands.sort((a, b) => {
+          if (a.t !== b.t) return b.t - a.t;                      // 有写入时刻就按它
+          const da = eff(a), db = eff(b);
+          if (da !== db) return da < db ? 1 : -1;                  // 日期新的优先
+          return a.i - b.i;                                        // 同一天：镜像（第 1 路）优先
+        });
+        bodyText = got[cands[0].i];
+      }
     }
     // 定时轮询（light）读不到是常事（没网、CDN 抖），别往错误记录里写，免得每 60 秒刷一条
     if (!bodyText) { if (!light) logError('err-body', '体脂数据读取失败', 'body.json 三路都没读到'); return false; }
@@ -6272,6 +6280,11 @@ async function pullBodyJson(forceFresh, light) {
       try { j = JSON.parse(bodyText.replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
     }
     if (!j) return null;
+    // v8.21：文件里 d 是空的但确实有数值 → 按今天算（以前这种既比不过镜像的旧日期，日期也定不下来）
+    if (!Array.isArray(j.items) && !String(j.d || '').trim()
+        && ['w', 'bf', 'bmi', 'ffm'].some(k => String(j[k] == null ? '' : j[k]).trim() !== '')) {
+      j.d = todayISO();
+    }
     if (bodyAt) j._at = bodyAt;   // 这份数据写上去的时间
     // 支持历史批量导入：{"items":[{"d","w","bf","bmi","ffm"}, ...]}
     if (Array.isArray(j.items)) {
@@ -6341,7 +6354,15 @@ async function pullBodyJson(forceFresh, light) {
       date = todayISO();
     }
     const cur = (d.body && d.body[date]) || {};
-    if (d.weights[date] === w && cur.bf === bf) return j;
+    if (d.weights[date] === w && cur.bf === bf) {
+      // v8.21：数没变也要记下「这份是从秤上来的、什么时候来的」（跨设备防回退靠它）
+      if (w && !(d.bodyAt && d.bodyAt[date])) {
+        d.bodyAt = d.bodyAt || {};
+        d.bodyAt[date] = Date.now();
+        Store.save({ silent: true });
+      }
+      return j;
+    }
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
     // v8.21：记下这一天的数是「什么时候从体脂秤拿进来的」。
     // 两台设备互相同步时（api.js cloudPull），比它旧的云端记录不许再把这一天盖回去。
