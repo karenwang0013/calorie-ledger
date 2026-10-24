@@ -24,6 +24,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.30', d: '10-24', items: [
+    '改：设置卡的顶部再抬高 18px（内容一个字没动）',
+    '改：设置卡里每一块信息条换成「清空记录」那颗按钮的玻璃质感（白 8.5% + 亮边 + 顶边高光）',
+    '改：提醒记录打开时，顶栏那个铃铛也点亮（和设置齿轮一样）',
+    '加原则：设置卡和提醒记录卡同时只能显示一张 —— 开一个自动收掉另一个',
+  ] },
   { v: 'v8.29', d: '10-24', items: [
     '修：点设置里的选项后卡牌会变大变小（像换了张卡）—— 现在卡的尺寸锁死在设置列表那一屏的高度，进哪一项都一样大',
     '改：内容装不下时，就在卡里上下滑（不是把卡撑高）；滑到顶继续往下拽仍然是关掉卡',
@@ -2182,7 +2188,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.29';
+const APP_VERSION = 'v8.30';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4850,6 +4856,10 @@ function renderNotifyDot() {
   dot.hidden = false;
   dot.className = 'dot ' + kind;
 }
+function nlogOn() {
+  const s = $('#nlogSheet');
+  return !!(s && s.classList.contains('on'));
+}
 function openNotifyLog() {
   closeSetCard();   // 两张卡不要叠在一起：先收设置卡
   // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
@@ -5144,6 +5154,7 @@ function setBackToRoot() {
 function openSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
+  if (nlogOn()) closeNotifyLog();   // 原则：两张信息卡同时只允许开一张
   if (!setCardOn()) setFromView = (S.view && S.view !== 'me') ? S.view : (setFromView || 'today');
   refreshSetBody();
   document.body.classList.add('set-open');

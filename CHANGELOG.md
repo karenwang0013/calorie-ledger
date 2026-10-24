@@ -1,3 +1,9 @@
+## v8.30 · 2026-10-24
+- 改：设置卡 `#setSheet` 的 `padding-top` 18px（卡上沿抬高，内容不动；锁定高度机制自动跟着变 678）
+- 改：`.setrows` / `#setBody .card` 改用「清空记录」按钮那套材质（`--btn-solid` 8.5% + `--edge-gloss` + `inset 0 1px 0 rgba(255,255,255,.10)`）
+- 加：`body.nlog-open .bellbtn { color: var(--lime) }`，提醒记录开着时铃铛点亮
+- 加原则（写进 AGENTS.md）：设置卡 ⇄ 提醒记录卡同时只能开一张，`openSetCard()` 先 `closeNotifyLog()`
+
 ## v8.29 · 2026-10-24
 - 修：设置卡点进选项后高度会跟着内容变（看着像换了张卡）—— 现在进子页时卡高锁成首页那张卡的实测高度（`setCardH`，用 `offsetHeight` 量，避开入场 `scale(.98)` 的 647 误差），内容超出只在 `#setBody` 里滚
 - 实测（390×844）：首页 660，8 个子页全部 660（差 0）；375×667：首页 582，子页全部 582；身体数据 scrollHeight 1708 / 可视 574
