@@ -1493,28 +1493,32 @@ body.add-open .sheet-mask.on {
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
 
-/* ---- 记录卡里「装东西的框」统一换成「设置」里那张行卡的材质（--setrow-fill 那套）----
-   用户 2026-10-24 点名四处：① 拍照/从相册选下面的大卡 ② 实物照片 + 营养成分两张小卡
-   ③ 描述下面的大框 ④ 识别热量/食材/克数/补充说明那张卡。
-   照抄 .setrows：黑 40% 实底 + var(--edge-gloss) 描边 + inset 顶部高光 10% + 圆角 22，
-   不加模糊（设置里的行卡本来就没有模糊）。圆角也按这套走。 */
-.drop.photobox,
-#photoActions,
-.pslot-empty,
-#textInput {
+/* ---- 记录卡里「装东西的框」的材质 ----
+   2026-10-24 用户定稿分两套：
+   ① 识别热量/食材/克数/补充说明 那张卡 → 设置里那张行卡的材质（黑 40% 实底，不加模糊）
+   ② 照片大框 + 实物照片/营养成分两个小框 + 描述大框 → 照抄「拍照 / 搜索 / 描述」那条椭圆条：
+      黑 26%→38% 渐变 + 同一圈 edge-gloss 描边 + blur(10px) saturate(150%) + 顶边 5% 细高光 + 圆角 27 */
+#photoActions {
   background-color: transparent;
   background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
-  border-radius: 22px;
+  border-radius: 28px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
 }
-
-/* v8.52（用户定稿）：只有两个照片小框用黑 5%；包着它们的大框回到黑 40%（设置行卡原值）。 */
-.pslot-empty {
+.drop.photobox,
+.pslot-empty,
+#textInput {
   background-color: transparent;
-  background-image: linear-gradient(rgba(2, 4, 3, .05), rgba(2, 4, 3, .05)), var(--edge-gloss);
+  background-image: linear-gradient(180deg, rgba(13, 15, 14, .26) 0%, rgba(13, 15, 14, .38) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  border-radius: 27px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
