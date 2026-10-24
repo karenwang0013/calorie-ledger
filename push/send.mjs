@@ -33,8 +33,24 @@ const ws = Object.keys(store.weights || {}).sort();
 const lastW = ws[ws.length - 1];
 const daysW = lastW ? Math.floor((Date.now() - new Date(lastW + 'T00:00:00').getTime()) / 86400000) : 999;
 
-const event = process.env.EVENT || '';       // morning/evening/watch/goal/fail；'' = 手动或未知
 const bjHour = new Date(Date.now() + 8 * 3600 * 1000).getUTCHours();
+
+/* 定时那几次（北京时间 08:00–09:59 / 21:00–22:59 每 10 分钟一个窗口）：
+   不再靠 cron 字符串认事件，直接看北京几点；再用 push-sent.json 保证一天只发一次。
+   GitHub 的 schedule 会延迟，所以同一个事件有 12 次机会，谁先跑成功就算谁的。 */
+let event = process.env.EVENT || '';         // morning/evening/watch/goal/fail；'' = 按时间自动判断
+if (!event) {
+  if (bjHour >= 8 && bjHour < 10) event = 'morning';
+  else if (bjHour >= 21 && bjHour < 23) event = 'evening';
+}
+const SENT_FILE = 'push-sent.json';
+let sentMap = {};
+try { sentMap = JSON.parse(fs.readFileSync(SENT_FILE, 'utf8')) || {}; } catch (e) { sentMap = {}; }
+if ((event === 'morning' || event === 'evening') && sentMap[event] === today) {
+  console.log(`今天 ${event} 已经发过了（${sentMap[event]}），这次跳过`);
+  process.exit(0);
+}
+if (!event) { console.log('不在推送窗口内（北京时间 ' + bjHour + ' 点），跳过'); process.exit(0); }
 // 定时那次发什么，看 workflow 传进来的"是哪个 cron"（EVENT=morning/evening）。
 // 以前是按"北京时间几点"猜，GitHub 一延迟就猜错：22:00 那次延迟到 02:12，
 // 结果凌晨发了"上秤提醒"、22:00 的补记反而没发（v7.62 修）
@@ -55,6 +71,10 @@ if (isMorning) {
     body = need > 0
       ? `⚖️ 上秤时间 · 再连续称 ${need} 天就能算出真实消耗`
       : `⚖️ 上秤时间 · 每周称一次，曲线才准`;
+  } else if (weighedToday) {
+    // 今天已经称过：不发，但也记下来，窗口里后面那几次别再白跑
+    sentMap[event] = today;
+    try { fs.writeFileSync(SENT_FILE, JSON.stringify(sentMap, null, 2)); } catch (e) {}
   }
 } else if (event === 'watch') {
   if (flags.watch) body = `⌚ 数据已更新：活动 ${active} 千卡` + (left != null ? ` · 还可以吃 ${left} 千卡` : '');
@@ -80,3 +100,9 @@ for (const sub of subs) {
   catch (e) { if (e.statusCode === 404 || e.statusCode === 410) dead++; console.log('失败', e.statusCode, e.body || e.message); }
 }
 console.log(`发送完成（${event || '定时'}）：成功 ${ok}，失效 ${dead}，共 ${subs.length} → ${body}`);
+
+/* 发成功就把「今天这个事件已经发过」记下来，窗口里后面那几次就不再重复打扰 */
+if (ok > 0 && (event === 'morning' || event === 'evening')) {
+  sentMap[event] = today;
+  try { fs.writeFileSync(SENT_FILE, JSON.stringify(sentMap, null, 2)); } catch (e) {}
+}

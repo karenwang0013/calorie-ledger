@@ -1,19 +1,22 @@
 name: 每天锁屏推送
 
+# 为什么不是一个 cron：GitHub 的 schedule 经常延迟几十分钟、偶尔整天不跑
+# （2026-10-24 早上 08:30 那次压根没出现，用户一条都没收到）。
+# 现在改成「窗口内每 10 分钟试一次」，哪个点跑成功就发出去，之后靠 push-sent.json 去重。
 on:
   schedule:
-    - cron: '30 0 * * *'       # UTC 00:30 = 北京时间 08:30 —— 早上上秤提醒
-    - cron: '0 14 * * *'       # UTC 14:00 = 北京时间 22:00 —— 晚上补记提醒
+    - cron: '*/10 0-1 * * *'   # UTC 00:00–01:59 = 北京时间 08:00–09:59 —— 早上上秤提醒
+    - cron: '*/10 13-14 * * *' # UTC 13:00–14:59 = 北京时间 21:00–22:59 —— 晚上补记提醒
   workflow_dispatch:
     inputs:
       event:
-        description: '留空=定时检查；也可填 morning / watch / goal / fail 模拟事件'
+        description: '留空=按北京时间自动判断；也可填 morning / evening / watch / goal / fail'
         required: false
   repository_dispatch:
-    types: [watch, goal, fail]   # App 发生事件时立刻触发
+    types: [watch, goal, fail, morning, evening, cron]   # App 事件 + 外部准点触发
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   push:
@@ -29,7 +32,16 @@ jobs:
         env:
           VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
-          # 定时触发时用 github.event.schedule 认"是哪一个 cron"，
-          # 不能靠"北京时间几点"去猜：GitHub 的定时经常延迟几小时，
-          # 昨晚 22:00 那次就是延迟到凌晨 02:12 才跑，被当成"早上"发了上秤提醒（v7.62 修）
-          EVENT: ${{ github.event.client_payload.type || github.event.inputs.event || (github.event.schedule == '30 0 * * *' && 'morning') || (github.event.schedule == '0 14 * * *' && 'evening') || '' }}
+          # 定时触发时不再靠 cron 字符串判断（现在一个窗口有 12 个 cron）：
+          # 交给 send.mjs 按北京时间 + 窗口判断，并用 push-sent.json 保证一天只发一次。
+          EVENT: ${{ github.event.client_payload.type || github.event.inputs.event || '' }}
+      - name: 记下今天已发过（防空窗重复推送）
+        run: |
+          if [ -f push-sent.json ] && ! git diff --quiet -- push-sent.json; then
+            git config user.name "data-bot"
+            git config user.email "data-bot@users.noreply.github.com"
+            git add push-sent.json
+            git commit -m "push sent $(date -u +%FT%TZ)"
+            git pull --rebase --autostash -q origin main || true
+            git push || true
+          fi
