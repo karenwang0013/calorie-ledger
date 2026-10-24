@@ -1491,6 +1491,8 @@ body.add-open .sheet-mask.on {
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
 #photoActions .prow2 input,
 #photoActions #photoHint { padding-top: 10px; padding-bottom: 10px; }
+/* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
+#photoActions .btnrow { margin-bottom: 10px; }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
