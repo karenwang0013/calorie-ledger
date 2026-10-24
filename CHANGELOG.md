@@ -1,3 +1,9 @@
+## v8.47 · 2026-10-24
+- 新增 `icons.js`（图标库 125 个 + 27 个位置的默认值/候选）与 app.js 的 `iconPath(slot)` / `iconOverride()` / `applyStaticIcons()`
+- 设置 → 其他 → 「图标（本机可换）」：`.icrow/.icopt` 逐位置点选，写 `localStorage.icon_override`，立刻 `applyStaticIcons()` + 重渲染；每行有「默认」可回退
+- 静态 svg（顶栏 4 / 底栏 3 / 三格 3 / 按钮 4）加 `data-icn`，由 `applyStaticIcons()` 统一重画
+- 提醒记录图标按 kind → slot（nlog.weight/goal/day/watch/fail），设置卡 8 行按 `set.*`
+
 ## v8.42 · 2026-10-24
 - 记录卡按钮加图标：`#pickCamera`=add_a_photo、`#pickAlbum`=photo_library、`#saveItems`=check（Material fill1 内联），CSS 加 `#addSheet` 内 svg 18px + 同中心线
 - 选图页扩到 26 个位置 / 133 个候选（新增 24 拍照按钮、25 从相册选、26 记入）

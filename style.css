@@ -2761,3 +2761,16 @@ body.set-open .toast, body.nlog-open .toast {
 /* 「识别热量」按钮的图标：18px、和文字同一中心线 */
 #photoGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
 #photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+
+/* 「图标」设置页：每一行 = 位置名 + 一排候选（横向可滚） */
+.icrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.icrow:first-of-type { border-top: 0; }
+.icl { flex: 0 0 96px; font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.icopts { display: flex; gap: 8px; overflow-x: auto; flex: 1 1 auto; padding-bottom: 2px; }
+.icopt { flex: 0 0 auto; width: 58px; border: 1px solid transparent; border-radius: 12px; padding: 7px 4px 5px;
+  background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  color: var(--muted2); text-align: center; }
+.icopt svg { width: 22px; height: 22px; fill: currentColor; display: block; margin: 0 auto; }
+.icopt span { display: block; font-size: 8px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icopt.on { color: var(--lime); border-color: rgba(214,255,75,.5); }

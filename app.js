@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.47', d: '10-24', items: [
+    '加：设置里多了一行「图标（本机可换）」—— 进去点一下就能换图标，立刻生效、存在这台手机上，不用再发给我、也不用选图网页',
+    '加：27 个位置全在里面（设置卡 8 行、提醒记录 5 类、顶栏 4 个、底栏 3 个、三格 3 个、按钮 4 个），每个位置都带「默认」可随时退回',
+    '说明：换好的图标只在这台设备生效；你挑定了告诉我，我把它做成两台设备都一样的默认值',
+  ] },
   { v: 'v8.46', d: '10-24', items: [
     '改：搜索里那行「在网上找」去掉虚线框，和上面每条结果一样就是普通一行',
     '改：「已添加」里那张卡的底色/描边改成和上面照片卡完全同值，两张卡现在是同一个颜色',
@@ -2268,7 +2273,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.46';
+const APP_VERSION = 'v8.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5035,6 +5040,15 @@ function openNotifyLog() {
     const iso = isoOf(ts), t = new Date(ts), p2 = n => String(n).padStart(2, '0');
     return iso === todayISO() ? p2(t.getHours()) + ':' + p2(t.getMinutes()) : iso.slice(5);
   };
+  const slotOf = (k, ok) => {
+    if (ok === false) return 'nlog.fail';
+    const s = String(k || '');
+    if (s.includes('body') || s.includes('weight')) return 'nlog.weight';
+    if (s.includes('goal')) return 'nlog.goal';
+    if (s.includes('watch')) return 'nlog.watch';
+    if (s.includes('day')) return 'nlog.day';
+    return 'nlog.day';
+  };
   const iconOf = (k, ok) => {
     if (ok === false) return 'danger';         // 失败那条：橙色 report（用户在选图页选定的）
     const s = String(k || '');
@@ -5046,7 +5060,7 @@ function openNotifyLog() {
   };
   const rowOf = x => `
     <div class="setrow">
-      <span class="ico"${x.ok === false ? ' style="color:var(--orange)"' : ''}><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${SET_ICONS[iconOf(x.k, x.ok)]}"/></svg></span>
+      <span class="ico"${x.ok === false ? ' style="color:var(--orange)"' : ''}><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${iconPath(slotOf(x.k, x.ok))}"/></svg></span>
       <span><div class="ttl">${esc(x.t || '提醒')}</div>${x.b ? `<div class="sub">${esc(x.b)}</div>` : ''}</span>
       <span class="when">${labelOf(x.ts)}</span>
     </div>`;
@@ -5217,6 +5231,33 @@ function pushNote() {
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
+
+/* ---------------- 图标：本机可换（icons.js 提供库与默认值） ---------------- */
+function iconOverride(){ try { return JSON.parse(localStorage.getItem('icon_override') || '{}'); } catch(e) { return {}; } }
+function iconName(slot){
+  const ov = iconOverride()[slot];
+  const def = (window.ICON_DEFAULT || {})[slot];
+  return (ov && (window.ICON_LIB || {})[ov]) ? ov : def;
+}
+function iconPath(slot){
+  const n = iconName(slot);
+  return (window.ICON_LIB || {})[n] || '';
+}
+/* 静态 svg（顶栏/底栏/三格/按钮）统一按 data-icn 重画 */
+function applyStaticIcons(){
+  $$('svg[data-icn]').forEach(svg => {
+    const slot = svg.getAttribute('data-icn');
+    const d = iconPath(slot);
+    if (!d) return;
+    svg.setAttribute('viewBox', '0 -960 960 960');
+    svg.setAttribute('fill', 'currentColor');
+    let pth = svg.querySelector('path');
+    if (!pth) { pth = document.createElementNS('http://www.w3.org/2000/svg', 'path'); svg.appendChild(pth); }
+    pth.setAttribute('d', d);
+    svg.querySelectorAll('circle').forEach(c => c.remove());
+  });
+}
+
 /* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
 /* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */
 const SET_ICONS = {
@@ -5251,9 +5292,10 @@ const SET_ICONS = {
 let setFromView = 'today';          // 打开设置卡时停在哪个页面（「完成」就回到它）
 let setCardH = 0;                   // 设置首页那张卡的高度：进子页后卡不许变大变小，内容多就在卡里滚
 
-function setRowHTML(page, icon, label, val) {
+function setRowHTML(page, icon, label, val, slot) {
+  const d = slot ? iconPath(slot) : SET_ICONS[icon];
   return `<button class="setrow" data-page="${page}">
-    <span class="ico"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${SET_ICONS[icon]}"/></svg></span>
+    <span class="ico"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${d}"/></svg></span>
     <span>${label}</span>
     <em>${val}</em><i>›</i>
   </button>`;
@@ -5279,17 +5321,18 @@ function renderSetCard() {
   box.innerHTML = `
     <div class="setlabel">功能</div>
     <div class="setrows">
-      ${setRowHTML('body', 'personOpen', '身体与目标', `${p.height_cm || 165}cm · ${p.weight_kg || 60}kg`)}
-      ${setRowHTML('nutri', 'goal', '饮食目标', `${d.targets.kcal_budget} 千卡 / 天`)}
-      ${setRowHTML('bodydata', 'insights', '身体数据', bodyTxt)}
-      ${setRowHTML('ai', 'ai', 'AI 识别', d.has_key ? '已配置' : '未配置')}
-      ${setRowHTML('theme', 'brush', '个性化', THEME_NAMES[d.theme] || '荧光绿')}
-      ${setRowHTML('notify', 'bellAct', '通知', d.sync_toast ? '开' : '关')}
+      ${setRowHTML('body', 'personOpen', '身体与目标', `${p.height_cm || 165}cm · ${p.weight_kg || 60}kg`, 'set.body')}
+      ${setRowHTML('nutri', 'goal', '饮食目标', `${d.targets.kcal_budget} 千卡 / 天`, 'set.goal')}
+      ${setRowHTML('bodydata', 'insights', '身体数据', bodyTxt, 'set.weight')}
+      ${setRowHTML('ai', 'ai', 'AI 识别', d.has_key ? '已配置' : '未配置', 'set.ai')}
+      ${setRowHTML('theme', 'brush', '个性化', THEME_NAMES[d.theme] || '荧光绿', 'set.theme')}
+      ${setRowHTML('notify', 'bellAct', '通知', d.sync_toast ? '开' : '关', 'set.notify')}
     </div>
     <div class="setlabel">其他</div>
     <div class="setrows">
-      ${setRowHTML('data', 'db', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启')}
-      ${setRowHTML('about', 'sysupd', '关于与更新', APP_VERSION)}
+      ${setRowHTML('icons', 'theme', '图标（本机可换）', '点进去挑', 'set.theme')}
+      ${setRowHTML('data', 'db', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启', 'set.backup')}
+      ${setRowHTML('about', 'sysupd', '关于与更新', APP_VERSION, 'set.about')}
     </div>
     <div class="setrows last">
       <div class="setrow ver">
@@ -5781,6 +5824,27 @@ function renderMe() {
       })() : ''}
       ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
 `;
+  } else if (mePage === 'icons') {
+    const ov = iconOverride();
+    h = meBackBar('图标') + `
+      <div class="card">
+        <h3>本机换图标</h3>
+        <div class="hint" style="margin:0 0 12px">点一下立刻替换，只存在这台设备；点「默认」回到出厂那套。选好告诉我，我把你这套做成两台设备的默认。</div>
+        ${(window.ICON_SLOTS || []).map(s => {
+          const cur = iconName(s.k), curD = (window.ICON_LIB || {})[cur] || '';
+          return `<div class="icrow">
+            <div class="icl">${s.label}</div>
+            <div class="icopts">
+              <button class="icopt${ov[s.k] ? '' : ' on'}" data-slot="${s.k}" data-name="" title="默认">
+                <svg viewBox="0 -960 960 960"><path d="${curD}"/></svg><span>默认</span>
+              </button>
+              ${s.opts.map(n => `<button class="icopt${ov[s.k] === n ? ' on' : ''}" data-slot="${s.k}" data-name="${n}" title="${n}">
+                <svg viewBox="0 -960 960 960"><path d="${(window.ICON_LIB || {})[n] || ''}"/></svg><span>${n}</span>
+              </button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="about-fill">
@@ -5865,6 +5929,16 @@ function wireMe() {
     if (mePage === 'bodydata') {
       pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
     }
+  });
+
+  $$('.icopt').forEach(b => b.onclick = () => {
+    const slot = b.dataset.slot, name = b.dataset.name;
+    const ov = iconOverride();
+    if (name) ov[slot] = name; else delete ov[slot];
+    try { localStorage.setItem('icon_override', JSON.stringify(ov)); } catch (e) {}
+    applyStaticIcons();
+    renderMe();                        // 本页勾选状态 + 其它地方下次渲染都跟着变
+    toast(name ? '已换成 ' + name : '已恢复默认', 1600);
   });
 
   $$('.swatch').forEach(b => b.onclick = async () => {
@@ -7876,6 +7950,7 @@ function init() {
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   wireSetDrag();
+  try { applyStaticIcons(); } catch (e) {}
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
   if (window.visualViewport) {
     const vv = window.visualViewport;
