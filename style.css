@@ -2647,13 +2647,11 @@ body.nlog-open .bellbtn { color: var(--lime); }
   /* 四个角都裁成圆弧，半径 = 卡内行卡/小卡的圆角（22px），和「目标模式」这类内部卡牌呼应
      —— 内容上下滑动被边缘裁掉时，出现的是弧，不是直角 */
   --set-inner-r: 22px;
-  border-radius: var(--set-inner-r);
-  clip-path: inset(0 round var(--set-inner-r));
-  /* iOS Safari：滚动容器只写 border-radius 常常不裁（滚动时的内容会露方角），
-     这个 -webkit-mask 是强制裁剪的老办法；放在滚动区这一层，不影响卡片的玻璃模糊 */
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
+  /* 关键：裁切窗口要内缩到「内容边」上（卡内内容左右各内缩 16px），
+     否则圆弧落在外卡边上、内容本身的角根本没被裁到 —— 这就是之前一直看到直角的原因 */
+  --set-clip-x: 16px;
+  border-radius: 0;
+  clip-path: inset(0 var(--set-clip-x) round var(--set-inner-r));
 }
 
 :root {
@@ -2819,9 +2817,5 @@ body.set-open .toast, body.nlog-open .toast {
 /* 其余卡片里的滚动区也按同一套裁（记录卡列表 / 提醒记录列表）：
    22px 圆角 + iOS 强制裁剪，滑动时不出方角 */
 #addSheet .sh-body, #nlogList {
-  border-radius: 22px;
-  clip-path: inset(0 round 22px);
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
+  clip-path: inset(0 16px round 22px);
 }
