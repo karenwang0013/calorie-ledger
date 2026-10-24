@@ -2829,3 +2829,12 @@ body.set-open .toast, body.nlog-open .toast {
 #nlogList {
   clip-path: inset(0 16px round 22px);
 }
+
+/* 记录卡 · 搜索：搜索框粘在三格条下面，滚结果时不动
+   （三格条本身 sticky top:0，高 72；这里接在它下面 8px） */
+#pane-search { display: block; }
+#pane-search #searchInput {
+  position: sticky;
+  top: 80px;      /* 三格条 72 + 8 的缝 */
+  z-index: 4;     /* 盖在结果列表上面 */
+}

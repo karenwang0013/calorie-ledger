@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.61', d: '10-24', items: [
+    '改：记录卡里的「搜索」—— 搜索框现在粘在「拍照 / 搜索 / 描述」那一栏下面，滚动结果时不动',
+  ] },
   { v: 'v8.60', d: '10-24', items: [
     '改：实物照片、营养成分表两个小框不要上下渐变，改成单色黑 15%（大框和描述框仍是原来那套渐变）',
   ] },
@@ -2323,7 +2326,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.60';
+const APP_VERSION = 'v8.61';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
