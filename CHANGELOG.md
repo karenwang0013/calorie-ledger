@@ -1,3 +1,9 @@
+## v8.37 · 2026-10-24
+- 图标全量落地（choice.json 只到 4 条，其余按「推荐」补齐）：卡片 8 + 提醒记录 5（新增按 kind 区分：monitor/fire/note/watchM/failRep）+ 顶栏（sync / refresh / notifications / settings）+ 底栏（donut_large / add / bar_chart）
+- 用户指定：顶栏「数据同步」= `sync`（环形双箭头），不是之前的 cloud_sync
+- 修 bug：v8.35 把 `body.set-open .toast` 误写进 `.toast{}` 里（CSS 嵌套 → 永不命中），提示条仍压在卡内最后一行；已移到顶层
+- 修：`watchM` 图标键漏写导致「手表数据已更新」那行没有图标
+
 ## v8.36 · 2026-10-24
 - 按用户在「图标候选」页提交的 4 条（choice.json）换图标：`notify` 行 bell→notifications_active；提醒记录失败 info→report（橙）；顶栏 `#cloudRefresh` 自绘→cloud_sync；`#hardReloadTop` 自绘→refresh
 - `SET_ICONS` 新增 `bellAct / failRep / cloudSync / refresh`（Material Symbols rounded fill1 官方 path，内联 SVG）
