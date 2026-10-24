@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.18', d: '10-24', items: [
+    '修：iPhone 上拍的照片，iPad 只看到名字没有图 —— 云端照片库里缺这些文件（早期照片只存在拍它的那台设备里，从没上过云）',
+    '现在 App 开着的时候会自动把「本机有、云端没有」的照片补上去（每次最多 6 张，补完就不动了）；iPad 那台打开对应日期就能看到',
+    '顺带：同一天多组照片（超过 4 组）以前只补前 4 组，现在一次最多补 12 组',
+  ]},
   { v: 'v8.17', d: '10-23', items: [
     '改：改名小卡里再缩一档 —— 输入框 278×38 → **266×33**（字号 14）、按钮行 278×37 → **266×32**（字号 13）、左右留白 24 → 30',
     '框框还是 328 × 130 **不变**，内容上下居中（上 28 / 中 10 / 下 28）',
@@ -2133,7 +2138,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.17';
+const APP_VERSION = 'v8.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2424,7 +2429,7 @@ function renderToday() {
   renderMeals();
   // 换过设备 / 照片只在云端时：把当天缺的小图按需拉回来（最多 4 张，拉完重画一次列表）
   try {
-    const miss = [...new Set((d.logs || []).map(l => l.batch).filter(b => b && !shotUrl(b)))].slice(0, 4);
+    const miss = [...new Set((d.logs || []).map(l => l.batch).filter(b => b && !shotUrl(b)))].slice(0, 12);
     if (miss.length) {
       Promise.all(miss.map(b => ensurePhoto(b))).then(list => {
         if (list.some(Boolean)) renderMeals();
@@ -2444,7 +2449,11 @@ function renderMeals() {
   const d = S.day;
   const box = $('#meals');
   const shots = d.shots || {};
-  const thumbOf = l => (l.batch && shots[l.batch]) ? `<img class="mthumb" src="${shots[l.batch]}" alt="">` : '';
+  // 图可能在：本机 IndexedDB 的内存镜像（shotUrl，刚补传/刚拉回来的也在这里）或快照里的 shots
+  const thumbOf = l => {
+    const u = (l.batch && shotUrl(l.batch)) || (l.batch && shots[l.batch]) || '';
+    return u ? `<img class="mthumb" src="${u}" alt="">` : '';
+  };
   const itemRow = l => `
       <div class="mitem" data-item="${l.id}">
         ${thumbOf(l)}
@@ -7457,6 +7466,22 @@ function init() {
     if (document.visibilityState === 'visible') syncRecords();
   });
   setInterval(() => { if (!document.hidden) syncRecords(); }, 30000);
+
+  // 老照片补传（v8.18）：v7.80 之后照片只在各设备自己的 IndexedDB 里，
+  // 之前拍的那些从没上过云，iPad 换设备只看到名字。这里把「本机有、云端没有」的补上去。
+  // 每次最多 6 张、十分钟内不重复跑，补完就安静了（不弹提示，不打扰）。
+  let lastPhotoFill = 0;
+  const fillPhotos = () => {
+    if (typeof cloudToken !== 'function' || !cloudToken()) return;
+    if (typeof backfillCloudPhotos !== 'function') return;
+    if (Date.now() - lastPhotoFill < 10 * 60 * 1000) return;
+    lastPhotoFill = Date.now();
+    backfillCloudPhotos(6).catch(() => {});
+  };
+  setTimeout(fillPhotos, 8000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') setTimeout(fillPhotos, 3000);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

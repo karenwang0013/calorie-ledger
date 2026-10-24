@@ -263,6 +263,65 @@ async function cloudGetPhoto(batch) {
   } catch (e) { return ''; }
 }
 
+/* ---------------- 老照片补传（v8.18） ----------------
+   v7.80 把照片从 data.json 搬进本机 IndexedDB 时，只搬了本机、**没往云端补传**；
+   photoSave 里的上传又是"一次就丢、失败不重试"。结果：iPhone 本机有图，
+   iPad 换设备拉记录只能看到名字（云端 photos/ 里没有那个文件）。
+   这里做一件事：把「本机有、云端没有」的照片逐张补上去，可断点续传。 */
+const PHOTO_FILL_KEY = 'photo_fill_v1';
+
+function photoFillState() {
+  try { return JSON.parse(localStorage.getItem(PHOTO_FILL_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function setPhotoFillState(o) {
+  try { localStorage.setItem(PHOTO_FILL_KEY, JSON.stringify(o)); } catch (e) {}
+}
+
+/* 云端照片目录里已有哪些（读不到返回 null —— 不许当成"都没有"，否则会重复传一堆） */
+async function cloudListPhotos() {
+  const tk = encodeURIComponent(cloudToken());
+  const url = cloudPhotoApi(PHOTO_DIR) + `?ref=${encodeURIComponent(CLOUD.branch)}&t=${Date.now()}` + (tk ? `&access_token=${tk}` : '');
+  try {
+    const res = await fetchT(url, { headers: cloudHeaders() }, 15000);
+    if (res.status === 404) return new Set();          // 目录还没建 → 云端确实一张都没有
+    if (!res.ok) return null;
+    const arr = await res.json();
+    if (!Array.isArray(arr)) return null;
+    return new Set(arr.filter(x => x && x.name).map(x => String(x.name).replace(/\.jpg$/i, '')));
+  } catch (e) { return null; }
+}
+
+/* 每次启动最多补 limit 张，剩下的下次启动接着补（iPhone 上打开两次 App 就能补齐） */
+async function backfillCloudPhotos(limit) {
+  if (!cloudToken()) return 0;
+  const max = Math.max(1, Number(limit) || 6);
+  try { await photoInit(); } catch (e) {}
+  if (!photoMem.size) return 0;
+  const remote = await cloudListPhotos();
+  if (!remote) return 0;
+  const miss = [...photoMem.keys()].filter(b => b && !remote.has(String(b)));
+  if (!miss.length) { setPhotoFillState({ doneAt: Date.now(), left: 0 }); return 0; }
+  const st = photoFillState();
+  let cur = Number(st.cursor) || 0;
+  if (cur >= miss.length) cur = 0;
+  let ok = 0, tried = 0;
+  while (tried < max && tried < miss.length) {
+    const b = miss[(cur + tried) % miss.length];
+    tried++;
+    const url = photoMem.get(b);
+    if (!url) continue;
+    let good = false;
+    try { good = await cloudPutPhoto(b, url); } catch (e) { good = false; }
+    if (good) ok++;
+    setPhotoFillState({ doneAt: Date.now(), left: Math.max(0, miss.length - tried), cursor: (cur + tried) % miss.length });
+    await new Promise(r => setTimeout(r, 400));        // 给 Gitee 留点喘息，别撞限流
+  }
+  if (typeof logError === 'function' && !ok) {
+    logError('err-photo-fill', '照片补传没成功', '云端 photos/ 写不进去（令牌或网络）');
+  }
+  return ok;
+}
+
 function setting(k, def) {
   const v = Store.load().settings[k];
   return v === undefined || v === null ? def : v;
