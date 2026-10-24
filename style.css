@@ -1386,10 +1386,12 @@ body.add-open .sheet-mask.on {
   position: sticky; top: 0; z-index: 3;
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
-  /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符） */
+  /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符）。
+     v8.56：用户要求这一条单独更透一点 → 黑 46%/58% 降到 26%/38%，只改这里，
+     Dock / 设置卡 / 弹出层那些仍用母版 --glass-fill-top/bot。 */
   border: 1px solid transparent;
   background-color: transparent;
-  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-image: linear-gradient(180deg, rgba(13, 15, 14, 0.26) 0%, rgba(13, 15, 14, 0.38) 100%), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);

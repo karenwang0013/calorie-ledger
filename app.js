@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.56', d: '10-24', items: [
+    '改：记录卡顶部「拍照 / 搜索 / 描述」那条椭圆框更透了（黑 46%/58% → 26%/38%），只改这一条，Dock 和别的卡没动',
+  ] },
   { v: 'v8.55', d: '10-24', items: [
     '修：iPhone 上「卡里滑动时的四个角还是直角」—— Safari 对滚动容器只写 border-radius 常常不裁，这次给滚动区加了 iOS 专用的强制裁剪（22px，和卡内小卡同弧）',
     '说明：更新后如果还是直角，请看一下设置右上角的版本号是不是 v8.55，不是就点强制更新',
@@ -2305,7 +2308,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.55';
+const APP_VERSION = 'v8.56';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
