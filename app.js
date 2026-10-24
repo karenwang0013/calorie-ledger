@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.49', d: '10-24', items: [
+    '修：设置里的图标可能整排消失（图标库文件没加载成功时，行里会被画成空白）—— 现在取不到就退回内置图标，绝不会空',
+    '说明：如果还看到空白，去 设置 → 关于与更新 → 强制更新 一次，让手机重新拉文件',
+  ] },
   { v: 'v8.48', d: '10-24', items: [
     '改：按你这次提交的清单定了 3 处默认 —— 个性化=调色板、数据备份=云上传、关于与更新=信息圈；其余 24 个位置保持原样',
     '加：设置 → 图标 里多了「恢复全部默认」按钮（如果你之前在手机上临时点过图标，点它就能回到这套默认）',
@@ -2281,7 +2285,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.48';
+const APP_VERSION = 'v8.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5068,7 +5072,7 @@ function openNotifyLog() {
   };
   const rowOf = x => `
     <div class="setrow">
-      <span class="ico"${x.ok === false ? ' style="color:var(--orange)"' : ''}><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${iconPath(slotOf(x.k, x.ok))}"/></svg></span>
+      <span class="ico"${x.ok === false ? ' style="color:var(--orange)"' : ''}><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${iconPath(slotOf(x.k, x.ok)) || SET_ICONS[iconOf(x.k, x.ok)]}"/></svg></span>
       <span><div class="ttl">${esc(x.t || '提醒')}</div>${x.b ? `<div class="sub">${esc(x.b)}</div>` : ''}</span>
       <span class="when">${labelOf(x.ts)}</span>
     </div>`;
@@ -5301,7 +5305,7 @@ let setFromView = 'today';          // 打开设置卡时停在哪个页面（�
 let setCardH = 0;                   // 设置首页那张卡的高度：进子页后卡不许变大变小，内容多就在卡里滚
 
 function setRowHTML(page, icon, label, val, slot) {
-  const d = slot ? iconPath(slot) : SET_ICONS[icon];
+  const d = (slot && iconPath(slot)) || SET_ICONS[icon] || '';   // 库里取不到就退回内置，绝不画空
   return `<button class="setrow" data-page="${page}">
     <span class="ico"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${d}"/></svg></span>
     <span>${label}</span>
@@ -7966,6 +7970,7 @@ function init() {
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   wireSetDrag();
   try { applyStaticIcons(); } catch (e) {}
+  if (!window.ICON_LIB || !window.ICON_DEFAULT) console.warn('[icons] icons.js 没加载，已回退到内置图标');
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
   if (window.visualViewport) {
     const vv = window.visualViewport;

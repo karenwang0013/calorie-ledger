@@ -1,3 +1,8 @@
+## v8.49 · 2026-10-24
+- 修：`setRowHTML` / 提醒记录行在 `iconPath(slot)` 取不到时（icons.js 未加载/被缓存成 404）会写入空 path → 设置卡图标整排消失。现改为 `iconPath(slot) || SET_ICONS[icon]` 兜底；静态 svg 本来就不会被覆盖
+- 启动时若 `ICON_LIB/ICON_DEFAULT` 缺失打一条 warn（不阻塞）
+- sw/index 版本统一到同一号
+
 ## v8.48 · 2026-10-24
 - 按用户在选图标页(127.0.0.1:8938)提交的 submits/20261024-212250.json：只改 3 个默认 —— `set.theme=palette`、`set.backup=cloud_upload`、`set.about=info`；其余 24 个 keepNow
 - 设置 → 图标 新增「恢复全部默认」（清 `icon_override`），用于清掉手机上临时点的覆盖值
