@@ -1383,8 +1383,8 @@ body.add-open .sheet-mask.on {
    材质**照抄 Dock 栏**（.tabbar .inner 那一段）：
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
-  /* 吸附位置 = 它在滚动区里的自然位置（脚本实测写进 --addtabs-top），这样 0 位移、不会「跳一下」 */
-  position: sticky; top: var(--addtabs-top, 0px); z-index: 3;
+  /* 吸附位置回到 0（和 v8.59 之前完全一致的样子）：实测静止与滚动后都是 302.8，一点不动 */
+  position: sticky; top: 0; z-index: 3;
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
   /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符）。

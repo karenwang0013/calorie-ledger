@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.67', d: '10-24', items: [
+    '修：记录卡的「拍照/搜索/描述」那一条被我上一版推下去了（多算了 24~32px，而且切页时高度还不一样）—— 现在回到原来的位置（实测 302.8），切页、滚动都完全不动',
+    '说明：搜索框也回到原位（和旧版差 1px），滚动时固定不动',
+  ] },
   { v: 'v8.66', d: '10-24', items: [
     '改：「描述」页的「估算热量」按钮加了图标（✦ AI 星星，18px、和文字同一中心线，和「识别热量」那颗闪电同一套）',
   ] },
@@ -2341,7 +2345,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.66';
+const APP_VERSION = 'v8.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2826,12 +2830,6 @@ function syncAddTabsH() {
   const t = $('#addTabs');
   if (!t || !t.offsetHeight) return;
   document.documentElement.style.setProperty('--addtabs-h', t.offsetHeight + 'px');
-  // 让它「粘住的位置」正好等于自然位置 → 上下滑都不位移
-  const body = $('#addSheet .sh-body');
-  if (body) {
-    const off = t.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
-    document.documentElement.style.setProperty('--addtabs-top', Math.max(0, Math.round(off)) + 'px');
-  }
 }
 
 function openAdd(meal) {
