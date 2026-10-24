@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.19', d: '10-24', items: [
+    '修：体脂秤有时候只把体脂率/去脂体重写进「健康」、漏掉体重，账本就整份不更新 —— 现在缺体重时按「去脂体重 ÷ (1−体脂率)」自己算出来，数据照常记上',
+    '加：云端身体数据这次什么都没取到时，会记一条可见的错误（设置 → 关于与更新 → 错误记录），不再悄悄不动',
+  ]},
   { v: 'v8.18', d: '10-24', items: [
     '修：iPhone 上拍的照片，iPad 只看到名字没有图 —— 云端照片库里缺这些文件（早期照片只存在拍它的那台设备里，从没上过云）',
     '现在 App 开着的时候会自动把「本机有、云端没有」的照片补上去（每次最多 6 张，补完就不动了）；iPad 那台打开对应日期就能看到',
@@ -2138,7 +2142,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.18';
+const APP_VERSION = 'v8.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6260,8 +6264,18 @@ async function pullBodyJson(forceFresh) {
       const lines = String(v == null ? '' : v).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
       return lines.length ? Number(lines[lines.length - 1]) || 0 : 0;
     };
-    const w = normKg(pick(j.w)), bf = normPct(pick(j.bf)), jbmi = pick(j.bmi), jffm = normKg(pick(j.ffm));
-    if (!w && !bf && !jbmi && !jffm) return null;
+    let w = normKg(pick(j.w));
+    const bf = normPct(pick(j.bf)), jbmi = pick(j.bmi), jffm = normKg(pick(j.ffm));
+    // 兜底：米家偶尔只把体脂率/去脂体重写进「健康」，唯独漏掉体重（2026-10-24 就是这样，
+    // 那份 body.json 直接被写成全空）。这两个数都在就反算：体重 = 去脂体重 ÷ (1 − 体脂率)
+    if (!w && bf > 1 && bf < 70 && jffm > 20) {
+      w = Math.round((jffm / (1 - bf / 100)) * 10) / 10;
+      if (w < 25 || w > 300) w = 0;
+    }
+    if (!w && !bf && !jbmi && !jffm) {
+      logError('err-body-empty', '云端身体数据是空的', '快捷指令这次没取到任何健康样本（体重/体脂率都没读到）');
+      return null;
+    }
     // 数值校验：明显不合理的数据不写进来
     if (w && (w < 25 || w > 300)) {
       logError('err-body', '体重数值异常', `E10 读到 ${w} kg，不合常理，已忽略`);
