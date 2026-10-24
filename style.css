@@ -1509,6 +1509,14 @@ body.add-open .sheet-mask.on {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
 }
 
+/* v8.51：用户点名这「三个框」单独调亮 —— 包着两个照片格的大框 + 实物照片 / 营养成分两个小框，
+   黑的比例从 40% 降到 5%（其余两处：识别热量那张卡、描述下面的大框，仍是 40%）。 */
+.drop.photobox,
+.pslot-empty {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(2, 4, 3, .05), rgba(2, 4, 3, .05)), var(--edge-gloss);
+}
+
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
   flex: 1; padding: 8px 6px; border-radius: 11px;
@@ -2628,7 +2636,15 @@ body.nlog-open .bellbtn { color: var(--lime); }
 #setSheet .sh-hd .backbtn svg { width: 24px; height: 24px; }
 #setSheet .sh-hd .backbtn:active { opacity: .6; }
 #setSheet .grab { width: 66px; height: 4px; }   /* 和提醒记录卡的横杠同一尺寸 */
-#setBody { padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block; }   /* .sheet .sh-body 是 column flex，这里必须回成 block，否则行卡会被压扁裁掉 */
+#setBody {
+  padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block;
+  /* 卡内滚动区：四个角跟着外层卡片走（原来是直角，滑动时内容被切出方角）
+     上下再各加一条 14px 的柔和过渡，内容钻到边缘时不出现硬切线 */
+  border-radius: calc(var(--dock-r, 26px) - 12px);
+  clip-path: inset(0 round calc(var(--dock-r, 26px) - 12px));
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
 
 :root {
   /* 卡里行卡的底色：只改这一处（2026-10-24 用户选定 E 档 = 黑 40%） */
