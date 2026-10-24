@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.77', d: '10-25', items: [
+    '加规则：记录卡 / 设置卡 / 提醒记录卡 三张**同时只允许开一张** —— 开任意一张，另外两张自动收掉（之前只做了设置⇄提醒记录互斥）',
+  ] },
   { v: 'v8.76', d: '10-25', items: [
     '改：搜索页的「常用词」那一排钉住不动，结果列表从它下面滚过 —— 内容「消失的那条线」就在搜索栏与常用词之间的正中',
   ] },
@@ -2379,7 +2382,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.76';
+const APP_VERSION = 'v8.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2886,6 +2889,7 @@ function openAdd(meal) {
   renderMealPick();
   renderRecent();
 
+  closeOtherCards('add');                    // 三张卡同时只允许开一张
   raiseSheet('#addSheet');                   // 刚打开的弹层放到最上面
   document.body.classList.add('add-open');   // 用和提醒记录一样的浅遮罩，玻璃才透得出来
   initAddTabsLens();
@@ -5155,7 +5159,7 @@ function nlogOn() {
   return !!(s && s.classList.contains('on'));
 }
 function openNotifyLog() {
-  closeSetCard();   // 两张卡不要叠在一起：先收设置卡
+  closeOtherCards('nlog');   // 三张卡同时只允许开一张
   ensureSetCardH(); // 和设置卡同高（这时设置卡是关着的，量的就是标准尺寸）
   // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
   let all = notifyLogGet();
@@ -5403,6 +5407,15 @@ function applyStaticIcons(){
 }
 
 
+
+/* 三张浮层卡（记录 / 设置 / 提醒记录）同一时间只允许开一张 —— 打开任意一张先把另两张收掉 */
+function addCardOn() { const s = $('#addSheet'); return !!(s && s.classList.contains('on')); }
+function closeOtherCards(keep) {
+  if (keep !== 'add' && addCardOn()) closeAdd();
+  if (keep !== 'set' && setCardOn()) closeSetCard();
+  if (keep !== 'nlog' && nlogOn()) closeNotifyLog();
+}
+
 /* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
 /* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */
 const SET_ICONS = {
@@ -5562,7 +5575,7 @@ function setBackToRoot() {
 function openSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
-  if (nlogOn()) closeNotifyLog();   // 原则：两张信息卡同时只允许开一张
+  closeOtherCards('set');           // 原则：三张卡同时只允许开一张
   if (!setCardOn()) setFromView = (S.view && S.view !== 'me') ? S.view : (setFromView || 'today');
   refreshSetBody();
   document.body.classList.add('set-open');
