@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.62', d: '10-24', items: [
+    '改：搜索框粘在「拍照 / 搜索 / 描述」下面那条缝按实测高度算（不同机型字号不同也不会压到或留大缝）',
+  ] },
   { v: 'v8.61', d: '10-24', items: [
     '改：记录卡里的「搜索」—— 搜索框现在粘在「拍照 / 搜索 / 描述」那一栏下面，滚动结果时不动',
   ] },
@@ -2326,7 +2329,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.61';
+const APP_VERSION = 'v8.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2791,6 +2794,11 @@ function raiseSheet(id) {
 }
 
 /* ---------------- 记录弹层 ---------------- */
+function syncAddTabsH() {
+  const t = $('#addTabs');
+  if (t && t.offsetHeight) document.documentElement.style.setProperty('--addtabs-h', t.offsetHeight + 'px');
+}
+
 function openAdd(meal) {
   S.items = [];
   S.meal = meal || defaultMeal();
@@ -2819,6 +2827,9 @@ function openAdd(meal) {
   setTimeout(() => { if (window.__addTabsLens) window.__addTabsLens.sync(); }, 60);
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
+  // 三格条的真实高度（搜索框要粘在它下面），等卡片显示后再量
+  requestAnimationFrame(syncAddTabsH);
+  setTimeout(syncAddTabsH, 80);
 }
 function closeAdd() {
   document.body.classList.remove('add-open');
@@ -3016,6 +3027,7 @@ function syncResultVisibility() {
 }
 
 function setAddMode(m) {
+  requestAnimationFrame(() => { try { syncAddTabsH(); } catch (e) {} });
   S.addMode = m;
   addMode = m;
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));

@@ -2835,6 +2835,7 @@ body.set-open .toast, body.nlog-open .toast {
 #pane-search { display: block; }
 #pane-search #searchInput {
   position: sticky;
-  top: 80px;      /* 三格条 72 + 8 的缝 */
+  /* 三格条高度由脚本实测写进 --addtabs-h（不同机型字号略有差别），再接 8px 的缝 */
+  top: calc(var(--addtabs-h, 72px) + 8px);
   z-index: 4;     /* 盖在结果列表上面 */
 }
