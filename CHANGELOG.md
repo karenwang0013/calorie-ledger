@@ -1,3 +1,8 @@
+## v8.38 · 2026-10-24
+- 按用户复制提交的 23 条（全 Material）落地：`#addTabs` 三格 → photo_camera / travel_explore / subject
+- 用户点名「没换」的四行（1/5/7/8）：其「推荐」本来就等于现有图标 → 改用形状不同的备选：accessibility_new / brush / backup / system_update
+- 选图页修：`payload()` 只扫 `#pane-m` → 第 ④ 页（21-23）永远提交不上；复制键在 file:// 下静默失败 → 加 execCommand + 弹框兜底
+
 ## v8.37 · 2026-10-24
 - 图标全量落地（choice.json 只到 4 条，其余按「推荐」补齐）：卡片 8 + 提醒记录 5（新增按 kind 区分：monitor/fire/note/watchM/failRep）+ 顶栏（sync / refresh / notifications / settings）+ 底栏（donut_large / add / bar_chart）
 - 用户指定：顶栏「数据同步」= `sync`（环形双箭头），不是之前的 cloud_sync
