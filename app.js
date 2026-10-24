@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.26', d: '10-24', items: [
+    '改：GitHub 那边常常晚几分钟才发布新文件，导致刚收到的体重又被旧数盖一下 —— 现在镜像比本机旧时直接去 Gitee 源取最新',
+    '改：进「身体数据」/「设置」页时强制读源，不再等镜像',
+  ] },
   { v: 'v8.25', d: '10-24', items: [
     '修：刚收到最新体重，过一会儿又自己退回上一个重量 —— 现在会比对云端文件自带的写入时刻，比手机这份更旧的一律不认，旧镜像盖不回来',
   ] },
@@ -2162,7 +2166,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.25';
+const APP_VERSION = 'v8.26';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5490,7 +5494,7 @@ function wireMe() {
     renderMe();
     // v8.24：进「身体数据」时顺手拉一次最新的体重/体脂（走镜像，不占 Gitee 额度），拿到就重画
     if (mePage === 'bodydata') {
-      pullBodyJson(false, true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
+      pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
     }
   });
 
@@ -6057,7 +6061,7 @@ function switchView(v) {
   if (v === 'me') {
     mePage = null; renderMe();
     // v8.24：打开「设置」也顺手拉一次身体数据，列表行上的体重/体脂跟着更新
-    pullBodyJson(false, true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
+    pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
   }
 }
 
@@ -6277,6 +6281,22 @@ async function pullBodyJson(forceFresh, light) {
     };
     const cands = [];
     got.forEach((t, i) => { const inf = infoOf(t); if (inf) { inf.i = i; cands.push(inf); } });
+    // v8.26：镜像比本机这份还旧（GitHub 常常晚几分钟才发布）→ 当作没读到，回退问 Gitee
+    if (light && cands.length && Date.now() - _giteeLightAt > 90000 && giteeBlockedUntil < Date.now()) {
+      try {
+        const dl = Store.load();
+        const bt = dl.bodyT || {};
+        const bw = dl.weights || {};
+        const newestD = Object.keys(bw).sort().pop() || '';
+        const mineT = bt[newestD] || 0;
+        const best = cands.slice().sort((a, b) => (b.t - a.t))[0];
+        if (mineT && best && (!best.t || best.t < mineT)) {
+          _giteeLightAt = Date.now();
+          const gf = await giteeFresh('body.json');
+          if (gf) { got.push(gf); jobs.push('gitee'); const inf = infoOf(gf); if (inf) { inf.i = got.length - 1; cands.push(inf); } }
+        }
+      } catch (e) { /* 限流/没网，下一轮再说 */ }
+    }
     let bodyText = '';
     if (cands.length) {
       const gitee = cands.find(c => c.i === 2 && c.hasVal);
