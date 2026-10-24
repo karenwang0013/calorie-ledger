@@ -26,6 +26,10 @@ function nameLine(name, attr) {
 
 const RELEASES = [
   { v: 'v8.48', d: '10-24', items: [
+    '改：按你这次提交的清单定了 3 处默认 —— 个性化=调色板、数据备份=云上传、关于与更新=信息圈；其余 24 个位置保持原样',
+    '加：设置 → 图标 里多了「恢复全部默认」按钮（如果你之前在手机上临时点过图标，点它就能回到这套默认）',
+  ] },
+  { v: 'v8.48', d: '10-24', items: [
     '改：记录卡里所有「装东西的框」统一成「描述」下方那个输入框的玻璃质感 —— 拍照/从相册选下面的大框、识别热量下面的小框、实物照片 + 营养成分这两个框，四处一起换',
     '说明：搜索框本来就是同一套质感，没动；圆角和尺寸一个都没改，只换材质',
   ] },
@@ -5833,7 +5837,8 @@ function renderMe() {
     h = meBackBar('图标') + `
       <div class="card">
         <h3>本机换图标</h3>
-        <div class="hint" style="margin:0 0 12px">点一下立刻替换，只存在这台设备；点「默认」回到出厂那套。选好告诉我，我把你这套做成两台设备的默认。</div>
+        <div class="hint" style="margin:0 0 10px">点一下立刻替换，只存在这台设备；每行第一个「默认」＝回到出厂那套。选好告诉我，我把你这套做成两台设备的默认。</div>
+        <button class="btn ghost sm" id="icReset" style="margin-bottom:12px">恢复全部默认</button>
         ${(window.ICON_SLOTS || []).map(s => {
           const cur = iconName(s.k), curD = (window.ICON_LIB || {})[cur] || '';
           return `<div class="icrow">
@@ -5934,6 +5939,12 @@ function wireMe() {
       pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
     }
   });
+
+  const icReset = $('#icReset');
+  if (icReset) icReset.onclick = () => {
+    try { localStorage.removeItem('icon_override'); } catch (e) {}
+    applyStaticIcons(); renderMe(); toast('已恢复全部默认', 1600);
+  };
 
   $$('.icopt').forEach(b => b.onclick = () => {
     const slot = b.dataset.slot, name = b.dataset.name;

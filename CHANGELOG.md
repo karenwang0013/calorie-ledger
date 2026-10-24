@@ -1,3 +1,8 @@
+## v8.48 · 2026-10-24
+- 按用户在选图标页(127.0.0.1:8938)提交的 submits/20261024-212250.json：只改 3 个默认 —— `set.theme=palette`、`set.backup=cloud_upload`、`set.about=info`；其余 24 个 keepNow
+- 设置 → 图标 新增「恢复全部默认」（清 `icon_override`），用于清掉手机上临时点的覆盖值
+- 说明：默认值集中在 `icons.js` 的 `ICON_DEFAULT`，改默认只动这一处
+
 ## v8.47 · 2026-10-24
 - 新增 `icons.js`（图标库 125 个 + 27 个位置的默认值/候选）与 app.js 的 `iconPath(slot)` / `iconOverride()` / `applyStaticIcons()`
 - 设置 → 其他 → 「图标（本机可换）」：`.icrow/.icopt` 逐位置点选，写 `localStorage.icon_override`，立刻 `applyStaticIcons()` + 重渲染；每行有「默认」可回退
