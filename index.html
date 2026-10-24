@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=846">
+<link rel="stylesheet" href="style.css?v=847">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -192,8 +192,7 @@
 <div class="sheet-mask" id="addMask"></div>
 <div class="sheet" id="addSheet">
   <div class="grab"></div>
-  <div class="sh-body">
-    <div class="tabs3" id="addTabs">
+  <div class="tabs3" id="addTabs">
       <button data-m="photo" class="on">
         <svg data-icn="tab.photo" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l50-54q11-12 26.5-19t32.5-7h170q17 0 32.5 7t26.5 19l50 54h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Z"/></svg>拍照</button>
       <button data-m="search">
@@ -201,6 +200,8 @@
       <button data-m="text">
         <svg data-icn="tab.text" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M360-240h240q17 0 28.5-11.5T640-280q0-17-11.5-28.5T600-320H360q-17 0-28.5 11.5T320-280q0 17 11.5 28.5T360-240Zm0-160h240q17 0 28.5-11.5T640-440q0-17-11.5-28.5T600-480H360q-17 0-28.5 11.5T320-440q0 17 11.5 28.5T360-400ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h287q16 0 30.5 6t25.5 17l194 194q11 11 17 25.5t6 30.5v447q0 33-23.5 56.5T720-80H240Zm280-560q0 17 11.5 28.5T560-600h160L520-800v160Z"/></svg>描述</button>
     </div>
+  <div class="sh-body">
+    
 
     <!-- 拍照 -->
     <div class="pane" id="pane-photo">
@@ -248,8 +249,10 @@
     <!-- 搜索（搜索框在卡片顶部） -->
     <div class="pane" id="pane-search" hidden>
       <input id="searchInput" placeholder="搜食物：米饭 / 鸡胸 / 拿铁" autocomplete="off">
-      <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
-      <div class="slist" id="searchList"></div>
+      <div class="searchscroll">
+        <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
+        <div class="slist" id="searchList"></div>
+      </div>
     </div>
 
     <!-- 描述 -->
@@ -447,10 +450,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=846"></script>
-<script src="icons.js?v=846"></script>
-<script src="api.js?v=846"></script>
-<script src="app.js?v=846"></script>
+<script src="foods.js?v=847"></script>
+<script src="icons.js?v=847"></script>
+<script src="api.js?v=847"></script>
+<script src="app.js?v=847"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

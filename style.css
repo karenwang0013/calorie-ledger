@@ -1383,8 +1383,9 @@ body.add-open .sheet-mask.on {
    材质**照抄 Dock 栏**（.tabbar .inner 那一段）：
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
-  /* 吸附位置回到 0（和 v8.59 之前完全一致的样子）：实测静止与滚动后都是 302.8，一点不动 */
-  position: sticky; top: 0; z-index: 3;
+  /* 已经搬到卡片层（不再是滚动区的子元素）：本来就固定在卡上，不需要 sticky，永远不会跟着滚 */
+  position: relative; z-index: 3;
+  margin: 13px 12px 12px;   /* 13 = 原来它在滚动区里的位置（grab 下面 8 + margin 4 + 1px 边框） */
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
   /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符）。
@@ -2843,3 +2844,16 @@ body.set-open .toast, body.nlog-open .toast {
 /* 「描述」页的「识别热量」按钮：字号/字重/内边距/圆角跟拍照页那颗完全一样
    （拍照页 #photoGo 实测 16px / 600 / padding 16 / radius 15；原来这里是 14/550/14/14） */
 #textGo { font-size: 16px; font-weight: 600; padding: 16px; border-radius: 15px; }
+
+/* 记录卡 · 搜索：结果区自己滚，内容到「搜索栏下沿」就被裁住，
+   不会跑到搜索栏下面/卡片顶上去 */
+#pane-search:not([hidden]) { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#pane-search .searchscroll {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border-radius: 22px;
+}
+
+/* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
+#addSheet #addTabs { margin: 13px 12px 12px; }
