@@ -2474,3 +2474,21 @@ select:focus {
   background-clip: border-box, border-box;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
+
+/* ===== 次级按钮换成 kit 里「次按钮」的材质与渐变起点 =====
+   照 liquid-ui.B-换了材质.html 的 .liquid-glass-sm：
+   透明填充 + edge-gloss（origin=border-box，渐变从最外沿起算 → 顶部不再留 1px 缝）+ 1px 顶部高光。
+   圆角、尺寸、内边距仍是账本各自的（尺寸不算种类）。 */
+.btn:not(.primary),
+.chip,
+.pgbtn,
+.topbtn,
+.pickbtn:not(.on),
+#nutSheet .nutsug button {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-gloss);
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
