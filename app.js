@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.63', d: '10-24', items: [
+    '改：记录卡「搜索」—— 搜索框从滚动层拿出来、真的固定在卡片上（上滑下滑下拉都不动）；上面「拍照/搜索/描述」那一栏也不会再位移',
+  ] },
   { v: 'v8.62', d: '10-24', items: [
     '改：搜索框粘在「拍照 / 搜索 / 描述」下面那条缝按实测高度算（不同机型字号不同也不会压到或留大缝）',
   ] },
@@ -2329,7 +2332,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.62';
+const APP_VERSION = 'v8.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2794,9 +2797,33 @@ function raiseSheet(id) {
 }
 
 /* ---------------- 记录弹层 ---------------- */
+
+/* 搜索框固定在卡片上：位置 = 三格条下沿 + 8px（相对卡片），并给内容留出同高的空隙 */
+function placeSearchInput() {
+  const sheet = $('#addSheet');
+  const tabs = $('#addTabs');
+  const input = $('#searchInput');
+  const pane = $('#pane-search');
+  if (!sheet || !tabs || !input || !pane) return;
+  if (pane.hidden) return;
+  const sr = sheet.getBoundingClientRect();
+  const tr = tabs.getBoundingClientRect();
+  const top = Math.round(tr.bottom - sr.top + 8);
+  input.style.top = top + 'px';
+  const pad = Math.round(input.offsetHeight + 24 - (pane.getBoundingClientRect().top - sr.top));
+  pane.style.paddingTop = Math.max(0, pad) + 'px';
+}
+
 function syncAddTabsH() {
   const t = $('#addTabs');
-  if (t && t.offsetHeight) document.documentElement.style.setProperty('--addtabs-h', t.offsetHeight + 'px');
+  if (!t || !t.offsetHeight) return;
+  document.documentElement.style.setProperty('--addtabs-h', t.offsetHeight + 'px');
+  // 让它「粘住的位置」正好等于自然位置 → 上下滑都不位移
+  const body = $('#addSheet .sh-body');
+  if (body) {
+    const off = t.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+    document.documentElement.style.setProperty('--addtabs-top', Math.max(0, Math.round(off)) + 'px');
+  }
 }
 
 function openAdd(meal) {
@@ -2828,8 +2855,8 @@ function openAdd(meal) {
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
   // 三格条的真实高度（搜索框要粘在它下面），等卡片显示后再量
-  requestAnimationFrame(syncAddTabsH);
-  setTimeout(syncAddTabsH, 80);
+  requestAnimationFrame(() => { try { syncAddTabsH(); placeSearchInput(); } catch (e) {} });
+  setTimeout(() => { try { syncAddTabsH(); placeSearchInput(); } catch (e) {} }, 90);
 }
 function closeAdd() {
   document.body.classList.remove('add-open');
@@ -3027,7 +3054,7 @@ function syncResultVisibility() {
 }
 
 function setAddMode(m) {
-  requestAnimationFrame(() => { try { syncAddTabsH(); } catch (e) {} });
+  requestAnimationFrame(() => { try { syncAddTabsH(); placeSearchInput(); } catch (e) {} });
   S.addMode = m;
   addMode = m;
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));

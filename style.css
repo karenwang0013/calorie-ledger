@@ -1383,7 +1383,8 @@ body.add-open .sheet-mask.on {
    材质**照抄 Dock 栏**（.tabbar .inner 那一段）：
    同样的 46%/58% 玻璃渐变 + 玻璃高光边 + blur(20px) saturate(150%)，没有额外的白色层 */
 #addTabs {
-  position: sticky; top: 0; z-index: 3;
+  /* 吸附位置 = 它在滚动区里的自然位置（脚本实测写进 --addtabs-top），这样 0 位移、不会「跳一下」 */
+  position: sticky; top: var(--addtabs-top, 0px); z-index: 3;
   /* 一圈不要硬白线：边框压到几乎看不见，靠"顶边极细高光 + 往下 18px 的柔和内发光"
      做出渐变过渡（越往下越接近底色），不再是一条亮线 */
   /* 材质跟 Dock 同一套母版（原来是实色 #2b3035→#23282c，与注释不符）。
@@ -2830,12 +2831,12 @@ body.set-open .toast, body.nlog-open .toast {
   clip-path: inset(0 16px round 22px);
 }
 
-/* 记录卡 · 搜索：搜索框粘在三格条下面，滚结果时不动
-   （三格条本身 sticky top:0，高 72；这里接在它下面 8px） */
+/* 记录卡 · 搜索：搜索框「完全固定」—— 从滚动层里拿出来，绝对定位在卡片上
+   （sticky 在 iOS 下拉回弹时会跟着动，用户要求上下都不动） */
 #pane-search { display: block; }
 #pane-search #searchInput {
-  position: sticky;
-  /* 三格条高度由脚本实测写进 --addtabs-h（不同机型字号略有差别），再接 8px 的缝 */
-  top: calc(var(--addtabs-h, 72px) + 8px);
-  z-index: 4;     /* 盖在结果列表上面 */
+  position: absolute;     /* 相对 #addSheet（fixed）定位，卡片内滚动不影响它 */
+  left: 12px; right: 12px; width: auto;
+  z-index: 5;
+  margin: 0;
 }
