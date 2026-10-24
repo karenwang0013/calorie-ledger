@@ -1494,12 +1494,14 @@ body.add-open .sheet-mask.on {
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
 
-/* ---- 记录卡里「装东西的框」的材质 ----
-   2026-10-24 用户定稿分两套：
-   ① 识别热量/食材/克数/补充说明 那张卡 → 设置里那张行卡的材质（黑 40% 实底，不加模糊）
-   ② 照片大框 + 实物照片/营养成分两个小框 + 描述大框 → 照抄「拍照 / 搜索 / 描述」那条椭圆条：
-      黑 26%→38% 渐变 + 同一圈 edge-gloss 描边 + blur(10px) saturate(150%) + 顶边 5% 细高光 + 圆角 27 */
-#photoActions {
+/* ---- 记录卡里「装东西的框」全部统一成同一种卡（= 识别热量那张卡，也就是设置里的行卡材质）----
+   2026-10-24 用户定稿：照片大框 + 实物照片/营养成分两个小框 + 描述大框 +
+   「识别热量 / 食材 / 克数 / 补充说明」那张卡，五处完全同一套：
+   黑 40% 实底（--setrow-fill）+ var(--edge-gloss) 描边 + 顶边 10% 细高光 + 圆角 28 + 不加模糊。 */
+#photoActions,
+.drop.photobox,
+.pslot-empty,
+#textInput {
   background-color: transparent;
   background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
   background-origin: border-box;
@@ -1507,24 +1509,8 @@ body.add-open .sheet-mask.on {
   border: 1px solid transparent;
   border-radius: 28px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
-}
-.drop.photobox,
-.pslot-empty,
-#textInput {
-  background-color: transparent;
-  background-image: linear-gradient(180deg, rgba(13, 15, 14, .26) 0%, rgba(13, 15, 14, .38) 100%), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1px solid transparent;
-  border-radius: 27px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
-  -webkit-backdrop-filter: var(--glass-blur-2);
-  backdrop-filter: var(--glass-blur-2);
-}
-/* v8.60 用户定稿：两个照片小框不要渐变，改单色黑 15%（大框和描述框仍是上面的 26%→38% 渐变） */
-.pslot-empty {
-  background-color: transparent;
-  background-image: linear-gradient(rgba(13, 15, 14, .15), rgba(13, 15, 14, .15)), var(--edge-gloss);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
@@ -2840,3 +2826,7 @@ body.set-open .toast, body.nlog-open .toast {
   z-index: 5;
   margin: 0;
 }
+
+/* 「估算热量」按钮的图标：18px、和文字同一中心线（与「识别热量」同一套） */
+#textGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#textGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
