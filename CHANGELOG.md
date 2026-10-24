@@ -1,3 +1,7 @@
+## v8.41 · 2026-10-24
+- 4 AI 识别 → psychology（大脑+电路）；5 个性化 → brush；7 数据备份 → database；8 关于与更新 → system_update
+- 原因：v8.40 完全照用户提交清单执行，但清单里这 4 项填的正是原图标（auto_awesome/palette/cloud_upload/info）→ 视觉无变化；选图页把「当前」重复列为候选是诱因
+
 ## v8.40 · 2026-10-24
 - 按用户 23 条清单：3 bodydata monitor_weight→speed；5 theme brush→palette；7 data database→cloud_upload；8 about system_update→info；23 描述 subject→article；22 未选 → 保持 travel_explore
 
