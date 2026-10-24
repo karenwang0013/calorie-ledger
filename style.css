@@ -1517,11 +1517,16 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
 }
-/* v8.72 用户定稿：两个照片格用「大框渐变的中间值」做**不透明实色**，彻底没有上下明暗差。
-   #111412 = 大框渐变中点（黑 32%）叠在卡底色上的等效色；描边仍走 edge-gloss。 */
+/* v8.72 用户定稿：两个照片格用「大框渐变的中间值」做**不透明实色**。
+   #111412 = 大框渐变中点（黑 32%）叠在卡底色上的等效色。
+   ⚠️ v8.75 修：原来写成 `background-color + edge-gloss`，漏了 background-clip →
+   edge-gloss 那层白色渐变铺满了整个格子（上 10.6% 下 3.5%），格子看着上亮下暗。
+   现在按项目通用写法两层 image：实色层裁到 padding-box，描边层裁到 border-box（只露 1px 边框）。 */
 .pslot-empty {
-  background-color: #111412;
-  background-image: var(--edge-gloss);
+  background-color: transparent;
+  background-image: linear-gradient(#111412, #111412), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
