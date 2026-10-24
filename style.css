@@ -2511,3 +2511,101 @@ select:focus {
   z-index: -1;
   pointer-events: none;
 }
+
+/* ==================================================================
+   设置卡：和「提醒记录 / 记录卡」同一张磨砂玻璃卡
+   —— 材质那段（fill + edge-gloss + backdrop-filter）与 #nlogSheet 逐行一致，
+      位置 / 宽度 / 圆角 / 底边全走 --dock-inset / --dock-max / --dock-r / --dock-bottom，
+      所以底部永远和提醒记录卡落在同一根线上。
+   里面换成行式布局（图标 + 标题 + 右侧值 + 箭头），尺寸照设计数据：
+      行高 54、行卡圆角 22、图标 21 起于 x41、值右缘距屏右 63.1、箭头距屏右 41。
+   ================================================================== */
+#setSheet {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+  position: fixed;
+  left: var(--dock-inset); right: var(--dock-inset);
+  bottom: calc(var(--dock-bottom) + var(--safe-b));
+  top: auto; margin: 0 auto;
+  max-width: var(--dock-max);
+  /* 内容撑开（上方可以比提醒记录卡高），超过可用高度就在卡内滚 */
+  min-height: 0;
+  max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
+  border-radius: var(--dock-r, 26px);
+  padding: 0 0 20px;
+  box-shadow: 0 24px 56px rgba(0,0,0,.55);
+}
+/* 打开时遮罩浅一档（和提醒记录同一档 28%），不盖顶栏 */
+body.set-open .sheet-mask.on {
+  background-color: rgba(0,0,0,.28);
+  top: var(--topbar-h, 64px);
+}
+/* 齿轮在卡打开时点亮，让"我现在在设置里"一眼看得出来 */
+body.set-open #goMe { color: var(--lime); }
+
+#setSheet .sh-hd {
+  display: flex; align-items: center; gap: 9px;
+  padding: 14px 22px 15px;
+  flex: 0 0 auto;
+}
+#setSheet .sh-hd h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: .3px; }
+#setSheet .sh-hd .vtag {
+  font-size: 10.5px; color: var(--muted2);
+  border: 1px solid var(--line2); border-radius: 20px; padding: 3px 8px;
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
+}
+#setSheet .sh-hd .done {
+  margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--text);
+  padding: 8px 15px; border-radius: 13px;
+  background-image: linear-gradient(rgba(255,255,255,.085), rgba(255,255,255,.085)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}
+#setSheet .grab { width: 66px; height: 4px; }   /* 和提醒记录卡的横杠同一尺寸 */
+#setBody { padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block; }   /* .sheet .sh-body 是 column flex，这里必须回成 block，否则行卡会被压扁裁掉 */
+
+/* 分组小标题 */
+.setlabel { padding: 0 32px 8px; font-size: 12px; color: var(--muted2); letter-spacing: .4px; line-height: 17px; }
+/* 行卡：玻璃卡里再套一层实底小卡（和 .chip / .ritem 同一套做法） */
+.setrows {
+  margin: 0 16px 16px; border-radius: 22px; overflow: hidden;
+  background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.setrows.last { margin-bottom: 0; }
+.setrow {
+  display: flex; align-items: center; gap: 13px;
+  width: 100%; height: 54px; padding: 0 15px; position: relative;
+  background: none; border: 0; color: var(--text); text-align: left;
+  font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: .1px;
+}
+.setrow + .setrow::before {
+  content: ''; position: absolute; top: 0; left: 48px; right: 0; height: 1px;
+  background: rgba(255,255,255,.065);
+}
+.setrow:active { background: var(--btn-solid); }
+.setrow .ico { flex: 0 0 21px; display: flex; align-items: center; justify-content: center; color: var(--lime); }
+.setrow .ico svg { width: 21px; height: 21px; fill: currentColor; }
+.setrow em {
+  margin-left: auto; font-style: normal; font-size: 13.5px; font-weight: 400;
+  color: var(--muted); letter-spacing: .1px; font-variant-numeric: tabular-nums;
+  text-align: right; white-space: nowrap;
+}
+.setrow i { color: #5b625c; font-style: normal; font-size: 17px; line-height: 1; margin-left: 2px; transform: translateY(-1px); }
+/* 版本行：没图标、没箭头，右侧一颗荧光绿胶囊 */
+.setrow.ver { padding-left: 15px; }
+.setrow.ver em { margin-right: 12px; }
+.setpill {
+  font-size: 12.5px; font-weight: 650; color: #111; line-height: 1.2;
+  padding: 8px 14px; border-radius: 12px;
+  background-image: linear-gradient(var(--lime), var(--lime)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}

@@ -24,6 +24,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.27', d: '10-24', items: [
+    '改：设置页不再是一整页 —— 点右上角齿轮，直接浮起一张卡（和「提醒记录」那张同一块玻璃：同样的底、同样的圆角、同样的底边位置）',
+    '改：设置里面换成行式列表 —— 左边荧光绿图标、中间标题、右边灰字数值和箭头；分成「功能 / 其他」两组，版本更新单独一行带「强制更新」',
+    '改：设置卡点「完成」、点卡外、往下滑都能关；点任意一行进原来那页，返回直接回到这张卡',
+    '说明：材质、颜色一个都没动，只换了设置的呈现方式和排版',
+  ] },
   { v: 'v8.26', d: '10-24', items: [
     '改：GitHub 那边常常晚几分钟才发布新文件，导致刚收到的体重又被旧数盖一下 —— 现在镜像比本机旧时直接去 Gitee 源取最新',
     '改：进「身体数据」/「设置」页时强制读源，不再等镜像',
@@ -2166,7 +2172,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.26';
+const APP_VERSION = 'v8.27';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4552,9 +4558,8 @@ function goBack() {
     const v = $('#view-me');
     if (v) v.classList.add('slideout');
     setTimeout(() => {
-      mePage = null;
       if (v) v.classList.remove('slideout');
-      renderMe();
+      backToSetCard();          // 子页返回 → 回到设置卡
     }, 170);
   }
 }
@@ -4835,6 +4840,7 @@ function renderNotifyDot() {
   dot.className = 'dot ' + kind;
 }
 function openNotifyLog() {
+  closeSetCard();   // 两张卡不要叠在一起：先收设置卡
   // 第一次打开且没有记录时，放两条「示例」，让用户看清卡片长什么样（清空即消失）
   let all = notifyLogGet();
   if (!all.length && !localStorage.getItem('notify_demo_seeded')) {
@@ -4932,6 +4938,7 @@ function wireSheetDrag(sheet, list, closeFn) {
   sheet.addEventListener('touchcancel', end);
 }
 function wireNotifyDrag() { wireSheetDrag($('#nlogSheet'), $('#nlogList'), closeNotifyLog); }
+function wireSetDrag() { wireSheetDrag($('#setSheet'), $('#setBody'), closeSetCard); }
 /* 记录卡片：同一套下滑关闭（内容滚到顶才生效，别和内部滚动打架） */
 function wireAddDrag() { wireSheetDrag($('#addSheet'), $('#addSheet .sh-body'), closeAdd); }
 
@@ -4999,6 +5006,121 @@ function pushNote() {
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
+/* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
+/* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */
+const SET_ICONS = {
+  person: 'M367-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q560-607 560-640t-23.5-56.5Q513-720 480-720t-56.5 23.5Q400-673 400-640t23.5 56.5Q447-560 480-560t56.5-23.5ZM480-640Zm0 400Z',
+  goal: 'M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880h40v331q18 11 29 28.5t11 40.5q0 33-23.5 56.5T480-400q-33 0-56.5-23.5T400-480q0-23 11-41t29-28v-86q-52 14-86 56.5T320-480q0 66 47 113t113 47q66 0 113-47t47-113q0-36-14.5-66.5T586-600l57-57q35 33 56 78.5t21 98.5q0 100-70 170t-170 70q-100 0-170-70t-70-170q0-90 57-156.5T440-717v-81q-119 15-199.5 105T160-480q0 134 93 227t227 93q134 0 227-93t93-227q0-69-27-129t-74-104l57-57q57 55 90.5 129.5T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80q-83 0-156-31.5Z',
+  weight: 'M480-480q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Zm-74-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z',
+  ai: 'm760-600-50-110-110-50 110-50 50-110 50 110 110 50-110 50-50 110Zm0 560-50-110-110-50 110-50 50-110 50 110 110 50-110 50-50 110ZM360-160 260-380 40-480l220-100 100-220 100 220 220 100-220 100-100 220Zm0-194 40-86 86-40-86-40-40-86-40 86-86 40 86 40 40 86Zm0-126Z',
+  theme: 'M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z',
+  bell: 'M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z',
+  cloud: 'M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H520q-33 0-56.5-23.5T440-240v-206l-64 62-56-56 160-160 160 160-56 56-64-62v206h220q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41h100v80H260Zm220-280Z',
+  info: 'M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z'
+};
+let setFromView = 'today';          // 打开设置卡时停在哪个页面（「完成」就回到它）
+
+function setRowHTML(page, icon, label, val) {
+  return `<button class="setrow" data-page="${page}">
+    <span class="ico"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${SET_ICONS[icon]}"/></svg></span>
+    <span>${label}</span>
+    <em>${val}</em><i>›</i>
+  </button>`;
+}
+
+/* 卡里的内容：8 行 + 版本行（值全部取本机真实数据） */
+function renderSetCard() {
+  const box = $('#setBody');
+  if (!box || !S.day) return;
+  const d = S.day, p = d.profile || {};
+  const ver = $('#setVer');
+  if (ver) ver.textContent = APP_VERSION;
+
+  const st = Store.load();
+  const ds = Object.keys(st.body || {}).sort();
+  const last = ds[ds.length - 1];
+  const b = last ? st.body[last] : null;
+  const w = last ? st.weights[last] : null;
+  const bodyTxt = !last
+    ? '还没有秤的数据'
+    : ((w ? w + ' kg' : '') + (b && b.bf ? ' · 体脂 ' + b.bf + '%' : '') || '—');
+
+  box.innerHTML = `
+    <div class="setlabel">功能</div>
+    <div class="setrows">
+      ${setRowHTML('body', 'person', '身体与目标', `${p.height_cm || 165}cm · ${p.weight_kg || 60}kg`)}
+      ${setRowHTML('nutri', 'goal', '饮食目标', `${d.targets.kcal_budget} 千卡 / 天`)}
+      ${setRowHTML('bodydata', 'weight', '身体数据', bodyTxt)}
+      ${setRowHTML('ai', 'ai', 'AI 识别', d.has_key ? '已配置' : '未配置')}
+      ${setRowHTML('theme', 'theme', '个性化', THEME_NAMES[d.theme] || '荧光绿')}
+      ${setRowHTML('notify', 'bell', '通知', d.sync_toast ? '开' : '关')}
+    </div>
+    <div class="setlabel">其他</div>
+    <div class="setrows">
+      ${setRowHTML('data', 'cloud', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启')}
+      ${setRowHTML('about', 'info', '关于与更新', APP_VERSION)}
+    </div>
+    <div class="setrows last">
+      <div class="setrow ver">
+        <span>版本更新</span>
+        <em>${APP_VERSION}</em>
+        <button class="setpill" id="hardReload">强制更新</button>
+      </div>
+    </div>`;
+
+  const hr = $('#hardReload');
+  if (hr) hr.onclick = () => hardReloadApp();
+  $$('#setBody .setrow[data-page]').forEach(b2 => b2.onclick = () => openSetSub(b2.dataset.page));
+}
+
+function setCardOn() {
+  const s = $('#setSheet');
+  return !!(s && s.classList.contains('on'));
+}
+
+function openSetCard() {
+  const sheet = $('#setSheet'), mask = $('#setMask');
+  if (!sheet) return;
+  if (!setCardOn()) setFromView = (S.view && S.view !== 'me') ? S.view : (setFromView || 'today');
+  renderSetCard();
+  document.body.classList.add('set-open');
+  raiseSheet(sheet);
+  if (mask) mask.classList.add('on');
+  sheet.classList.add('on');
+}
+
+function closeSetCard() {
+  const sheet = $('#setSheet'), mask = $('#setMask');
+  if (!sheet) return;
+  document.body.classList.remove('set-open');
+  if (mask) mask.classList.remove('on');
+  sheet.classList.remove('on');
+  sheet.classList.remove('dragging');
+  sheet.style.transform = '';
+  sheet.style.opacity = '';
+}
+
+/* 子页返回：回到设置卡（并且回到打开卡时所在的那个页面） */
+function backToSetCard() {
+  mePage = null;
+  if (S.view === 'me') switchView(setFromView && setFromView !== 'me' ? setFromView : 'today');
+  else renderMe();
+  openSetCard();
+}
+
+/* 点卡里的某一行 → 关掉卡，进对应的子页（子页还是原来那套整页） */
+function openSetSub(page) {
+  if (!page) return;
+  closeSetCard();
+  switchView('me');            // 会先把 mePage 清空并重画
+  mePage = page;
+  if (page === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
+  renderMe();
+  if (page === 'bodydata') {
+    pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
+  }
+}
+
 function renderMe() {
   const d = S.day;
   if (!d) return;
@@ -5010,60 +5132,8 @@ function renderMe() {
   let h = '';
 
   if (!mePage) {
-    h = `
-      <h1 class="pagetitle">设置</h1>
-      <div class="setgroup">
-        <button class="srow" data-page="body">
-          <span>身体与目标</span>
-          <em>${p.height_cm || 165}cm · ${p.weight_kg || 60}kg</em><i>›</i>
-        </button>
-        <button class="srow" data-page="nutri">
-          <span>饮食目标</span>
-          <em>${d.targets.kcal_budget} 千卡 / 天</em><i>›</i>
-        </button>
-        <button class="srow" data-page="bodydata">
-          <span>身体数据</span>
-          <em>${(() => {
-            const st = Store.load();
-            const ds = Object.keys(st.body || {}).sort();
-            const last = ds[ds.length - 1];
-            const b = last ? st.body[last] : null;
-            const w = last ? st.weights[last] : null;
-            if (!last) return '还没有秤的数据';
-            return (w ? w + ' kg' : '') + (b && b.bf ? ' · 体脂 ' + b.bf + '%' : '');
-          })()}</em><i>›</i>
-        </button>
-      </div>
-      <div class="seclabel">功能</div>
-      <div class="setgroup">
-        <button class="srow" data-page="ai">
-          <span>AI 识别</span>
-          <em>${d.has_key ? '已配置' : '未配置'}</em><i>›</i>
-        </button>
-        <button class="srow" data-page="theme">
-          <span>个性化</span>
-          <em>${THEME_NAMES[d.theme] || '荧光绿'}</em><i>›</i>
-        </button>
-        <button class="srow" data-page="notify">
-          <span>通知</span>
-          <em>${d.sync_toast ? '开' : '关'}</em><i>›</i>
-        </button>
-      </div>
-      <div class="seclabel">其他</div>
-      <div class="setgroup">
-        <button class="srow" data-page="data">
-          <span>数据备份</span><em></em><i>›</i>
-        </button>
-        <button class="srow" data-page="about">
-          <span>关于与更新</span><em>${APP_VERSION}</em><i>›</i>
-        </button>
-      </div>
-      <div class="card" style="margin-top:14px">
-        <h3>版本更新 <span class="tag" style="color:var(--muted);background:rgba(255,255,255,.06)">${APP_VERSION}</span></h3>
-        <div class="hint" style="margin:0 0 14px">iPhone / iPad 会缓存网页。看到旧界面就点下面的按钮强制刷新，不动数据。</div>
-        <button class="btn primary" id="hardReload">强制更新</button>
-      </div>
-`;
+    // 设置首页不再是整页：内容是那张玻璃卡（见 renderSetCard / openSetCard），页面保持空
+    h = '';
   } else if (mePage === 'body') {
     h = meBackBar('身体与目标') + `
       <div class="card">
@@ -5442,8 +5512,9 @@ function renderMe() {
 
   $('#meBody').innerHTML = h;
   fitAboutFill();
-  fitMeScroll();
+  if (S.view === 'me') fitMeScroll();
   wireMe();
+  if (!mePage) renderSetCard();     // 设置卡里的数字跟着一起刷新
 }
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
@@ -5487,7 +5558,7 @@ function wireMe() {
       + `\n历史 ${histN} 条 · 记账 ${logN} 条 · 已删 ${delN} 条${delList ? '（' + delList + '…）' : ''}`;
   }
   const back = $('#meBack');
-  if (back) back.onclick = () => { mePage = null; renderMe(); };
+  if (back) back.onclick = () => backToSetCard();
   $$('.srow').forEach(b => b.onclick = () => {
     mePage = b.dataset.page;
     if (mePage === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
@@ -6046,6 +6117,7 @@ function refreshTodayIfNeeded() {
   return true;
 }
 function switchView(v) {
+  if (v !== 'me') closeSetCard();   // 换页时把设置卡收起来（它是浮在页面上的）
   refreshTodayIfNeeded();
   if (v !== 'me') document.documentElement.classList.remove('noscroll');
   if (v !== 'me') { const sc0 = $('#scroller'); if (sc0) sc0.style.overflowY = ''; }
@@ -6454,6 +6526,7 @@ async function pullBodyJson(forceFresh, light) {
 function refreshBodyViews() {
   try { loadDay(); } catch (e) {}
   try { if (S.view === 'me') renderMe(); } catch (e) {}
+  try { if (setCardOn()) renderSetCard(); } catch (e) {}   // 设置卡开着时，行上的体重/体脂也要跟着变
 }
 
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
@@ -6833,9 +6906,11 @@ function init() {
 
   const gm = $('#goMe');
   if (gm) gm.onclick = () => {
-    // 已经在设置里、且停在某个子页（身体数据 / 饮食目标 …）→ 先退回设置首页
-    if (S.view === 'me' && mePage) { mePage = null; renderMe(); return; }
-    switchView(S.view === 'me' ? 'today' : 'me');
+    // 卡已经开着 → 再点一下收起
+    if (setCardOn()) { closeSetCard(); return; }
+    // 正在某个子页（身体数据 / 饮食目标 …）→ 先回到设置卡
+    if (S.view === 'me' && mePage) { backToSetCard(); return; }
+    openSetCard();
   };
   const refreshBtn = $('#cloudRefresh');
   // 手动刷新时，如果还是旧数据，后台再自动补拉几次（GitHub Pages 发布要几十秒）
@@ -7497,6 +7572,11 @@ function init() {
   } catch (e) {}
   renderNotifyDot();
   wireNotifyDrag();
+  // 设置卡：完成 / 点遮罩 / 下滑 都能关
+  const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask');
+  if (setDoneBtn) setDoneBtn.onclick = () => closeSetCard();
+  if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
+  wireSetDrag();
 
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => {
