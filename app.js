@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.21', d: '10-24', items: [
+    '修：称完体重后，设置 → 身体数据 有时还是上一回的重量 —— 数据其实已经取到手机上了，只是那一页打开时停在旧数、不会自己更新；现在取到新数就立刻重画，不用退出再进',
+    '加：开着 App 的时候每 60 秒悄悄看一眼体重有没有更新（只读网页镜像，不占数据接口额度），有新数就自己换上',
+    '修：两台设备同步时，手机上刚称的数不会被云端那份旧的体重改回去',
+  ]},
   { v: 'v8.20', d: '10-24', items: [
     '修：体重称了却不进云端 —— 真原因是 App 每 30 秒同步一次都在调 Gitee 的接口，一小时把这套接口的额度（60 次）用光，手机上的「健康采集」快捷指令想写数据时被拒',
     '改：自动同步只读网页镜像（不占额度），Gitee 实时读取最多 10 分钟一次；手动点「数据同步」仍然立刻读最新',
@@ -2146,7 +2151,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.20';
+const APP_VERSION = 'v8.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4699,6 +4704,7 @@ async function disablePush() {
    注意：必须用 API 读，raw 链接会 302 到 raw.giteeusercontent.com，那个域名没有 CORS 头，浏览器会拒绝。 */
 const GITEE_API = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents';
 let freshAt = { health: 0, body: 0 };
+let bodyVer = 0;   // v8.21：身体数据每写进本机一次就 +1，定时轮询靠它判断要不要重画页面
 let lastHealthFrom = '';   // 最近一次热量数据是从哪一路读到的（镜像/GitHub/Gitee），排查用   // 上次直接读 Gitee 源的时间（5 分钟内不重复读）
 const _gtCache = {};
 let giteeBlockedUntil = 0;
@@ -6209,22 +6215,47 @@ async function bodyCommitDate() {
   return _bodCd;
 }
 
-async function pullBodyJson(forceFresh) {
+async function pullBodyJson(forceFresh, light) {
   try {
-    const needFresh = !!forceFresh || Date.now() - freshAt.body > 300000;
+    // v8.21：light = 定时轮询用。不碰 Gitee（额度贵），只读同源镜像和 GitHub raw 这两份
+    const needFresh = !light && (!!forceFresh || Date.now() - freshAt.body > 300000);
     if (needFresh) freshAt.body = Date.now();
     const stamp = Date.now();
     const jobs = [getText('body.json?t=' + stamp), getText(GH_RAW + 'body.json?t=' + stamp)];
-    jobs.push((needFresh || giteeBlockedUntil < Date.now()) ? giteeFresh('body.json') : Promise.resolve(''));
+    jobs.push(light ? Promise.resolve('') : ((needFresh || giteeBlockedUntil < Date.now()) ? giteeFresh('body.json') : Promise.resolve('')));
     const got = await Promise.all(jobs);
-    const dOf = t => { try { const j = JSON.parse(t); return String((j && j.d) || '').slice(0, 10); } catch (e) { return ''; } };
-    let bodyText = '', bestD = '';
-    got.forEach(t => {
-      if (!t) return;
-      const dd = dOf(t);
-      if (dd >= bestD) { bestD = dd; bodyText = t; }   // 日期更新的那份优先
-    });
-    if (!bodyText) { logError('err-body', '体脂数据读取失败', 'body.json 三路都没读到'); return false; }
+    // v8.21 到底用哪一份（以前是"字符串日期大的赢，一样大就后者赢"，Gitee 是第 3 路，永远输）：
+    // ① 文件里带写入时间 t（Mac 兜底脚本会写）→ 谁的 t 新用谁
+    // ② 没 t → 比日期，日期新的优先
+    // ③ 日期一样 → Gitee 那份优先（它是源，另外两份是镜像/缓存）
+    // ④ d 是空的但有数值 → 当作今天（这种以前会被镜像里的旧日期压住）
+    const infoOf = t => {
+      if (!t) return null;
+      let j = null;
+      try { j = JSON.parse(t); } catch (e) {
+        try { j = JSON.parse(String(t).replace(/\r?\n/g, '\\n')); } catch (e2) { return null; }
+      }
+      if (!j || typeof j !== 'object') return null;
+      const hasVal = Array.isArray(j.items) || ['w', 'bf', 'bmi', 'ffm'].some(k => String(j[k] == null ? '' : j[k]).trim() !== '');
+      const tRaw = j.t ? String(j.t) : '';
+      const tNum = tRaw ? (Number(tRaw) || (Date.parse(tRaw) || 0)) : 0;
+      return { i: 0, d: String(j.d || '').slice(0, 10), hasVal, t: isFinite(tNum) ? tNum : 0 };
+    };
+    const cands = [];
+    got.forEach((t, i) => { const inf = infoOf(t); if (inf) { inf.i = i; cands.push(inf); } });
+    let bodyText = '';
+    if (cands.length) {
+      const eff = c => c.d || (c.hasVal ? todayISO() : '');
+      cands.sort((a, b) => {
+        if (a.t || b.t) return (b.t || 0) - (a.t || 0);          // 有写入时间就按它
+        const da = eff(a), db = eff(b);
+        if (da !== db) return da < db ? 1 : -1;                   // 日期新的优先
+        return (b.i === 2 ? 1 : 0) - (a.i === 2 ? 1 : 0);         // 同一天：Gitee 优先
+      });
+      bodyText = got[cands[0].i];
+    }
+    // 定时轮询（light）读不到是常事（没网、CDN 抖），别往错误记录里写，免得每 60 秒刷一条
+    if (!bodyText) { if (!light) logError('err-body', '体脂数据读取失败', 'body.json 三路都没读到'); return false; }
     // 用文件的 Last-Modified 当作「这份数据是什么时候写上去的」
     let bodyAt = '';
     try {
@@ -6255,11 +6286,14 @@ async function pullBodyJson(forceFresh) {
         if (!w && !bf && !bmi && !ffm) continue;
         if (w) d0.weights[dd] = w;
         d0.body[dd] = { bf: bf || null, bmi, ffm };
+        d0.bodyAt = d0.bodyAt || {};
+        d0.bodyAt[dd] = Date.now();   // v8.21：见下面单条分支的说明
         n++;
       }
       if (!n) return null;
       const lastD = Object.keys(d0.body).sort().pop();
       if (lastD && d0.weights[lastD]) d0.profile.weight_kg = d0.weights[lastD];
+      bodyVer++;
       Store.save({ silent: true });
       return { d: lastD, n };
     }
@@ -6309,6 +6343,11 @@ async function pullBodyJson(forceFresh) {
     const cur = (d.body && d.body[date]) || {};
     if (d.weights[date] === w && cur.bf === bf) return j;
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
+    // v8.21：记下这一天的数是「什么时候从体脂秤拿进来的」。
+    // 两台设备互相同步时（api.js cloudPull），比它旧的云端记录不许再把这一天盖回去。
+    d.bodyAt = d.bodyAt || {};
+    d.bodyAt[date] = Date.now();
+    bodyVer++;
     let bmi = jbmi || cur.bmi || null;
     if (!bmi && w) {
       const h = Number(d.profile.height_cm) || 0;
@@ -6320,6 +6359,14 @@ async function pullBodyJson(forceFresh) {
     Store.save({ silent: true });   // 不参与「谁更新」判定，避免两台设备互相盖掉记录
     return j;
   } catch (e) { return null; }
+}
+
+// v8.21：身体数据刚写进本机后，让「此刻屏幕上这一页」立刻跟上。
+// 以前各处只调 loadDay()，用户正停在「设置 → 身体数据」时那一页不会重画，
+// 必须退出再进才看到新数（2026-10-24 就是这个现象：设置列表行已经是 64.9，详情页还写着 66.6）。
+function refreshBodyViews() {
+  try { loadDay(); } catch (e) {}
+  try { if (S.view === 'me') renderMe(); } catch (e) {}
 }
 
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
@@ -6732,7 +6779,7 @@ function init() {
     refreshBtn.classList.remove('spin');
     try { await giteeGetText('body.json', true); await giteeGetText('health.json', true); } catch (e) {}
     const gotBody = await pullBodyJson(true);   // 体脂秤那份也一起拉（强制读源）
-    loadDay();
+    refreshBodyViews();   // v8.21：停在身体数据页时也要立刻重画
     const dd = Store.load().daily[S.today] || {};
     const c = lastCloud;
     if (date) {
@@ -7380,10 +7427,10 @@ function init() {
   if (cloudToken() && localStorage.getItem('pending_push')) {
     setTimeout(() => { try { cloudPush(); } catch (e) {} }, 2500);
   }
-  pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
+  pullBodyHistory().then(n => { if (n) { try { refreshBodyViews(); } catch (e) {} } });
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
-      try { loadDay(); } catch (e) {}
+      try { refreshBodyViews(); } catch (e) {}   // v8.21：停在「设置→身体数据」时也要重画
       try { clearErr('err-body'); clearErr('err-history'); } catch (e) {}
       const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
       updToast(what, j.d, SCALE_NAME, 2600);
@@ -7457,8 +7504,8 @@ function init() {
     if (document.visibilityState !== 'visible') return;
     lastPull = Date.now();
     // 切回前台也刷一次身体数据（历史 + 当天）
-    pullBodyHistory().then(n => { if (n) { try { loadDay(); } catch (e) {} } });
-    pullBodyJson().then(j => { if (j) { try { loadDay(); } catch (e) {} } });
+    pullBodyHistory().then(n => { if (n) { try { refreshBodyViews(); } catch (e) {} } });
+    pullBodyJson().then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } });
     if (cloudToken() && localStorage.getItem('pending_push')) { try { cloudPush(); } catch (e) {} }
     pullCloudData().then(date => {
       if (date) { loadDay(); updToast('热量数据', date, WATCH_NAME, 2200); }
@@ -7484,6 +7531,20 @@ function init() {
     if (document.visibilityState === 'visible') syncRecords();
   });
   setInterval(() => { if (!document.hidden) syncRecords(); }, 30000);
+
+  // v8.21：身体数据也要定时拉。以前只有「打开 App」「切回前台」「手动点同步」三处拉，
+  // 所以开着 App 时永远是打开那一刻的体重；而拉回来的数又不会重画页面，只能退出再进。
+  // 这里每 60 秒只读同源镜像 + GitHub raw（不花 Gitee 额度），真有变化才重画。
+  let _lastBodyVer = bodyVer, _lastBodyPoll = 0;
+  setInterval(() => {
+    if (document.hidden) return;
+    if (Date.now() - _lastBodyPoll < 45000) return;
+    _lastBodyPoll = Date.now();
+    pullBodyJson(false, true).then(j => {
+      if (!j) return;
+      if (bodyVer !== _lastBodyVer) { _lastBodyVer = bodyVer; refreshBodyViews(); }
+    }).catch(() => {});
+  }, 60000);
 
   // 老照片补传（v8.18）：v7.80 之后照片只在各设备自己的 IndexedDB 里，
   // 之前拍的那些从没上过云，iPad 换设备只看到名字。这里把「本机有、云端没有」的补上去。

@@ -42,5 +42,12 @@ jobs:
           else
             git add body.json health.json body-history.json data.json
             git commit -m "mirror data from gitee"
-            git push
+            # 2026-10-24：手机上「健康采集」/ Mac 兜底脚本会直接推这些数据文件，
+            # 这里 push 常被拒（! [rejected] fetch first）→ 先 rebase 再推，失败重试三次。
+            for i in 1 2 3; do
+              if git push; then break; fi
+              echo "push failed, rebase and retry ($i)"
+              git pull --rebase --autostash origin main || true
+              sleep 5
+            done
           fi

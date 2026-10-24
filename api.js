@@ -1415,6 +1415,27 @@ async function cloudVerify() {
   } catch (e) { return { ok: false, err: e.message || String(e) }; }
 }
 
+// v8.21：body.json（体脂秤）已经拉进来、且比云端 data.json 更新的那几天，别让 cloudPull 盖回去。
+// local.bodyAt[日期] = 那天的数「从体脂秤写进本机」的时刻；cloudAt = 云端 data.json 的 updatedAt。
+// 以前两台设备的 data.json 互相合并时，云端那份旧的体重会把刚拉到的 64.9 改回 66.6。
+function _keepFreshBody(local, rd, cloudAt) {
+  try {
+    const at = (local && local.bodyAt) || {};
+    if (!Object.keys(at).length || !rd) return;
+    const cAt = Date.parse(String(cloudAt || '')) || 0;
+    for (const k of Object.keys(at)) {
+      if (!at[k] || (cAt && at[k] <= cAt)) continue;
+      if (rd.weights) delete rd.weights[k];
+      if (rd.body) delete rd.body[k];
+    }
+    // 最近一次称重就是被保护的那天 → 顺带别让 profile.weight_kg 回头
+    const lastD = Object.keys(at).sort().pop();
+    if (lastD && at[lastD] && (!cAt || at[lastD] > cAt) && rd.profile && local.weights && local.weights[lastD]) {
+      rd.profile.weight_kg = local.weights[lastD];
+    }
+  } catch (e) {}
+}
+
 async function cloudPull(force) {
   cloudErr = '';
   if (!cloudToken()) { if (typeof logError === 'function') logError('err-notoken', '还没配置同步令牌', 'E03 去 设置 → 数据同步 填 Gitee 令牌'); return false; }
@@ -1432,6 +1453,7 @@ async function cloudPull(force) {
           const lAt0 = String((local0.settings && local0.settings.updatedAt) || '');
           if (force || (rAt0 && rAt0 > lAt0)) {
             const rd0 = remote0.data || {};
+            _keepFreshBody(local0, rd0, rAt0);   // v8.21：刚称的数不许被旧数据盖回去
             const lb0 = local0.body || {}, lw0 = local0.weights || {};
             Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) });
             local0.body = Object.assign({}, lb0, rd0.body || {});
@@ -1467,6 +1489,7 @@ async function cloudPull(force) {
     const lAt = String((local.settings && local.settings.updatedAt) || '');
     if (force || (rAt && rAt > lAt)) {
       const rd = remote.data || {};
+      _keepFreshBody(local, rd, rAt);   // v8.21：同上
       const lBody = local.body || {}, lWts = local.weights || {};
       Object.assign(local, rd, { settings: Object.assign({}, local.settings, rd.settings) });
       // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
