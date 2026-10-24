@@ -2576,6 +2576,10 @@ body.nlog-open .bellbtn { color: var(--lime); }
 #setSheet .grab { width: 66px; height: 4px; }   /* 和提醒记录卡的横杠同一尺寸 */
 #setBody { padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block; }   /* .sheet .sh-body 是 column flex，这里必须回成 block，否则行卡会被压扁裁掉 */
 
+:root {
+  /* 卡里行卡的底色：黑 62%，但仍透（背后圆环会隐约透上来）。只改这一处 */
+  --setrow-fill: rgba(2, 4, 3, .62);
+}
 /* 子页在卡里就地渲染：标题已在卡头，页面自己那条返回栏藏掉 */
 #setBody .mehead { display: none; }
 /* 卡里的内容块 = 和首页行卡同一种实底小卡（不再套一层玻璃，避免玻璃叠玻璃发灰） */
@@ -2583,7 +2587,7 @@ body.nlog-open .bellbtn { color: var(--lime); }
   margin: 0 16px 12px;
   border-radius: 22px;
   background-color: transparent;
-  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
@@ -2603,7 +2607,7 @@ html.kb #setSheet {
 .setrows {
   margin: 0 16px 16px; border-radius: 22px; overflow: hidden;
   background-color: transparent;
-  background-image: linear-gradient(var(--btn-solid), var(--btn-solid)), var(--edge-gloss);
+  background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
   background-origin: border-box; background-clip: padding-box, border-box;
   border: 1px solid transparent;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
