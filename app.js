@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.53', d: '10-24', items: [
+    '改：卡片里向上/向下滑时，内容被边缘裁掉的四个角不再是直角 —— 改成和外层卡片同一套圆角（同一个 --dock-r），弧线和外面的大卡呼应',
+  ] },
+  { v: 'v8.52', d: '10-24', items: [
+    '改：定稿 —— 包着两个照片格的大框回到黑 40%（和设置里的卡一样深），只有「食物照片」「营养成分表」两个小框是黑 5%（亮）',
+  ] },
   { v: 'v8.51', d: '10-24', items: [
     '改：照片那一块的三个框调亮 —— 包着照片格的大框、实物照片框、营养成分框，黑的比例从 40% 降到 5%（另外两处「识别热量」卡、描述大框没动，还是 40%）',
   ] },
@@ -2292,7 +2298,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.51';
+const APP_VERSION = 'v8.53';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5276,6 +5282,7 @@ function applyStaticIcons(){
     svg.querySelectorAll('circle').forEach(c => c.remove());
   });
 }
+
 
 /* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
 /* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */

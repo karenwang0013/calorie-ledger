@@ -1509,9 +1509,7 @@ body.add-open .sheet-mask.on {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10);
 }
 
-/* v8.51：用户点名这「三个框」单独调亮 —— 包着两个照片格的大框 + 实物照片 / 营养成分两个小框，
-   黑的比例从 40% 降到 5%（其余两处：识别热量那张卡、描述下面的大框，仍是 40%）。 */
-.drop.photobox,
+/* v8.52（用户定稿）：只有两个照片小框用黑 5%；包着它们的大框回到黑 40%（设置行卡原值）。 */
 .pslot-empty {
   background-color: transparent;
   background-image: linear-gradient(rgba(2, 4, 3, .05), rgba(2, 4, 3, .05)), var(--edge-gloss);
@@ -2640,10 +2638,10 @@ body.nlog-open .bellbtn { color: var(--lime); }
   padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block;
   /* 卡内滚动区：四个角跟着外层卡片走（原来是直角，滑动时内容被切出方角）
      上下再各加一条 14px 的柔和过渡，内容钻到边缘时不出现硬切线 */
-  border-radius: calc(var(--dock-r, 26px) - 12px);
-  clip-path: inset(0 round calc(var(--dock-r, 26px) - 12px));
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-          mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  /* 四个角都裁成圆弧，半径直接取外层卡片的 --dock-r（和卡片同一套弧，互相呼应）
+     —— 内容上下滑动被边缘裁掉时，出现的是弧，不是直角 */
+  border-radius: var(--dock-r, 26px);
+  clip-path: inset(0 round var(--dock-r, 26px));
 }
 
 :root {
