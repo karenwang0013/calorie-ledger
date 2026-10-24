@@ -2815,7 +2815,12 @@ body.set-open .toast, body.nlog-open .toast {
 .icopt.on { color: var(--lime); border-color: rgba(214,255,75,.5); }
 
 /* 其余卡片里的滚动区也按同一套裁（记录卡列表 / 提醒记录列表）：
-   22px 圆角 + iOS 强制裁剪，滑动时不出方角 */
-#addSheet .sh-body, #nlogList {
+   22px 圆角 + iOS 强制裁剪，滑动时不出方角。
+   ⚠️ v8.59 修正：记录卡的内容左右只留 12px（照片大框/绿按钮就在这儿），
+   裁切窗口再内缩 16px 会把内容左右各切掉一截 —— 用户报「左右两边被裁了」就是这个。
+   所以记录卡这里不内缩、也不裁（三格条自己是 sticky + 27 圆角，不会露方角）；
+   提醒记录卡的行卡左右各 16px margin，内缩 16 正好贴内容边，保持原样。 */
+#addSheet .sh-body { clip-path: none; }
+#nlogList {
   clip-path: inset(0 16px round 22px);
 }
