@@ -1,3 +1,8 @@
+## v8.36 · 2026-10-24
+- 按用户在「图标候选」页提交的 4 条（choice.json）换图标：`notify` 行 bell→notifications_active；提醒记录失败 info→report（橙）；顶栏 `#cloudRefresh` 自绘→cloud_sync；`#hardReloadTop` 自绘→refresh
+- `SET_ICONS` 新增 `bellAct / failRep / cloudSync / refresh`（Material Symbols rounded fill1 官方 path，内联 SVG）
+- 其余 16 个位置未动（用户只勾了这 4 个）
+
 ## v8.35 · 2026-10-24
 - 定：`--setrow-fill` = `rgba(2,4,3,.40)`（E 档），删掉 v8.34 的 A–F 预览行与 `ROW_FILL_PRESETS` / `applyRowFill` / `savedRowFill`
 - 修 bug：`refreshBodyViews()` 里 `renderSetCard()` → `refreshSetBody()`（拿到体重后把子页冲成列表 = 用户说的「点身体数据自动退出」）
