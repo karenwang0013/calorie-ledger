@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.54', d: '10-24', items: [
+    '改：卡内滚动区的圆弧改成和「卡里那张小卡」同一个圆角（22px，跟「目标模式」这类卡呼应），不是外卡那 39',
+  ] },
   { v: 'v8.53', d: '10-24', items: [
     '改：卡片里向上/向下滑时，内容被边缘裁掉的四个角不再是直角 —— 改成和外层卡片同一套圆角（同一个 --dock-r），弧线和外面的大卡呼应',
   ] },
@@ -2298,7 +2301,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.53';
+const APP_VERSION = 'v8.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

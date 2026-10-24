@@ -2638,10 +2638,11 @@ body.nlog-open .bellbtn { color: var(--lime); }
   padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block;
   /* 卡内滚动区：四个角跟着外层卡片走（原来是直角，滑动时内容被切出方角）
      上下再各加一条 14px 的柔和过渡，内容钻到边缘时不出现硬切线 */
-  /* 四个角都裁成圆弧，半径直接取外层卡片的 --dock-r（和卡片同一套弧，互相呼应）
+  /* 四个角都裁成圆弧，半径 = 卡内行卡/小卡的圆角（22px），和「目标模式」这类内部卡牌呼应
      —— 内容上下滑动被边缘裁掉时，出现的是弧，不是直角 */
-  border-radius: var(--dock-r, 26px);
-  clip-path: inset(0 round var(--dock-r, 26px));
+  --set-inner-r: 22px;
+  border-radius: var(--set-inner-r);
+  clip-path: inset(0 round var(--set-inner-r));
 }
 
 :root {
