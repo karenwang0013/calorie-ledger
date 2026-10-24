@@ -1756,6 +1756,27 @@ body.add-open .sheet-mask.on {
 .sitem .hdel svg { width: 13px; height: 13px; display: block; }
 .sitem .hdel:active { color: var(--text); }
 
+/* 搜索页：本地没有这个食物时，列表底下那一行「在网上找」
+   （点了才真的去问 AI；不做成边打字边请求，否则每敲一个字都花钱）。
+   估出来的结果会单独显示成一条，并带「AI 估」标记，进账后在记录里也带那个 AI 小标。 */
+.netfind {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px; padding: 12px;
+  border: 1px dashed rgba(214, 255, 75, 0.32);
+  border-radius: 14px;
+  font-size: 14px; color: var(--lime);
+  -webkit-tap-highlight-color: transparent;
+}
+.netfind .cat { font-size: 10px; color: var(--muted2); margin-top: 3px; }
+.netfind .kc { margin-left: auto; font-size: 11.5px; color: var(--lime); white-space: nowrap; }
+.netfind.busy { opacity: .6; }
+.netfind:active { background: rgba(214, 255, 75, 0.06); }
+.sitem .aiTag {
+  font-size: 9px; color: var(--lime);
+  border: 1px solid rgba(214, 255, 75, 0.40);
+  border-radius: 6px; padding: 1px 5px;
+}
+
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip {
   padding: 7px 12px; border-radius: 20px; font-size: 12px;

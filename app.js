@@ -24,6 +24,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.43', d: '10-24', items: [
+    '加：搜索里本地查不到的东西，现在能在「网上找」——列表底下多一行「在网上找「德芙巧克力」」，点它才让 AI 按同类食物估一份（每 100 克）',
+    '说明：估出来的会单独一条带「AI 估」标记排在前面，点它才加进这一餐；没填 API Key / 没网 / 认不出都会明说',
+    '说明：同一个东西只花一次钱 —— 估过就记住，下次搜直接出来；进账的记录会带那个 AI 小标，你手改过数字以后都按你改的来',
+  ] },
   { v: 'v8.42', d: '10-24', items: [
     '加图标：记录卡里的「拍照」「从相册选」「记入」三个按钮现在都带图标了（相机+、相册、对勾），和文字同一中心线',
     '说明：这三个也可以像别的图标一样换 —— 选图页多了 24/25/26 三个位置（共 26 个位置、133 个候选）',
@@ -2250,7 +2255,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.42';
+const APP_VERSION = 'v8.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3372,6 +3377,39 @@ function syncSearchList() {
   box.hidden = (S.items || []).length > 0;
 }
 
+/* 搜索页：本地历史 / 食物库 / AI 以前估过的缓存里，有没有「一字不差就是这个食物」的 */
+function exactFoodHit(q) {
+  const k = normName(q);
+  if (!k) return false;
+  if (historyFoods().some(f => normName(f.name) === k)) return true;
+  if ((S.foods || []).some(f => normName(f.name) === k || (f.alias || []).some(a => normName(a) === k))) return true;
+  return !!(Store.load().nutCache || []).some(x => normName(x.n) === k || normName(x.canon) === k);
+}
+
+/* AI 以前估过的那份（nutCache 里存的就是「每 100 克」四项）：
+   命中就直接当一条搜索结果显示出来 —— 同一个词不重复花钱问 AI */
+function nutCacheFood(q) {
+  const k = normName(q);
+  if (!k) return null;
+  const cache = (Store.load().nutCache || []).slice().reverse();
+  const one = cache.find(x => normName(x.n) === k || normName(x.canon) === k);
+  if (!one) return null;
+  return { name: one.canon || one.n, kcal: one.k, p: one.p, c: one.c, f: one.f, cat: '网上估值' };
+}
+
+/* 列表末尾那一行「在网上找」：点了才真的去问 AI（不做成边打字边请求，否则每敲一个字都花钱） */
+function netFindRow(q) {
+  const name = esc(String(q || '').trim().slice(0, 20));
+  return `
+    <div class="netfind" id="netFindRow">
+      <div>
+        <div>在网上找「${name}」</div>
+        <div class="cat">本地没有 · 让 AI 按同类食物估一份（每 100 克）</div>
+      </div>
+      <div class="kc">找 ↗</div>
+    </div>`;
+}
+
 function runSearch(q) {
   const box = $('#searchList');
   const key = q.trim().toLowerCase();
@@ -3393,26 +3431,52 @@ function runSearch(q) {
       .slice(0, 20)
       .map(f => ({ f, h: false }));
     list = h.concat(db);
+    // AI 以前估过这个食物：排最前面单独一项（同一个词不重复花钱问）；本地一条都没有时它就是唯一结果
+    const ai = nutCacheFood(q);
+    if (ai) list.unshift({ f: ai, h: false, ai: true });
   }
 
-  if (!list.length) {
-    box.innerHTML = key
-      ? `<div class="empty-state">库里没有「${esc(q)}」<br>试试换个说法，或用「描述」让 AI 估</div>`
-      : '';
+  // 本地没有「一字不差就是这个食物」时，列表末尾放一行「在网上找」
+  const netRow = (key && !exactFoodHit(q)) ? netFindRow(q) : '';
+
+  if (!list.length && !netRow) {
+    box.innerHTML = '';
     return;
   }
 
   box.innerHTML = list.map((x, i) => `
     <div class="sitem" data-i="${i}">
       <div>
-        <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}</div>
+        <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}${x.ai ? ' <span class="aiTag">AI 估</span>' : ''}</div>
         <div class="cat">${esc(x.f.cat || '')} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
       </div>
       <div class="kc">${x.f.kcal}<br><span style="font-size:9px">/100g</span></div>
       ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
       </button>` : ''}
-    </div>`).join('');
+    </div>`).join('') + netRow;
+
+  // 「在网上找」：点了才请求（AI 估出来的值进 nutCache，下次同一个词直接出、不再花钱）
+  const netBtn = $('#netFindRow', box);
+  if (netBtn) netBtn.onclick = async () => {
+    if (netBtn.dataset.busy) return;
+    netBtn.dataset.busy = '1';
+    netBtn.classList.add('busy');
+    const kc = netBtn.querySelector('.kc');
+    if (kc) kc.textContent = '正在找…';
+    let r = null;
+    try { r = await lookupNutrition(q.trim()); } catch (e) { r = { found: false, why: 'net' }; }
+    delete netBtn.dataset.busy;
+    if (!r || !r.found) {
+      netBtn.classList.remove('busy');
+      if (kc) kc.textContent = '没找成';
+      toast(`「${q.trim()}」${NET_WHY[(r && r.why) || ''] || NUT_WHY[(r && r.why) || 'unknown'] || NUT_WHY.unknown}`, 4200);
+      return;
+    }
+    runSearch($('#searchInput').value || '');
+    const name = r.name || q.trim();
+    toast(`AI 估：${name} 每 100 克 ${Math.round(r.per.k)} 千卡 · 点那条加进来`, 4000);
+  };
 
   // × 只从这个历史名单里删（不影响已经记过的账），点它不会顺手把食物加进去
   $$('.hdel', box).forEach(b => b.onclick = ev => {
@@ -3424,7 +3488,8 @@ function runSearch(q) {
   });
 
   $$('.sitem', box).forEach(el => el.onclick = () => {
-    pushFood(list[Number(el.dataset.i)].f);
+    const one = list[Number(el.dataset.i)];
+    pushFood(one.ai ? Object.assign({}, one.f, { _src: 'ai' }) : one.f);
     // 选中后：搜索这边清空回初始状态（清空搜索词、列表滚回顶部），
     // 然后把界面切到左边的「拍照」—— 记录区在那边，加进来的都列在那里
     $('#searchInput').value = '';
@@ -3452,7 +3517,7 @@ function pushFood(f) {
     carb_per_100g: f.c,
     fat_per_100g: f.f,
     confidence: 1,
-    _src: 'db',
+    _src: f._src || 'db',
     _units: f.units || [],
   });
   showResult('已添加', '');
@@ -3804,6 +3869,15 @@ const NUT_WHY = {
   'bad-data': 'AI 给的数对不上，没敢用，营养没动',
   'empty': '没有名字，营养没动',
   'unknown': '营养没查成，还是原来的数',
+};
+
+/* 搜索页「在网上找」失败时的说法：同一个原因，搜索这边不是"营养没动"，而是"没估出来" */
+const NET_WHY = {
+  'no-key': '没填 API Key，没法网上估（设置 → 我的 → AI）',
+  'no-net': '没网或请求失败，估不了',
+  'net': '没网或请求失败，估不了',
+  'ai-miss': 'AI 没认出这个食物，换个说法或用「描述」',
+  'bad-data': 'AI 给的数对不上，没敢用',
 };
 
 /* 已记录的一条（或几条）：查新名字的每 100 克，乘它自己的克数写回去 */
