@@ -26,6 +26,10 @@ function nameLine(name, attr) {
 
 const RELEASES = [
   { v: 'v8.68', d: '10-24', items: [
+    '改：记录卡去掉「下拉关闭」手势 —— 之前你在卡里往下滑，整张卡（连拍照/搜索/描述那一条）会被手指拖着走；现在下拉不再拖卡，关闭改为点卡片外面',
+    '说明：提醒记录卡的下拉关闭保持原样',
+  ] },
+  { v: 'v8.68', d: '10-24', items: [
     '改：方向修正 —— 不是让别的框去学「识别热量」那张卡，而是让那张卡向照片区对齐：现在照片大框、识别热量那张卡、描述大框三处用同一套（黑 26%→38% 渐变 + 玻璃描边 + 模糊 + 圆角 27），两个照片小框仍是单色黑 15%',
   ] },
   { v: 'v8.67', d: '10-24', items: [
@@ -5266,7 +5270,11 @@ function wireSheetDrag(sheet, list, closeFn) {
 function wireNotifyDrag() { wireSheetDrag($('#nlogSheet'), $('#nlogList'), closeNotifyLog); }
 function wireSetDrag() { wireSheetDrag($('#setSheet'), $('#setBody'), closeSetCard); }
 /* 记录卡片：同一套下滑关闭（内容滚到顶才生效，别和内部滚动打架） */
-function wireAddDrag() { wireSheetDrag($('#addSheet'), $('#addSheet .sh-body'), closeAdd); }
+function wireAddDrag() {
+  /* 记录卡不再用「下拉关闭」：那个手势会把整张卡（连三格条）跟着手指往下拖，
+     用户要求拍照/搜索/描述这一条完全固定 → 只能点卡外或按系统返回关闭。
+     提醒记录卡的下拉关闭仍然保留（wireNotifyDrag）。 */
+}
 
 function runNotifyChecks() {
   if (setting('notify_inapp', true) === false) return false;   // 总开关关掉就全部静音
