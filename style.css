@@ -2854,7 +2854,25 @@ body.set-open .toast, body.nlog-open .toast {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   border-radius: 22px;
+  /* 内容消失的那条线 = 搜索栏与常用词之间的正中（各让一半） */
+  margin-top: 6px;
 }
+#pane-search .chips-wrap { margin-top: 6px !important; }
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 #addSheet #addTabs { margin: 13px 12px 12px; }
+
+/* 「描述」输入框里的示例文字：从顶端挪到框的正中间（原来用 placeholder，只能贴在第一行）
+   做法：textarea 不再带 placeholder，改成盖在上面的一个层，垂直+水平居中；一有字就隐藏 */
+.twrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
+.twrap #textInput { flex: 1 1 auto; width: 100%; }
+.tph {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  padding: 0 30px;
+  text-align: center;
+  font-size: 16px; line-height: 1.6;
+  color: var(--muted2); opacity: .55;
+  pointer-events: none;
+}
+.tph[hidden] { display: none; }

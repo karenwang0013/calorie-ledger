@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.73', d: '10-24', items: [
+    '改：搜索结果「消失的那条线」挪到搜索栏与常用词之间的正中（各让一半），不再贴着搜索栏',
+  ] },
   { v: 'v8.72', d: '10-24', items: [
     '改：实物照片、营养成分表两个格子的底色 —— 取外面大框那个渐变的中间值，做成不透明实色 #111412，格子里面再也没有上浅下深的渐变',
   ] },
@@ -2367,7 +2370,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.72';
+const APP_VERSION = 'v8.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7314,6 +7317,9 @@ function init() {
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
   $('#textGo').onclick = runText;
+  // 描述框里的示例文字：框里没字才显示（居中那层，见 .tph），一打字就收起
+  const _ta = $('#textInput');
+  if (_ta) _ta.addEventListener('input', syncTextPh);
   $('#saveItems').onclick = saveItems;
   $('#nutMask').onclick = closeNutEdit;
   // 下滑关闭（拖拽结束时一定会复位，touchcancel 也复位）；叉号和点遮罩也都能关
