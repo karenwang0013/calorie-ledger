@@ -2680,3 +2680,13 @@ html.kb #setSheet {
 #nlogFoot { background: transparent; border-top: 0; padding: 0 0 0; flex: 0 0 auto; }
 #nlogEmpty { padding: 18px 20px 22px; font-size: 13px; color: var(--muted2); line-height: 1.6; }
 #nlogEmpty span { display: block; font-size: 12px; margin-top: 4px; color: var(--muted2); opacity: .8; }
+
+/* 信息条深浅预览（临时）：A–F 六个小钮 */
+.shadepill {
+  flex: 0 0 auto; width: 30px; height: 26px; border-radius: 9px;
+  font-size: 12.5px; font-weight: 600; color: var(--muted);
+  background-image: linear-gradient(rgba(255,255,255,.05), rgba(255,255,255,.02)), var(--edge-gloss);
+  background-origin: border-box; background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}
+.shadepill.on { color: var(--lime); background-image: linear-gradient(rgba(214,255,75,.10), rgba(214,255,75,.10)), var(--edge-gloss); }

@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.34', d: '10-24', items: [
+    '加（临时）：设置卡最下面多了一行「信息条深浅 A–F」——点一下信息条立刻变色，设置卡和提醒记录卡一起变，不用我发版你就能挑',
+    '说明：默认还是 A（原来的样子，不点不会变）；挑好后告诉我字母，我把那档固化成默认，再把这一行删掉',
+  ] },
   { v: 'v8.33', d: '10-24', items: [
     '回滚：v8.32 那个「信息条变黑」是我擅自发上线的，已经退回原来的样子（外观和 v8.31 完全一致）—— 效果应该先给你看，你点头再改',
     '说明：底色现在收在一个变量 --setrow-fill 里，值暂时等于原来的白 8.5%，等你定了再改这一个数',
@@ -2201,7 +2205,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.33';
+const APP_VERSION = 'v8.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5073,6 +5077,29 @@ function pushNote() {
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
+/* ---------------- 信息条深浅预览（临时工具，选定后可整段删掉） ---------------- */
+const PREVIEW_ROW_FILL = true;   // 临时预览开关：选定并固化成默认后，把这段和上面那一行一起删掉
+/* 卡里行卡的底色：从「白」到「黑」，点一下立刻生效，存在本机，重启也在 */
+const ROW_FILL_PRESETS = [
+  { k: 'A', name: '现在（白 8.5%）', v: 'rgba(255,255,255,.085)' },
+  { k: 'B', name: '白 3.5%（浅灰）', v: 'rgba(255,255,255,.035)' },
+  { k: 'C', name: '全透明（只留亮边）', v: 'rgba(0,0,0,0)' },
+  { k: 'D', name: '黑 20%', v: 'rgba(2,4,3,.20)' },
+  { k: 'E', name: '黑 40%', v: 'rgba(2,4,3,.40)' },
+  { k: 'F', name: '黑 62%（上次那版）', v: 'rgba(2,4,3,.62)' }
+];
+function rowFillNow() {
+  const st = getComputedStyle(document.documentElement).getPropertyValue('--setrow-fill').trim();
+  return st || '';
+}
+function applyRowFill(v) {
+  if (v) document.documentElement.style.setProperty('--setrow-fill', v);
+  else document.documentElement.style.removeProperty('--setrow-fill');
+}
+function savedRowFill() {
+  try { return localStorage.getItem('preview_rowfill') || ''; } catch (e) { return ''; }
+}
+
 /* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
 /* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */
 const SET_ICONS = {
@@ -5134,11 +5161,30 @@ function renderSetCard() {
         <em>${APP_VERSION}</em>
         <button class="setpill" id="hardReload">强制更新</button>
       </div>
-    </div>`;
+    </div>
+    ${PREVIEW_ROW_FILL ? `
+    <div class="setlabel" style="margin-top:16px">信息条深浅（临时预览）</div>
+    <div class="setrows last">
+      <div class="setrow ver" style="gap:6px;overflow-x:auto">
+        <span class="ttl" style="font-weight:400;font-size:12.5px;color:var(--muted2);flex:0 0 auto">白 → 黑</span>
+        ${ROW_FILL_PRESETS.map(o => `
+          <button class="shadepill${(savedRowFill() || ROW_FILL_PRESETS[0].v) === o.v ? ' on' : ''}"
+                  data-fill="${o.v}" data-key="${o.k}" title="${o.name}">${o.k}</button>`).join('')}
+      </div>
+    </div>` : ''}`;
 
   const hr = $('#hardReload');
   if (hr) hr.onclick = () => hardReloadApp();
   $$('#setBody .setrow[data-page]').forEach(b2 => b2.onclick = () => openSetSub(b2.dataset.page));
+  // 临时预览：A–F 六档深浅，点一下就地变（不重画整页）
+  $$('.shadepill').forEach(b => b.onclick = () => {
+    const v = b.dataset.fill || '';
+    applyRowFill(v);
+    try { localStorage.setItem('preview_rowfill', v); } catch (e) {}
+    $$('.shadepill').forEach(x => x.classList.toggle('on', x === b));
+    const o = ROW_FILL_PRESETS.find(x => x.k === b.dataset.key);
+    toast('信息条：' + (b.dataset.key || '') + (o ? ' · ' + o.name : ''), 2000);
+  });
 }
 
 function setCardOn() {
@@ -7712,6 +7758,9 @@ function init() {
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   wireSetDrag();
+  // 上次在「信息条深浅」里选过的值，重开 App 也生效
+  const savedFill = savedRowFill();
+  if (savedFill) applyRowFill(savedFill);
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
   if (window.visualViewport) {
     const vv = window.visualViewport;
