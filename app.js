@@ -9,6 +9,7 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const MEALS = [
   { k: 'breakfast', n: '早餐' },
   { k: 'lunch', n: '午餐' },
+  { k: 'tea', n: '点心' },          // v8.45 用户要求：午餐和晚餐中间加一个「点心」
   { k: 'dinner', n: '晚餐' },
   { k: 'snack', n: '加餐' },
 ];
@@ -24,6 +25,15 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.46', d: '10-24', items: [
+    '改：搜索里那行「在网上找」去掉虚线框，和上面每条结果一样就是普通一行',
+    '改：「已添加」里那张卡的底色/描边改成和上面照片卡完全同值，两张卡现在是同一个颜色',
+    '加：餐次里多了「点心」，排在午餐和晚餐中间（首页五个餐次、记到哪一餐都能选它）',
+  ] },
+  { v: 'v8.45', d: '10-24', items: [
+    '加：记录卡里「识别热量」按钮有图标了（闪电 bolt）',
+    '改：个性化=画笔、数据备份=数据库、关于与更新=手机更新箭头（这三个之前被我按你清单换成了调色板/云上传/信息圈，你说错了，已改回这三个）',
+  ] },
   { v: 'v8.44', d: '10-24', items: [
     '改：按你这次清单换了 14 个图标（其余 12 个没选，一个都没动）—— 身体数据=趋势线、AI=星芒、个性化=调色板、备份=云上传、关于=信息圈、还没记录=便签、失败=八角停、数据同步=循环、今日=日历、记录=笔、描述=文档、拍照=相机、从相册选=相册集、记入=书签勾',
   ] },
@@ -2258,7 +2268,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.44';
+const APP_VERSION = 'v8.46';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5273,13 +5283,13 @@ function renderSetCard() {
       ${setRowHTML('nutri', 'goal', '饮食目标', `${d.targets.kcal_budget} 千卡 / 天`)}
       ${setRowHTML('bodydata', 'insights', '身体数据', bodyTxt)}
       ${setRowHTML('ai', 'ai', 'AI 识别', d.has_key ? '已配置' : '未配置')}
-      ${setRowHTML('theme', 'theme', '个性化', THEME_NAMES[d.theme] || '荧光绿')}
+      ${setRowHTML('theme', 'brush', '个性化', THEME_NAMES[d.theme] || '荧光绿')}
       ${setRowHTML('notify', 'bellAct', '通知', d.sync_toast ? '开' : '关')}
     </div>
     <div class="setlabel">其他</div>
     <div class="setrows">
-      ${setRowHTML('data', 'cloud', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启')}
-      ${setRowHTML('about', 'info', '关于与更新', APP_VERSION)}
+      ${setRowHTML('data', 'db', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启')}
+      ${setRowHTML('about', 'sysupd', '关于与更新', APP_VERSION)}
     </div>
     <div class="setrows last">
       <div class="setrow ver">

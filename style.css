@@ -1689,8 +1689,10 @@ body.add-open .sheet-mask.on {
 /* 识别结果行 */
 .ritem {
   position: relative;
-  background: var(--card);
-  border: 1px solid var(--line);
+  /* 材质和上面那张照片卡（.drop）完全同值：白 4.5% 底 + 白 10% 描边。
+     用户 2026-10-24：下面的卡牌和上面的卡牌颜色要一样。圆角/尺寸不动。 */
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 9px;
@@ -1758,12 +1760,12 @@ body.add-open .sheet-mask.on {
 
 /* 搜索页：本地没有这个食物时，列表底下那一行「在网上找」
    （点了才真的去问 AI；不做成边打字边请求，否则每敲一个字都花钱）。
-   估出来的结果会单独显示成一条，并带「AI 估」标记，进账后在记录里也带那个 AI 小标。 */
+   估出来的结果会单独显示成一条，并带「AI 估」标记，进账后在记录里也带那个 AI 小标。
+   v8.45：用户要求「搜索出来的结果不要虚线框」→ 去掉虚线框，和上面每一条结果一样就是一行。 */
 .netfind {
   display: flex; align-items: center; gap: 10px;
-  margin-top: 10px; padding: 12px;
-  border: 1px dashed rgba(214, 255, 75, 0.32);
-  border-radius: 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
   font-size: 14px; color: var(--lime);
   -webkit-tap-highlight-color: transparent;
 }
@@ -2180,8 +2182,10 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   backdrop-filter: var(--glass-blur-2);
   box-shadow: var(--glass-shadow-2);
 }
-/* 卡片里的小块（识别结果、拍照摘要）留在实底上，避免一层套一层地反复模糊 */
-.shotrow, .ritem, .chip {
+/* 卡片里的小块（拍照摘要）留在实底上，避免一层套一层地反复模糊。
+   v8.45：`.ritem`（识别结果里「已添加」那张）已经从这里拿出去单独定材质 ——
+   用户要求它和上面那张照片卡同色，见上面 `.ritem` 那一段。 */
+.shotrow, .chip {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
   background-origin: border-box;
@@ -2753,3 +2757,7 @@ body.set-open .toast, body.nlog-open .toast {
 #addSheet .prow-pick .pickbtn svg,
 #addSheet .sh-foot .btn svg { width: 18px; height: 18px; flex: 0 0 18px; }
 #addSheet .prow-pick .pickbtn, #addSheet .sh-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+
+/* 「识别热量」按钮的图标：18px、和文字同一中心线 */
+#photoGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
+#photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
