@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.64', d: '10-24', items: [
+    '修：搜索框上一版被整体往下推了（我算错了一个间距）—— 现在它就在原来的位置，只是滚动时不动；下面的内容也回到原位',
+  ] },
   { v: 'v8.63', d: '10-24', items: [
     '改：记录卡「搜索」—— 搜索框从滚动层拿出来、真的固定在卡片上（上滑下滑下拉都不动）；上面「拍照/搜索/描述」那一栏也不会再位移',
   ] },
@@ -2332,7 +2335,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.63';
+const APP_VERSION = 'v8.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2798,20 +2801,19 @@ function raiseSheet(id) {
 
 /* ---------------- 记录弹层 ---------------- */
 
-/* 搜索框固定在卡片上：位置 = 三格条下沿 + 8px（相对卡片），并给内容留出同高的空隙 */
+/* 搜索框固定在卡片上：位置就放在它原来的地方（面板顶部），
+   并把滚动内容的上边距补成它原来占的高度 —— 位置一点不挪，只是不跟着滚 */
 function placeSearchInput() {
   const sheet = $('#addSheet');
-  const tabs = $('#addTabs');
   const input = $('#searchInput');
   const pane = $('#pane-search');
-  if (!sheet || !tabs || !input || !pane) return;
-  if (pane.hidden) return;
+  if (!sheet || !input || !pane || pane.hidden) return;
   const sr = sheet.getBoundingClientRect();
-  const tr = tabs.getBoundingClientRect();
-  const top = Math.round(tr.bottom - sr.top + 8);
-  input.style.top = top + 'px';
-  const pad = Math.round(input.offsetHeight + 24 - (pane.getBoundingClientRect().top - sr.top));
-  pane.style.paddingTop = Math.max(0, pad) + 'px';
+  const pr = pane.getBoundingClientRect();
+  // 原来它就是这个面板的第一个元素：top = 面板顶
+  input.style.top = Math.round(pr.top - sr.top) + 'px';
+  // 内容从它下面开始（补回它原本占的高度），不再额外加任何间距
+  pane.style.paddingTop = Math.round(input.offsetHeight) + 'px';
 }
 
 function syncAddTabsH() {
