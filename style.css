@@ -2566,9 +2566,34 @@ body.set-open #goMe { color: var(--lime); }
   background-origin: border-box; background-clip: padding-box, border-box;
   border: 1px solid transparent;
 }
+#setSheet .sh-hd .backbtn {
+  width: 30px; height: 30px; margin: 0 0 0 -8px; flex: 0 0 auto;
+  display: grid; place-items: center; color: var(--text);
+}
+#setSheet .sh-hd .backbtn svg { width: 24px; height: 24px; }
+#setSheet .sh-hd .backbtn:active { opacity: .6; }
 #setSheet .grab { width: 66px; height: 4px; }   /* 和提醒记录卡的横杠同一尺寸 */
 #setBody { padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block; }   /* .sheet .sh-body 是 column flex，这里必须回成 block，否则行卡会被压扁裁掉 */
 
+/* 子页在卡里就地渲染：标题已在卡头，页面自己那条返回栏藏掉 */
+#setBody .mehead { display: none; }
+/* 卡里的内容块 = 和首页行卡同一种实底小卡（不再套一层玻璃，避免玻璃叠玻璃发灰） */
+#setBody .card {
+  margin: 0 16px 12px;
+  border-radius: 22px;
+  background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+#setBody > .card:first-child { margin-top: 2px; }
+#setBody .about-fill { height: auto !important; display: block; }
+#setBody .split { gap: 10px; }
+/* 键盘弹起时，卡整体贴在键盘上沿（卡是 fixed 到底部的，不会自己让位） */
+html.kb #setSheet {
+  bottom: calc(var(--vfull, 100dvh) - var(--vvh, 100dvh) + 8px);
+  max-height: calc(var(--vvh, 100dvh) - var(--topbar-h, 64px) - 16px);
+}
 /* 分组小标题 */
 .setlabel { padding: 0 32px 8px; font-size: 12px; color: var(--muted2); letter-spacing: .4px; line-height: 17px; }
 /* 行卡：玻璃卡里再套一层实底小卡（和 .chip / .ritem 同一套做法） */

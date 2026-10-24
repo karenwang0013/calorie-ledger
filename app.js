@@ -24,6 +24,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.28', d: '10-24', items: [
+    '改：点设置里的任意一项，不再跳到整页 —— 内容就在这张卡里就地换掉，卡不动、位置不变；左上角「‹」回设置列表',
+    '改：「功能 / 其他 / 版本更新」这几块的做法和主屏幕的卡一致（同一套实底小卡 + 同样的圆角），里面的页面也按这个口径排',
+    '修：卡里的输入框（身体与目标 / 饮食目标 / AI 识别 / 数据备份）弹键盘时，整张卡跟着抬到键盘上沿，不再被键盘盖住',
+    '说明：卡牌材质、颜色、模糊依然一个都没改',
+  ] },
   { v: 'v8.27', d: '10-24', items: [
     '改：设置页不再是一整页 —— 点右上角齿轮，直接浮起一张卡（和「提醒记录」那张同一块玻璃：同样的底、同样的圆角、同样的底边位置）',
     '改：设置里面换成行式列表 —— 左边荧光绿图标、中间标题、右边灰字数值和箭头；分成「功能 / 其他」两组，版本更新单独一行带「强制更新」',
@@ -2172,7 +2178,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.27';
+const APP_VERSION = 'v8.28';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4550,6 +4556,7 @@ function applyTheme(name) {
 /* 左边缘往右滑 = 返回（关卡片 / 关弹层 / 退出我的子页） */
 function goBack() {
   const on = id => { const el = $(id); return el && el.classList.contains('on'); };
+  if (setCardOn()) { if (mePage) setBackToRoot(); else closeSetCard(); return; }   // 设置卡：先回首页，再关卡
   if (on('#grpSheet')) return closeGroup();
   if (on('#addSheet')) return closeAdd();
   if (on('#helpSheet')) return closeHelp();
@@ -5078,11 +5085,47 @@ function setCardOn() {
   return !!(s && s.classList.contains('on'));
 }
 
+/* 卡里那 8 个子页的标题（点行进子页时显示在卡头，不再跳整页） */
+const SET_SUB_TITLE = {
+  body: '身体与目标', nutri: '饮食目标', bodydata: '身体数据', ai: 'AI 识别',
+  theme: '个性化', notify: '通知', data: '数据备份', about: '关于与更新'
+};
+
+/* 卡头：首页 = 设置 + 版本徽标；子页 = ‹ + 子页标题 */
+function setCardHeader() {
+  const hd = $('#setSheet .sh-hd');
+  if (!hd) return;
+  const t = hd.querySelector('h2'), v = $('#setVer'), back = $('#setBack');
+  if (mePage) {
+    if (t) t.textContent = SET_SUB_TITLE[mePage] || '设置';
+    if (v) v.hidden = true;
+    if (back) back.hidden = false;
+  } else {
+    if (t) t.textContent = '设置';
+    if (v) { v.hidden = false; v.textContent = APP_VERSION; }
+    if (back) back.hidden = true;
+  }
+}
+
+/* 卡里的内容：首页行式列表 / 子页（就地在卡里换内容，不跳页） */
+function refreshSetBody() {
+  if (mePage) renderMe(); else renderSetCard();
+  setCardHeader();
+}
+
+/* 子页 → 回卡首页 */
+function setBackToRoot() {
+  mePage = null;
+  renderSetCard();
+  setCardHeader();
+  const b = $('#setBody'); if (b) b.scrollTop = 0;
+}
+
 function openSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
   if (!setCardOn()) setFromView = (S.view && S.view !== 'me') ? S.view : (setFromView || 'today');
-  renderSetCard();
+  refreshSetBody();
   document.body.classList.add('set-open');
   raiseSheet(sheet);
   if (mask) mask.classList.add('on');
@@ -5092,6 +5135,7 @@ function openSetCard() {
 function closeSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
+  mePage = null;                 // 下次打开从首页开始
   document.body.classList.remove('set-open');
   if (mask) mask.classList.remove('on');
   sheet.classList.remove('on');
@@ -5108,14 +5152,13 @@ function backToSetCard() {
   openSetCard();
 }
 
-/* 点卡里的某一行 → 关掉卡，进对应的子页（子页还是原来那套整页） */
+/* 点卡里的某一行 → 卡原地换内容（不跳整页，也不关这张卡） */
 function openSetSub(page) {
   if (!page) return;
-  closeSetCard();
-  switchView('me');            // 会先把 mePage 清空并重画
   mePage = page;
   if (page === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
-  renderMe();
+  if (!setCardOn()) openSetCard(); else refreshSetBody();
+  const b = $('#setBody'); if (b) b.scrollTop = 0;
   if (page === 'bodydata') {
     pullBodyJson(true).then(j => { if (j) { try { refreshBodyViews(); } catch (e) {} } }).catch(() => {});
   }
@@ -5510,11 +5553,13 @@ function renderMe() {
       </div>`;
   }
 
-  $('#meBody').innerHTML = h;
-  fitAboutFill();
+  if (mePage) $('#setBody').innerHTML = h;   // 子页就在卡里换内容
+  else $('#meBody').innerHTML = h;
+  if (S.view === 'me') fitAboutFill();
   if (S.view === 'me') fitMeScroll();
   wireMe();
   if (!mePage) renderSetCard();     // 设置卡里的数字跟着一起刷新
+  setCardHeader();
 }
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
@@ -5558,7 +5603,7 @@ function wireMe() {
       + `\n历史 ${histN} 条 · 记账 ${logN} 条 · 已删 ${delN} 条${delList ? '（' + delList + '…）' : ''}`;
   }
   const back = $('#meBack');
-  if (back) back.onclick = () => backToSetCard();
+  if (back) back.onclick = () => setBackToRoot();
   $$('.srow').forEach(b => b.onclick = () => {
     mePage = b.dataset.page;
     if (mePage === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
@@ -6906,10 +6951,10 @@ function init() {
 
   const gm = $('#goMe');
   if (gm) gm.onclick = () => {
-    // 卡已经开着 → 再点一下收起
+    // 卡里的子页 → 先回卡首页
+    if (setCardOn() && mePage) { setBackToRoot(); return; }
+    // 卡已经开着（首页）→ 再点一下收起
     if (setCardOn()) { closeSetCard(); return; }
-    // 正在某个子页（身体数据 / 饮食目标 …）→ 先回到设置卡
-    if (S.view === 'me' && mePage) { backToSetCard(); return; }
     openSetCard();
   };
   const refreshBtn = $('#cloudRefresh');
@@ -7573,10 +7618,23 @@ function init() {
   renderNotifyDot();
   wireNotifyDrag();
   // 设置卡：完成 / 点遮罩 / 下滑 都能关
-  const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask');
+  const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask'), setBackBtn = $('#setBack');
   if (setDoneBtn) setDoneBtn.onclick = () => closeSetCard();
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
+  if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   wireSetDrag();
+  // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
+  if (window.visualViewport) {
+    const vv = window.visualViewport;
+    const putVvh = () => {
+      const de = document.documentElement;
+      de.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+      // 没键盘时顺手记一份"整屏高"：键盘弹起时用它算卡该往上抬多少
+      if (!de.classList.contains('kb')) de.style.setProperty('--vfull', Math.round(window.innerHeight) + 'px');
+    };
+    putVvh();
+    vv.addEventListener('resize', putVvh);
+  }
 
   const hrTop = $('#hardReloadTop');
   if (hrTop) hrTop.onclick = () => {
