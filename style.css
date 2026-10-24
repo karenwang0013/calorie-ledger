@@ -1480,12 +1480,9 @@ body.add-open .sheet-mask.on {
 .prow2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 10px; }
 .prow2 input { width: 100%; font-size: 16px; padding-left: 11px; padding-right: 8px; }
 
-/* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡，
-   材质与上面照片那张卡完全同值（1px 白 10% 描边 + 白 4.5% 底 + 圆角 28），两张卡左右同宽。 */
+/* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡。 */
 #photoActions {
-  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.045);
   padding: 12px;
 }
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
@@ -1493,6 +1490,22 @@ body.add-open .sheet-mask.on {
 #photoActions #photoHint { padding-top: 10px; padding-bottom: 10px; }
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
+
+/* ---- 记录卡里「装东西的框」统一用「描述」下方那个输入框的玻璃质感（B2）----
+   用户 2026-10-24：① 拍照/从相册选下面的大框、② 识别热量下面的小框、
+   ③ 实物照片 + 营养成分这两个框，全部换成和 textarea 一样的质感。
+   B2 = linear-gradient(180deg, rgba(34,38,36,.52) → rgba(24,28,26,.62)) + var(--edge-gloss) 描边
+   （照抄 style.css 里 input/textarea 那段的同值写法；圆角与尺寸各自不动，
+    搜索框本来就是 input，已经是这套，不用改。） */
+.drop.photobox,
+#photoActions,
+.pslot-empty {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(34, 38, 36, 0.52) 0%, rgba(24, 28, 26, 0.62) 100%), var(--edge-gloss);
+  background-origin: border-box, border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+}
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
 .photomode button {
