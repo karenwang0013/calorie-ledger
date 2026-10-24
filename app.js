@@ -24,6 +24,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.29', d: '10-24', items: [
+    '修：点设置里的选项后卡牌会变大变小（像换了张卡）—— 现在卡的尺寸锁死在设置列表那一屏的高度，进哪一项都一样大',
+    '改：内容装不下时，就在卡里上下滑（不是把卡撑高）；滑到顶继续往下拽仍然是关掉卡',
+  ] },
   { v: 'v8.28', d: '10-24', items: [
     '改：点设置里的任意一项，不再跳到整页 —— 内容就在这张卡里就地换掉，卡不动、位置不变；左上角「‹」回设置列表',
     '改：「功能 / 其他 / 版本更新」这几块的做法和主屏幕的卡一致（同一套实底小卡 + 同样的圆角），里面的页面也按这个口径排',
@@ -2178,7 +2182,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.28';
+const APP_VERSION = 'v8.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5026,6 +5030,7 @@ const SET_ICONS = {
   info: 'M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z'
 };
 let setFromView = 'today';          // 打开设置卡时停在哪个页面（「完成」就回到它）
+let setCardH = 0;                   // 设置首页那张卡的高度：进子页后卡不许变大变小，内容多就在卡里滚
 
 function setRowHTML(page, icon, label, val) {
   return `<button class="setrow" data-page="${page}">
@@ -5109,15 +5114,30 @@ function setCardHeader() {
 
 /* 卡里的内容：首页行式列表 / 子页（就地在卡里换内容，不跳页） */
 function refreshSetBody() {
+  const sheet = $('#setSheet');
+  if (sheet) sheet.style.height = '';           // 先松绑，首页才能量到"内容撑开"的真实高度
   if (mePage) renderMe(); else renderSetCard();
   setCardHeader();
+  if (!sheet) return;
+  if (!mePage) {
+    setCardH = sheet.offsetHeight;   // 首页高度 = 这张卡的标准尺寸（offsetHeight 不受入场 scale(.98) 影响）
+  } else if (setCardH) {
+    sheet.style.height = setCardH + 'px';       // 子页：尺寸不变，装不下就在卡里上下滑
+  }
+}
+
+/* 量一次首页卡高（进子页前必须先有这个值） */
+function measureRootH() {
+  const sheet = $('#setSheet');
+  if (!sheet || mePage) return;
+  sheet.style.height = '';
+  setCardH = sheet.offsetHeight;
 }
 
 /* 子页 → 回卡首页 */
 function setBackToRoot() {
   mePage = null;
-  renderSetCard();
-  setCardHeader();
+  refreshSetBody();          // 松绑 → 回列表 → 重新量高
   const b = $('#setBody'); if (b) b.scrollTop = 0;
 }
 
@@ -5136,6 +5156,7 @@ function closeSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
   mePage = null;                 // 下次打开从首页开始
+  sheet.style.height = '';       // 清掉子页锁的高度
   document.body.classList.remove('set-open');
   if (mask) mask.classList.remove('on');
   sheet.classList.remove('on');
@@ -5155,6 +5176,7 @@ function backToSetCard() {
 /* 点卡里的某一行 → 卡原地换内容（不跳整页，也不关这张卡） */
 function openSetSub(page) {
   if (!page) return;
+  if (!setCardH) measureRootH();
   mePage = page;
   if (page === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
   if (!setCardOn()) openSetCard(); else refreshSetBody();
@@ -7631,6 +7653,7 @@ function init() {
       de.style.setProperty('--vvh', Math.round(vv.height) + 'px');
       // 没键盘时顺手记一份"整屏高"：键盘弹起时用它算卡该往上抬多少
       if (!de.classList.contains('kb')) de.style.setProperty('--vfull', Math.round(window.innerHeight) + 'px');
+      if (setCardOn() && !mePage) measureRootH();   // 转屏 / 改窗口：首页那张卡重新量高
     };
     putVvh();
     vv.addEventListener('resize', putVvh);
