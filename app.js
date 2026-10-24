@@ -24,6 +24,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.35', d: '10-24', items: [
+    '定：信息条深浅就用你选的 E（黑 40%），临时的 A–F 预览那一行已经撤掉',
+    '修：点「身体数据」会自己退回列表 —— 是后台拉到体重后把卡里内容重画成了列表，现在按当前页重画',
+    '修：卡打开时提示条会压在「版本更新」那一行上（看着像按钮文字没居中）—— 现在提示条改在顶栏下面出现；胶囊也改成固定高 + 真正居中',
+    '改：「提醒记录」底部那一行（共 N 条 / 清空记录）的宽度、离卡底的距离，和设置卡「版本更新」行完全一致；今天/更早两组跟着对齐',
+    '改：加号那张「记录」卡也跟着换主题（按钮、从相册选、候选标签）；两个拍照框、外面那张大卡、「拍照 / 搜索 / 描述」三格保持原样',
+  ] },
   { v: 'v8.34', d: '10-24', items: [
     '加（临时）：设置卡最下面多了一行「信息条深浅 A–F」——点一下信息条立刻变色，设置卡和提醒记录卡一起变，不用我发版你就能挑',
     '说明：默认还是 A（原来的样子，不点不会变）；挑好后告诉我字母，我把那档固化成默认，再把这一行删掉',
@@ -2205,7 +2212,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.34';
+const APP_VERSION = 'v8.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4964,14 +4971,21 @@ function closeNotifyLog() {
 function wireSheetDrag(sheet, list, closeFn) {
   if (!sheet || sheet.dataset.dragWired) return;
   sheet.dataset.dragWired = '1';
-  let y0 = 0, dy = 0, dragging = false, armed = false;
+  let y0 = 0, x0 = 0, dy = 0, dragging = false, armed = false, horiz = false;
   sheet.addEventListener('touchstart', (e) => {
     if (!sheet.classList.contains('on')) return;
-    y0 = e.touches[0].clientY; dy = 0; dragging = false;
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; dragging = false; horiz = false;
     armed = !list || list.scrollTop <= 0;
   }, { passive: true });
   sheet.addEventListener('touchmove', (e) => {
     if (!armed || !sheet.classList.contains('on')) return;
+    // 横向成分更大 = 在滑图表 / 翻页，不归这个手势管（否则会把卡拖着走甚至关掉）
+    if (!dragging) {
+      const dx0 = Math.abs(e.touches[0].clientX - x0);
+      const dy0 = Math.abs(e.touches[0].clientY - y0);
+      if (dx0 > 12 && dx0 > dy0) { horiz = true; armed = false; return; }
+    }
+    if (horiz) return;
     const d = e.touches[0].clientY - y0;
     if (d <= 0) {
       if (!dragging) return;
@@ -5077,29 +5091,6 @@ function pushNote() {
   return `网页自己要有一台推送服务才能锁屏提醒；点右侧开关开始（当前权限：${permTxt}）`;
 }
 
-/* ---------------- 信息条深浅预览（临时工具，选定后可整段删掉） ---------------- */
-const PREVIEW_ROW_FILL = true;   // 临时预览开关：选定并固化成默认后，把这段和上面那一行一起删掉
-/* 卡里行卡的底色：从「白」到「黑」，点一下立刻生效，存在本机，重启也在 */
-const ROW_FILL_PRESETS = [
-  { k: 'A', name: '现在（白 8.5%）', v: 'rgba(255,255,255,.085)' },
-  { k: 'B', name: '白 3.5%（浅灰）', v: 'rgba(255,255,255,.035)' },
-  { k: 'C', name: '全透明（只留亮边）', v: 'rgba(0,0,0,0)' },
-  { k: 'D', name: '黑 20%', v: 'rgba(2,4,3,.20)' },
-  { k: 'E', name: '黑 40%', v: 'rgba(2,4,3,.40)' },
-  { k: 'F', name: '黑 62%（上次那版）', v: 'rgba(2,4,3,.62)' }
-];
-function rowFillNow() {
-  const st = getComputedStyle(document.documentElement).getPropertyValue('--setrow-fill').trim();
-  return st || '';
-}
-function applyRowFill(v) {
-  if (v) document.documentElement.style.setProperty('--setrow-fill', v);
-  else document.documentElement.style.removeProperty('--setrow-fill');
-}
-function savedRowFill() {
-  try { return localStorage.getItem('preview_rowfill') || ''; } catch (e) { return ''; }
-}
-
 /* ---------------- 设置卡（和「提醒记录」同一张玻璃卡） ---------------- */
 /* 图标用 Material Symbols 的 path（Apache-2.0），21×21、随 currentColor（荧光绿） */
 const SET_ICONS = {
@@ -5162,29 +5153,11 @@ function renderSetCard() {
         <button class="setpill" id="hardReload">强制更新</button>
       </div>
     </div>
-    ${PREVIEW_ROW_FILL ? `
-    <div class="setlabel" style="margin-top:16px">信息条深浅（临时预览）</div>
-    <div class="setrows last">
-      <div class="setrow ver" style="gap:6px;overflow-x:auto">
-        <span class="ttl" style="font-weight:400;font-size:12.5px;color:var(--muted2);flex:0 0 auto">白 → 黑</span>
-        ${ROW_FILL_PRESETS.map(o => `
-          <button class="shadepill${(savedRowFill() || ROW_FILL_PRESETS[0].v) === o.v ? ' on' : ''}"
-                  data-fill="${o.v}" data-key="${o.k}" title="${o.name}">${o.k}</button>`).join('')}
-      </div>
-    </div>` : ''}`;
+`;
 
   const hr = $('#hardReload');
   if (hr) hr.onclick = () => hardReloadApp();
   $$('#setBody .setrow[data-page]').forEach(b2 => b2.onclick = () => openSetSub(b2.dataset.page));
-  // 临时预览：A–F 六档深浅，点一下就地变（不重画整页）
-  $$('.shadepill').forEach(b => b.onclick = () => {
-    const v = b.dataset.fill || '';
-    applyRowFill(v);
-    try { localStorage.setItem('preview_rowfill', v); } catch (e) {}
-    $$('.shadepill').forEach(x => x.classList.toggle('on', x === b));
-    const o = ROW_FILL_PRESETS.find(x => x.k === b.dataset.key);
-    toast('信息条：' + (b.dataset.key || '') + (o ? ' · ' + o.name : ''), 2000);
-  });
 }
 
 function setCardOn() {
@@ -6706,7 +6679,7 @@ async function pullBodyJson(forceFresh, light) {
 function refreshBodyViews() {
   try { loadDay(); } catch (e) {}
   try { if (S.view === 'me') renderMe(); } catch (e) {}
-  try { if (setCardOn()) renderSetCard(); } catch (e) {}   // 设置卡开着时，行上的体重/体脂也要跟着变
+  try { if (setCardOn()) refreshSetBody(); } catch (e) {}   // 卡开着时按当前页重画（子页不能被列表冲掉）
 }
 
 /* ---------------- 云端同步（GitHub 上的 health.json） ---------------- */
@@ -7758,9 +7731,6 @@ function init() {
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   wireSetDrag();
-  // 上次在「信息条深浅」里选过的值，重开 App 也生效
-  const savedFill = savedRowFill();
-  if (savedFill) applyRowFill(savedFill);
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
   if (window.visualViewport) {
     const vv = window.visualViewport;

@@ -1,3 +1,11 @@
+## v8.35 · 2026-10-24
+- 定：`--setrow-fill` = `rgba(2,4,3,.40)`（E 档），删掉 v8.34 的 A–F 预览行与 `ROW_FILL_PRESETS` / `applyRowFill` / `savedRowFill`
+- 修 bug：`refreshBodyViews()` 里 `renderSetCard()` → `refreshSetBody()`（拿到体重后把子页冲成列表 = 用户说的「点身体数据自动退出」）
+- 修：`.setpill` 改 inline-flex + 固定高 33 + line-height 1（文字真正居中）；`body.set-open/.nlog-open .toast` 移到顶栏下（原来压住版本更新行）
+- 对齐：`#nlogSheet .sh-foot` padding 归零（原来被 `#nlogSheet .sh-foot{padding:8px 16px 30px}` 覆盖）→ 提醒记录底部行与设置版本行实测同 x26 / w338 / 离卡底 22
+- 加：`#addSheet` 的 `.btn:not(.primary)` / `.pickbtn:not(.on)` / `.chip` / `.pgbtn` 用 `--setrow-fill`；`.drop` `.pslot` `#addTabs` `.tabs3` 不动
+- 加：`wireSheetDrag` 横向手势保护（|dx|>12 且 >|dy| 时不接管，保护图表翻页）
+
 ## v8.34 · 2026-10-24
 - 加（临时预览）：设置列表底部一行 `A–F` 六档信息条深浅（`ROW_FILL_PRESETS` + `PREVIEW_ROW_FILL`），点一下写 `documentElement.style --setrow-fill` 并存 `preview_rowfill`，重开 App 也保留；默认 A = 原样
 - 六档实测行内像素（同一采样点）：A `rgb(49,56,59)` / B `rgb(36,44,48)` / C `rgb(30,37,41)`（全透明，只剩亮边）/ D `rgb(24,30,33)` / E `rgb(18,24,25)` / F `rgb(12,16,17)`
