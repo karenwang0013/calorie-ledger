@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.03', d: '10-25', items: [
+    '删：设置 →「身体与目标」页里那颗「记录今天的体重」按钮',
+    '改：「描述」不再单独占一格 —— 记录卡现在只有「拍照 / 搜索」两格，「描述」的输入框 + 识别热量按钮做成拍照板块下面单独的一块（打开拍照页就能直接打字识别，不用再切页）',
+  ] },
   { v: 'v9.02', d: '10-25', items: [
     '改：搜索结果的消失点改成硬切 —— 不要渐变，内容滑到那道缝的正中就直接被裁掉，没有半透明的拖影',
   ] },
@@ -2473,7 +2477,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.02';
+const APP_VERSION = 'v9.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3192,10 +3196,10 @@ function setAddMode(m) {
   addMode = m;
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   syncResultVisibility();
-  ['photo', 'search', 'text'].forEach(k => {
-    $('#pane-' + k).hidden = k !== m;
+  ['photo', 'search'].forEach(k => {
+    const el = $('#pane-' + k);
+    if (el) el.hidden = k !== m;
   });
-  if (m === 'text') syncTextPh();
   if (m === 'search') {
     $('#searchList').hidden = false;              // 回到搜索就一定能继续挑
     runSearch($('#searchInput').value || '');
@@ -5791,7 +5795,6 @@ function renderMe() {
           <div class="hint">没有手表数据时用来估算日常消耗。有手表的话会被覆盖。</div>
         </div>
         <button class="btn primary" id="saveProfile">保存</button>
-        <button class="btn ghost sm" id="openWeight2" style="margin-top:10px">记录今天的体重</button>
       </div>`;
   } else if (mePage === 'ai') {
     h = meBackBar('AI 识别') + `
@@ -6406,7 +6409,6 @@ function wireMe() {
     } catch (e) { toast(e.message); }
   };
 
-  const w2 = $('#openWeight2'); if (w2) w2.onclick = openWeight;
 
   const hr = $('#hardReload');
   if (hr) hr.onclick = () => hardReloadApp();

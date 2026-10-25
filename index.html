@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=880">
+<link rel="stylesheet" href="style.css?v=881">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -197,8 +197,6 @@
         <svg data-icn="tab.photo" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l50-54q11-12 26.5-19t32.5-7h170q17 0 32.5 7t26.5 19l50 54h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Z"/></svg>拍照</button>
       <button data-m="search">
         <svg data-icn="tab.search" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q127 0 226.5 70T851-629q7 17 .5 34T828-572q-16 5-30.5-3T777-599q-24-60-69-106t-108-71v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h40q17 0 28.5 11.5T400-440v80h-40L168-552q-3 18-5.5 36t-2.5 36q0 122 80.5 213T443-162q16 2 26.5 13.5T480-120q0 17-11.5 28.5T441-82Q288-97 184-210T80-480Zm736 352L716-228q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-380q0-75 52.5-127.5T620-560q75 0 127.5 52.5T800-380q0 27-8 51t-20 45l100 100q11 11 11 28t-11 28q-11 11-28 11t-28-11ZM691-309q29-29 29-71t-29-71q-29-29-71-29t-71 29q-29 29-29 71t29 71q29 29 71 29t71-29Z"/></svg>搜索</button>
-      <button data-m="text">
-        <svg data-icn="tab.text" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M360-240h240q17 0 28.5-11.5T640-280q0-17-11.5-28.5T600-320H360q-17 0-28.5 11.5T320-280q0 17 11.5 28.5T360-240Zm0-160h240q17 0 28.5-11.5T640-440q0-17-11.5-28.5T600-480H360q-17 0-28.5 11.5T320-440q0 17 11.5 28.5T360-400ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h287q16 0 30.5 6t25.5 17l194 194q11 11 17 25.5t6 30.5v447q0 33-23.5 56.5T720-80H240Zm280-560q0 17 11.5 28.5T560-600h160L520-800v160Z"/></svg>描述</button>
     </div>
   <div class="sh-body">
     
@@ -244,6 +242,19 @@
         </div>
         <input id="photoHint" placeholder="补充说明（可选）">
       </div>
+
+      <!-- v9.03：原来「描述」那一页并进来了 —— 在拍照板块下面单独一块 -->
+      <div id="descBlock">
+
+          <div class="twrap">
+            <textarea id="textInput" rows="4"></textarea>
+            <div class="tph" id="textPh" aria-hidden="true">比如：一碗牛肉面，加了两个卤蛋，一杯冰美式</div>
+          </div>
+          <button class="btn primary" id="textGo" style="margin-top:10px"><svg data-icn="btn.go" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M160-400q0-113 67-217t184-182q22-15 45.5-1.5T480-760v52q0 34 23.5 57t57.5 23q17 0 32.5-7.5T621-657q8-10 20.5-12.5T665-664q63 45 99 115t36 149q0 88-43 160.5T644-125q17-24 26.5-52.5T680-238q0-40-15-75.5T622-377L480-516 339-377q-29 29-44 64t-15 75q0 32 9.5 60.5T316-125q-70-42-113-114.5T160-400Zm320-4 85 83q17 17 26 38t9 45q0 49-35 83.5T480-120q-50 0-85-34.5T360-238q0-23 9-44.5t26-38.5l85-83Z"/></svg>识别热量</button>
+          <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.5;text-align:center">
+            用「碗 / 个 / 份」就行，自动换算成克。
+          </div>
+      </div>
     </div>
 
     <!-- 搜索（搜索框在卡片顶部） -->
@@ -252,18 +263,6 @@
       <div class="searchscroll">
         <div class="chips-wrap" style="margin-top:12px" id="recentChips"></div>
         <div class="slist" id="searchList"></div>
-      </div>
-    </div>
-
-    <!-- 描述 -->
-    <div class="pane" id="pane-text" hidden>
-      <div class="twrap">
-        <textarea id="textInput" rows="4"></textarea>
-        <div class="tph" id="textPh" aria-hidden="true">比如：一碗牛肉面，加了两个卤蛋，一杯冰美式</div>
-      </div>
-      <button class="btn primary" id="textGo" style="margin-top:10px"><svg data-icn="btn.go" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M160-400q0-113 67-217t184-182q22-15 45.5-1.5T480-760v52q0 34 23.5 57t57.5 23q17 0 32.5-7.5T621-657q8-10 20.5-12.5T665-664q63 45 99 115t36 149q0 88-43 160.5T644-125q17-24 26.5-52.5T680-238q0-40-15-75.5T622-377L480-516 339-377q-29 29-44 64t-15 75q0 32 9.5 60.5T316-125q-70-42-113-114.5T160-400Zm320-4 85 83q17 17 26 38t9 45q0 49-35 83.5T480-120q-50 0-85-34.5T360-238q0-23 9-44.5t26-38.5l85-83Z"/></svg>识别热量</button>
-      <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.5;text-align:center">
-        用「碗 / 个 / 份」就行，自动换算成克。
       </div>
     </div>
 
@@ -453,10 +452,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=880"></script>
+<script src="foods.js?v=881"></script>
 <script src="icons.js?v=854"></script>
-<script src="api.js?v=880"></script>
-<script src="app.js?v=880"></script>
+<script src="api.js?v=881"></script>
+<script src="app.js?v=881"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

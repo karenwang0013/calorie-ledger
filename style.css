@@ -2984,6 +2984,13 @@ body.set-open .toast, body.nlog-open .toast {
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 #addSheet #addTabs { margin: 13px 12px 12px; }
+/* v9.03 用户口径：「描述」拆成一页不如并进来 —— 记录卡现在只有「拍照 / 搜索」两格，
+   描述输入框 + 识别热量按钮做成拍照板块下面的新一块（#descBlock） */
+#addTabs { grid-template-columns: 1fr 1fr; }
+#descBlock { flex: 0 0 auto; margin-top: 12px; }
+#descBlock .twrap { flex: 0 0 auto; height: 132px; }
+#descBlock #textInput { height: 100%; }
+#descBlock #textGo { margin-top: 10px; }
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
    用 zoom 而不是 transform:scale —— zoom 会参与布局，不会出现"放大后压到边、留一圈空白"的问题。
    当前 1.06（放大 6%）；要更大 / 更小只改这一个数。 */
