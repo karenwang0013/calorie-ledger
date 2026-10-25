@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.08', d: '10-25', items: [
+    '修：在搜索里连着加几个食品后，切回拍照页照片区会被压扁、按钮错位 —— 照片区改成按两个格子（1:1.3）自然撑开，不再跟着卡片抢高度',
+    '改：记录卡不再写死高度 —— 空闲时高度正好到照片大框下面那道缝（实测 480，底部留 13px 缝隙），「拍照 / 搜索」两页一样高',
+    '改：加了照片或食品后卡片按内容变高（多了在卡内下滑查看），上限仍避让顶栏',
+    '保持：搜索结果上滑消失仍是硬切、不虚化；卡片与内部各框四个角都是圆角（27 / 18 / 12，同心）',
+  ] },
   { v: 'v9.07', d: '10-25', items: [
     '删：记录里的「描述」板块整个去掉（文字描述框 + 那颗识别热量按钮都不在了），现在只有「拍照 / 搜索」两页',
     '修：卡片自适应变高时，照片区会被压扁、按钮盖到两个格子上（看着错乱）—— 给照片大框加了最低高度，不会再压塌',
@@ -2493,7 +2499,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.07';
+const APP_VERSION = 'v9.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3199,13 +3205,28 @@ function initTrendSegLens() { initSegLens($('#trendSeg')); }
 let addMode = 'photo';
 /* 记录区（识别结果 + 合计 + 记到哪一餐 + 记入按钮）只在「拍照」页显示。
    描述页/搜索页只负责输入，不要把结果挂在那两页下面 —— 用户明确要求过 */
-/* v9.06 用户口径：空闲时「拍照 / 搜索」两张卡必须一样高；一旦加了照片、或搜索结果里选了食材，
-   卡片允许按内容自适应高度（下限仍是空闲时那个高度，上限由 max-height 兜住）。 */
+/* v9.08 用户口径：
+   · 空闲（没照片、没食品）时卡片高度定死，且「拍照 / 搜索」完全一致；
+   · 加了照片或食品后按内容长高，多了就在卡内滚。
+   实现：卡片本身 height:auto，下限用 --add-static-h —— 这个值在“拍照页空闲”时量一次。 */
+function measureAddStaticH() {
+  const s = $('#addSheet'), pane = $('#pane-photo');
+  if (!s || !pane || pane.hidden) return;
+  if (S.photoData || S.photo2Data || (S.items || []).length) return;   // 只在空闲态量
+  // 量「内容自然高度」：临时把下限摘掉，量完立刻还原（否则量到的是下限自己，会循环）
+  const prev = s.style.minHeight;
+  s.style.minHeight = '0px';
+  const h = Math.round(s.getBoundingClientRect().height);
+  s.style.minHeight = prev;
+  if (h > 120) document.documentElement.style.setProperty('--add-static-h', h + 'px');
+}
 function syncAddSheetFit() {
   const s = $('#addSheet');
   if (!s) return;
   const busy = !!(S.photoData || S.photo2Data || (S.items || []).length);
   s.classList.toggle('fitted', busy);
+  // 空闲时量一次静态高度（切回拍照页 / 清空之后）
+  if (!busy) { try { measureAddStaticH(); } catch (e) {} }
 }
 
 function syncResultVisibility() {
