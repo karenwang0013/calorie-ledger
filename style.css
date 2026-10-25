@@ -3027,7 +3027,7 @@ body.set-open .toast, body.nlog-open .toast {
   /* v9.27：常用词固定在滚动区外面，与搜索框之间留 14（= 缝 1）；卡片滚动时它 sticky 钉住 */
   margin-top: 7px !important;
   flex: 0 0 auto;
-  position: sticky; top: 0; z-index: 3;
+  position: relative; z-index: 3;
   /* v8.80 用户口径：「常用词下面多了一块黑黑的框，这个框不要」
      → 去掉上一版给这一排加的深色底 + 模糊 + 内边距，也不再钉在顶部（那层底就是为了钉住挡字才加的） */
 }
