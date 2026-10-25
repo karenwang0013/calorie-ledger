@@ -11,6 +11,8 @@ permissions:
 jobs:
   mirror:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - name: Fetch files from Gitee
@@ -36,11 +38,13 @@ jobs:
             fi
           done
       - name: Commit if changed
+        id: commit
         run: |
           git config user.name "data-bot"
           git config user.email "data-bot@users.noreply.github.com"
           if git diff --quiet; then
             echo "no change"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git add body.json health.json body-history.json data.json
             git commit -m "mirror data from gitee"
@@ -52,4 +56,33 @@ jobs:
               git pull --rebase --autostash origin main || true
               sleep 5
             done
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+
+  # v9.63：镜像提交用的是 GITHUB_TOKEN，GitHub 规定它推的提交**不会连锁触发**其它工作流，
+  # 所以 pages.yml 从来没为这些提交跑过 —— 线上 Pages 的 data.json / health.json 一直停在
+  # 最后一次人工 push 的版本（实测 Pages 还是 18:30/180，而 main 已经 23:21/326）。
+  # App 的「同源镜像」这一路于是永远给旧数据，Gitee 一限流就会回退。
+  # 这里在真的提交了之后，自己跑一次 Pages 部署。
+  deploy:
+    needs: mirror
+    if: needs.mirror.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

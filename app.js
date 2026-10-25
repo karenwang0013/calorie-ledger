@@ -25,6 +25,17 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.63', d: '10-26', items: [
+    '修：身体数据每打开两次就有一次翻到几年前 —— 体重曲线的分页刚挂上去就误判成"用户滑到了最老一页"，页码一路加到底；现在等真正量到宽度再落位，落位完成前不理滑动',
+    '修：同一次里「所选那天」和下面的图各算一套页码，会显示"所选那天 10-12"配一张 2021 年的图、日期区间甚至倒着写；现在共用一套',
+    '修：在 Safari 里打开时那条提醒被顶栏整个盖住（只剩一条橙色边，字一个都看不见），内容还被往下推了几像素；现在它跟在内容顶部、正常显示',
+    '改：首页「消耗」在今天这一页标注成「消耗（到现在）」，省得拿它去核对「还可以吃」（后者按全天预算算，本来就不等）',
+    '修：当天还没有手表数据时，沿用最近一天的手表数据，不再退回公式估算 —— 以前早上打开「还可以吃」比晚上多 534 千卡、碳水目标差 98 克，等于一天里目标在变',
+    '修：趋势页「平均缺口」以前分子是整段窗口 30 天的消耗平均、分母只有 6 天有记录，算出 1122 千卡/天（≈1.0kg/周），和同一屏体重曲线的 0.8kg/周对不上；现在两边用同一批日子',
+    '修：饮食目标页「公式估算是 X」标签错了 —— 那个数其实是"基础代谢+手表活动"；现在写清是同一段时间的估算，并给出估算值',
+    '修：镜像同步的提交不会触发 Pages 重新部署（GitHub 对机器人提交不连锁），线上那份数据一直是旧的；现在镜像一提交就自己跑一次部署',
+    '修：锁屏推送的「还可以吃」一直是空的（读错了字段），10-25 早晚两条还因为运行时间漂出窗口整条没发；现在按 App 的口径算，窗口也放宽了',
+  ] },
   { v: 'v9.62', d: '10-26', items: [
     '修：身体数据「恢复备份」会把同步令牌弄丢 —— 云端备份里没有令牌，恢复完就传不上去；现在恢复时会保留本机现有的令牌和 Key',
     '修：「从文件恢复」不再什么文件都收 —— 以前一个只有 {"profile":{}} 的空文件也会提示"已恢复备份"，把记录和体重全清空；现在会明确拒绝，并提示文件不对',
@@ -2668,7 +2679,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.62';
+const APP_VERSION = 'v9.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2928,6 +2939,10 @@ function renderToday() {
   $('#heroSub').textContent = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
+  // v9.63：今天这一格是"到现在为止"的折算值，历史日期才是全天值 —— 标清楚，
+  // 省得拿「消耗 − 摄入」去核对「还可以吃」（后者按全天预算算，本来就不等）。
+  const expLbl = $('#stExpLbl');
+  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
@@ -6206,7 +6221,7 @@ function renderMe() {
           <span class="rec-date">${rec.date.slice(5)}</span>
         </div>
         <div class="rec-note">${realT
-          ? `实测每天烧 ${realT.tdee} 千卡（用你 ${realT.span_days} 天的数据，${realT.coverage}% 的天数有饮食记录）；公式估算是 ${d.expenditure} 千卡`
+          ? `实测每天烧 ${realT.tdee} 千卡（用你 ${realT.span_days} 天的数据，${realT.coverage}% 的天数有饮食记录）；同一段时间按「基础代谢 + 手表/公式」估算是 ${realT.est_avg || d.expenditure} 千卡`
           : '还没有足够的实测数据 —— 下面的方向是按公式估的'}</div>
         ${conflict ? `<div class="rec-warn">⚠️ 你现在实际是每天 ${Math.abs(bal)} 千卡${dir === 'deficit' ? '缺口' : '盈余'}（约 ${kgW.toFixed(2)} kg/周），和上面「${recName}」的方向相反。先定一个方向，别两头对着干</div>` : ''}
       </div>` : ''}
@@ -6300,8 +6315,10 @@ function renderMe() {
     const wtAsc = dates.filter(dt => wts[dt]).sort();
     const PAGE_N = 7;
     const trendLastPage = Math.max(0, Math.ceil(wtAsc.length / PAGE_N) - 1);
-    const pageIdx0 = Math.min(Math.max(bodyTrendPage, 0), trendLastPage);
-    const endI0 = Math.min(wtAsc.length, wtAsc.length - pageIdx0 * PAGE_N);
+    // v9.63：页码只在这里算一次，头部四宫格和下面的图共用同一套（以前两处各算一套，
+    // 页码一偏就会出现「所选那天 10-12」配一张 2021 年的图，日期区间甚至倒着写）。
+    bodyTrendPage = Math.min(Math.max(bodyTrendPage, 0), trendLastPage);
+    const endI0 = Math.max(Math.min(wtAsc.length, wtAsc.length - bodyTrendPage * PAGE_N), PAGE_N);
     const startI0 = Math.max(0, endI0 - PAGE_N);
     const pageLastDate = wtAsc.length ? wtAsc[Math.max(startI0, endI0 - 1)] : null;
     const effDate = (bodySelDate && (body[bodySelDate] || wts[bodySelDate])) ? bodySelDate : pageLastDate;
@@ -6798,13 +6815,25 @@ function wireMe() {
   const pager = $('#btPager');
   if (pager) {
     const slides = pager.querySelectorAll('.cpslide');
-    const mid = () => Math.round(pager.clientWidth * 1);
-    pager.scrollLeft = mid();                    // 同步设一次，避免先闪一下第 1 页
-    requestAnimationFrame(() => { pager.scrollLeft = mid(); });
+    // v9.63：以前这里一挂载就设 scrollLeft，但卡片刚插进 DOM 时 clientWidth 还是 0，
+    // 结果 scrollLeft 停在 0；随后的 scroll 事件把它当成"用户滑到了最左一页"，
+    // 页码 +1 → 重画 → 又 +1 … 一路加到最后一页（最老那一页），所以每 2 次打开就有 1 次
+    // 看到 2021/2022 年的体重。现在等真正量到宽度再落位，落位完成前不理 scroll。
+    let pagerReady = false, placeTries = 0;
+    const place = () => {
+      const w = pager.clientWidth;
+      if (!w) { if (placeTries++ < 40) requestAnimationFrame(place); return; }
+      pager.scrollLeft = w;                      // 中间那页
+      requestAnimationFrame(() => {
+        pager.scrollLeft = w;
+        requestAnimationFrame(() => { pagerReady = true; });
+      });
+    };
+    place();
     let settleTimer = null, pagerLock = false;
     window.__pagerLock = false;
     pager.addEventListener('scroll', () => {
-      if (pagerLock) return;
+      if (!pagerReady || pagerLock) return;
       clearTimeout(settleTimer);
       // 等惯性滚动停下来（140ms 内没有新的滚动事件）再判定，避免连环跳页
       settleTimer = setTimeout(() => {
@@ -7938,7 +7967,10 @@ function init() {
     const b = document.createElement('div');
     b.className = 'safariwarn';
     b.textContent = '你正在 Safari 里打开，这份数据是独立的副本，和主屏幕「热量账本」App 不互通。日常请在主屏幕打开。';
-    document.querySelector('.app').prepend(b);
+    // v9.63：以前 prepend 到 .app 上 —— 顶栏是 fixed 的，正好把这条提示整个盖住，
+    // 只剩一条 7px 的橙边露在下面，内容还被往下推了 7px。现在放进滚动区顶部。
+    const host = document.getElementById('scBody') || document.querySelector('.app');
+    host.prepend(b);
   }
 
   // 有弹层/卡片打开时锁住背后的页面滚动

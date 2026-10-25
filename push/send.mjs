@@ -25,7 +25,34 @@ const intake = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
 const day = (store.daily || {})[today] || {};
 const active = Math.round(day.active || 0);
 const ov = (store.settings || {}).target_override || {};
-const budget = Number(ov.kcal) || 0;
+// v9.63：这里的「还可以吃」以前用 Number(ov.kcal)，而用户只设了「缺口」没设可吃，
+// 结果 left 永远是 null，推送里那一段就从来没有过。现在按和 App 一样的口径算一遍。
+const prof = store.profile || {};
+const ACT = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 };
+const age = prof.birth_year ? (new Date().getFullYear() - Number(prof.birth_year)) : 30;
+const bw = Number(prof.weight_kg) || 60;
+const bmr = 10 * bw + 6.25 * (Number(prof.height_cm) || 170) - 5 * age + (prof.sex === 'male' ? 5 : -161);
+const dayTotal = Number(day.total), dayActive = Number(day.active);
+let exp;
+if (dayTotal > 500) exp = Math.round(dayTotal);
+else if (dayActive > 0) exp = Math.round(bmr + dayActive);
+else {
+  // 当天还没手表数据 → 沿用最近一天的手表数据（和 App 的 v9.63 一致），没有才退回公式
+  const prev = Object.keys(store.daily || {})
+    .filter(k => String(k) < today && (Number(store.daily[k].active) > 0 || Number(store.daily[k].total) > 500))
+    .sort().pop();
+  if (prev) {
+    const w0 = store.daily[prev];
+    exp = Math.round(Number(w0.total) > 500 ? Number(w0.total) : bmr + Number(w0.active));
+  } else {
+    exp = Math.round(bmr * (ACT[prof.activity] || 1.375));
+  }
+}
+const hasDefOv = ov.deficit !== undefined && ov.deficit !== null && ov.deficit !== '' && isFinite(Number(ov.deficit));
+const goalWant = Math.min(700, Math.max(-600, -Number(prof.goal_rate || 0) * 7700 / 7));   // 正=缺口
+const budget = hasDefOv
+  ? Math.max(0, Math.round(exp - Number(ov.deficit)))
+  : (Number(ov.kcal) || Math.round(exp - goalWant));
 const left = budget ? budget - intake : null;
 
 // 距上次称体重多少天
@@ -40,8 +67,11 @@ const bjHour = new Date(Date.now() + 8 * 3600 * 1000).getUTCHours();
    GitHub 的 schedule 会延迟，所以同一个事件有 12 次机会，谁先跑成功就算谁的。 */
 let event = process.env.EVENT || '';         // morning/evening/watch/goal/fail；'' = 按时间自动判断
 if (!event) {
-  if (bjHour >= 8 && bjHour < 10) event = 'morning';
-  else if (bjHour >= 21 && bjHour < 23) event = 'evening';
+  // v9.63：GitHub 的 schedule 经常整体漂移（实测有 12:26、00:57 这种点），
+  // 原来按「两小时窗口」判断，漂出去就一条都不发（10-25 早晚全漏）。
+  // 现在把窗口放宽到 4 段小时，晚发总比不发强；重复发送由后面的 push-sent.json 挡。
+  if (bjHour >= 8 && bjHour < 12) event = 'morning';
+  else if (bjHour >= 20 && bjHour < 24) event = 'evening';
 }
 const SENT_FILE = 'push-sent.json';
 let sentMap = {};

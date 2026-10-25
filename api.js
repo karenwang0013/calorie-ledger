@@ -434,7 +434,20 @@ function daySummary(date) {
   const protein = logs.reduce((a, b) => a + (Number(b.p) || 0), 0);
   const carb = logs.reduce((a, b) => a + (Number(b.c) || 0), 0);
   const fat = logs.reduce((a, b) => a + (Number(b.f) || 0), 0);
-  const [exp, src, detail] = tdeeOf(p, watch, latestWeight());
+  // v9.63：当天还没有手表数据时，沿用「最近一个有手表数据的那天」，不要退回公式估算。
+  // 起因：公式（BMR×1.55）比手表实测高一截（2422 vs 1888），每天早上打开看到的
+  // 「还可以吃」比晚上跑完快捷指令后多 534 千卡，碳水目标差 98 克，等于一天里目标在变。
+  const hasWatch = w => !!(w && (Number(w.total) > 500 || Number(w.active) > 0));
+  let watchForCalc = watch, carried = '';
+  if (!hasWatch(watch)) {
+    const prevKey = Object.keys(d.daily || {})
+      .filter(k => String(k) < String(date) && hasWatch(d.daily[k]))
+      .sort().pop();
+    if (prevKey) { watchForCalc = Object.assign({}, d.daily[prevKey]); carried = prevKey; }
+  }
+  const [exp0, src0, detail] = tdeeOf(p, watchForCalc, latestWeight());
+  const exp = exp0;
+  const src = carried ? `${src0}（沿用 ${carried.slice(5)} 的手表数据）` : src0;
   // 只把当天这几条记录的小图带出来（现在图在 IndexedDB 的内存镜像里，不占 localStorage）
   const shots = {};
   logs.forEach(l => {
@@ -590,6 +603,12 @@ function computeTrends(days) {
   const avgExp = series.length
     ? Math.round(series.reduce((a, b) => a + b.expenditure, 0) / series.length) : 0;
 
+  // v9.63：平均缺口要和柱子同一批日子 —— 以前分子是「整段 30 天的消耗平均」，
+  // 分母是「只有 6 天有记录的平均摄入」，两边日子根本不是同一批，
+  // 算出来 1122 千卡/天（≈1.0kg/周），跟同一屏体重曲线给的 0.8kg/周对不上。
+  const avgExpLogged = logged.length
+    ? Math.round(logged.reduce((a, b) => a + b.expenditure, 0) / logged.length) : 0;
+
   // 实测 TDEE：体重回归斜率 × 7700（算法抽在 computeRealTdee，跟页面选几天无关）
   const _rt = computeRealTdee(d);
   const real = _rt.real, realMissing = _rt.missing;
@@ -598,7 +617,7 @@ function computeTrends(days) {
     days, start, end: today, series,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
-    avg_balance: avgIntake ? Math.round(avgExp - avgIntake) : null,
+    avg_balance: avgIntake ? Math.round(avgExpLogged - avgIntake) : null,
     logged_days: logged.length,
     real_tdee: real,
     real_missing: realMissing,
