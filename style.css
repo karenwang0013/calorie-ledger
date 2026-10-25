@@ -1432,9 +1432,13 @@ body.add-open .sheet-mask.on {
   /* v9.18：左右内边距改成外边距 —— 滚动框不再贴到卡片边上，
      这样上下滑动时那条直切的边止于卡片圆弧以内，四角不会露出直角（clip-path 在 iOS 上不裁滚动内容） */
   margin: 0 var(--blk-gap);
-  /* v9.36：底部内边距 0 —— 裁切边界（本盒底边）要正好落在「合计 ↔ 餐次」那道缝的正中，
-     多出来的 7px 留给底栏的上内边距 */
-  padding: calc(var(--blk-gap) - 4px) 0 0;
+  /* v9.36：裁切边界（本盒底边）要正好落在「合计 ↔ 餐次」那道缝的正中，
+     多出来的 7px 留给底栏的上内边距 → 底栏出现时这一段仍是 0 参与裁切。
+   v9.49：底部内边距 12 —— 空闲/只有照片时卡片高度是按「照片大框底 + 本盒 padding-bottom」
+     量的（measureAddStaticH），原来这里是 0 → 大框底边正好压在卡片底边上（框被卡片边切掉）。
+     12（+ 卡片 1px 边框 = 13）和左右两侧一样：大框离卡片边 左13 / 右13 / 下13。
+     注意：padding 不参与 overflow 裁切，滚动消失线（本盒底边）的位置不受影响。 */
+  padding: calc(var(--blk-gap) - 4px) 0 var(--blk-gap);
 }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 /* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
@@ -1482,7 +1486,10 @@ body.add-open .sheet-mask.on {
   border-top: 0;
   /* v9.36：上边留 7px —— 卡片内容的裁切边界（.sh-body 底边）因此上移 7px，
      正好落在「合计 ↔ 餐次」那道缝的正中（缝宽 14）。 */
-  padding: 7px 16px 30px;
+  /* v9.49：左右 16 → 12。底栏内容（五个餐次 + 记入按钮）原来比上面的卡牌各窄 4px
+     （上面是 12 外边距 + 1 边框 = 13，这里是 16 内边距 + 1 边框 = 17），左右看着不齐。
+     改成 12 后和 .sh-body 的内容边完全对齐（都是离卡片边 13）；30 的底距没动。 */
+  padding: 7px 12px 30px;
 }
 /* v9.32 用户口径：去掉「记到哪一餐」那行小字，五个餐次单独装进一张卡牌
    （材质和上面那些食品卡一致：黑 8% 底 + edge-gloss + 圆角 18） */
@@ -1749,8 +1756,14 @@ body.add-open .sheet-mask.on {
 /* 格子高度由 JS 按列宽算好（宽 : 高 = 1 : 1.3），写成 --slot-h */
 #pane-photo .pslot { height: var(--slot-h, 200px); width: 100%; min-height: 0; }
 #pane-photo .pslot-body { height: 100%; min-height: 0; }
-#pane-photo .pslot-empty { height: 100%; min-height: 0; }
-#pane-photo .pslot-body .preview { height: 100%; object-fit: cover; }
+/* v9.49：两个照片格的「框」必须严格等于格子宽度。
+   原来只给了 height:100%，而 .pslot-empty 上还挂着 aspect-ratio: 1 / 1.3 ——
+   高度定了以后宽度会被比例反推成 245×1/1.3 = 188.5，比 180 的格子宽出 8.5：
+   真机上两框中间那道缝被挤到 3.7px、右边那个框还压进大框的 12px 内边距里（左右不等边）。
+   现在宽度写死 100%、比例关掉（高度已经由 --slot-h 定死，不需要比例了）。 */
+#pane-photo .pslot-empty { width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; }
+/* 照片的圆角必须和空框一样（原来预览图是 14、空框是 27，拍完一张就换了个样子） */
+#pane-photo .pslot-body .preview { height: 100%; object-fit: cover; border-radius: 27px; }
 #pane-photo .prow-pick { grid-column: 1 / -1; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }

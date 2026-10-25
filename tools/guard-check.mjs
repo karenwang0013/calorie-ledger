@@ -115,7 +115,18 @@ const checks = [
   ['按下的水光跟着手指（--hx / --hy）', /--hx/.test(app) && /--hy/.test(app)],
   ['和 Dock 重叠的卡牌宽度取自 --dock-max（不许写死）', /max-width: var\(--dock-max\)/.test(css) && !/max-width: 470px/.test(css)],
   ['记录卡片选项框的圆角由 --dock-r 推算（与卡片同心）', /\.tabs3 \{[\s\S]*?border-radius: calc\(var\(--dock-r/.test(css)],
-  ['记录卡片大虚线框贴住卡片底边（底部对齐）', /#pane-photo:not\(\[hidden\]\) \.drop\.photobox \{[\s\S]*?flex: 1 1 auto/.test(css)],
+  // v9.49 用户口径：下面那个大框（照片大框 / 识别热量那张卡）不许再压到卡片底边上 ——
+  //   卡片高度是「大框底 + .sh-body 的下内边距」量出来的，下内边距必须是 --blk-gap（12），
+  //   这样大框离卡片边 左13 / 右13 / 下13 等距（以前这里是 0 → 框底正好被卡片的圆角切掉）。
+  ['记录卡片大框不贴卡片底边（左/右/下都是 13，水平垂直等距）',
+    /#addSheet \.sh-body \{[\s\S]*?padding: calc\(var\(--blk-gap\) - 4px\) 0 var\(--blk-gap\);/.test(css)
+      && /const padB = \(parseFloat\(getComputedStyle\(body\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
+  ['两个照片格宽度必须等于格子（不许被 1:1.3 比例反推撑宽，否则中间缝被挤没）',
+    /#pane-photo \.pslot-empty \{ width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; \}/.test(css)],
+  ['照片预览和空框圆角一致（27，拍完一张不许变成 14）',
+    /#pane-photo \.pslot-body \.preview \{ height: 100%; object-fit: cover; border-radius: 27px; \}/.test(css)],
+  ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 12）',
+    /#addSheet \.sh-foot \{[\s\S]*?padding: 7px 12px 30px;/.test(css)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
     const i = css.indexOf('.seg-lens {');
     if (i < 0) return false;
