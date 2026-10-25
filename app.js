@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.52', d: '10-26', items: [
+    '改：记录卡里那两个大框去掉了 —— 「食物照片 / 营养成分表」和两个拍照按钮外面那层框，以及「识别热量 / 食材 / 克数 / 补充说明」那张卡，都不再套一层；两块照片格跟着放大到 193×262（原来 180×245）',
+    '改：「识别热量」按钮由实心荧光绿改成淡绿底 + 绿字 + 绿描边 —— 一张卡里只留「拍照」一个实心绿按钮',
+  ] },
   { v: 'v9.51', d: '10-26', items: [
     '修：两个照片格（食物照片 / 营养成分表）被挤变形 —— 格子宽度被 1:1.3 的比例反推成 188（格子实际只有 180），两框中间那道缝被挤到 3.7px、右边那个框还压进大框的内边距里；现在两框等宽，中间缝 12、左右各 13',
     '修：两个照片格圆角和大框不呼应（都写 27，角上那道缝 18、边上只有 13）—— 按同心公式改成 14，两条弧线平行；照片和空框同一个圆角',
@@ -2629,7 +2633,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.51';
+const APP_VERSION = 'v9.52';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3355,8 +3359,9 @@ function syncSlotH() {
   if (!box) return;
   const w = box.clientWidth;
   if (!w) return;
-  const inner = w - 24 - 12;       // 左右内边距 12*2 + 两列间距 12
-  const slotH = Math.round((inner / 2) * 1.36);   // v9.48：外框保留，格子略微放大（1 : 1.36）
+  /* v9.52：照片大框去掉了 → 盒子不再有 12×2 的内边距，只剩两列之间那道 12 */
+  const inner = w - 12;            // 两列之间的间距 12
+  const slotH = Math.round((inner / 2) * 1.36);   // 1 : 1.36（v9.48 定的比例）
   if (slotH > 40) document.documentElement.style.setProperty('--slot-h', slotH + 'px');
 }
 

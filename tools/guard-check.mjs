@@ -128,6 +128,16 @@ const checks = [
     /#pane-photo \.pslot-body \.preview \{ height: 100%; object-fit: cover; border-radius: 14px; \}/.test(css)],
   ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 12）',
     /#addSheet \.sh-foot \{[\s\S]*?padding: 7px 12px 30px;/.test(css)],
+  // v9.52 用户口径（效果图确认）：包着两个照片格 + 两个按钮的大框去掉；拍两格的宽度改由「盒宽 − 12」算
+  ['照片大框（.drop.photobox）已去掉：无底色/无描边/无内边距',
+    /\.drop\.photobox \{[\s\S]*?background-image: none;[\s\S]*?border-width: 0;[\s\S]*?padding: 0;/.test(css)
+      && /const inner = w - 12;/.test(app)],
+  ['「识别热量 / 食材 / 克数 / 补充说明」那张卡已去掉框（无底色/无描边/无内边距）',
+    /#photoActions \{\s*\n\s*background-color: transparent;\s*\n\s*background-image: none;\s*\n\s*border-width: 0;[\s\S]*?padding: 0;/.test(css)
+      && !/id="photoActions" style=/.test(html)],
+  ['「识别热量」不再是第二根实心绿条（淡绿底 + 绿字，压过 .btn:not(.primary) 的灰底）',
+    /#addSheet #photoGo \{[\s\S]*?rgba\(214, 255, 75, \.10\)[\s\S]*?color: var\(--lime\);/.test(css)
+      && !/class="btn primary" id="photoGo"/.test(html)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
     const i = css.indexOf('.seg-lens {');
     if (i < 0) return false;

@@ -1564,7 +1564,9 @@ body.add-open .sheet-mask.on {
 #photoActions {
   border-radius: 18px;      /* v8.82：跟「模式建议」那张卡同圆角 */
   padding: 12px;
+  margin-top: 14px;         /* v9.52：从 index.html 的内联样式搬过来（原来是 12，和下面结果区 14 不齐） */
 }
+
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
 #photoActions .prow2 input,
 #photoActions #photoHint { padding-top: 10px; padding-bottom: 10px; }
@@ -1613,6 +1615,23 @@ body.add-open .sheet-mask.on {
   backdrop-filter: none;
 }
 
+/* v9.52 用户口径（效果图已确认）：「识别热量 / 食材 / 克数 / 补充说明」这张卡也去掉框 ——
+   里面的绿按钮和三个输入框自己就是一块一块的，外面再套一层只是多出上下各 12 的边距。
+   去掉后它们和上面两个照片格、下面结果卡用同一条边（21..419）。
+   ⚠️ 必须写在上面 v8.82 / 四合一材质之后，否则被它们的 background/border 盖回去；
+   v8.82/v8.86 那几条材质规则保留不删（是历史，也方便退回）。
+   注意别加回 border: 1px：那 1px 会把内容整体往右推 1px（21 → 22）。 */
+#photoActions {
+  background-color: transparent;
+  background-image: none;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: 0;
+}
+
 /* v8.83 用户口径：「食物照片 / 营养成分表这两个框下面那个大框」也换掉
    —— 就是包着两个小格 + 「拍照 / 从相册选」的那个大框（.drop.photobox）。
    材质同「模式建议」：白 8.5% + edge-gloss + 顶部 8% 高光，去掉模糊。
@@ -1629,6 +1648,20 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* v9.52 用户口径（效果图已确认）：「包着两个照片格 + 拍照/从相册选 的那个大框，去掉」。
+   ⚠️ 这条必须写在上面 v8.83 / 四合一材质之后，否则会被它们的 background/border 盖回去。
+   去掉后两个格子按 1fr 1fr + 12 间距直接铺满卡片内容边（各 193 宽，高度由 --slot-h 按 1.36 算）。 */
+.drop.photobox {
+  background-color: transparent;
+  background-image: none;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: 0;
+}
+
 /* v8.78 用户定稿：两个照片格改成「设置·模式建议」那套材质的实色中间值。
    #313432 = rgb(49,52,50)，正好夹在 v8.72 的 #111412（格内实测 17,20,18）
    和「模式建议」白 8.5%（实测 60,62,61）的正中间。
@@ -2969,6 +3002,19 @@ body.set-open .toast, body.nlog-open .toast {
 
 /* 「识别热量」按钮的图标：18px、和文字同一中心线 */
 #photoGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
+/* v9.52 用户口径：「识别热量」按钮换颜色 —— 去掉两个框以后，这张卡里「拍照」已经是一根
+   荧光绿大条，识别热量再来一根实心绿就抢了。改成和 .chip.on / .photomode button.on
+   同一档的「淡绿底 + 绿字 + 绿描边」：全卡只剩一个实心绿按钮 = 拍照。
+   尺寸/字号/圆角不动（16px / 600 / 圆角 15 / 内边距 16 一项都没改）。
+   ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面第 2981 行那条
+   `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
+#addSheet #photoGo {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(214, 255, 75, .10), rgba(214, 255, 75, .10));
+  border: 1px solid rgba(214, 255, 75, .45);
+  color: var(--lime);
+  box-shadow: none;
+}
 #photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 
 /* 「图标」设置页：每一行 = 位置名 + 一排候选（横向可滚） */
