@@ -1706,7 +1706,7 @@ body.add-open .sheet-mask.on {
 }
 #pane-photo .prow-pick { align-self: end; }
 /* v9.11：比例放在「格子」这一层（grid item），里面全部撑满 100%，高度就不会和父级打架 */
-#pane-photo .pslot { aspect-ratio: 1 / 1.3; min-height: 0; }
+#pane-photo .pslot { aspect-ratio: 1 / 1.3; width: 100%; min-height: 0; }
 #pane-photo .pslot-body { height: 100%; min-height: 0; }
 #pane-photo .pslot-empty { aspect-ratio: auto; height: 100%; min-height: 0; }
 #pane-photo .pslot-body .preview { aspect-ratio: auto; height: 100%; object-fit: cover; }
