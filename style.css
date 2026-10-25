@@ -13,6 +13,8 @@
   --glow2-rgb: 70, 255, 196;
   --lime-dim: #a8cc2e;
   --orange: #ff8a4c;
+  /* v9.60：「识别热量」实色按钮专用 —— 比 --orange 更红的橙红（--orange 还用在盈余数字/警告文字上，不能改） */
+  --orange-red: #ff5a2b;
   --red: #ff5d5d;
   --blue: #6ea8ff;
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -3019,16 +3021,16 @@ body.set-open .toast, body.nlog-open .toast {
    尺寸/字号/圆角不动（16px / 600 / 圆角 15 / 内边距 16 一项都没改）。
    ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面第 2981 行那条
    `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
-/* v9.58 用户口径：「识别热量」的绿色换成橙色 —— 淡橙底 + 橙字 + 橙描边，
-   和上面「拍照」那根荧光绿分开，一眼能分出两个动作。只换色，尺寸/字号/圆角/内边距不动。
-   （v9.52 的配方原样保留，只把 rgba(214,255,75) 换成 --orange 的 255,138,76）
-   ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面那条
-   `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
+/* v9.60 用户口径：「识别热量」改成实色按钮，颜色用橙红（--orange-red #ff5a2b）——
+   和「拍照」那颗同一种做法：实色底 + var(--edge-gloss) 光泽描边 + 深色字。
+   尺寸 / 字号 / 圆角（18）/ 内边距一项都不动，只换填充和字色。 */
 #addSheet #photoGo {
   background-color: transparent;
-  background-image: linear-gradient(rgba(255, 138, 76, .12), rgba(255, 138, 76, .12));
-  border: 1px solid rgba(255, 138, 76, .50);
-  color: var(--orange);
+  background-image: linear-gradient(var(--orange-red), var(--orange-red)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  color: #1a0c07;
   box-shadow: none;
 }
 #photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }

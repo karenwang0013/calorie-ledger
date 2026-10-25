@@ -147,8 +147,9 @@ const checks = [
       && !/S\.shotHidden/.test(app)],
   ['拍照按钮不许带荧光外发光（会和「从相册选」上方那 8px 的缝糊成一层荧光渐变）',
     !/\.pickbtn\.on \{[\s\S]{0,200}?box-shadow: 0 8px 22px rgba\(214,255,75/.test(css)],
-  ['「识别热量」用橙色（淡橙底 + 橙字，压过 .btn:not(.primary) 的灰底），不再是第二根实心绿条',
-    /#addSheet #photoGo \{[\s\S]*?rgba\(255, 138, 76, \.12\)[\s\S]*?color: var\(--orange\);/.test(css)
+  ['「识别热量」是实色橙红按钮（--orange-red #ff5a2b + edge-gloss 描边 + 深色字），和「拍照」同一种做法',
+    /#addSheet #photoGo \{[\s\S]*?linear-gradient\(var\(--orange-red\), var\(--orange-red\)\), var\(--edge-gloss\)[\s\S]*?color: #1a0c07;/.test(css)
+      && /--orange-red: #ff5a2b;/.test(css)
       && !/class="btn primary" id="photoGo"/.test(html)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
     const i = css.indexOf('.seg-lens {');
