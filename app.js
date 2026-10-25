@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.53', d: '10-26', items: [
+    '加：识别结果最上面那张「食物照片」卡，右上角也有一个关闭叉了（和下面每一项的 × 长得一样）—— 点它只是把这张说明卡收起来，照片和识别出来的项都不动；重拍一张、清空、重开记录卡会自动再出现',
+  ] },
   { v: 'v9.52', d: '10-26', items: [
     '改：记录卡里那两个大框去掉了 —— 「食物照片 / 营养成分表」和两个拍照按钮外面那层框，以及「识别热量 / 食材 / 克数 / 补充说明」那张卡，都不再套一层；两块照片格跟着放大到 193×262（原来 180×245）',
     '改：「识别热量」按钮由实心荧光绿改成淡绿底 + 绿字 + 绿描边 —— 一张卡里只留「拍照」一个实心绿按钮',
@@ -2633,7 +2636,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.52';
+const APP_VERSION = 'v9.53';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3503,6 +3506,7 @@ async function handlePhoto(file) {
     $('#emptyA').hidden = true;
     S.photoData = await compress(file);
     S.photoAt = Date.now();
+    S.shotHidden = false;        // v9.53：又拍了一张，照片卡重新显示
     $('#photoActions').hidden = false;
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
@@ -3529,6 +3533,7 @@ async function handlePhoto2(file) {
     $('#del2').hidden = false;
     $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
+    S.shotHidden = false;        // v9.53：又拍了一张，照片卡重新显示
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
@@ -3598,6 +3603,7 @@ function resetPhotoUI() {
   $('#pv2').hidden = true;
   $('#del2').hidden = true;
   $('#emptyB').hidden = false;
+  S.shotHidden = false;          // v9.53：照片清空了，上面那张照片卡要重新出现
   try { syncAddSheetFit(); } catch (e) {}
 }
 
@@ -4040,7 +4046,8 @@ function renderResult() {
   let shot = '';
   // 拍的是什么就显示什么：拍实物 →「食物照片」，拍营养成分表 →「营养成分表照片」；
   // 两样都拍了就两行都列出来，各自配各自的图
-  if (S.photoData || S.photo2Data) {
+  // v9.53：右上角的 × 收起来以后（S.shotHidden）就不再画这张卡，直到重拍 / 清空 / 重开记录卡
+  if ((S.photoData || S.photo2Data) && !S.shotHidden) {
     const two = !!(S.photoData && S.photo2Data);
     const shotThumb = (src, cap) => `<span class="sthumb"><img src="${src}" alt=""><i>${cap}</i></span>`;
     const thumbs = [
@@ -4051,6 +4058,7 @@ function renderResult() {
     const sub = two ? `识别出 ${S.items.length} 项 · 克数可改`
                     : (S.photo2Data ? '按标签每 100 克换算' : `识别出 ${S.items.length} 项 · 克数可改`);
     shot = `<div class="shotrow">
+      <button class="del" id="shotClose" aria-label="收起这张照片卡">×</button>
       <div class="sthumbs">${thumbs}</div>
       <div class="sinfo">
         <b>${title}</b>
@@ -4059,6 +4067,11 @@ function renderResult() {
     </div>`;
   }
   $('#shotBox').innerHTML = shot;
+  // v9.53 用户口径：照片卡右上角加「关闭」叉（和下面行卡的 × 同一款）。
+  // 只是把这张说明卡收起来 —— 照片和识别出来的项都不动（要删照片用照片格上那个 ×）。
+  // 收起后这张卡不再自己弹回来；重拍 / 清空 / 重开记录卡会自动恢复。
+  const shotClose = $('#shotClose');
+  if (shotClose) shotClose.onclick = ev => { ev.stopPropagation(); S.shotHidden = true; renderResult(); };
   // 多项才需要给这一餐起名（识别到的菜名会自动填进来）
   const nw = $('#nameWrap'); if (nw) nw.hidden = S.items.length < 2;
   box.innerHTML = S.items.map((it, i) => {

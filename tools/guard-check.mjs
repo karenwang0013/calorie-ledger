@@ -135,6 +135,10 @@ const checks = [
   ['「识别热量 / 食材 / 克数 / 补充说明」那张卡已去掉框（无底色/无描边/无内边距）',
     /#photoActions \{\s*\n\s*background-color: transparent;\s*\n\s*background-image: none;\s*\n\s*border-width: 0;[\s\S]*?padding: 0;/.test(css)
       && !/id="photoActions" style=/.test(html)],
+  ['识别结果里那张「照片卡」右上角有关闭叉，且和下面行卡的 × 是同一套样式',
+    /\.ritem \.del,\s*\n\.shotrow \.del \{[\s\S]*?width: 28px; height: 28px;/.test(css)
+      && /class="del" id="shotClose"/.test(app)
+      && /S\.shotHidden = true; renderResult\(\)/.test(app)],
   ['「识别热量」不再是第二根实心绿条（淡绿底 + 绿字，压过 .btn:not(.primary) 的灰底）',
     /#addSheet #photoGo \{[\s\S]*?rgba\(214, 255, 75, \.10\)[\s\S]*?color: var\(--lime\);/.test(css)
       && !/class="btn primary" id="photoGo"/.test(html)],

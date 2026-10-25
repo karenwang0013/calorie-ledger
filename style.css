@@ -1877,6 +1877,8 @@ body.add-open .sheet-mask.on {
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
+  /* v9.53：右上角要放关闭叉（和下面行卡的 × 同款），所以这层要能定位 */
+  position: relative;
 }
 .shotrow img {
   width: 56px; height: 56px; border-radius: 10px;
@@ -1888,7 +1890,7 @@ body.add-open .sheet-mask.on {
   font-style: normal; font-size: 9.5px; color: var(--muted2); letter-spacing: .2px;
   white-space: nowrap;
 }
-.shotrow .sinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.shotrow .sinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-right: 30px; }   /* v9.53：给右上角那个叉让位（和 .ritem .top 的 32 同思路） */
 .shotrow .sinfo b { font-size: 13px; font-weight: 600; }
 .shotrow .sinfo span { font-size: 11px; color: var(--muted2); }
 
@@ -1907,7 +1909,9 @@ body.add-open .sheet-mask.on {
 .ritem .nm { font-size: 14px; font-weight: 550; flex: 1; min-width: 0; }
 .ritem .kc { font-size: 14px; color: var(--lime); font-variant-numeric: tabular-nums; flex: 0 0 auto; margin-left: auto; }
 /* 删除按钮挪到卡片右上角，独占一角，不再和名字、数字抢位置 */
-.ritem .del {
+/* v9.53：上面那张照片卡（.shotrow）的关闭叉用同一条规则 —— 位置/尺寸/颜色必须一模一样 */
+.ritem .del,
+.shotrow .del {
   position: absolute; top: 6px; right: 6px; z-index: 1;
   width: 28px; height: 28px; padding: 0;
   display: grid; place-items: center;
