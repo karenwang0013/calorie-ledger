@@ -3020,9 +3020,8 @@ body.set-open .toast, body.nlog-open .toast {
   max-height: calc(var(--add-static-h, 480px) * 0.95);
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  /* v9.30 用户口径：消失起始点（上沿）左右要圆角，和下面那些食品卡一样；
-     下沿保持直角。 */
-  border-radius: 14px 14px 0 0;
+  /* v9.37 用户口径：消失起始线左右两边的圆角取消，改回直角 */
+  border-radius: 0;
   margin-top: 7px;
   padding: 7px 0 10px;
   box-sizing: border-box;
