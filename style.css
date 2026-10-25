@@ -1454,13 +1454,16 @@ body.add-open .sheet-mask.on {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   border-radius: 18px;
+  /* v9.22：结果区底部内边距收小，让「记到哪一餐」到「记入」的可见间距也等于 14px */
+  padding-bottom: 4px;
 }
 
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
   /* v9.20：结果区底 →「记入」按钮 = 14px（和卡片顶→三格条一致） */
-  padding: 18px 16px 30px;
+  padding: 13px 16px 30px;
+  margin-top: -2.5px;
 }
 /* 「已添加」那一行到照片大框 = 14px（原来 10） */
 #resultArea > div:first-child { margin-top: 14px !important; }

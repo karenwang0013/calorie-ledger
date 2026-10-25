@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.22', d: '10-26', items: [
+    '微调：记录卡底部「记入」上方的留白（结果区底部内边距收小）',
+  ] },
   { v: 'v9.20', d: '10-26', items: [
     '改：记录卡里四道缝统一成 14px（①卡片顶→三格条 ②三格条→照片大框 ③照片大框→「已添加」 ④结果区→「记入」）',
   ] },
@@ -2537,7 +2540,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.21';
+const APP_VERSION = 'v9.22';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
