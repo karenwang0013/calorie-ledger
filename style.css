@@ -2943,7 +2943,9 @@ body.set-open .toast, body.nlog-open .toast {
   /* v9.13：回到最朴素的结构 —— 面板从正常位置开始，上面用 padding 给搜索框让位，
      滚动区从「搜索框下方 20px」开始。不再用负 margin + mask 那套（iOS 上会把第一行裁掉半截）。 */
   margin-top: 0;
-  padding-top: calc(var(--si-h, 45px) + 13px);
+  /* 搜索框高度 + 13px 顶缝由 JS 写进 padding-top（placeSearchInput），
+     这样滚动区正好从「搜索框下方 20px」开始 */
+  padding-top: 58px;
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
@@ -2970,7 +2972,7 @@ body.set-open .toast, body.nlog-open .toast {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   border-radius: 22px;
-  margin-top: 20px;
+  margin-top: 0;
   padding: 0 0 10px;
   box-sizing: border-box;
 }

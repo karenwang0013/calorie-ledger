@@ -2515,7 +2515,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.13';
+const APP_VERSION = 'v9.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2991,7 +2991,8 @@ function placeSearchInput() {
   // v8.99：面板 position:relative，搜索框的 top 由 CSS 给（和三格条上方那道缝同宽）；
   // 这里只把它的高度记成变量，让滚动区自己算「开场时从搜索框下面开始」。
   pane.style.setProperty('--si-h', Math.round(input.offsetHeight) + 'px');
-  pane.style.paddingTop = '0px';
+  // 上内边距 = 搜索框高度 + 13（三格条那道缝）；滚动区就紧接在它下面开始
+  pane.style.paddingTop = Math.round(input.offsetHeight + 13) + 'px';
 }
 
 function syncAddTabsH() {
