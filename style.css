@@ -2418,6 +2418,12 @@ input, textarea, select {
   border-color: transparent;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
+/* v8.90 用户口径：「模式建议」这张卡改成和「描述输入框」完全一样的原色和质感 ——
+   底色白 8.5% → 黑 8%，描边（edge-gloss）、顶部高光 8%、圆角 18、无模糊本来就一致。
+   注意：这条必须写在上面那条 .mini,.rec-card 之后，否则会被白 8.5% 盖回去。 */
+.rec-card {
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
+}
 
 /* 弹层卡片（食品详情 / 营养卡 / 其它 sheet）：跟 Dock 同一套卡片材质 */
 .sheet, .modal {
