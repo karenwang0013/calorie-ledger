@@ -2940,15 +2940,16 @@ body.set-open .toast, body.nlog-open .toast {
    （sticky 在 iOS 下拉回弹时会跟着动，用户要求上下都不动） */
 #pane-search {
   display: block; position: relative;
-  /* v8.99：让这一页从「三格条下沿」就开始（原来是三格条 margin 12 + 卡片 8 的间距），
-     这样滚动区顶边正好落在缝上，内容滑上去就在缝里消失。 */
-  margin-top: -13.5px;
+  /* v9.13：回到最朴素的结构 —— 面板从正常位置开始，上面用 padding 给搜索框让位，
+     滚动区从「搜索框下方 20px」开始。不再用负 margin + mask 那套（iOS 上会把第一行裁掉半截）。 */
+  margin-top: 0;
+  padding-top: calc(var(--si-h, 45px) + 13px);
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
   left: 12px; right: 12px; width: auto;
-  /* 和「卡片顶边 → 三格条」那道缝同宽（13px 布局 = 13.8px 实际） */
-  top: 13px;
+  /* 面板本身已在三格条下方 20px，往上提 7px → 和三格条之间正好 13px（= 卡片顶 → 三格条） */
+  top: -7px;
   z-index: 5;
   margin: 0;
 }
@@ -2969,20 +2970,11 @@ body.set-open .toast, body.nlog-open .toast {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   border-radius: 22px;
-  /* v8.99 用户口径：结果列表要能滚到「三格条」和「搜索框」之间那道缝里再消失。
-     做法：滚动区从面板顶（三格条下沿）开始，开场时用 padding-top 把内容推到搜索框下面；
-     再用 mask 把最上面那 13px 缝做淡出 —— 内容滑上去就是在这道缝里没的。 */
-  margin-top: 0;
-  padding-top: calc(var(--si-h, 45px) + 13px + 19px);
-  padding-bottom: 10px;
+  margin-top: 20px;
+  padding: 0 0 10px;
   box-sizing: border-box;
-  /* v9.00 用户口径：消失线要落在「搜索框下沿」和「常用词上沿」那道缝的中间 ——
-     不再贴着三格条。这个位置 = 搜索框底 + 半条缝（10px），用 --si-h 推出来。 */
-  /* v9.02 用户口径：不要渐变 —— 两个停靠点取同一个值 = 硬切，
-     内容滑到缝的正中（搜索框底 + 半条缝）就直接没了，没有拖影。 */
-  -webkit-mask-image: linear-gradient(180deg, transparent calc(var(--si-h, 45px) + 23px), #000 calc(var(--si-h, 45px) + 23px));
-  mask-image: linear-gradient(180deg, transparent calc(var(--si-h, 45px) + 23px), #000 calc(var(--si-h, 45px) + 23px));
 }
+
 #pane-search .chips-wrap {
   /* v8.99：搜索框到常用词的间距已由 .searchscroll 的 padding-top 统一给定，这里归零，避免叠加 */
   margin-top: 0 !important;
