@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.02', d: '10-25', items: [
+    '改：搜索结果的消失点改成硬切 —— 不要渐变，内容滑到那道缝的正中就直接被裁掉，没有半透明的拖影',
+  ] },
   { v: 'v9.01', d: '10-25', items: [
     '修：搜索结果消失的位置再校准 —— 现在是在「搜索框下沿」和「常用词上沿」那道缝的正中（实测 376px）就完全消失，缝上面不会留半透明的字',
   ] },
@@ -2470,7 +2473,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.01';
+const APP_VERSION = 'v9.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
