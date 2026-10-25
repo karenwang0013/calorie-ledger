@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.09', d: '10-25', items: [
+    '修：真机上记录卡下方留出一大块空白（高度算错被缓存）—— 静态高度改成按「照片大框底 + 底部内边距」精确算，并在每次打开卡片后重算一次',
+    '修：在搜索里加完食品再切回拍照页，照片区位置仍然正确（这次连着静态高度一起校准）',
+  ] },
   { v: 'v9.08', d: '10-25', items: [
     '修：在搜索里连着加几个食品后，切回拍照页照片区会被压扁、按钮错位 —— 照片区改成按两个格子（1:1.3）自然撑开，不再跟着卡片抢高度',
     '改：记录卡不再写死高度 —— 空闲时高度正好到照片大框下面那道缝（实测 480，底部留 13px 缝隙），「拍照 / 搜索」两页一样高',
@@ -2499,7 +2503,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.08';
+const APP_VERSION = 'v9.09';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3011,6 +3015,9 @@ function openAdd(meal) {
   // 打开卡片：滑块直接落在「拍照」上（不从上一次停的那格滑过来），而且一出现就是实色
   if (window.__addTabsLens) window.__addTabsLens.sync(true, true);
   setTimeout(() => { if (window.__addTabsLens) window.__addTabsLens.sync(); }, 60);
+  // 打开后量一次「空闲静态高度」（首帧还没量过时卡片会先按 62dvh 显示，量完立刻贴回内容高度）
+  setTimeout(() => { try { measureAddStaticH(); } catch (e) {} }, 80);
+  setTimeout(() => { try { measureAddStaticH(); } catch (e) {} }, 420);
   $('#addMask').classList.add('on');
   $('#addSheet').classList.add('on');
   // 三格条的真实高度（搜索框要粘在它下面），等卡片显示后再量
@@ -3213,11 +3220,17 @@ function measureAddStaticH() {
   const s = $('#addSheet'), pane = $('#pane-photo');
   if (!s || !pane || pane.hidden) return;
   if (S.photoData || S.photo2Data || (S.items || []).length) return;   // 只在空闲态量
-  // 量「内容自然高度」：临时把下限摘掉，量完立刻还原（否则量到的是下限自己，会循环）
-  const prev = s.style.minHeight;
-  s.style.minHeight = '0px';
-  const h = Math.round(s.getBoundingClientRect().height);
-  s.style.minHeight = prev;
+  if (!s.classList.contains('on')) return;                             // 只在卡片打开时量
+  const pb = pane.querySelector('.drop.photobox');
+  if (!pb) return;
+  // 不再「临时摘掉下限再量整张卡」—— 那套在真机上量到过动画中的高度，把 --add-static-h 写大，
+  // 之后每次都撑出一大块空白。现在直接用内容算：
+  //   卡片顶 → 照片大框底，再加上内容区底部内边距 = 空闲时卡片应该有的高度
+  const sr = s.getBoundingClientRect(), pr = pb.getBoundingClientRect();
+  const body = s.querySelector('.sh-body');
+  const z = (pane.offsetHeight ? (pane.getBoundingClientRect().height / pane.offsetHeight) : 1) || 1;
+  const padB = (parseFloat(getComputedStyle(body).paddingBottom) || 0) * z;
+  const h = Math.round(pr.bottom - sr.top + padB);
   if (h > 120) document.documentElement.style.setProperty('--add-static-h', h + 'px');
 }
 function syncAddSheetFit() {
