@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.89', d: '10-25', items: [
+    '修：个性化 → 图标里「默认」那一格画错了图案 —— 选了别的图标以后，它跟着变成你选的图案（两个一模一样的按钮）。现在「默认」永远是出厂那个图案',
+  ] },
   { v: 'v8.88', d: '10-25', items: [
     '改：个性化 → 图标，每一行的第一格现在就是「你正在用的那个」（选了别的图标，它排到第一位，「默认」退到第二位）；以前「默认」永远钉在第一格，看着像没生效',
     '改：图标列表里的「按钮 · 识别热量」以前只有一项不能选，现在给了 6 个候选（默认火苗 + 闪电 / AI 星 / 火箭 / 圆环 / 曲线 / 星星）',
@@ -2425,7 +2428,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.88';
+const APP_VERSION = 'v8.89';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5458,7 +5461,10 @@ function iconPickerCard() {
            点名：以前是「默认」死死钉在第一格，选了别的以后第一格还是默认，看着像没生效。 */
         const curName = ov[s.k] || '';
         const lib = window.ICON_LIB || {};
-        const all = [{ n: '', label: '默认', d: lib[iconName(s.k)] || '' }]
+        /* 「默认」这一格永远是**出厂图案**，不能跟着当前选择变 —— 否则选了别的以后，
+           默认那格画的是你选的图案，看着像两个一样的按钮（用户 2026-10-25 报的就是这个）。 */
+        const defName = (window.ICON_DEFAULT || {})[s.k] || '';
+        const all = [{ n: '', label: '默认', d: lib[defName] || '' }]
           .concat((s.opts || []).map(n => ({ n, label: n, d: lib[n] || '' })));
         const ordered = all.filter(o => o.n === curName).concat(all.filter(o => o.n !== curName));
         return `<div class="icrow">
