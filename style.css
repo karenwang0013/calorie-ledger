@@ -1845,7 +1845,9 @@ body.add-open .sheet-mask.on {
   background: var(--lime); color: #0a0b0c;
   border-color: transparent; font-weight: 600; font-size: 16px;
   padding: 16px;
-  box-shadow: 0 8px 22px rgba(214,255,75,.18);
+  /* v9.56 用户口径：这里不要荧光外发光 —— 原来那层 `0 8px 22px rgba(214,255,75,.18)`
+     向下糊 22px，正好盖住「拍照 ↔ 从相册选」之间那 8px 的缝和下面那颗按钮的上边，
+     看着就是两张按钮之间多了一层荧光渐变。绿底本身够亮了，去掉阴影不影响谁是主操作。 */
 }
 /* 「从相册选择」：和 Dock 里的按钮同一套材质（白 8.5% + edge-gloss + 顶边高光），
    不再是虚线、也不是黄绿主操作；字号/内边距沿用原来的（13px / 11px） */

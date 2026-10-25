@@ -140,6 +140,8 @@ const checks = [
       && /class="del" id="shotClose"/.test(app)
       && /shotClose\.onclick = ev => \{\s*\n\s*ev\.stopPropagation\(\);[\s\S]{0,160}?S\.items = \[\];[\s\S]{0,160}?resetPhotoUI\(\);/.test(app)
       && !/S\.shotHidden/.test(app)],
+  ['拍照按钮不许带荧光外发光（会和「从相册选」上方那 8px 的缝糊成一层荧光渐变）',
+    !/\.pickbtn\.on \{[\s\S]{0,200}?box-shadow: 0 8px 22px rgba\(214,255,75/.test(css)],
   ['「识别热量」不再是第二根实心绿条（淡绿底 + 绿字，压过 .btn:not(.primary) 的灰底）',
     /#addSheet #photoGo \{[\s\S]*?rgba\(214, 255, 75, \.10\)[\s\S]*?color: var\(--lime\);/.test(css)
       && !/class="btn primary" id="photoGo"/.test(html)],
