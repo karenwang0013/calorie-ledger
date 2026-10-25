@@ -446,15 +446,15 @@ window.ICON_SLOTS = [
  },
  {
   "k": "btn.go",
-  "label": "按钮·识别热量",
-  "def": "bolt",
+  "label": "按钮·识别热量（拍照 / 描述共用）",
+  "def": "local_fire_department",
   "opts": [
-   "bolt",
-   "auto_awesome",
-   "rocket_launch",
+   "manage_search",
+   "search_insights",
+   "photo_camera",
+   "receipt_long",
    "donut_large",
-   "insights",
-   "star"
+   "pie_chart"
   ]
  }
 ];
