@@ -3018,8 +3018,12 @@ body.set-open .toast, body.nlog-open .toast {
   /* v9.27：结果多时只让这一块滚（给个上限，别把卡片顶破），
      常用词在它上面、位置固定不动 */
   max-height: calc(var(--add-static-h, 480px) * 0.95);
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  /* v9.42：去掉 iOS 的触摸滚动回弹（-webkit-overflow-scrolling: touch 会带来橡皮筋，
+     下拉时列表整体位移 → 常用词与首行之间那道缝被拉宽；松手/重开才恢复） */
+  -webkit-overflow-scrolling: auto;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   /* v9.37 用户口径：消失起始线左右两边的圆角取消，改回直角 */
   border-radius: 0;
   /* v9.41 用户口径：消失起始线要落在「常用词按钮底边 ↔ 结果首行文字顶」这道缝的**中心线**。
