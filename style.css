@@ -1453,7 +1453,8 @@ body.add-open .sheet-mask.on {
      用户口径：在最下面的已添加列表上滑，内容要能一路滚到「三格条」下方才消失，
      消失线落在第 2 道缝的中心线上。整页由 .sh-body 滚，这里只是普通块。 */
   margin: 14px 0 0;        /* 照片区 → 结果区 = 14（第 3 道缝） */
-  border-radius: 18px;
+  /* v9.29：消失裁切线取消圆角 */
+  border-radius: 0;
   padding-bottom: 4px;
 }
 
@@ -1466,11 +1467,9 @@ body.add-open .sheet-mask.on {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   display: block;
-  /* v9.28 用户口径：滑动时被裁掉的那条边只加在上方两角，弧度要和照片框（实物照片 / 营养成分表）
-     那张卡一致 —— 它的圆角是 27，滚动区与它左右同宽，所以这里也取 27。
-     iOS 默认不拿 border-radius 裁滚动内容，补一条 mask 强制它按圆角裁；下面两个角不加（只裁上面）。 */
-  border-radius: 27px 27px 0 0;
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  /* v9.29 用户口径：消失线取消圆角（回到直边） */
+  border-radius: 0;
+  -webkit-mask-image: none;
 }
 
 #addSheet .sh-foot {
@@ -3016,8 +3015,8 @@ body.set-open .toast, body.nlog-open .toast {
   max-height: calc(var(--add-static-h, 480px) * 0.95);
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  /* v9.27：滚动区上沿 = 常用词下方那道缝（4 号）的中心线，圆角和卡片内层一致 */
-  border-radius: 14px;
+  /* v9.29 用户口径：消失的那条裁切线取消圆角（要直角） */
+  border-radius: 0;
   margin-top: 7px;
   padding: 7px 0 10px;
   box-sizing: border-box;
