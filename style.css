@@ -1495,10 +1495,10 @@ body.add-open .sheet-mask.on {
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
 #photoActions .prow2 input,
 #photoActions #photoHint { padding-top: 10px; padding-bottom: 10px; }
-/* v8.84 用户口径：识别热量下面那几个框（食材 / 克数 / 补充说明）也用同一档颜色 */
+/* v8.86 用户口径：识别热量下面那几个框（食材 / 克数 / 补充说明）同用「黑 8%」这一档 */
 #photoActions .prow2 input,
 #photoActions #photoHint {
-  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
 }
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
@@ -1529,8 +1529,8 @@ body.add-open .sheet-mask.on {
 #photoActions,
 #textInput {
   background-color: transparent;
-  /* v8.84 用户选定「白 4.5%」这一档（原 8.5% 太亮；4.5% 实测框内 rgb 36,39,35） */
-  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
+  /* v8.86 用户选定「黑 8%」这一档（白 4.5% 实测 51,53,49 太浅 → 黑 8% 实测 28,31,27） */
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
@@ -1547,7 +1547,7 @@ body.add-open .sheet-mask.on {
    否则外框比内格还小、两个格子会顶出弧线。 */
 .drop.photobox {
   background-color: transparent;
-  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
