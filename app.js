@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.20', d: '10-26', items: [
+    '改：记录卡里四道缝统一成 14px（①卡片顶→三格条 ②三格条→照片大框 ③照片大框→「已添加」 ④结果区→「记入」）',
+  ] },
+  { v: 'v9.21', d: '10-26', items: [
+    '修：既拍照、又从搜索加了食物时，识别结果会把搜索里加的那些冲掉，只能记其中一项 —— 现在两边都保留、一起合计',
+  ] },
   { v: 'v9.19', d: '10-26', items: [
     '改：照片区不再跟着上下滚 —— 「已添加」那一段变成一个独立的圆角滚动框（食品多了在框里滚），这样卡片顶边不会再切到照片区，也就不会出现直角切口',
   ] },
@@ -2531,7 +2537,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.19';
+const APP_VERSION = 'v9.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3516,31 +3522,37 @@ async function runPhoto() {
       image2: hasFood ? (S.photo2Data || null) : null,
       hint,
     });
-    S.items = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
+    /* v9.21 用户口径：既拍照、又从搜索加了食物时，两边都要留下、一起统计。
+       以前这里直接 `S.items = 识别结果`，会把搜索里已经加进来的全冲掉。
+       现在：搜索加的（_src !== 'photo'）原样保留，识别出来的接在后面。 */
+    const fromPhoto = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
+    const kept = (S.items || []).filter(it => it && it._src !== 'photo');
+    const photoBase = kept.length;                 // 识别结果从这一位开始
+    S.items = kept.concat(fromPhoto);
     // 读表读串了（碳水/脂肪串行、数字多一位）→ App 自己用营养表那张照片重读一次，
     // 不让用户去核对数字（用户明确要求：你自己读出来的数，你自己得认）。
     // 只在"当前显示的就是这次读出来的数"时才自检/重读：要是历史里你手改过的值赢了，绝不许覆盖。
-    if (S.items.length === 1 && r.items.length === 1) {
-      const one = S.items[0], src = r.items[0];
+    if (fromPhoto.length === 1 && r.items.length === 1) {
+      const one = S.items[photoBase], src = r.items[0];
       const fromThisRead = one.kcal_per_100g === src.kcal_per_100g
         && one.protein_per_100g === src.protein_per_100g
         && one.carb_per_100g === src.carb_per_100g
         && one.fat_per_100g === src.fat_per_100g;
       if (fromThisRead && (src._suspect || !nutSane(one.kcal_per_100g, one.protein_per_100g, one.carb_per_100g, one.fat_per_100g))) {
         const re = await rereadLabelNutrition();
-        if (re && S.items[0] === one) {
+        if (re && S.items[photoBase] === one) {
           one.kcal_per_100g = re.kcal_per_100g;
           one.protein_per_100g = re.protein_per_100g;
           one.carb_per_100g = re.carb_per_100g;
           one.fat_per_100g = re.fat_per_100g;
           delete one._suspect;
-        } else if (S.items[0] === one) {
+        } else if (S.items[photoBase] === one) {
           setTimeout(() => toast('这张营养成分表没读准，重拍一张更清楚的会更准', 5200), 400);
         }
       }
     }
     // 填了克数就以它为准（包装营养表通常只有一条）
-    if (grams > 0 && S.items.length === 1) S.items[0].grams = grams;
+    if (grams > 0 && fromPhoto.length === 1) S.items[photoBase].grams = grams;
     // 识别完就把大图收起，结果区（左小图 + 右数值）直接露出来
     $('#photoDrop').hidden = true;
     $('#photoActions').hidden = true;

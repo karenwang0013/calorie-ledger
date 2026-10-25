@@ -1448,6 +1448,7 @@ body.add-open .sheet-mask.on {
    解法：照片区不再跟着滚 —— 让「已添加」这一段自己成为一个圆角滚动框，
    内容在框内滚，框的四个角是圆的，卡片顶边再也不会切到照片区。 */
 #resultArea {
+  /* v9.20 用户口径：①卡片顶→三格条 = ②三格条→照片框 = ③照片框→「已添加」= ④结果区底→「记入」，都取 14px */
   max-height: calc(var(--add-static-h, 480px) * 0.62);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -1458,8 +1459,11 @@ body.add-open .sheet-mask.on {
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
-  padding: 8px 16px 30px;
+  /* v9.20：结果区底 →「记入」按钮 = 14px（和卡片顶→三格条一致） */
+  padding: 18px 16px 30px;
 }
+/* 「已添加」那一行到照片大框 = 14px（原来 10） */
+#resultArea > div:first-child { margin-top: 14px !important; }
 #addSheet .sh-body { padding-top: 8px; }
 
 /* 一个框：左右两个照片位 + 一组按钮 */
@@ -3005,7 +3009,7 @@ body.set-open .toast, body.nlog-open .toast {
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
    实测 1 是 14px，所以把这条的下边距从 12 收到 6.3（6.3 + 卡片 8 = 14.3 布局 ≈ 14 实际）。 */
-#addSheet #addTabs { margin: 13px 12px 6.3px; }
+#addSheet #addTabs { margin: 13px 12px 6px; }
 /* v9.03 起记录卡只有「拍照 / 搜索」两格（v9.07 把描述板块整个去掉） */
 #addTabs { grid-template-columns: 1fr 1fr; }
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
