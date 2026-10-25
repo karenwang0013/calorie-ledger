@@ -1466,13 +1466,23 @@ body.add-open .sheet-mask.on {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   display: block;
+  /* v9.26 用户口径：滑动时被裁掉的那条边**不许是直角**，圆角要和卡片弧度同心。
+     卡片圆角 27、滚动区左右内缩 12 → 内圆 = 27 − 12 = 15。
+     iOS 默认不拿 border-radius 裁滚动内容，补一条 mask 强制它按圆角裁。 */
+  border-radius: calc(var(--dock-r, 27px) - 12px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
-  /* v9.23：结果区底 →「记入」按钮取那道缝的中间（约 7px） */
   padding: 0 16px 30px;
+}
+/* v9.26：「记到哪一餐」整块固定在底栏，滚动内容的下端停在这块上方 14px（= 其它缝同宽） */
+#addSheet .mealpick { margin: 14px -4px 14px; }   /* 左右 −4 抵掉 sh-foot 的 16，与滚动区（内缩 12）左对齐 */
+/* 「记到哪一餐」标题 → 五个餐次：7px */
+#addSheet .mealpick-t {
+  font-size: 11.5px; color: var(--muted2); line-height: 1; margin: 0 0 7px;
 }
 
 #addSheet .sh-body { padding-top: 7px; }   /* v9.25：7 = 第 2 道缝的下半截（裁切线在缝心，首行落在缝底） */
