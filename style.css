@@ -1495,6 +1495,11 @@ body.add-open .sheet-mask.on {
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
 #photoActions .prow2 input,
 #photoActions #photoHint { padding-top: 10px; padding-bottom: 10px; }
+/* v8.84 用户口径：识别热量下面那几个框（食材 / 克数 / 补充说明）也用同一档颜色 */
+#photoActions .prow2 input,
+#photoActions #photoHint {
+  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
+}
 /* 识别热量排在最上面：它到下面「食材 / 克数」那排的间距，和卡里其他块一样是 10 */
 #photoActions .btnrow { margin-bottom: 10px; }
 
@@ -1524,7 +1529,8 @@ body.add-open .sheet-mask.on {
 #photoActions,
 #textInput {
   background-color: transparent;
-  background-image: linear-gradient(rgba(255, 255, 255, .085), rgba(255, 255, 255, .085)), var(--edge-gloss);
+  /* v8.84 用户选定「白 4.5%」这一档（原 8.5% 太亮；4.5% 实测框内 rgb 36,39,35） */
+  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
@@ -1541,7 +1547,7 @@ body.add-open .sheet-mask.on {
    否则外框比内格还小、两个格子会顶出弧线。 */
 .drop.photobox {
   background-color: transparent;
-  background-image: linear-gradient(rgba(255, 255, 255, .085), rgba(255, 255, 255, .085)), var(--edge-gloss);
+  background-image: linear-gradient(rgba(255, 255, 255, .045), rgba(255, 255, 255, .045)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
@@ -1562,11 +1568,20 @@ body.add-open .sheet-mask.on {
    现在按项目通用写法两层 image：实色层裁到 padding-box，描边层裁到 border-box（只露 1px 边框）。 */
 .pslot-empty {
   background-color: transparent;
-  background-image: linear-gradient(#313432, #313432), var(--edge-gloss);
+  /* v8.84 用户口径：两个照片格改成「透明」—— 不加任何填充层，只留 1px 描边和顶部高光，
+     底下照片大框的颜色直接透上来 */
+  /* ⚠️ 必须两层：下面是 border-box 的描边层，上面一层透明层裁到 padding-box。
+     只写 `var(--edge-gloss)` 一层时，background-clip 的第一个值（padding-box）会作用在它身上，
+     白色渐变又铺满整个格子 —— 就是 v8.75 修过的那个坑，这里差点重犯。 */
+  background-image: linear-gradient(transparent, transparent), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   /* 顶部高光和「模式建议」那张卡同值（共用规则里是 5%，参照物是 8%） */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+  /* v8.84：既然要「透明」，模糊也得撤 —— saturate(1.5) 会把底下的暗绿提亮，
+     留着的话格子还是比大框亮一块，看起来就不是"透明"而是"磨砂浅色" */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
