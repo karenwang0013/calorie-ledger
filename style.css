@@ -1466,11 +1466,9 @@ body.add-open .sheet-mask.on {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   display: block;
-  /* v9.26 用户口径：滑动时被裁掉的那条边**不许是直角**，圆角要和卡片弧度同心。
-     卡片圆角 27、滚动区左右内缩 12 → 内圆 = 27 − 12 = 15。
-     iOS 默认不拿 border-radius 裁滚动内容，补一条 mask 强制它按圆角裁。 */
-  border-radius: calc(var(--dock-r, 27px) - 12px);
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  /* v9.27 用户口径：取消 v9.26 给滑动裁切边加的圆角（回到直边） */
+  border-radius: 0;
+  -webkit-mask-image: none;
 }
 
 #addSheet .sh-foot {
@@ -2987,7 +2985,7 @@ body.set-open .toast, body.nlog-open .toast {
      全部 14px；而且结果向上滑时「消失线」落在第 3 道的**中心线**上，不是缝底。
      所以滚动区顶 = 搜索框底 + 7（缝心），滚动区自己再留 7 的 padding → 首行正好在缝底。
      JS 的 placeSearchInput 会按输入框实际高度重写这个值（这里只是首帧兜底）。 */
-  padding-top: 51px;
+  padding-top: 65px;   /* 搜索框高(~51) + 14 = 缝 2；JS 会按实际高重写 */
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
@@ -3013,23 +3011,22 @@ body.set-open .toast, body.nlog-open .toast {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border-radius: 22px;
-  margin-top: 0;
-  /* v9.24：上 7 = 第 3 道缝的下半截。滚动区顶正好落在缝心，所以内容是在缝心开始被裁掉；
-     首行因此出现在缝底（7 + 7 = 14，与缝 1 / 缝 2 相等） */
+  /* v9.27：滚动区上沿 = 常用词下方那道缝（4 号）的中心线，圆角和卡片内层一致 */
+  border-radius: 14px;
+  margin-top: 7px;
   padding: 7px 0 10px;
   box-sizing: border-box;
 }
 
 #pane-search .chips-wrap {
-  /* v8.99：搜索框到常用词的间距已由 .searchscroll 的 padding-top 统一给定，这里归零，避免叠加 */
-  margin-top: 0 !important;
+  /* v9.27：常用词固定在滚动区外面，与搜索框之间留 14（= 缝 1） */
+  margin-top: 14px !important;
+  flex: 0 0 auto;
   /* v8.80 用户口径：「常用词下面多了一块黑黑的框，这个框不要」
      → 去掉上一版给这一排加的深色底 + 模糊 + 内边距，也不再钉在顶部（那层底就是为了钉住挡字才加的） */
 }
 
-/* v8.98 用户口径：「常用词 → 搜索结果」也用同一个 20px 间隙 */
-#pane-search .slist { margin-top: 19px; }
+#pane-search .slist { margin-top: 0; }
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
