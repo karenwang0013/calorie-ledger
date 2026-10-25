@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.34', d: '10-26', items: [
+    '改：去掉底部那个框（卡牌）—— 餐次和「记入」按钮直接放在卡里，不再套一层边框和底色',
+  ] },
   { v: 'v9.33', d: '10-26', items: [
     '改：底部那张卡牌把「记入」按钮也一起包进去了 —— 现在餐次和记入在同一张卡里（黑 8% 底 + 同一套描边 + 圆角 18），餐次到按钮 12px',
   ] },
@@ -2589,7 +2592,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.33';
+const APP_VERSION = 'v9.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
