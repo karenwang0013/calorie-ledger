@@ -2931,7 +2931,7 @@ body.set-open .toast, body.nlog-open .toast {
   display: block; position: relative;
   /* v8.99：让这一页从「三格条下沿」就开始（原来是三格条 margin 12 + 卡片 8 的间距），
      这样滚动区顶边正好落在缝上，内容滑上去就在缝里消失。 */
-  margin-top: -18.9px;
+  margin-top: -13.5px;
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
@@ -2983,14 +2983,28 @@ body.set-open .toast, body.nlog-open .toast {
 #pane-search .slist { margin-top: 19px; }
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
-#addSheet #addTabs { margin: 13px 12px 12px; }
+/* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
+   实测 1 是 14px，所以把这条的下边距从 12 收到 6.3（6.3 + 卡片 8 = 14.3 布局 ≈ 14 实际）。 */
+#addSheet #addTabs { margin: 13px 12px 6.3px; }
 /* v9.03 用户口径：「描述」拆成一页不如并进来 —— 记录卡现在只有「拍照 / 搜索」两格，
    描述输入框 + 识别热量按钮做成拍照板块下面的新一块（#descBlock） */
 #addTabs { grid-template-columns: 1fr 1fr; }
-#descBlock { flex: 0 0 auto; margin-top: 12px; }
+/* v9.05 用户口径：描述这块也要像上面照片区一样有个外框，框里放「文字描述」和下面那颗识别热量按钮 */
+#descBlock {
+  flex: 0 0 auto;
+  margin-top: 13.2px;
+  padding: 12px;
+  background-color: transparent;
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  border-radius: 27px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
 #descBlock .twrap { flex: 0 0 auto; height: 132px; }
 #descBlock #textInput { height: 100%; }
-#descBlock #textGo { margin-top: 10px; }
+#descBlock #textGo { margin-top: 12px; }
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
    用 zoom 而不是 transform:scale —— zoom 会参与布局，不会出现"放大后压到边、留一圈空白"的问题。
    当前 1.06（放大 6%）；要更大 / 更小只改这一个数。 */
