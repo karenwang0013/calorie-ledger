@@ -79,7 +79,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # 必须显式取 main 的最新提交：这个 job 是同一个 workflow 里的第二个 job，
+      # 默认的 github.sha 是**工作流启动那一刻**的提交，不包含前面 mirror 刚推的那次 ——
+      # 不写 ref 的话会把旧数据重新部署一遍（实测：跑完 Pages 上还是 18:30/180）。
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
