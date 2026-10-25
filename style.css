@@ -2927,10 +2927,17 @@ body.set-open .toast, body.nlog-open .toast {
 
 /* 记录卡 · 搜索：搜索框「完全固定」—— 从滚动层里拿出来，绝对定位在卡片上
    （sticky 在 iOS 下拉回弹时会跟着动，用户要求上下都不动） */
-#pane-search { display: block; position: relative; }
+#pane-search {
+  display: block; position: relative;
+  /* v8.99：让这一页从「三格条下沿」就开始（原来是三格条 margin 12 + 卡片 8 的间距），
+     这样滚动区顶边正好落在缝上，内容滑上去就在缝里消失。 */
+  margin-top: -18.9px;
+}
 #pane-search #searchInput {
-  position: absolute;     /* 相对 #addSheet（fixed）定位，卡片内滚动不影响它 */
+  position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
   left: 12px; right: 12px; width: auto;
+  /* 和「卡片顶边 → 三格条」那道缝同宽（13px 布局 = 13.8px 实际） */
+  top: 13px;
   z-index: 5;
   margin: 0;
 }
@@ -2951,16 +2958,19 @@ body.set-open .toast, body.nlog-open .toast {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   border-radius: 22px;
-  /* v8.98：间距统一由下面的 chips / slist 的 margin 控制，这里归零 */
+  /* v8.99 用户口径：结果列表要能滚到「三格条」和「搜索框」之间那道缝里再消失。
+     做法：滚动区从面板顶（三格条下沿）开始，开场时用 padding-top 把内容推到搜索框下面；
+     再用 mask 把最上面那 13px 缝做淡出 —— 内容滑上去就是在这道缝里没的。 */
   margin-top: 0;
-  /* v8.96：结果列表不要顶到卡片最底边 —— 和「拍照 / 描述」两页一样留一条收口，
-     否则最后一行被卡边切掉，看着像这张卡比别人高、一直延伸到底 */
+  padding-top: calc(var(--si-h, 45px) + 13px + 19px);
   padding-bottom: 10px;
   box-sizing: border-box;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0px, transparent 6px, #000 22px);
+  mask-image: linear-gradient(180deg, transparent 0px, transparent 6px, #000 22px);
 }
 #pane-search .chips-wrap {
-  /* v8.98 用户口径：搜索框与下面内容之间的间隙 = 拍照/描述页里「三格条 → 内容卡」那个间隙（20px） */
-  margin-top: 18.6px !important;
+  /* v8.99：搜索框到常用词的间距已由 .searchscroll 的 padding-top 统一给定，这里归零，避免叠加 */
+  margin-top: 0 !important;
   /* v8.80 用户口径：「常用词下面多了一块黑黑的框，这个框不要」
      → 去掉上一版给这一排加的深色底 + 模糊 + 内边距，也不再钉在顶部（那层底就是为了钉住挡字才加的） */
 }

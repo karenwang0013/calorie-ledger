@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.99', d: '10-25', items: [
+    '改：「搜索」页里三格条到搜索框那道缝，改成和上面「卡片顶边 → 三格条」一样宽（都是 14px）；原来这里是 20px，所以两处看着不一样',
+    '改：搜索结果往上滚的时候，现在是在「三格条与搜索框之间那道缝」里淡出消失（滚动区顶边就落在那条缝上），不再是钻到搜索框底下才被切',
+  ] },
   { v: 'v8.98', d: '10-25', items: [
     '改：「搜索」页的搜索框往上贴一点 —— 它到「拍照 / 搜索 / 描述」那条的间隙，现在是 20px，和「拍照 / 描述」页里那条到内容卡的间隙完全一样（原来多出约 7px）',
     '改：搜索框到下面「常用词」、以及「常用词」到搜索结果列表，间隙也统一成同一个 20px（原来分别是 6px / 10px）',
@@ -2460,7 +2464,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.98';
+const APP_VERSION = 'v8.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2933,11 +2937,10 @@ function placeSearchInput() {
   const input = $('#searchInput');
   const pane = $('#pane-search');
   if (!sheet || !input || !pane || pane.hidden) return;
-  // v8.98：面板现在是 position:relative，搜索框直接贴面板顶（top:0），
-  // 不用再拿"相对整张卡的坐标"换算 —— 之前那套在 zoom 下会多缩一次，实测低了 7px。
-  input.style.top = '0px';
-  // 内容从它下面开始（补回它原本占的高度），不再额外加任何间距
-  pane.style.paddingTop = Math.round(input.offsetHeight) + 'px';
+  // v8.99：面板 position:relative，搜索框的 top 由 CSS 给（和三格条上方那道缝同宽）；
+  // 这里只把它的高度记成变量，让滚动区自己算「开场时从搜索框下面开始」。
+  pane.style.setProperty('--si-h', Math.round(input.offsetHeight) + 'px');
+  pane.style.paddingTop = '0px';
 }
 
 function syncAddTabsH() {
