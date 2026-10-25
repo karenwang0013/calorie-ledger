@@ -1706,10 +1706,12 @@ body.add-open .sheet-mask.on {
 }
 #pane-photo .prow-pick { align-self: end; }
 /* v9.11：比例放在「格子」这一层（grid item），里面全部撑满 100%，高度就不会和父级打架 */
-#pane-photo .pslot { aspect-ratio: 1 / 1.3; width: 100%; min-height: 0; }
+/* v9.15：不再用 aspect-ratio（iOS Safari 在网格里会算出偏差，导致按钮溢出/和下面结果区叠）
+   —— 格子高度由 JS 按列宽算好写成 --slot-h（1 : 1.3） */
+#pane-photo .pslot { height: var(--slot-h, 200px); width: 100%; min-height: 0; }
 #pane-photo .pslot-body { height: 100%; min-height: 0; }
-#pane-photo .pslot-empty { aspect-ratio: auto; height: 100%; min-height: 0; }
-#pane-photo .pslot-body .preview { aspect-ratio: auto; height: 100%; object-fit: cover; }
+#pane-photo .pslot-empty { height: 100%; min-height: 0; }
+#pane-photo .pslot-body .preview { height: 100%; object-fit: cover; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }

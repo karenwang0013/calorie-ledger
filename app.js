@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.15', d: '10-25', items: [
+    '修：真机上「从相册选」按钮被裁掉一截、「已添加」压到它上面 —— 照片格的高度不再交给 CSS 的比例（iOS 算不准），改成按列宽算出像素高再写死',
+  ] },
   { v: 'v9.13', d: '10-25', items: [
     '修：搜索页第一行结果/常用词被裁掉半截、列表贴着搜索框 —— 去掉「负外边距 + 顶部遮罩」那套，回到最朴素的结构：搜索框下来 20px 才开始滚动区',
   ] },
@@ -2515,7 +2518,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.14';
+const APP_VERSION = 'v9.15';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3229,11 +3232,27 @@ let addMode = 'photo';
    · 空闲（没照片、没食品）时卡片高度定死，且「拍照 / 搜索」完全一致；
    · 加了照片或食品后按内容长高，多了就在卡内滚。
    实现：卡片本身 height:auto，下限用 --add-static-h —— 这个值在“拍照页空闲”时量一次。 */
+/* v9.15：按列宽算出「照片格」的高度（宽 : 高 = 1 : 1.3），写成 --slot-h。
+   不在 CSS 里用 aspect-ratio —— iOS Safari 在网格里算出来的高度有偏差，
+   会让「从相册选」按钮溢出盒子、和下面的「已添加」叠在一起。 */
+function syncSlotH() {
+  const pane = $('#pane-photo');
+  if (!pane) return;
+  const box = pane.querySelector('.drop.photobox');
+  if (!box) return;
+  const w = box.clientWidth;
+  if (!w) return;
+  const inner = w - 24 - 12;            // 左右 padding 12*2 + 两列间距 12
+  const slotH = Math.round((inner / 2) * 1.3);
+  if (slotH > 40) document.documentElement.style.setProperty('--slot-h', slotH + 'px');
+}
+
 function measureAddStaticH() {
   const s = $('#addSheet'), pane = $('#pane-photo');
   if (!s || !pane || pane.hidden) return;
   if (S.photoData || S.photo2Data || (S.items || []).length) return;   // 只在空闲态量
   if (!s.classList.contains('on')) return;                             // 只在卡片打开时量
+  try { syncSlotH(); } catch (e) {}
   const pb = pane.querySelector('.drop.photobox');
   if (!pb) return;
   // 不再「临时摘掉下限再量整张卡」—— 那套在真机上量到过动画中的高度，把 --add-static-h 写大，
