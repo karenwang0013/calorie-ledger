@@ -3022,9 +3022,9 @@ body.set-open .toast, body.nlog-open .toast {
   overscroll-behavior: contain;
   /* v9.37 用户口径：消失起始线左右两边的圆角取消，改回直角 */
   border-radius: 0;
-  /* v9.39 用户口径：②号缝量的是「常用词按钮底边 → 结果第一行文字顶边」，要等于①号的 14px。
-     结果行有 12px 上内边距，所以外边距只留 2（2 + 12 = 14）。 */
-  margin-top: 2px;
+  /* v9.40 用户澄清：①号缝量的是「卡片顶边 → 拍照/搜索按钮顶边」= 21px（不是三格条容器顶的 14）。
+     所以 ②号缝（常用词底 → 结果首行文字顶）取 21：结果行自带 12 上内边距 → 外边距 9。 */
+  margin-top: 9px;
   padding: 0 0 10px;
   box-sizing: border-box;
 }

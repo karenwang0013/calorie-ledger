@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.40', d: '10-26', items: [
+    '改：①号缝按「卡片顶边 → 拍照/搜索按钮顶边」算（= 21px），搜索页「常用词底 → 结果首行文字顶」也调到 21px，两者一致',
+  ] },
   { v: 'v9.39', d: '10-26', items: [
     '改：搜索页「常用词按钮底边 → 结果第一行文字顶边」的距离调成 14px（与①号缝一致）。结果行自带 12px 上内边距，所以滚动区上边距收到 2px',
   ] },
@@ -2607,7 +2610,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.39';
+const APP_VERSION = 'v9.40';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
