@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.31', d: '10-26', items: [
+    '修：记录卡往下拖关不掉了 —— 手指落在内层列表（搜索结果 / 已添加）上时，滑动被列表吃掉、卡片收不到。现在先判断手指底下那个能滚的容器到没到顶，到顶就交给卡片拖拽关闭',
+  ] },
+  { v: 'v9.30', d: '10-26', items: [
+    '改：搜索页内容往上滑消失的那条起始线，左右两端改成圆角（14px，和下面的食品卡一致），下沿仍是直角',
+  ] },
   { v: 'v9.29', d: '10-26', items: [
     '改：滑动时内容消失的那条裁切线取消圆角，恢复直角（搜索页列表 + 拍照页结果区两处）',
   ] },
@@ -2577,7 +2583,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.29';
+const APP_VERSION = 'v9.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5527,11 +5533,24 @@ function wireSheetDrag(sheet, list, closeFn) {
   if (!sheet || sheet.dataset.dragWired) return;
   sheet.dataset.dragWired = '1';
   let y0 = 0, x0 = 0, dy = 0, dragging = false, armed = false, horiz = false;
+  /* 找到手指底下那个「能滚的容器」（搜索列表 / 结果区 / 卡片身体）——
+     v9.31：以前只看 list（卡片身体）的 scrollTop，身体被改成 overflow:hidden 之后
+     这里永远是 0，但实际在滚的是内层列表，于是往下拖时被内层列表吃掉，卡片就关不掉了。 */
+  const scrollerAt = (t) => {
+    let el = t;
+    while (el && el !== sheet && el.nodeType === 1) {
+      const cs = getComputedStyle(el);
+      if (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
+      el = el.parentElement;
+    }
+    return null;
+  };
   sheet.addEventListener('touchstart', (e) => {
     if (!sheet.classList.contains('on')) return;
     y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; dragging = false; horiz = false;
-    armed = !list || list.scrollTop <= 0;
-  }, { passive: true });
+    const sc = scrollerAt(e.target);
+    armed = (!list || list.scrollTop <= 0) && (!sc || sc.scrollTop <= 0);
+  }, { passive: true, capture: true });
   sheet.addEventListener('touchmove', (e) => {
     if (!armed || !sheet.classList.contains('on')) return;
     // 横向成分更大 = 在滑图表 / 翻页，不归这个手势管（否则会把卡拖着走甚至关掉）
@@ -5557,7 +5576,7 @@ function wireSheetDrag(sheet, list, closeFn) {
       sheet.style.opacity = String(Math.max(0.82, 1 - dy / 1600));
       e.preventDefault();
     }
-  }, { passive: false });
+  }, { passive: false, capture: true });
   const end = () => {
     if (!dragging) { dy = 0; return; }
     dragging = false;
