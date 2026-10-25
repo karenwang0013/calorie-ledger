@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.98', d: '10-25', items: [
+    '改：「搜索」页的搜索框往上贴一点 —— 它到「拍照 / 搜索 / 描述」那条的间隙，现在是 20px，和「拍照 / 描述」页里那条到内容卡的间隙完全一样（原来多出约 7px）',
+    '改：搜索框到下面「常用词」、以及「常用词」到搜索结果列表，间隙也统一成同一个 20px（原来分别是 6px / 10px）',
+    '修：搜索框位置换算时被放大倍数多算了一次，导致它比「拍照」页的内容低 7px —— 现在直接贴面板顶，不再换算',
+  ] },
   { v: 'v8.97', d: '10-25', items: [
     '修：手机上点开「搜索」、键盘一弹起，这张记录卡会自己变高（不再是 74dvh）—— 原因是高度用了 dvh，iOS 键盘弹起时 dvh 会跟着视口变。现在高度改成用「没键盘时的整屏高」算死，键盘弹起卡高一点不变，和「拍照」完全一致',
     '说明：卡内内容照旧可以上下滑动查看；「拍照 / 搜索 / 描述」那一条固定在卡顶，滑动时不动',
@@ -2455,7 +2460,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.97';
+const APP_VERSION = 'v8.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2928,10 +2933,9 @@ function placeSearchInput() {
   const input = $('#searchInput');
   const pane = $('#pane-search');
   if (!sheet || !input || !pane || pane.hidden) return;
-  const sr = sheet.getBoundingClientRect();
-  const pr = pane.getBoundingClientRect();
-  // 原来它就是这个面板的第一个元素：top = 面板顶
-  input.style.top = Math.round(pr.top - sr.top) + 'px';
+  // v8.98：面板现在是 position:relative，搜索框直接贴面板顶（top:0），
+  // 不用再拿"相对整张卡的坐标"换算 —— 之前那套在 zoom 下会多缩一次，实测低了 7px。
+  input.style.top = '0px';
   // 内容从它下面开始（补回它原本占的高度），不再额外加任何间距
   pane.style.paddingTop = Math.round(input.offsetHeight) + 'px';
 }
