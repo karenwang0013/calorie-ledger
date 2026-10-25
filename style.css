@@ -1436,15 +1436,17 @@ body.add-open .sheet-mask.on {
      多出来的 7px 留给底栏的上内边距 */
   padding: calc(var(--blk-gap) - 4px) 0 0;
 }
-/* v9.49：拍照页底部留 12 —— 没照片时卡片高度是按「照片大框底 + 这段留白」量的
+/* v9.49：拍照页底部留白 —— 没内容时卡片高度是按「最后一个块 + 这段留白」量的
    （measureAddStaticH 会把 #pane-photo 的下内边距算进去），原来是 0 →
    大框底边正好压在卡片底边上、被卡片圆角切掉。
-   12（+ 卡片 1px 边框 = 13）和左右一样：大框离卡片边 左13 / 右13 / 下13。
+   v9.54 用户口径：「1 号（补充说明）和 2 号（从相册选）离边的距离，也调成 31」——
+   和底栏「记入」按钮到卡片外沿的距离（30 内边距 + 1 边框 = 31）一致。
+   所以这里写 30（+ 卡片 1px 边框 = 31）。
    ⚠️ 留白挂在 #pane-photo 上、不挂 .sh-body：
    · 挂 .sh-body 会影响搜索页（列表本来是贴到卡片底边的，会多出一条空档）；
    · 而且切到搜索页时 .sh-body 的 padding 一变，量出来的卡高就跟着变（两张卡不一样高）。
    padding 不参与 overflow 裁切，所以滚动消失线（本盒底边）的位置不受影响。 */
-#addSheet.no-items #pane-photo { padding-bottom: var(--blk-gap); }
+#addSheet.no-items #pane-photo { padding-bottom: 30px; }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 /* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
    滚动内容到那里就被切掉，看着像有一层东西盖住（横杠下沿就是切边）。

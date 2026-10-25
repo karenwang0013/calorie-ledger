@@ -118,8 +118,8 @@ const checks = [
   // v9.49 用户口径：下面那个大框（照片大框 / 识别热量那张卡）不许再压到卡片底边上 ——
   //   卡片高度是「大框底 + .sh-body 的下内边距」量出来的，下内边距必须是 --blk-gap（12），
   //   这样大框离卡片边 左13 / 右13 / 下13 等距（以前这里是 0 → 框底正好被卡片的圆角切掉）。
-  ['记录卡片大框不贴卡片底边（左/右/下都是 13，水平垂直等距）',
-    /#addSheet\.no-items #pane-photo \{ padding-bottom: var\(--blk-gap\); \}/.test(css)
+  ['记录卡片底部：从相册选 / 补充说明 到卡片外沿必须是 31（= 记入按钮那个 31；写 30 + 1px 边框）',
+    /#addSheet\.no-items #pane-photo \{ padding-bottom: 30px; \}/.test(css)
       && /_addS\.classList\.toggle\('no-items', !\(S\.items \|\| \[\]\)\.length\)/.test(app)
       && /const panePadB = \(parseFloat\(getComputedStyle\(pane\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
   ['两个照片格宽度必须等于格子（不许被 1:1.3 比例反推撑宽，否则中间缝被挤没）',
