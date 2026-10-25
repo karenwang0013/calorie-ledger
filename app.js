@@ -26,6 +26,11 @@ function nameLine(name, attr) {
 
 const RELEASES = [
   { v: 'v9.27', d: '10-26', items: [
+    '改：搜索页四道缝等宽（都为 14px）：①卡片顶→三格条 ②三格条→搜索框 ③搜索框→常用词 ④常用词→结果首行',
+    '改：搜索框和「常用词」那一排钉住不动，只有下面的结果列表滚（滚动区上沿正好落在缝 ④ 的中心线，四角是 14px 圆角）',
+    '修：结果多时列表滚不动、下面的行点不到（现在列表自己有高度上限、可正常滑动）',
+  ] },
+  { v: 'v9.27', d: '10-26', items: [
     '改：取消滑动裁切边的圆角，回到直边（「记到哪一餐」固定不滚保持不变）',
   ] },
   { v: 'v9.26', d: '10-26', items: [
@@ -3328,6 +3333,10 @@ function setAddMode(m) {
   requestAnimationFrame(() => { try { syncAddTabsH(); placeSearchInput(); } catch (e) {} });
   S.addMode = m;
   addMode = m;
+  // v9.27：搜索页允许卡片内容整体滚动（不然结果多时下面的行点不到），
+  // 但「常用词」那一排用 sticky 钉住 → 列表滑动时它不动。拍照页仍然只滚「添加」块。
+  const _sh = $('#addSheet');
+  if (_sh) _sh.classList.toggle('search-mode', m === 'search');
   $$('#addTabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   syncResultVisibility();
   ['photo', 'search'].forEach(k => {
