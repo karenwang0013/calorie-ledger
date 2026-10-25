@@ -1432,7 +1432,9 @@ body.add-open .sheet-mask.on {
   /* v9.18：左右内边距改成外边距 —— 滚动框不再贴到卡片边上，
      这样上下滑动时那条直切的边止于卡片圆弧以内，四角不会露出直角（clip-path 在 iOS 上不裁滚动内容） */
   margin: 0 var(--blk-gap);
-  padding: calc(var(--blk-gap) - 4px) 0 7px;
+  /* v9.36：底部内边距 0 —— 裁切边界（本盒底边）要正好落在「合计 ↔ 餐次」那道缝的正中，
+     多出来的 7px 留给底栏的上内边距 */
+  padding: calc(var(--blk-gap) - 4px) 0 0;
 }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 /* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
@@ -1478,13 +1480,16 @@ body.add-open .sheet-mask.on {
   /* v9.34 用户口径：底部那个框不要了 —— 回到透明底栏，餐次和记入直接放着 */
   background: transparent;
   border-top: 0;
-  padding: 0 16px 30px;
+  /* v9.36：上边留 7px —— 卡片内容的裁切边界（.sh-body 底边）因此上移 7px，
+     正好落在「合计 ↔ 餐次」那道缝的正中（缝宽 14）。 */
+  padding: 7px 16px 30px;
 }
 /* v9.32 用户口径：去掉「记到哪一餐」那行小字，五个餐次单独装进一张卡牌
    （材质和上面那些食品卡一致：黑 8% 底 + edge-gloss + 圆角 18） */
 #addSheet .mealpick { margin: 0 0 12px; }
 
 #addSheet .sh-body { padding-top: 7px; }   /* v9.25：7 = 第 2 道缝的下半截（裁切线在缝心，首行落在缝底） */
+
 
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
