@@ -503,6 +503,13 @@ body.add-open .sheet-mask.on {
 .rec-nums span:first-child em { font-style: normal; font-size: 10.5px; color: var(--muted2); font-weight: 400; }
 .rec-date { margin-left: auto; font-size: 11px; }
 
+/* v8.87 用户口径：「模式建议」这四个字，以及下面和它同色的字（单位 / BMI·体脂那排 / 日期 / 底部说明）都改成绿色。
+   只改颜色，字号 / 字重 / 间距一个不动；白色的大数字（65.5）和那行白色结论不动。 */
+.rec-card .rec-label,
+.rec-card .rec-nums,
+.rec-card .rec-nums span:first-child em,
+.rec-card .rec-note { color: var(--lime); }
+
 /* 身体数据：三个板块标题统一、和右侧控件同一中心线 */
 .bh { font-size: 12.5px; line-height: 20px; min-height: 22px; align-items: center; }
 .bh .datechip, .bh .pager, .bh .tag { align-self: center; }
