@@ -1455,7 +1455,9 @@ body.add-open .sheet-mask.on {
   margin: 14px 0 0;        /* 照片区 → 结果区 = 14（第 3 道缝） */
   /* v9.29：消失裁切线取消圆角 */
   border-radius: 0;
-  padding-bottom: 4px;
+  /* v9.35 用户口径：向下滑时的消失线落在「合计 ↔ 餐次」那道缝的正中
+     （缝总宽 14：合计 +7 = 裁切线，再过 7 = 餐次首行） */
+  padding-bottom: 7px;
 }
 
 /* v9.25 用户口径（真机口述）：

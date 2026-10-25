@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.35', d: '10-26', items: [
+    '改：向下滑时内容消失的那条线，落到「合计」和餐次之间那道缝的正中（合计下方 7px，再过 7px 才是餐次，缝宽 14）',
+  ] },
   { v: 'v9.34', d: '10-26', items: [
     '改：去掉底部那个框（卡牌）—— 餐次和「记入」按钮直接放在卡里，不再套一层边框和底色',
   ] },
@@ -2592,7 +2595,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.34';
+const APP_VERSION = 'v9.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
