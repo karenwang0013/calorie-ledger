@@ -2826,7 +2826,11 @@ body.set-open .toast, body.nlog-open .toast {
 .icl { flex: 0 0 96px; font-size: 12.5px; color: var(--muted); line-height: 1.35; }
 .icopts { display: flex; gap: 8px; overflow-x: auto; flex: 1 1 auto; padding-bottom: 2px; }
 .icopt { flex: 0 0 auto; width: 58px; border: 1px solid transparent; border-radius: 12px; padding: 7px 4px 5px;
-  background-image: linear-gradient(var(--setrow-fill), var(--setrow-fill)), var(--edge-gloss);
+  /* v8.81 用户口径：图标这排的小框以「主题色」那排的框为准 —— 同一套材质
+     （黑 46%→58% 竖向渐变 + edge-gloss 描边），尺寸/内边距/字号不动。
+     不挂 backdrop-filter：一屏有上百个小方块，各自模糊会让 iOS 滚动掉帧；
+     底色是半透明黑，背后又是一块纯色卡，糊不糊肉眼没有区别。 */
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
   background-origin: border-box; background-clip: padding-box, border-box;
   color: var(--muted2); text-align: center; }
 .icopt svg { width: 22px; height: 22px; fill: currentColor; display: block; margin: 0 auto; }
