@@ -3176,3 +3176,20 @@ body.set-open .toast, body.nlog-open .toast {
 #addSheet .mealpick .chip,
 #addSheet .ritem,
 #addSheet .shotrow { border-radius: 18px; }
+
+/* ==================================================================
+   v9.59 用户口径：两个照片格（食物照片 / 营养成分表）换成记录卡顶部
+   「拍照 / 搜索」那条（#addTabs）的材质和颜色 ——
+     黑 26% → 38% 竖向渐变 + var(--edge-gloss) 光泽描边 + 顶部 5% 高光。
+   原来是全透明（只剩一条 10% 白边），看着像没有框。圆角仍是 v9.57 定的 18，尺寸/比例不动。
+   ⚠️ 必须写在 v8.84 那条 `.pslot-empty { background-color: transparent }` 之后，否则被盖回去。
+   ⚠️ 不加 backdrop-filter：格子里没有别的层可模糊，加上只是白烧 GPU（v8.83 就去掉过一次）。
+   ================================================================== */
+#pane-photo .pslot-empty {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(13, 15, 14, .26) 0%, rgba(13, 15, 14, .38) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}

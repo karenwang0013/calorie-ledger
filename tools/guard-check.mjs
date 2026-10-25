@@ -131,6 +131,8 @@ const checks = [
   // v9.57 用户口径（效果图确认）：记录卡里的框和按钮统一成设置卡那套 —— 圆角 18。
   ['记录卡里的框和按钮统一圆角 18（照片格 / 预览 / 三个输入框 / 拍照 / 从相册选 / 识别热量 / 记入 / 餐次 / 条目 / 结果照片卡）',
     /#addSheet \.pslot-empty,[\s\S]{0,140}?#addSheet #photoActions input,[\s\S]{0,320}?#addSheet \.shotrow \{ border-radius: 18px; \}/.test(css)],
+  ['两个照片格的材质与顶部「拍照 / 搜索」那条一致（黑 26%→38% + edge-gloss 描边 + 顶部 5% 高光，不再是全透明）',
+    /#pane-photo \.pslot-empty \{\s*\n\s*background-color: transparent;\s*\n\s*background-image: linear-gradient\(180deg, rgba\(13, 15, 14, \.26\) 0%, rgba\(13, 15, 14, \.38\) 100%\), var\(--edge-gloss\);/.test(css)],
   // v9.52 用户口径（效果图确认）：包着两个照片格 + 两个按钮的大框去掉；拍两格的宽度改由「盒宽 − 12」算
   ['照片大框（.drop.photobox）已去掉：无底色/无描边/无内边距',
     /\.drop\.photobox \{[\s\S]*?background-image: none;[\s\S]*?border-width: 0;[\s\S]*?padding: 0;/.test(css)
