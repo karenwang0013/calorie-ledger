@@ -119,8 +119,9 @@ const checks = [
   //   卡片高度是「大框底 + .sh-body 的下内边距」量出来的，下内边距必须是 --blk-gap（12），
   //   这样大框离卡片边 左13 / 右13 / 下13 等距（以前这里是 0 → 框底正好被卡片的圆角切掉）。
   ['记录卡片大框不贴卡片底边（左/右/下都是 13，水平垂直等距）',
-    /#addSheet \.sh-body \{[\s\S]*?padding: calc\(var\(--blk-gap\) - 4px\) 0 var\(--blk-gap\);/.test(css)
-      && /const padB = \(parseFloat\(getComputedStyle\(body\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
+    /#addSheet\.no-items #pane-photo \{ padding-bottom: var\(--blk-gap\); \}/.test(css)
+      && /_addS\.classList\.toggle\('no-items', !\(S\.items \|\| \[\]\)\.length\)/.test(app)
+      && /const panePadB = \(parseFloat\(getComputedStyle\(pane\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
   ['两个照片格宽度必须等于格子（不许被 1:1.3 比例反推撑宽，否则中间缝被挤没）',
     /#pane-photo \.pslot-empty \{ width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; \}/.test(css)],
   ['照片预览和空框圆角一致（27，拍完一张不许变成 14）',

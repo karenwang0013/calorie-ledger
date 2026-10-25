@@ -25,12 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
-  { v: 'v9.49', d: '10-26', items: [
-    '修：两个照片格（食物照片 / 营养成分表）被挤变形 —— 格子宽度被 1:1.3 的比例反推成 188（格子只有 180），中间那道缝被挤到 3.7px、右边那个框压进大框内边距里；现在两框等宽、中间缝 12、左右各 13',
-    '修：拍完照后框里的照片是 14 圆角、旁边空框是 27 圆角（换了个样子）—— 统一成 27',
+  { v: 'v9.50', d: '10-26', items: [
+    '修：两个照片格（食物照片 / 营养成分表）被挤变形 —— 格子宽度被 1:1.3 的比例反推成 188（格子实际只有 180），两框中间那道缝被挤到 3.7px、右边那个框还压进大框的内边距里；现在两框等宽，中间缝 12、左右各 13',
+    '修：拍完照后框里的照片是 14 圆角、旁边空框是 27 圆角（同一个框换了张脸）—— 统一成 27',
     '修：下面那个大框（照片大框 / 识别热量那张卡）底边正好压在卡片底边上、被卡片圆角切掉 —— 现在大框离卡片边 左13 / 右13 / 下13',
     '修：底栏的五个餐次和「记入」按钮比上面的卡牌各窄 4px（左右不齐）—— 内边距 16 → 12，和上面完全对齐',
-    '修：识别热量那张卡离照片大框 12、离下面的结果区 14 —— 统一成 14',
+    '修：识别热量那张卡离上面照片大框 12、离下面结果区 14 —— 统一成 14',
   ] },
   { v: 'v9.48', d: '10-26', items: [
     '改：两个照片格稍微放大（1:1.3 → 1:1.36）；外框这次先保留 —— 去掉外框那版两格会各自撑到 239 宽、塞不进 398 的盒子，渲染错乱',
@@ -2629,7 +2629,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.49';
+const APP_VERSION = 'v9.50';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3375,7 +3375,10 @@ function measureAddStaticH() {
   const body = s.querySelector('.sh-body');
   const z = (pane.offsetHeight ? (pane.getBoundingClientRect().height / pane.offsetHeight) : 1) || 1;
   const padB = (parseFloat(getComputedStyle(body).paddingBottom) || 0) * z;
-  const h = Math.round(pr.bottom - sr.top + padB);
+  // v9.49：拍照页自己的下内边距（12）也要算进来 —— 它让大框不压到卡片底边。
+  // 挂在 #pane-photo 上而不是 .sh-body：切到搜索页时这个值不变，量出来的卡高就不会跳。
+  const panePadB = (parseFloat(getComputedStyle(pane).paddingBottom) || 0) * z;
+  const h = Math.round(pr.bottom - sr.top + padB + panePadB);
   if (h > 120) document.documentElement.style.setProperty('--add-static-h', h + 'px');
 }
 function syncAddSheetFit() {
@@ -3388,6 +3391,10 @@ function syncAddSheetFit() {
 }
 
 function syncResultVisibility() {
+  // v9.49：有没有「已添加」决定照片页要不要在底部留 12（没内容时大框才贴到卡片底边）。
+  // 这个类必须在 syncAddSheetFit() 之前切好 —— 它会在里面重新量卡片高度。
+  const _addS = $('#addSheet');
+  if (_addS) _addS.classList.toggle('no-items', !(S.items || []).length);
   try { syncAddSheetFit(); } catch (e) {}
   const on = addMode === 'photo';
   const area = $('#resultArea'), foot = $('#addFoot');
