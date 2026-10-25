@@ -1439,6 +1439,15 @@ body.add-open .sheet-mask.on {
 }
 /* 有照片 / 有已选食材时卡片自然按内容变高（height:auto 已覆盖），这里只留一个标记位 */
 
+/* v9.17 用户口径：上下滑动时，内容被裁切/遮挡的地方必须是圆角，
+   而且要和下面那张卡片的圆角一致（卡片 = --dock-r / 27）——
+   之前滚动区是矩形，切出来是直角，和卡片四角的弧不呼应。 */
+#addSheet .sh-body,
+#nlogSheet #nlogList {
+  --clip-r: var(--dock-r, 26px);
+  clip-path: inset(0 round var(--clip-r));
+}
+
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
