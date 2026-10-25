@@ -389,8 +389,11 @@ html.kb .sc-body {
   max-width: var(--dock-max);
   /* 高度上限必须避让顶栏：原来 92dvh 会让弹层顶边钻到顶栏后面，
      一往上滑，几格按钮就被顶栏盖住 —— 这就是"还没滑到顶就被遮挡" */
-  /* v8.94 用户口径：记录卡顶部再往上拉一点（64dvh → 74dvh），里面的内容按比例放大 */
-  min-height: 74dvh;
+  /* v8.97 用户口径：点开搜索、键盘弹起时这张卡不许再变高 —— 高度改成用「没键盘时的整屏高」算死
+     （--vfull 由 app.js 在无键盘状态写入），不再用 dvh：iOS 键盘弹起时 dvh 会跟着视口变，
+     卡就会自己长高，和拍照页对不上。 */
+  height: calc(var(--vfull, 100dvh) * 0.74);
+  min-height: 0;
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
   border-radius: var(--dock-r, 26px);
   padding: 0;
