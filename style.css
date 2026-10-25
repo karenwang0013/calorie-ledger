@@ -3019,11 +3019,16 @@ body.set-open .toast, body.nlog-open .toast {
    尺寸/字号/圆角不动（16px / 600 / 圆角 15 / 内边距 16 一项都没改）。
    ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面第 2981 行那条
    `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
+/* v9.58 用户口径：「识别热量」的绿色换成橙色 —— 淡橙底 + 橙字 + 橙描边，
+   和上面「拍照」那根荧光绿分开，一眼能分出两个动作。只换色，尺寸/字号/圆角/内边距不动。
+   （v9.52 的配方原样保留，只把 rgba(214,255,75) 换成 --orange 的 255,138,76）
+   ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面那条
+   `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
 #addSheet #photoGo {
   background-color: transparent;
-  background-image: linear-gradient(rgba(214, 255, 75, .10), rgba(214, 255, 75, .10));
-  border: 1px solid rgba(214, 255, 75, .45);
-  color: var(--lime);
+  background-image: linear-gradient(rgba(255, 138, 76, .12), rgba(255, 138, 76, .12));
+  border: 1px solid rgba(255, 138, 76, .50);
+  color: var(--orange);
   box-shadow: none;
 }
 #photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
@@ -3157,13 +3162,14 @@ body.set-open .toast, body.nlog-open .toast {
        · 圆角 18：两个照片格 / 照片预览 / 拍照 / 从相册选 / 识别热量 / 已添加条目 / 结果里的照片卡
        · 左右 16：整张卡的内容边（.sh-body 的 12 → 16），底栏和三格条也跟着 16，四处对齐
        · 底部 20：不看内容多少，卡片底边一律 20（原来是 31）
-     ⚠️ 输入框（食材 / 克数 / 补充说明）圆角保持 12 —— 高度只有 40，18 会变成半圆，
-        和设置里那些输入框也对不上；它们只跟着左右变成 16。
+     ⚠️ v9.58 用户口径：三个输入框（食材 / 克数 / 补充说明）圆角也一起 18 —— 它们离卡边本来就和
+        「从相册选」一致（实测左 34.5 / 右 765.5，同一个盒子），只是圆角还是 12，看着就不齐。
    ================================================================== */
 #addSheet { --card-gap: 16px; }
 
 #addSheet .pslot-empty,
 #addSheet .pslot-body .preview,
+#addSheet #photoActions input,
 #addSheet .pickbtn,
 #addSheet #photoGo,
 #addSheet .sh-foot .btn,

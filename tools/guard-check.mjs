@@ -129,8 +129,8 @@ const checks = [
   ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 = --card-gap 16），底距 20',
     /#addSheet \.sh-foot \{[\s\S]*?padding: 7px var\(--card-gap\) 20px;/.test(css)],
   // v9.57 用户口径（效果图确认）：记录卡里的框和按钮统一成设置卡那套 —— 圆角 18。
-  ['记录卡里的框和按钮统一圆角 18（照片格 / 预览 / 拍照 / 从相册选 / 识别热量 / 已添加条目 / 结果照片卡）',
-    /#addSheet \.pslot-empty,[\s\S]{0,320}?#addSheet \.shotrow \{ border-radius: 18px; \}/.test(css)],
+  ['记录卡里的框和按钮统一圆角 18（照片格 / 预览 / 三个输入框 / 拍照 / 从相册选 / 识别热量 / 记入 / 餐次 / 条目 / 结果照片卡）',
+    /#addSheet \.pslot-empty,[\s\S]{0,140}?#addSheet #photoActions input,[\s\S]{0,320}?#addSheet \.shotrow \{ border-radius: 18px; \}/.test(css)],
   // v9.52 用户口径（效果图确认）：包着两个照片格 + 两个按钮的大框去掉；拍两格的宽度改由「盒宽 − 12」算
   ['照片大框（.drop.photobox）已去掉：无底色/无描边/无内边距',
     /\.drop\.photobox \{[\s\S]*?background-image: none;[\s\S]*?border-width: 0;[\s\S]*?padding: 0;/.test(css)
@@ -145,8 +145,8 @@ const checks = [
       && !/S\.shotHidden/.test(app)],
   ['拍照按钮不许带荧光外发光（会和「从相册选」上方那 8px 的缝糊成一层荧光渐变）',
     !/\.pickbtn\.on \{[\s\S]{0,200}?box-shadow: 0 8px 22px rgba\(214,255,75/.test(css)],
-  ['「识别热量」不再是第二根实心绿条（淡绿底 + 绿字，压过 .btn:not(.primary) 的灰底）',
-    /#addSheet #photoGo \{[\s\S]*?rgba\(214, 255, 75, \.10\)[\s\S]*?color: var\(--lime\);/.test(css)
+  ['「识别热量」用橙色（淡橙底 + 橙字，压过 .btn:not(.primary) 的灰底），不再是第二根实心绿条',
+    /#addSheet #photoGo \{[\s\S]*?rgba\(255, 138, 76, \.12\)[\s\S]*?color: var\(--orange\);/.test(css)
       && !/class="btn primary" id="photoGo"/.test(html)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
     const i = css.indexOf('.seg-lens {');
