@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.07', d: '10-25', items: [
+    '删：记录里的「描述」板块整个去掉（文字描述框 + 那颗识别热量按钮都不在了），现在只有「拍照 / 搜索」两页',
+    '修：卡片自适应变高时，照片区会被压扁、按钮盖到两个格子上（看着错乱）—— 给照片大框加了最低高度，不会再压塌',
+    '改：记录卡整体再高一点（74% → 80%），顶部往上多让出约 54px',
+  ] },
   { v: 'v9.06', d: '10-25', items: [
     '改：记录卡不再死锁高度 —— 没操作时「拍照 / 搜索」两张卡一样高（都是 74%），一旦加了照片、或搜索结果里选了食材，卡片就按内容自适应变高（删掉照片 / 清空选择会缩回去）',
   ] },
@@ -2488,7 +2493,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.06';
+const APP_VERSION = 'v9.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2984,7 +2989,7 @@ function openAdd(meal) {
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
   $('#searchInput').value = '';
-  $('#textInput').value = '';
+  const ta = $('#textInput'); if (ta) ta.value = '';   // v9.07 描述板块已移除
   $('#searchList').innerHTML = '';
   $('#searchList').hidden = false;
   $('#addTabs').hidden = false;
@@ -3514,7 +3519,8 @@ async function makeThumb(dataUrl, side = 160, q = 0.5) {
 
 /* ---- 文字 ---- */
 async function runText() {
-  const text = $('#textInput').value.trim();
+  const taEl = $('#textInput');                       // v9.07 描述板块已移除，这里防空
+  const text = taEl ? taEl.value.trim() : '';
   if (!text) return toast('先描述一下吃了什么');
   const btn = $('#textGo');
   const old = btn.innerHTML;
@@ -7481,7 +7487,7 @@ function init() {
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
-  $('#textGo').onclick = runText;
+  const tgo = $('#textGo'); if (tgo) tgo.onclick = runText;   // v9.07 描述板块已移除，这里要防空
   // 描述框里的示例文字：框里没字才显示（居中那层，见 .tph），一打字就收起
   const _ta = $('#textInput');
   if (_ta) _ta.addEventListener('input', syncTextPh);
