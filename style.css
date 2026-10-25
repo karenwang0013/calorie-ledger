@@ -2991,7 +2991,8 @@ body.set-open .toast, body.nlog-open .toast {
      全部 14px；而且结果向上滑时「消失线」落在第 3 道的**中心线**上，不是缝底。
      所以滚动区顶 = 搜索框底 + 7（缝心），滚动区自己再留 7 的 padding → 首行正好在缝底。
      JS 的 placeSearchInput 会按输入框实际高度重写这个值（这里只是首帧兜底）。 */
-  padding-top: 65px;   /* 搜索框高(~51) + 14 = 缝 2；JS 会按实际高重写 */
+  /* v9.43：固定 58 = 搜索框 44 + 缝 14（不再由 JS 量，避免量值变化导致上下跳） */
+  padding-top: 58px;
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */

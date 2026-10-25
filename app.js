@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.43', d: '10-26', items: [
+    '修：搜索页那道缝往下拖会变宽、重开才恢复 —— 不再用 JS 每次量搜索框高度重写上内边距（iOS 地址栏/键盘变化都会触发重算，量值一变那排按钮就上下跳），改成 CSS 固定值',
+  ] },
   { v: 'v9.42', d: '10-26', items: [
     '修：搜索页往下拉时，「常用词 → 结果首行」那道缝会被拉宽、松手或重开才恢复 —— 是 iOS 的触摸滚动回弹（橡皮筋）造成的。已关掉列表和卡片的回弹',
   ] },
@@ -2616,7 +2619,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.42';
+const APP_VERSION = 'v9.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3091,10 +3094,11 @@ function placeSearchInput() {
   if (!sheet || !input || !pane || pane.hidden) return;
   // v8.99：面板 position:relative，搜索框的 top 由 CSS 给（和三格条上方那道缝同宽）；
   // 这里只把它的高度记成变量，让滚动区自己算「开场时从搜索框下面开始」。
-  pane.style.setProperty('--si-h', Math.round(input.offsetHeight) + 'px');
-  // v9.24：上内边距 = 搜索框高度 + 7（第 3 道缝的一半）—— 滚动区顶落在缝心，
-  // 内容从缝心开始被裁（用户口径：消失节点在 3 号间隙的中心线），首行仍在缝底。
-  pane.style.paddingTop = Math.round(input.offsetHeight + 7) + 'px';
+  // v9.43：上内边距改成 CSS 固定值（44 + 14），不再每次用 JS 量了重写。
+  // iOS 地址栏收起 / 键盘弹起都会触发这里，量出来的高度一变，常用词那一排就上下跳，
+  // 表现就是「往下拖那道缝会变宽、重开又恢复」。
+  pane.style.setProperty('--si-h', '44px');
+  pane.style.paddingTop = '58px';
 }
 
 function syncAddTabsH() {
