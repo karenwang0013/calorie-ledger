@@ -1434,6 +1434,12 @@ body.add-open .sheet-mask.on {
   position: absolute; top: 3.5px; left: 50%; transform: translateX(-50%);
   width: 66px; height: 4px; margin: 0; z-index: 3;
 }
+/* v9.06：有照片 / 有已选食材时，卡片按内容自适应（下限 = 空闲时那个 74% 高度） */
+#addSheet.fitted {
+  height: auto;
+  min-height: calc(var(--vfull, 100dvh) * 0.74);
+}
+
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;

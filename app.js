@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.06', d: '10-25', items: [
+    '改：记录卡不再死锁高度 —— 没操作时「拍照 / 搜索」两张卡一样高（都是 74%），一旦加了照片、或搜索结果里选了食材，卡片就按内容自适应变高（删掉照片 / 清空选择会缩回去）',
+  ] },
   { v: 'v9.05', d: '10-25', items: [
     '改：描述这块外面也套了一个和照片区同款的框（框里放「文字描述」和下面那颗「识别热量」按钮），不再是两个裸块浮在卡上',
     '改：三道缝现在一样宽（实测 14.0 / 14.3 / 14.0）—— ① 卡顶到「拍照/搜索」那条、② 那条到照片大框、③ 照片大框到描述框',
@@ -2485,7 +2488,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.05';
+const APP_VERSION = 'v9.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3191,7 +3194,17 @@ function initTrendSegLens() { initSegLens($('#trendSeg')); }
 let addMode = 'photo';
 /* 记录区（识别结果 + 合计 + 记到哪一餐 + 记入按钮）只在「拍照」页显示。
    描述页/搜索页只负责输入，不要把结果挂在那两页下面 —— 用户明确要求过 */
+/* v9.06 用户口径：空闲时「拍照 / 搜索」两张卡必须一样高；一旦加了照片、或搜索结果里选了食材，
+   卡片允许按内容自适应高度（下限仍是空闲时那个高度，上限由 max-height 兜住）。 */
+function syncAddSheetFit() {
+  const s = $('#addSheet');
+  if (!s) return;
+  const busy = !!(S.photoData || S.photo2Data || (S.items || []).length);
+  s.classList.toggle('fitted', busy);
+}
+
 function syncResultVisibility() {
+  try { syncAddSheetFit(); } catch (e) {}
   const on = addMode === 'photo';
   const area = $('#resultArea'), foot = $('#addFoot');
   if (area) area.hidden = !on || !(S.items || []).length;
@@ -3291,6 +3304,7 @@ async function handlePhoto(file) {
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
+    try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
     toast('图片读取失败');
@@ -3315,6 +3329,7 @@ async function handlePhoto2(file) {
     $('#del2').hidden = false;
     $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
+    try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
     toast('图片读取失败');
@@ -3361,6 +3376,7 @@ function restoreDraft() {
     $('#emptyB').hidden = true;
   }
   if (d.photo || d.photo2) $('#photoActions').hidden = false;
+  try { syncAddSheetFit(); } catch (e) {}
 }
 
 /* 把拍照区恢复成「还没选图」的样子 */
@@ -3382,6 +3398,7 @@ function resetPhotoUI() {
   $('#pv2').hidden = true;
   $('#del2').hidden = true;
   $('#emptyB').hidden = false;
+  try { syncAddSheetFit(); } catch (e) {}
 }
 
 async function runPhoto() {
