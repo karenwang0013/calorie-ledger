@@ -2967,8 +2967,8 @@ body.set-open .toast, body.nlog-open .toast {
   box-sizing: border-box;
   /* v9.00 用户口径：消失线要落在「搜索框下沿」和「常用词上沿」那道缝的中间 ——
      不再贴着三格条。这个位置 = 搜索框底 + 半条缝（10px），用 --si-h 推出来。 */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0px, transparent calc(var(--si-h, 45px) + 5px), #000 calc(var(--si-h, 45px) + 23px));
-  mask-image: linear-gradient(180deg, transparent 0px, transparent calc(var(--si-h, 45px) + 5px), #000 calc(var(--si-h, 45px) + 23px));
+  -webkit-mask-image: linear-gradient(180deg, transparent 0px, transparent calc(var(--si-h, 45px) + 20px), #000 calc(var(--si-h, 45px) + 23px));
+  mask-image: linear-gradient(180deg, transparent 0px, transparent calc(var(--si-h, 45px) + 20px), #000 calc(var(--si-h, 45px) + 23px));
 }
 #pane-search .chips-wrap {
   /* v8.99：搜索框到常用词的间距已由 .searchscroll 的 padding-top 统一给定，这里归零，避免叠加 */
