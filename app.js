@@ -25,6 +25,14 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.62', d: '10-26', items: [
+    '修：身体数据「恢复备份」会把同步令牌弄丢 —— 云端备份里没有令牌，恢复完就传不上去；现在恢复时会保留本机现有的令牌和 Key',
+    '修：「从文件恢复」不再什么文件都收 —— 以前一个只有 {"profile":{}} 的空文件也会提示"已恢复备份"，把记录和体重全清空；现在会明确拒绝，并提示文件不对',
+    '修：手表数据不会再被更旧的一份盖回去 —— 以前的判断只看"读到的是哪份"，本机已经是 23:21 的数据，打开 App 可能被 18:30 那份覆盖（消耗 1888→1743、可吃 350→205、碳水 237→212 都会跟着变）',
+    '修：启动时那条「✅ 已更新：体重+体脂数据」只在数值真的变了才弹，不再每次打开都弹、也不再顶掉你刚操作出来的提示',
+    '修：趋势页「相对误差」改用同一个统计窗口对比 —— 以前它跟着「今日」页停在哪一天变化（今天 17%、翻到 10-20 是 14%、10-21 是 11%）',
+    '修：镜像同步漏了带空格的写法，导致体重文件一直没同步（GitHub 上停在 10-24）；发版脚本也补上了图标文件的版本号',
+  ] },
   { v: 'v9.61', d: '10-26', items: [
     '改：「识别热量」做成实色按钮 —— 颜色就用首页「脂肪」那条的橙（#ff8a4c），深色字，和「拍照」那颗同一种做法（实色 + 一圈光泽描边）；尺寸、字号、圆角都没动',
   ] },
@@ -2660,7 +2668,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.61';
+const APP_VERSION = 'v9.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4980,7 +4988,7 @@ function renderTrends() {
         <div class="grid2" style="margin-top:14px">
           <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
           <div class="mini"><div class="k">相对误差</div><div class="v">${
-            S.day ? Math.round(Math.abs(real.tdee - S.day.expenditure) / real.tdee * 100) : '—'}<small>%</small></div></div>
+            (real.est_avg && real.tdee) ? Math.round(Math.abs(real.tdee - real.est_avg) / real.tdee * 100) : '—'}<small>%</small></div></div>
         </div>
         <div style="font-size:11px;color:var(--muted2);margin-top:10px;line-height:1.6">
           这个数字才是不说谎的那个。它把所有估算误差（拍照、克重、手表）全吃掉了。
@@ -7428,7 +7436,9 @@ async function pullBodyJson(forceFresh, light) {
       if (jt && (!d.bodyT[date] || jt > d.bodyT[date])) {
         d.bodyT[date] = jt; Store.save({ silent: true });
       }
-      return j;
+      // v9.62：数没变也带着 same 标记回去 —— 界面别每次都弹「✅ 已更新：体重+体脂数据」，
+      // 那条提示还会把用户刚操作出来的提示（记入成功 / 备份完成）顶掉。
+      return Object.assign({}, j, { same: true });
     }
     if (w) { d.weights[date] = w; d.profile.weight_kg = w; }
     // v8.21：记下这一天的数是「什么时候从体脂秤拿进来的」。
@@ -7540,6 +7550,15 @@ async function pullCloudData(forceFresh) {
     const at = tm ? `${date} ${String(tm[1]).padStart(2, '0')}:${tm[2]}` : date;
     const d = Store.load();
     const cur = d.daily[date] || {};
+    // v9.62：旧的不许盖新的（和 body.json 的 bodyT 守卫一个道理）。
+    // 起因：Gitee 被限流时三路里只剩同源镜像，而镜像可能是几小时前那份，
+    // 本机明明已经是 23:21/326，打开 App 就被 18:30/180 盖回去 → 消耗 1888→1743、
+    // 可吃 350→205、碳水目标 237→212。写入时刻比本机旧就整条丢掉。
+    const prevAt = String(cur.cloudAt || '');
+    if (!forceFresh && prevAt && at && at < prevAt) {
+      lastCloud = { date, active: cur.active, at: prevAt, changed: false, stale: true };
+      return null;
+    }
     const unchanged = cur.active === active && cur.source === 'cloud';
     d.daily[date] = Object.assign({}, cur, { active, source: 'cloud', cloudAt: at });
     if (!unchanged || cur.cloudAt !== at) Store.save();
@@ -8549,22 +8568,26 @@ function init() {
     if (j) {
       try { refreshBodyViews(); } catch (e) {}   // v8.21：停在「设置→身体数据」时也要重画
       try { clearErr('err-body'); clearErr('err-history'); } catch (e) {}
-      const what = (j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据');
-      updToast(what, j.d, SCALE_NAME, 2600);
-      try {
-        // 从已保存的数据里取（四项都带上）
-        const st = Store.load();
-        const all = Object.keys(st.body || {}).concat(Object.keys(st.weights || {})).sort();
-        const dd = String(j.d || '').slice(0, 10) || all[all.length - 1];
-        const b2 = (st.body || {})[dd] || {};
-        const w2 = (st.weights || {})[dd];
-        const bits = [];
-        if (w2) bits.push('体重 ' + w2 + ' kg');
-        if (b2.bf) bits.push('体脂 ' + b2.bf + '%');
-        if (b2.bmi) bits.push('BMI ' + b2.bmi);
-        if (b2.ffm) bits.push('去脂 ' + b2.ffm + ' kg');
-        logNotify('body', '体重数据已更新', (bits.length ? bits.join(' · ') : '（四项都为空）') + (j._at ? ' · 采集 ' + j._at : ''));
-      } catch (e) {}
+      // v9.62：只有值真的变了才弹「✅ 已更新」。以前每次打开都弹，
+      // 还会把用户刚触发的提示（记入成功 / 备份完成 / 找不到食物）顶掉。
+      const fresh = !j.same && !j.stale;
+      if (fresh) {
+        updToast((j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据'), j.d, SCALE_NAME, 2600);
+        try {
+          // 从已保存的数据里取（四项都带上）
+          const st = Store.load();
+          const all = Object.keys(st.body || {}).concat(Object.keys(st.weights || {})).sort();
+          const dd = String(j.d || '').slice(0, 10) || all[all.length - 1];
+          const b2 = (st.body || {})[dd] || {};
+          const w2 = (st.weights || {})[dd];
+          const bits = [];
+          if (w2) bits.push('体重 ' + w2 + ' kg');
+          if (b2.bf) bits.push('体脂 ' + b2.bf + '%');
+          if (b2.bmi) bits.push('BMI ' + b2.bmi);
+          if (b2.ffm) bits.push('去脂 ' + b2.ffm + ' kg');
+          logNotify('body', '体重数据已更新', (bits.length ? bits.join(' · ') : '（四项都为空）') + (j._at ? ' · 采集 ' + j._at : ''));
+        } catch (e) {}
+      }
     }
     // 只有「还没拿到今天的数据」才补拉，避免每次打开都多打两次网络
     const today = new Date();

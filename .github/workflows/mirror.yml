@@ -21,7 +21,9 @@ jobs:
             if curl -fsSL --max-time 20 "$url" -o "$f.new" && [ -s "$f.new" ]; then
               # body.json 例外：快捷指令偶尔查不到健康样本，会写出 {"w":"","bf":"",...} 这种全空值；
               # 那种空文件不许拿来冲掉这里已有好数据（2026-10-24 早上就是这么把前一天的数冲没的）
-              if [ "$f" = "body.json" ] && ! grep -qE '"w":"[0-9]' "$f.new"; then
+              # v9.62：正则以前是 '"w":"[0-9]'，但 Gitee 写出来的是 '"w": "64"'（冒号后带空格），
+              # 永远匹配不上 → body.json 从 2026-10-24 起就一直没同步过（GitHub 停在旧的 10-24）。
+              if [ "$f" = "body.json" ] && ! grep -qE '"w"[[:space:]]*:[[:space:]]*"?[0-9]' "$f.new"; then
                 echo "skip $f (gitee copy has no weight value)"
                 rm -f "$f.new"
                 continue

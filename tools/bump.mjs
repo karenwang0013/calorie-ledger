@@ -22,6 +22,7 @@ sw = sw.replace(/const CACHE = 'ledger-v\d+'/, `const CACHE = '${cache}'`);
 const num = cache.replace('ledger-v', '');
 html = html.replace(/style\.css\?v=\d+/g, 'style.css?v=' + num)
            .replace(/foods\.js\?v=\d+/g, 'foods.js?v=' + num)
+           .replace(/icons\.js\?v=\d+/g, 'icons.js?v=' + num)
            .replace(/api\.js\?v=\d+/g, 'api.js?v=' + num)
            .replace(/app\.js\?v=\d+/g, 'app.js?v=' + num);
 

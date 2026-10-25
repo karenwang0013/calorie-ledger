@@ -523,8 +523,17 @@ function computeRealTdee(d) {
       const xy = pick.pts.map(w => [(parseISO(w.date).getTime() - x0) / 86400000, w.kg]);
       const [slope, , r2] = linreg(xy);
       const meanIntake = pick.it.sum / pick.it.n;
+      // v9.62：估算那一侧也要用「同一个窗口」的平均，才能跟实测比。
+      // 以前拿的是「今日页当前那天」的消耗 —— 翻一下日期，"相对误差"就从 17% 变 14% 再变 11%。
+      let estSum = 0, estN = 0;
+      for (let i = 0; i < pick.span; i++) {
+        const ds = addDays(pick.firstD, i);
+        const [e2] = tdeeOf(d.profile || {}, (d.daily || {})[ds] || {}, latestWeight());
+        if (isFinite(e2) && e2 > 0) { estSum += e2; estN++; }
+      }
       real = {
         tdee: Math.round(meanIntake - slope * KCAL_PER_KG),
+        est_avg: estN ? Math.round(estSum / estN) : null,
         slope_kg_per_week: Math.round(slope * 7 * 1000) / 1000,
         r2: Math.round(r2 * 100) / 100,
         span_days: pick.span,
@@ -1597,15 +1606,35 @@ async function exportJson() {
 
 function importJson(text) {
   const obj = JSON.parse(text);
-  if (!obj || !obj.profile) throw new Error('这不是有效的备份文件');
+  // v9.62：只认「像个备份」的文件 —— 以前只要 JSON 里有 profile 字段就放行，
+  // 一个 {"profile":{}} 也能"恢复成功"，把 44 条记录和 138 条体重全清空。
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('这不是有效的备份文件');
+  const p = obj.profile;
+  if (!p || typeof p !== 'object' || Array.isArray(p)) throw new Error('这不是有效的备份文件');
+  const hasProfile = ['sex', 'birth_year', 'height_cm', 'weight_kg', 'activity']
+    .some(k => p[k] !== undefined && p[k] !== null && p[k] !== '');
+  const logsOk = obj.logs === undefined || obj.logs === null || Array.isArray(obj.logs);
+  const wOk = obj.weights === undefined || obj.weights === null || (typeof obj.weights === 'object' && !Array.isArray(obj.weights));
+  if (!hasProfile || !logsOk || !wOk) throw new Error('这不是有效的备份文件（身体资料或记录格式不对）');
+  const cur = Store.load();
+  const curSettings = Object.assign({}, cur.settings || {});
+  const inSettings = (obj.settings && typeof obj.settings === 'object') ? obj.settings : {};
   Store.data = Object.assign({}, obj, {
     v: 1,
-    profile: obj.profile,
-    logs: obj.logs || [],
-    weights: obj.weights || {},
+    profile: p,
+    logs: Array.isArray(obj.logs) ? obj.logs : [],
+    weights: wOk && obj.weights ? obj.weights : {},
     daily: obj.daily || {},
     shots: obj.shots || {},
-    settings: obj.settings || {},
+    // v9.62：云端的备份里没有同步令牌（上传前被剔掉了）。恢复时要把本机现有的留住，
+    // 否则「恢复一次备份」= 同步直接断掉，而且用户手里没有令牌，救不回来。
+    settings: Object.assign({}, curSettings, inSettings, {
+      gh_token: inSettings.gh_token || curSettings.gh_token || '',
+      gitee_token: inSettings.gitee_token || curSettings.gitee_token || '',
+      dashscope_key: inSettings.dashscope_key || curSettings.dashscope_key || '',
+      // 恢复出来的这份就算「本机最新」，否则云端一比对就又被旧数据盖回去
+      updatedAt: new Date().toISOString(),
+    }),
   });
   Store.save();
   // 备份里的照片（老格式）也搬进 IndexedDB
