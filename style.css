@@ -1765,10 +1765,13 @@ body.add-open .sheet-mask.on {
    原来只给了 height:100%，而 .pslot-empty 上还挂着 aspect-ratio: 1 / 1.3 ——
    高度定了以后宽度会被比例反推成 245×1/1.3 = 188.5，比 180 的格子宽出 8.5：
    真机上两框中间那道缝被挤到 3.7px、右边那个框还压进大框的 12px 内边距里（左右不等边）。
-   现在宽度写死 100%、比例关掉（高度已经由 --slot-h 定死，不需要比例了）。 */
-#pane-photo .pslot-empty { width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; }
+   现在宽度写死 100%、比例关掉（高度已经由 --slot-h 定死，不需要比例了）。
+   圆角按同心公式：外框 27 − 到大框的距离 13（12 内边距 + 1 边框）= 14。
+   原来这里被「四合一材质」那条规则带成 27，和大框等大 → 角上那道缝宽 18.4、边上只有 13，
+   看着就是"两个框的角不呼应"。 */
+#pane-photo .pslot-empty { width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; border-radius: 14px; }
 /* 照片的圆角必须和空框一样（原来预览图是 14、空框是 27，拍完一张就换了个样子） */
-#pane-photo .pslot-body .preview { height: 100%; object-fit: cover; border-radius: 27px; }
+#pane-photo .pslot-body .preview { height: 100%; object-fit: cover; border-radius: 14px; }
 #pane-photo .prow-pick { grid-column: 1 / -1; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }

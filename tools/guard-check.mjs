@@ -123,9 +123,9 @@ const checks = [
       && /_addS\.classList\.toggle\('no-items', !\(S\.items \|\| \[\]\)\.length\)/.test(app)
       && /const panePadB = \(parseFloat\(getComputedStyle\(pane\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
   ['两个照片格宽度必须等于格子（不许被 1:1.3 比例反推撑宽，否则中间缝被挤没）',
-    /#pane-photo \.pslot-empty \{ width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; \}/.test(css)],
-  ['照片预览和空框圆角一致（27，拍完一张不许变成 14）',
-    /#pane-photo \.pslot-body \.preview \{ height: 100%; object-fit: cover; border-radius: 27px; \}/.test(css)],
+    /#pane-photo \.pslot-empty \{ width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; border-radius: 14px; \}/.test(css)],
+  ['照片两小格圆角与外面大框同心（27 − 13 = 14），且照片与空框同一个圆角',
+    /#pane-photo \.pslot-body \.preview \{ height: 100%; object-fit: cover; border-radius: 14px; \}/.test(css)],
   ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 12）',
     /#addSheet \.sh-foot \{[\s\S]*?padding: 7px 12px 30px;/.test(css)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
