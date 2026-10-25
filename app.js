@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.88', d: '10-25', items: [
+    '改：个性化 → 图标，每一行的第一格现在就是「你正在用的那个」（选了别的图标，它排到第一位，「默认」退到第二位）；以前「默认」永远钉在第一格，看着像没生效',
+    '改：图标列表里的「按钮 · 识别热量」以前只有一项不能选，现在给了 6 个候选（默认火苗 + 闪电 / AI 星 / 火箭 / 圆环 / 曲线 / 星星）',
+  ] },
   { v: 'v8.87', d: '10-25', items: [
     '改：饮食目标页「模式建议」那张卡里的灰字改成绿色 —— 「模式建议」四个字、kg 单位、BMI / 体脂那排、日期、底部那句说明；字号字重不变，白色大数字和白色结论行不动',
   ] },
@@ -2421,7 +2425,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.87';
+const APP_VERSION = 'v8.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5446,18 +5450,22 @@ function iconPickerCard() {
   const ov = iconOverride();
   return `<div class="card">
       <h3>图标</h3>
-      <div class="hint" style="margin:0 0 10px">点一下立刻替换；每行第一个「默认」＝回到出厂那套。</div>
+      <div class="hint" style="margin:0 0 10px">点一下立刻替换；排在第一格的是你正在用的那个，想回出厂那套就点「默认」。</div>
       <button class="btn ghost sm" id="icReset" style="margin-bottom:12px">恢复全部默认</button>
       ${(window.ICON_SLOTS || []).map(s => {
-        const cur = iconName(s.k), curD = (window.ICON_LIB || {})[cur] || '';
+        /* v8.88 用户口径：第一格永远是「当前正在用的那个」——选了别的图标，它排到第一位，
+           「默认」退到第二位；没改过时第一位就是「默认」。其余候选保持原来的顺序。
+           点名：以前是「默认」死死钉在第一格，选了别的以后第一格还是默认，看着像没生效。 */
+        const curName = ov[s.k] || '';
+        const lib = window.ICON_LIB || {};
+        const all = [{ n: '', label: '默认', d: lib[iconName(s.k)] || '' }]
+          .concat((s.opts || []).map(n => ({ n, label: n, d: lib[n] || '' })));
+        const ordered = all.filter(o => o.n === curName).concat(all.filter(o => o.n !== curName));
         return `<div class="icrow">
           <div class="icl">${s.label}</div>
           <div class="icopts">
-            <button class="icopt${ov[s.k] ? '' : ' on'}" data-slot="${s.k}" data-name="" title="默认">
-              <svg viewBox="0 -960 960 960"><path d="${curD}"/></svg><span>默认</span>
-            </button>
-            ${s.opts.map(n => `<button class="icopt${ov[s.k] === n ? ' on' : ''}" data-slot="${s.k}" data-name="${n}" title="${n}">
-              <svg viewBox="0 -960 960 960"><path d="${(window.ICON_LIB || {})[n] || ''}"/></svg><span>${n}</span>
+            ${ordered.map(o => `<button class="icopt${o.n === curName ? ' on' : ''}" data-slot="${s.k}" data-name="${o.n}" title="${o.label}">
+              <svg viewBox="0 -960 960 960"><path d="${o.d}"/></svg><span>${o.label}</span>
             </button>`).join('')}
           </div>
         </div>`;
