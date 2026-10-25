@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.23', d: '10-26', items: [
+    '改：拍照页只有「添加」这一块上下滚，照片区 / 拍照 / 从相册选 固定不动（以前整页一起滑，照片区会被滚走）',
+    '删：结果页那行「已添加 · 继续选 · 重来」和「这一餐叫什么」输入框（在多选时没用且占地方）',
+    '改：结果区上沿离照片区 14px（与①②③同宽）；下沿到「记入」取那道缝的中间（7px）',
+  ] },
   { v: 'v9.22', d: '10-26', items: [
     '微调：记录卡底部「记入」上方的留白（结果区底部内边距收小）',
   ] },
@@ -2540,7 +2545,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.22';
+const APP_VERSION = 'v9.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3030,7 +3035,7 @@ function openAdd(meal) {
   S.items = [];
   S.meal = meal || defaultMeal();
   S.batchName = null;
-  $('#batchName').value = '';
+  const bn0 = $('#batchName'); if (bn0) bn0.value = '';
   resetPhotoUI();
   restoreDraft();
   $('#photoHint').value = '';
@@ -3561,7 +3566,7 @@ async function runPhoto() {
     $('#photoActions').hidden = true;
     $('#pane-photo').classList.add('done');
     S.batchName = r.dish || '';
-    $('#batchName').value = S.batchName;
+    const bn1 = $('#batchName'); if (bn1) bn1.value = S.batchName;
     showResult(r.dish ? '识别：' + r.dish : '识别结果', r.note);
     // 认出来但没给克数的条目：再让 AI 按食物名估一次（不用你手动点）
     fillMissingGrams();
@@ -3626,7 +3631,7 @@ async function runText() {
     const prevN = (S.items || []).length;
     S.items = (S.items || []).concat(r.items.map(x => applyKnownFood({ ...x, _src: 'ai' })));
     if (!prevN) S.batchName = r.dish || '';
-    $('#batchName').value = S.batchName || '';
+    const bn2 = $('#batchName'); if (bn2) bn2.value = S.batchName || '';
     showResult((prevN ? '已累加：' : '估算：') + (r.dish || ''), r.note);
     // 和"搜索选中"一样的处理：算完直接切到左边的「拍照」，成分表在那边看/改，
     // 描述这边不留结果（描述页只负责输入）
@@ -3916,7 +3921,7 @@ function pushFood(f) {
 /* ---- 结果编辑 ---- */
 function showResult(title, note) {
   $('#resultArea').hidden = S.items.length === 0;
-  $('#resultTitle').textContent = title || '识别结果';
+  const rt = $('#resultTitle'); if (rt) rt.textContent = title || '识别结果';
   $('#resultNote').textContent = note || '';
   $('#addFoot').hidden = S.items.length === 0;
   renderResult();
@@ -3953,7 +3958,7 @@ function renderResult() {
   }
   $('#shotBox').innerHTML = shot;
   // 多项才需要给这一餐起名（识别到的菜名会自动填进来）
-  $('#nameWrap').hidden = S.items.length < 2;
+  const nw = $('#nameWrap'); if (nw) nw.hidden = S.items.length < 2;
   box.innerHTML = S.items.map((it, i) => {
     const kcal = it.kcal_per_100g * it.grams / 100;
     const units = (it._units || []).filter(u => u.g !== 100).slice(0, 3);
@@ -4585,7 +4590,8 @@ async function saveItems() {
     if (inp) inp.focus();
     return toast('还有一项没填克数，先填上再记入', 3000);
   }
-  const dishName = ($('#batchName').value || '').trim().slice(0, 20);
+  const bnEl = $('#batchName');
+  const dishName = (bnEl ? bnEl.value : '').trim().slice(0, 20);
   if (items.length > 1 && !dishName) {
     $('#batchName').focus();
     return toast('先给这一餐起个名字，比如「沙县小吃」', 3000);
@@ -7656,7 +7662,7 @@ function init() {
     runSearch($('#searchInput').value || '');
     setTimeout(() => { const b = document.querySelector('#addSheet .sh-body'); if (b) b.scrollTop = 0; }, 30);
   };
-  $('#resultReset').onclick = () => {
+  const rr = $('#resultReset'); if (rr) rr.onclick = () => {
     S.items = [];
     resetPhotoUI();
     clearDraft();

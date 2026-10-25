@@ -1432,7 +1432,7 @@ body.add-open .sheet-mask.on {
   /* v9.18：左右内边距改成外边距 —— 滚动框不再贴到卡片边上，
      这样上下滑动时那条直切的边止于卡片圆弧以内，四角不会露出直角（clip-path 在 iOS 上不裁滚动内容） */
   margin: 0 var(--blk-gap);
-  padding: calc(var(--blk-gap) - 4px) 0 var(--blk-gap);
+  padding: calc(var(--blk-gap) - 4px) 0 7px;
 }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 /* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
@@ -1458,15 +1458,31 @@ body.add-open .sheet-mask.on {
   padding-bottom: 4px;
 }
 
+/* v9.23 用户口径：
+   · 拍照页只有「添加」这一块滚，照片区/拍照/从相册选 固定不动；
+   · 「已添加 / 继续选 / 重来」和「这一餐叫什么」两行已删（搜索框在结果页没有实际功能）。 */
+#addSheet .sh-body { overflow: hidden; display: flex; flex-direction: column; }
+#pane-photo { flex: 0 0 auto; }
+#pane-photo .drop.photobox { flex: 0 0 auto; }
+#pane-photo #photoActions { flex: 0 0 auto; }
+#addSheet #resultArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border-radius: 18px;
+  margin: 14px 0 0;        /* 照片区→结果 = 14；结果底→记入 由 sh-foot 的上内边距给（取缝隙中间） */
+  padding: 0 0 4px;
+}
+
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
-  /* v9.20：结果区底 →「记入」按钮 = 14px（和卡片顶→三格条一致） */
-  padding: 13px 16px 30px;
-  margin-top: -2.5px;
+  /* v9.23：结果区底 →「记入」按钮取那道缝的中间（约 7px） */
+  padding: 0 16px 30px;
 }
-/* 「已添加」那一行到照片大框 = 14px（原来 10） */
-#resultArea > div:first-child { margin-top: 14px !important; }
+
 #addSheet .sh-body { padding-top: 8px; }
 
 /* 一个框：左右两个照片位 + 一组按钮 */

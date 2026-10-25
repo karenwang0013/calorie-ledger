@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=900">
+<link rel="stylesheet" href="style.css?v=901">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -255,18 +255,7 @@
 
     <!-- 结果 -->
     <div id="resultArea" hidden>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0">
-        <div style="font-size:12.5px;color:var(--muted);line-height:1;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="resultTitle">识别结果</div>
-        <div style="display:flex;gap:14px;flex:0 0 auto;white-space:nowrap">
-          <button id="resultMore" style="font-size:11.5px;line-height:1;color:var(--lime);white-space:nowrap">继续选</button>
-          <button id="resultReset" style="font-size:11.5px;line-height:1;color:var(--muted2);white-space:nowrap">重来</button>
-        </div>
-      </div>
       <div id="shotBox"></div>
-      <div class="field" id="nameWrap" style="margin:0 0 12px" hidden>
-        <label>这一餐叫什么</label>
-        <input id="batchName" placeholder="如：沙县小吃 / 牛肉面" autocomplete="off" autocorrect="off" autocapitalize="off">
-      </div>
       <div id="resultItems"></div>
       <div id="resultNote" style="font-size:11px;color:var(--muted2);line-height:1.6;margin-top:8px"></div>
       <div class="totalrow">
@@ -439,10 +428,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=900"></script>
+<script src="foods.js?v=901"></script>
 <script src="icons.js?v=854"></script>
-<script src="api.js?v=900"></script>
-<script src="app.js?v=900"></script>
+<script src="api.js?v=901"></script>
+<script src="app.js?v=901"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
