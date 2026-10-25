@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.11', d: '10-25', items: [
+    '修：真机上「照片区和下面的已添加列表叠在一起」—— iOS Safari 对「网格行 1fr + 格子宽高比」这套算法处理不一样，格子会溢出到盒子外面。现在比例放在格子那一层、行高都交给内容算，盒子还加了裁切兜底',
+  ] },
   { v: 'v9.10', d: '10-25', items: [
     '修：真机上「加了食品后照片区和下面的已添加列表叠在一起」—— 原因是那一层 6% 的缩放（zoom）。iOS Safari 对 zoom + 弹性布局处理不好，桌面浏览器复现不出来。缩放已撤掉，三页仍然同尺寸',
   ] },
@@ -2506,7 +2509,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.10';
+const APP_VERSION = 'v9.11';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
