@@ -2979,17 +2979,19 @@ body.set-open .toast, body.nlog-open .toast {
 #pane-search {
   display: block; position: relative;
   /* v9.13：回到最朴素的结构 —— 面板从正常位置开始，上面用 padding 给搜索框让位，
-     滚动区从「搜索框下方 20px」开始。不再用负 margin + mask 那套（iOS 上会把第一行裁掉半截）。 */
+     滚动区从「搜索框下方」开始。不再用负 margin + mask 那套（iOS 上会把第一行裁掉半截）。 */
   margin-top: 0;
-  /* 搜索框高度 + 13px 顶缝由 JS 写进 padding-top（placeSearchInput），
-     这样滚动区正好从「搜索框下方 20px」开始 */
-  padding-top: 58px;
+  /* v9.24 用户口径：1（卡顶→三格条）、2（三格条→搜索框）、3（搜索框→结果首行）三道缝等宽，
+     全部 14px；而且结果向上滑时「消失线」落在第 3 道的**中心线**上，不是缝底。
+     所以滚动区顶 = 搜索框底 + 7（缝心），滚动区自己再留 7 的 padding → 首行正好在缝底。
+     JS 的 placeSearchInput 会按输入框实际高度重写这个值（这里只是首帧兜底）。 */
+  padding-top: 51px;
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
   left: 12px; right: 12px; width: auto;
-  /* 面板本身已在三格条下方 20px，往上提 7px → 和三格条之间正好 13px（= 卡片顶 → 三格条） */
-  top: -7px;
+  /* v9.24：不再上提 —— 顶上那道缝就是面板顶部到三格条的距离 = 14px（和缝 1 相等） */
+  top: 0;
   z-index: 5;
   margin: 0;
 }
@@ -3011,7 +3013,9 @@ body.set-open .toast, body.nlog-open .toast {
   overscroll-behavior: contain;
   border-radius: 22px;
   margin-top: 0;
-  padding: 0 0 10px;
+  /* v9.24：上 7 = 第 3 道缝的下半截。滚动区顶正好落在缝心，所以内容是在缝心开始被裁掉；
+     首行因此出现在缝底（7 + 7 = 14，与缝 1 / 缝 2 相等） */
+  padding: 7px 0 10px;
   box-sizing: border-box;
 }
 

@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.24', d: '10-26', items: [
+    '补：删掉「已添加 / 继续选 / 重来」那行后，把它的自检锁一并从 tools/locked.json 移除（这行是本版按你要求删的，不是失控）',
+  ] },
   { v: 'v9.23', d: '10-26', items: [
     '改：拍照页只有「添加」这一块上下滚，照片区 / 拍照 / 从相册选 固定不动（以前整页一起滑，照片区会被滚走）',
     '删：结果页那行「已添加 · 继续选 · 重来」和「这一餐叫什么」输入框（在多选时没用且占地方）',
@@ -2545,7 +2548,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.23';
+const APP_VERSION = 'v9.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3021,8 +3024,9 @@ function placeSearchInput() {
   // v8.99：面板 position:relative，搜索框的 top 由 CSS 给（和三格条上方那道缝同宽）；
   // 这里只把它的高度记成变量，让滚动区自己算「开场时从搜索框下面开始」。
   pane.style.setProperty('--si-h', Math.round(input.offsetHeight) + 'px');
-  // 上内边距 = 搜索框高度 + 13（三格条那道缝）；滚动区就紧接在它下面开始
-  pane.style.paddingTop = Math.round(input.offsetHeight + 13) + 'px';
+  // v9.24：上内边距 = 搜索框高度 + 7（第 3 道缝的一半）—— 滚动区顶落在缝心，
+  // 内容从缝心开始被裁（用户口径：消失节点在 3 号间隙的中心线），首行仍在缝底。
+  pane.style.paddingTop = Math.round(input.offsetHeight + 7) + 'px';
 }
 
 function syncAddTabsH() {

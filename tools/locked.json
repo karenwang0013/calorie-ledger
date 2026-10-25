@@ -1,92 +1,87 @@
 [
- {
-  "file": "style.css",
-  "find": "padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */",
-  "why": "卡片上下等距（用户要求的留白规矩）"
- },
- {
-  "file": "style.css",
-  "find": "width: 66px; height: 4px; margin: 0; z-index: 3;",
-  "why": "弹层横杠：浮层不占位（去掉横杠下面的切边）"
- },
- {
-  "file": "app.js",
-  "find": "const PAD = 10;",
-  "why": "Dock 滑块四周留白（圆角同心的前提）"
- },
- {
-  "file": "app.js",
-  "find": "dockR - PAD - bT",
-  "why": "Dock 滑块圆角同心公式"
- },
- {
-  "file": "index.html",
-  "find": "align-items:center;justify-content:space-between;margin:10px 0",
-  "why": "记录区顶部那行（已添加 / 继续选 / 重来）：共用一条中心线，并且上下各留 10px（落在虚线框和卡片之间的正中）"
- },
- {
-  "file": "style.css",
-  "find": "width: 26px; height: 24px; margin: 0; padding: 0;",
-  "why": "所有「⋯」统一成食品名后面那个的尺寸（盒子 26×24、图标 20×20、离字 5px）—— 用户要求全部一致"
- },
- {
-  "file": "style.css",
-  "find": "padding: 8px 16px 30px;",
-  "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
- },
- {
-  "file": "style.css",
-  "find": "background-color: rgba(0, 0, 0, 0.20);",
-  "why": "虚化遮罩的压暗值（20% 黑）：三处虚化共用（现在淡的是这个背景色，不是整体 opacity）"
- },
- {
-  "file": "style.css",
-  "find": "backdrop-filter: blur(5px) saturate(115%);",
-  "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
- },
- {
-  "file": "style.css",
-  "find": "backdrop-filter: blur(5px) saturate(115%);",
-  "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
- },
- {
-  "file": "style.css",
-  "find": "#nutMask.on,\n#grpMask.on,\n#rnMask.on {",
-  "why": "所有虚化场景必须共用这一份（基准 = 营养编辑卡后面那层）；不许某个场景单独另写一套"
- },
- {
-  "file": "style.css",
-  "find": "background: #0d0f0e;",
-  "why": "顶栏底色锁死 #0D0F0E（13,15,14）：用户明确要求任何情况下都不许变"
- },
- {
-  "file": "style.css",
-  "find": "  z-index: 70;",
-  "why": "顶栏必须在虚化层之上（≥70）：否则虚化会把它压暗成 #0A0C0B"
- },
- {
-  "file": "style.css",
-  "find": "background-color .6s cubic-bezier(.22,.8,.3,1),",
-  "why": "虚化的进出速度（0.6s 缓出）：所有遮罩共用，淡的是背景色+模糊强度"
- },
- {
-  "file": "style.css",
-  "find": "--glass-fill-top: rgba(13, 15, 14, 0.46);",
-  "why": "玻璃底色母版（Dock / 卡牌 / 弹层共用）"
- },
- {
-  "file": "style.css",
-  "find": "--glass-blur-2: blur(10px) saturate(150%);",
-  "why": "玻璃模糊母版（2026-10-23 用户同意 20px→10px：打开就发烫，降模糊半径减 GPU 负担）"
- },
- {
-  "file": "style.css",
-  "find": "--glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);",
-  "why": "玻璃阴影母版（含 Dock）"
- },
- {
-  "file": "style.css",
-  "find": "--btn-solid: rgba(255, 255, 255, 0.085);",
-  "why": "按钮/滑块停稳实色母版（Dock 那颗为准）"
- }
+  {
+    "file": "style.css",
+    "find": "padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */",
+    "why": "卡片上下等距（用户要求的留白规矩）"
+  },
+  {
+    "file": "style.css",
+    "find": "width: 66px; height: 4px; margin: 0; z-index: 3;",
+    "why": "弹层横杠：浮层不占位（去掉横杠下面的切边）"
+  },
+  {
+    "file": "app.js",
+    "find": "const PAD = 10;",
+    "why": "Dock 滑块四周留白（圆角同心的前提）"
+  },
+  {
+    "file": "app.js",
+    "find": "dockR - PAD - bT",
+    "why": "Dock 滑块圆角同心公式"
+  },
+  {
+    "file": "style.css",
+    "find": "width: 26px; height: 24px; margin: 0; padding: 0;",
+    "why": "所有「⋯」统一成食品名后面那个的尺寸（盒子 26×24、图标 20×20、离字 5px）—— 用户要求全部一致"
+  },
+  {
+    "file": "style.css",
+    "find": "padding: 8px 16px 30px;",
+    "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
+  },
+  {
+    "file": "style.css",
+    "find": "background-color: rgba(0, 0, 0, 0.20);",
+    "why": "虚化遮罩的压暗值（20% 黑）：三处虚化共用（现在淡的是这个背景色，不是整体 opacity）"
+  },
+  {
+    "file": "style.css",
+    "find": "backdrop-filter: blur(5px) saturate(115%);",
+    "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
+  },
+  {
+    "file": "style.css",
+    "find": "backdrop-filter: blur(5px) saturate(115%);",
+    "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
+  },
+  {
+    "file": "style.css",
+    "find": "#nutMask.on,\n#grpMask.on,\n#rnMask.on {",
+    "why": "所有虚化场景必须共用这一份（基准 = 营养编辑卡后面那层）；不许某个场景单独另写一套"
+  },
+  {
+    "file": "style.css",
+    "find": "background: #0d0f0e;",
+    "why": "顶栏底色锁死 #0D0F0E（13,15,14）：用户明确要求任何情况下都不许变"
+  },
+  {
+    "file": "style.css",
+    "find": "  z-index: 70;",
+    "why": "顶栏必须在虚化层之上（≥70）：否则虚化会把它压暗成 #0A0C0B"
+  },
+  {
+    "file": "style.css",
+    "find": "background-color .6s cubic-bezier(.22,.8,.3,1),",
+    "why": "虚化的进出速度（0.6s 缓出）：所有遮罩共用，淡的是背景色+模糊强度"
+  },
+  {
+    "file": "style.css",
+    "find": "--glass-fill-top: rgba(13, 15, 14, 0.46);",
+    "why": "玻璃底色母版（Dock / 卡牌 / 弹层共用）"
+  },
+  {
+    "file": "style.css",
+    "find": "--glass-blur-2: blur(10px) saturate(150%);",
+    "why": "玻璃模糊母版（2026-10-23 用户同意 20px→10px：打开就发烫，降模糊半径减 GPU 负担）"
+  },
+  {
+    "file": "style.css",
+    "find": "--glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);",
+    "why": "玻璃阴影母版（含 Dock）"
+  },
+  {
+    "file": "style.css",
+    "find": "--btn-solid: rgba(255, 255, 255, 0.085);",
+    "why": "按钮/滑块停稳实色母版（Dock 那颗为准）"
+  }
 ]
