@@ -2875,13 +2875,8 @@ body.set-open .toast, body.nlog-open .toast {
 }
 #pane-search .chips-wrap {
   margin-top: 6px !important;
-  /* 常用词这一排钉在滚动区顶部：结果从它下面滚过、在那条正中线上消失 */
-  position: sticky; top: 0; z-index: 2;
-  padding: 6px 0 6px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(13,15,14,.92) 0%, rgba(13,15,14,.78) 100%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  backdrop-filter: blur(10px) saturate(140%);
+  /* v8.80 用户口径：「常用词下面多了一块黑黑的框，这个框不要」
+     → 去掉上一版给这一排加的深色底 + 模糊 + 内边距，也不再钉在顶部（那层底就是为了钉住挡字才加的） */
 }
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */

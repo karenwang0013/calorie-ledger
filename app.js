@@ -25,6 +25,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v8.80', d: '10-25', items: [
+    '改：设置里的「图标」并进「个性化」页（和主题色同一页），设置首页「其他」里不再单独占一行',
+    '改：图标页标题就叫「图标」，不再写「本机可换」',
+    '删：图标页里的「按钮 · 估算热量」那一项',
+    '修：搜索页「常用词」下面那块深色方框去掉了（不再压暗、不再钉住）',
+    '修：点常用词（比如「麦片生」）以前一点反应都没有 —— 因为只按名字一字不差去食物库找。现在名字对不上就把这个词放进搜索框、直接把结果列出来让你挑',
+  ] },
   { v: 'v8.79', d: '10-25', items: [
     '修：两个照片格顶部那道 1px 高光，调成和「模式建议」那张卡同值（5% → 8%），颜色 #313432 不变',
   ] },
@@ -2389,7 +2396,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v8.79';
+const APP_VERSION = 'v8.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3149,9 +3156,19 @@ function renderRecent() {
   }
   box.innerHTML = picks.slice(0, 7).map(n =>
     `<button class="chip" data-quick="${esc(n)}">${esc(n)}</button>`).join('');
+  // v8.80 修：以前只按「名字一字不差」在食物库里找，找不到就什么都不发生（点「麦片生」没反应，
+  // 因为库里叫「燕麦片(干)」）。现在先做宽容匹配（忽略空格/标点、忽略括号里的备注），
+  // 仍然找不到就把这个名字填进搜索框、把搜索结果直接列出来让他挑 —— 点任何一颗常用词都一定有反馈。
   $$('[data-quick]', box).forEach(b => b.onclick = () => {
-    const f = S.foods.find(x => x.name === b.dataset.quick);
-    if (f) pushFood(f);
+    const q = b.dataset.quick;
+    const f = S.foods.find(x => x.name === q)
+      || S.foods.find(x => normName(x.name) === normName(q))
+      || S.foods.find(x => normBare(x.name) === normBare(q));
+    if (f) { pushFood(f); return; }
+    const inp = $('#searchInput');
+    if (inp) inp.value = q;
+    $('#searchList').hidden = false;
+    runSearch(q);
   });
 }
 
@@ -5387,7 +5404,7 @@ function pushNote() {
 }
 
 
-/* ---------------- 图标：本机可换（icons.js 提供库与默认值） ---------------- */
+/* ---------------- 图标：icons.js 提供库与默认值（入口在「个性化」页里） ---------------- */
 function iconOverride(){ try { return JSON.parse(localStorage.getItem('icon_override') || '{}'); } catch(e) { return {}; } }
 function iconName(slot){
   const ov = iconOverride()[slot];
@@ -5397,6 +5414,30 @@ function iconName(slot){
 function iconPath(slot){
   const n = iconName(slot);
   return (window.ICON_LIB || {})[n] || '';
+}
+
+/* 图标选择卡：v8.80 起并入「个性化」页（不再单独占设置首页一行） */
+function iconPickerCard() {
+  const ov = iconOverride();
+  return `<div class="card">
+      <h3>图标</h3>
+      <div class="hint" style="margin:0 0 10px">点一下立刻替换；每行第一个「默认」＝回到出厂那套。</div>
+      <button class="btn ghost sm" id="icReset" style="margin-bottom:12px">恢复全部默认</button>
+      ${(window.ICON_SLOTS || []).map(s => {
+        const cur = iconName(s.k), curD = (window.ICON_LIB || {})[cur] || '';
+        return `<div class="icrow">
+          <div class="icl">${s.label}</div>
+          <div class="icopts">
+            <button class="icopt${ov[s.k] ? '' : ' on'}" data-slot="${s.k}" data-name="" title="默认">
+              <svg viewBox="0 -960 960 960"><path d="${curD}"/></svg><span>默认</span>
+            </button>
+            ${s.opts.map(n => `<button class="icopt${ov[s.k] === n ? ' on' : ''}" data-slot="${s.k}" data-name="${n}" title="${n}">
+              <svg viewBox="0 -960 960 960"><path d="${(window.ICON_LIB || {})[n] || ''}"/></svg><span>${n}</span>
+            </button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 /* 静态 svg（顶栏/底栏/三格/按钮）统一按 data-icn 重画 */
 function applyStaticIcons(){
@@ -5495,7 +5536,6 @@ function renderSetCard() {
     </div>
     <div class="setlabel">其他</div>
     <div class="setrows">
-      ${setRowHTML('icons', 'theme', '图标（本机可换）', '点进去挑', 'set.theme')}
       ${setRowHTML('data', 'db', '数据备份', setting('gitee_token') ? '自动同步中' : '未开启', 'set.backup')}
       ${setRowHTML('about', 'sysupd', '关于与更新', APP_VERSION, 'set.about')}
     </div>
@@ -5847,7 +5887,8 @@ function renderMe() {
               ${cur === k ? '<b>✓</b>' : ''}
             </button>`).join('')}
         </div>
-      </div>`;
+      </div>
+      ${iconPickerCard()}`;
   } else if (mePage === 'notify') {
     const cfg = notifyCfg();
     const swOne = k => `<label class="sw"><input type="checkbox" data-nfy="${k}" ${cfg[k] ? 'checked' : ''}><i></i></label>`;
@@ -5989,28 +6030,6 @@ function renderMe() {
       })() : ''}
       ${rows ? `<div class="card"><h3 class="bh">历史记录 <span class="tag" style="color:var(--muted2);background:rgba(255,255,255,.06)">${dates.length} 天</span></h3><div class="hlist">${rows}</div></div>` : ''}
 `;
-  } else if (mePage === 'icons') {
-    const ov = iconOverride();
-    h = meBackBar('图标') + `
-      <div class="card">
-        <h3>本机换图标</h3>
-        <div class="hint" style="margin:0 0 10px">点一下立刻替换，只存在这台设备；每行第一个「默认」＝回到出厂那套。选好告诉我，我把你这套做成两台设备的默认。</div>
-        <button class="btn ghost sm" id="icReset" style="margin-bottom:12px">恢复全部默认</button>
-        ${(window.ICON_SLOTS || []).map(s => {
-          const cur = iconName(s.k), curD = (window.ICON_LIB || {})[cur] || '';
-          return `<div class="icrow">
-            <div class="icl">${s.label}</div>
-            <div class="icopts">
-              <button class="icopt${ov[s.k] ? '' : ' on'}" data-slot="${s.k}" data-name="" title="默认">
-                <svg viewBox="0 -960 960 960"><path d="${curD}"/></svg><span>默认</span>
-              </button>
-              ${s.opts.map(n => `<button class="icopt${ov[s.k] === n ? ' on' : ''}" data-slot="${s.k}" data-name="${n}" title="${n}">
-                <svg viewBox="0 -960 960 960"><path d="${(window.ICON_LIB || {})[n] || ''}"/></svg><span>${n}</span>
-              </button>`).join('')}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
   } else if (mePage === 'about') {
     h = meBackBar('关于与更新') + `
       <div class="about-fill">
