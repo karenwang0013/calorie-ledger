@@ -1449,31 +1449,23 @@ body.add-open .sheet-mask.on {
    内容在框内滚，框的四个角是圆的，卡片顶边再也不会切到照片区。 */
 #resultArea {
   /* v9.20 用户口径：①卡片顶→三格条 = ②三格条→照片框 = ③照片框→「已添加」= ④结果区底→「记入」，都取 14px */
-  max-height: calc(var(--add-static-h, 480px) * 0.62);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  /* v9.25：结果区不再自己滚（v9.19~v9.24 的框内滚动取消）——
+     用户口径：在最下面的已添加列表上滑，内容要能一路滚到「三格条」下方才消失，
+     消失线落在第 2 道缝的中心线上。整页由 .sh-body 滚，这里只是普通块。 */
+  margin: 14px 0 0;        /* 照片区 → 结果区 = 14（第 3 道缝） */
   border-radius: 18px;
-  /* v9.22：结果区底部内边距收小，让「记到哪一餐」到「记入」的可见间距也等于 14px */
   padding-bottom: 4px;
 }
 
-/* v9.23 用户口径：
-   · 拍照页只有「添加」这一块滚，照片区/拍照/从相册选 固定不动；
-   · 「已添加 / 继续选 / 重来」和「这一餐叫什么」两行已删（搜索框在结果页没有实际功能）。 */
-#addSheet .sh-body { overflow: hidden; display: flex; flex-direction: column; }
-#pane-photo { flex: 0 0 auto; }
-#pane-photo .drop.photobox { flex: 0 0 auto; }
-#pane-photo #photoActions { flex: 0 0 auto; }
-#addSheet #resultArea {
-  flex: 1 1 auto;
-  min-height: 0;
+/* v9.25 用户口径（真机口述）：
+   · 「1 号区域（已添加列表）向上滑，内容应该在 2 号间隙的中心线消失」——
+     即照片区也一起滚，滚动裁切线 = 三格条下方 7px（缝 2 的中心），而不是卡片顶 / 照片区底；
+   · 首行内容仍从缝 2 的底部开始（7 裁切 + 7 内边距 = 14，和缝 1 相等）。 */
+#addSheet .sh-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  border-radius: 18px;
-  margin: 14px 0 0;        /* 照片区→结果 = 14；结果底→记入 由 sh-foot 的上内边距给（取缝隙中间） */
-  padding: 0 0 4px;
+  display: block;
 }
 
 #addSheet .sh-foot {
@@ -1483,7 +1475,7 @@ body.add-open .sheet-mask.on {
   padding: 0 16px 30px;
 }
 
-#addSheet .sh-body { padding-top: 8px; }
+#addSheet .sh-body { padding-top: 7px; }   /* v9.25：7 = 第 2 道缝的下半截（裁切线在缝心，首行落在缝底） */
 
 /* 一个框：左右两个照片位 + 一组按钮 */
 .drop.photobox {
@@ -3031,8 +3023,9 @@ body.set-open .toast, body.nlog-open .toast {
 
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
-   实测 1 是 14px，所以把这条的下边距从 12 收到 6.3（6.3 + 卡片 8 = 14.3 布局 ≈ 14 实际）。 */
-#addSheet #addTabs { margin: 13px 12px 6px; }
+   v9.25：下边距 6 → 7 —— 滚动裁切线要落在第 2 道缝的中心线（三格条下方 7px），
+   首行内容再由 .sh-body 的 7px 内边距补到缝底，视觉上缝 2 仍 = 14。 */
+#addSheet #addTabs { margin: 13px 12px 7px; }
 /* v9.03 起记录卡只有「拍照 / 搜索」两格（v9.07 把描述板块整个去掉） */
 #addTabs { grid-template-columns: 1fr 1fr; }
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
