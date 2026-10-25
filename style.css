@@ -1532,6 +1532,8 @@ body.add-open .sheet-mask.on {
   background-image: linear-gradient(#313432, #313432), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  /* 顶部高光和「模式建议」那张卡同值（共用规则里是 5%，参照物是 8%） */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 
 .photomode { display: flex; gap: 6px; margin: 0 0 10px; flex: 0 0 auto; }
