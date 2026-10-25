@@ -1689,29 +1689,26 @@ body.add-open .sheet-mask.on {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
 }
-/* 拍照 / 描述这一格：撑满卡片剩下的高度，别在下面留一截空 */
-#pane-photo, #pane-text { display: flex; flex-direction: column; }
-#pane-photo:not([hidden]), #pane-text:not([hidden]) { flex: 1 1 auto; min-height: 0; }
-#pane-photo:not([hidden]) { justify-content: flex-start; }
-/* 大的虚线框撑满剩下的高度：底边一定和卡片底边平行对齐；两个照片位按固定比例贴在框顶，
-   多余的高度留在框里（照片位不会被拉变形），两个按钮沉在框底 */
+/* 拍照这一格：v9.16 起改成最普通的块级排版（不再用 flex 抢高度）。
+   iOS Safari 对「flex 子项 + 网格 + 固定高度」这套组合算得不准，反复出现
+   照片区被压扁 / 按钮溢出 / 和下面「已添加」叠在一起。块级排版下这些都不可能发生。 */
+#pane-photo, #pane-text { display: block; }
+#pane-photo:not([hidden]) { display: block; }
 #pane-photo:not([hidden]) .drop.photobox {
-  /* v9.11：真机（iOS Safari）上 `grid-template-rows: 1fr auto` + aspect-ratio 会算错，
-     格子溢出到盒子外、和下面的「已添加」列表叠在一起。
-     现在让行都是 auto，宽高比放在格子本身（.pslot），盒子高度自然等于 格子 + 按钮。 */
-  flex: 0 0 auto; min-height: 0;
-  align-items: stretch;
-  grid-template-rows: auto auto;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  overflow: visible;
 }
-#pane-photo .prow-pick { align-self: end; }
-/* v9.11：比例放在「格子」这一层（grid item），里面全部撑满 100%，高度就不会和父级打架 */
-/* v9.15：不再用 aspect-ratio（iOS Safari 在网格里会算出偏差，导致按钮溢出/和下面结果区叠）
-   —— 格子高度由 JS 按列宽算好写成 --slot-h（1 : 1.3） */
+/* 格子高度由 JS 按列宽算好（宽 : 高 = 1 : 1.3），写成 --slot-h */
 #pane-photo .pslot { height: var(--slot-h, 200px); width: 100%; min-height: 0; }
 #pane-photo .pslot-body { height: 100%; min-height: 0; }
 #pane-photo .pslot-empty { height: 100%; min-height: 0; }
 #pane-photo .pslot-body .preview { height: 100%; object-fit: cover; }
+#pane-photo .prow-pick { grid-column: 1 / -1; }
 #pane-photo.done { flex: 0 0 auto; }
 #pane-text:not([hidden]) textarea { flex: 1 1 auto; }
 .drop .big svg { width: 34px; height: 34px; display: block; }
