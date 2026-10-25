@@ -2772,7 +2772,9 @@ html.kb #setSheet {
    黑 8% 底 + edge-gloss 1px 描边 + 顶部 8% 高光 + 圆角 18，不带模糊。
    ⚠️ 必须写在 #setBody .card / .setrows 之后，否则会被原来那套（--setrow-fill 黑 40% / 圆角 22）盖回去。 */
 #setBody .card,
-#setBody .setrows {
+#setBody .setrows,
+/* v8.92：铃铛打开的「提醒记录」卡里也是同一套行卡，一起跟上 */
+#nlogList .setrows {
   background-color: transparent;
   background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
   background-origin: border-box;
