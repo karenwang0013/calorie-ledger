@@ -1517,14 +1517,19 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
 }
-/* v8.72 用户定稿：两个照片格用「大框渐变的中间值」做**不透明实色**。
-   #111412 = 大框渐变中点（黑 32%）叠在卡底色上的等效色。
-   ⚠️ v8.75 修：原来写成 `background-color + edge-gloss`，漏了 background-clip →
+/* v8.78 用户定稿：两个照片格改成「设置·模式建议」那套材质的实色中间值。
+   #313432 = rgb(49,52,50)，正好夹在 v8.72 的 #111412（格内实测 17,20,18）
+   和「模式建议」白 8.5%（实测 60,62,61）的正中间。
+   质感仍照抄模式建议那张卡：edge-gloss 1px 描边 + 顶部 inset 高光（共用规则里），
+   这里只换填充色；圆角仍 27，不动。 */
+/* 沿革（不要删，是这条规则的历史）：
+   v8.72：填充 #111412（= 大框渐变中点、黑 32% 叠卡底的等效色）。
+   v8.75 修：原来写成 `background-color + edge-gloss`，漏了 background-clip →
    edge-gloss 那层白色渐变铺满了整个格子（上 10.6% 下 3.5%），格子看着上亮下暗。
    现在按项目通用写法两层 image：实色层裁到 padding-box，描边层裁到 border-box（只露 1px 边框）。 */
 .pslot-empty {
   background-color: transparent;
-  background-image: linear-gradient(#111412, #111412), var(--edge-gloss);
+  background-image: linear-gradient(#313432, #313432), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
@@ -1703,8 +1708,10 @@ body.add-open .sheet-mask.on {
   display: flex; align-items: center; gap: 12px;
   margin: 0 0 12px;
   padding: 8px;
-  background: var(--card);
-  border: 1px solid var(--line);
+  /* v8.78 用户口径：上面这张「照片卡」的材质/颜色要和下面「已添加」那张行卡（.ritem）一样。
+     直接照抄 .ritem 的数值：白 4.5% 底 + 白 10% 描边；圆角 14、内边距不动。 */
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
 }
 .shotrow img {
@@ -2219,8 +2226,10 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
 }
 /* 卡片里的小块（拍照摘要）留在实底上，避免一层套一层地反复模糊。
    v8.45：`.ritem`（识别结果里「已添加」那张）已经从这里拿出去单独定材质 ——
-   用户要求它和上面那张照片卡同色，见上面 `.ritem` 那一段。 */
-.shotrow, .chip {
+   用户要求它和上面那张照片卡同色，见上面 `.ritem` 那一段。
+   v8.78：反过来了 —— 用户要求**上面那张照片卡（.shotrow）跟下面 .ritem 一样**，
+   所以 .shotrow 也从这条共享规则里拿出去，自己写成 .ritem 那几个值。 */
+.chip {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
   background-origin: border-box;
