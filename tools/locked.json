@@ -86,7 +86,7 @@
   },
   {
     "file": "style.css",
-    "find": "#addSheet.no-items #pane-photo { padding-bottom: 30px; }",
-    "why": "记录卡底部留白 30（+1 边框 = 31），和「记入」按钮到卡片外沿的 31 一致 —— 用户 2026-10-26 明确要求"
+    "find": "#addSheet.no-items #pane-photo { padding-bottom: 20px; }",
+    "why": "记录卡底部留白 20（+1 边框 = 21），和设置卡底边距一致 —— v9.57 用户确认（v9.54 的 31 作废）"
   }
 ]

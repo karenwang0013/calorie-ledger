@@ -118,16 +118,19 @@ const checks = [
   // v9.49 用户口径：下面那个大框（照片大框 / 识别热量那张卡）不许再压到卡片底边上 ——
   //   卡片高度是「大框底 + .sh-body 的下内边距」量出来的，下内边距必须是 --blk-gap（12），
   //   这样大框离卡片边 左13 / 右13 / 下13 等距（以前这里是 0 → 框底正好被卡片的圆角切掉）。
-  ['记录卡片底部：从相册选 / 补充说明 到卡片外沿必须是 31（= 记入按钮那个 31；写 30 + 1px 边框）',
-    /#addSheet\.no-items #pane-photo \{ padding-bottom: 30px; \}/.test(css)
+  ['记录卡片底部：从相册选 / 补充说明 到卡片外沿必须是 21（= 底部留白 20 + 1px 边框；v9.57 照抄设置卡的底边距）',
+    /#addSheet\.no-items #pane-photo \{ padding-bottom: 20px; \}/.test(css)
       && /_addS\.classList\.toggle\('no-items', !\(S\.items \|\| \[\]\)\.length\)/.test(app)
       && /const panePadB = \(parseFloat\(getComputedStyle\(pane\)\.paddingBottom\) \|\| 0\) \* z;/.test(app)],
   ['两个照片格宽度必须等于格子（不许被 1:1.3 比例反推撑宽，否则中间缝被挤没）',
     /#pane-photo \.pslot-empty \{ width: 100%; height: 100%; min-height: 0; aspect-ratio: auto; border-radius: 14px; \}/.test(css)],
   ['照片两小格圆角与外面大框同心（27 − 13 = 14），且照片与空框同一个圆角',
     /#pane-photo \.pslot-body \.preview \{ height: 100%; object-fit: cover; border-radius: 14px; \}/.test(css)],
-  ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 12）',
-    /#addSheet \.sh-foot \{[\s\S]*?padding: 7px 12px 30px;/.test(css)],
+  ['记录卡片底栏（餐次 + 记入）左右与上面的卡牌对齐（内边距 = --card-gap 16），底距 20',
+    /#addSheet \.sh-foot \{[\s\S]*?padding: 7px var\(--card-gap\) 20px;/.test(css)],
+  // v9.57 用户口径（效果图确认）：记录卡里的框和按钮统一成设置卡那套 —— 圆角 18。
+  ['记录卡里的框和按钮统一圆角 18（照片格 / 预览 / 拍照 / 从相册选 / 识别热量 / 已添加条目 / 结果照片卡）',
+    /#addSheet \.pslot-empty,[\s\S]{0,320}?#addSheet \.shotrow \{ border-radius: 18px; \}/.test(css)],
   // v9.52 用户口径（效果图确认）：包着两个照片格 + 两个按钮的大框去掉；拍两格的宽度改由「盒宽 − 12」算
   ['照片大框（.drop.photobox）已去掉：无底色/无描边/无内边距',
     /\.drop\.photobox \{[\s\S]*?background-image: none;[\s\S]*?border-width: 0;[\s\S]*?padding: 0;/.test(css)

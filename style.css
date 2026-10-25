@@ -1427,11 +1427,13 @@ body.add-open .sheet-mask.on {
 /* 记录卡片：卡片本身和提醒记录那张完全一样，只有"内容"是自己的。
    --blk-gap 是这张卡里唯一的间距基准：块到卡片边、块与块之间都用它。
    以后调三个按钮的高度/间距，就只动这个变量或那排的内边距，下面虚线框会自动跟着涨落。 */
-#addSheet { --blk-gap: 12px; }
+#addSheet { --blk-gap: 12px; --card-gap: 16px; }
 #addSheet .sh-body {
   /* v9.18：左右内边距改成外边距 —— 滚动框不再贴到卡片边上，
      这样上下滑动时那条直切的边止于卡片圆弧以内，四角不会露出直角（clip-path 在 iOS 上不裁滚动内容） */
-  margin: 0 var(--blk-gap);
+  /* v9.57 用户口径：内容左右离卡片边 16（原来 12 = 离卡边 13），和设置卡里的行卡一致。
+     块与块之间的间距仍是 --blk-gap 12，没动。 */
+  margin: 0 var(--card-gap);
   /* v9.36：底部内边距 0 —— 裁切边界（本盒底边）要正好落在「合计 ↔ 餐次」那道缝的正中，
      多出来的 7px 留给底栏的上内边距 */
   padding: calc(var(--blk-gap) - 4px) 0 0;
@@ -1446,7 +1448,7 @@ body.add-open .sheet-mask.on {
    · 挂 .sh-body 会影响搜索页（列表本来是贴到卡片底边的，会多出一条空档）；
    · 而且切到搜索页时 .sh-body 的 padding 一变，量出来的卡高就跟着变（两张卡不一样高）。
    padding 不参与 overflow 裁切，所以滚动消失线（本盒底边）的位置不受影响。 */
-#addSheet.no-items #pane-photo { padding-bottom: 30px; }
+#addSheet.no-items #pane-photo { padding-bottom: 20px; }
 #addSheet .tabs3 { margin: 4px 0 var(--blk-gap); }
 /* 横杠改成"浮在上面"：原来它是普通块，占掉顶部 9px，
    滚动内容到那里就被切掉，看着像有一层东西盖住（横杠下沿就是切边）。
@@ -1496,7 +1498,8 @@ body.add-open .sheet-mask.on {
   /* v9.49：左右 16 → 12。底栏内容（五个餐次 + 记入按钮）原来比上面的卡牌各窄 4px
      （上面是 12 外边距 + 1 边框 = 13，这里是 16 内边距 + 1 边框 = 17），左右看着不齐。
      改成 12 后和 .sh-body 的内容边完全对齐（都是离卡片边 13）；30 的底距没动。 */
-  padding: 7px 12px 30px;
+  /* v9.57 用户口径：底部留白 30 → 20，和「从相册选」离卡片底边一致（= 设置卡底边距 20）。 */
+  padding: 7px var(--card-gap) 20px;
 }
 /* v9.32 用户口径：去掉「记到哪一餐」那行小字，五个餐次单独装进一张卡牌
    （材质和上面那些食品卡一致：黑 8% 底 + edge-gloss + 圆角 18） */
@@ -3122,7 +3125,7 @@ body.set-open .toast, body.nlog-open .toast {
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
    v9.25：下边距 6 → 7 —— 滚动裁切线要落在第 2 道缝的中心线（三格条下方 7px），
    首行内容再由 .sh-body 的 7px 内边距补到缝底，视觉上缝 2 仍 = 14。 */
-#addSheet #addTabs { margin: 13px 12px 7px; }
+#addSheet #addTabs { margin: 13px var(--card-gap) 7px; }
 /* v9.03 起记录卡只有「拍照 / 搜索」两格（v9.07 把描述板块整个去掉） */
 #addTabs { grid-template-columns: 1fr 1fr; }
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
@@ -3147,3 +3150,23 @@ body.set-open .toast, body.nlog-open .toast {
   pointer-events: none;
 }
 .tph[hidden] { display: none; }
+
+/* ==================================================================
+   v9.57 用户口径（效果图已确认）：记录卡里的「框和按钮」统一成设置卡那套 ——
+     参照 = 设置卡里「版本更新」那张卡牌：圆角 18、离大卡左右 16、离大卡底 20。
+       · 圆角 18：两个照片格 / 照片预览 / 拍照 / 从相册选 / 识别热量 / 已添加条目 / 结果里的照片卡
+       · 左右 16：整张卡的内容边（.sh-body 的 12 → 16），底栏和三格条也跟着 16，四处对齐
+       · 底部 20：不看内容多少，卡片底边一律 20（原来是 31）
+     ⚠️ 输入框（食材 / 克数 / 补充说明）圆角保持 12 —— 高度只有 40，18 会变成半圆，
+        和设置里那些输入框也对不上；它们只跟着左右变成 16。
+   ================================================================== */
+#addSheet { --card-gap: 16px; }
+
+#addSheet .pslot-empty,
+#addSheet .pslot-body .preview,
+#addSheet .pickbtn,
+#addSheet #photoGo,
+#addSheet .sh-foot .btn,
+#addSheet .mealpick .chip,
+#addSheet .ritem,
+#addSheet .shotrow { border-radius: 18px; }
