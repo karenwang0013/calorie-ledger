@@ -1533,6 +1533,23 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* v8.83 用户口径：「食物照片 / 营养成分表这两个框下面那个大框」也换掉
+   —— 就是包着两个小格 + 「拍照 / 从相册选」的那个大框（.drop.photobox）。
+   材质同「模式建议」：白 8.5% + edge-gloss + 顶部 8% 高光，去掉模糊。
+   ⚠️ 圆角故意留 27：里面两个小格是 27，按同心公式「内圆 = 外圆 − 间距」不能把外框改小成 18，
+   否则外框比内格还小、两个格子会顶出弧线。 */
+.drop.photobox {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(255, 255, 255, .085), rgba(255, 255, 255, .085)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  border-radius: 27px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 /* v8.78 用户定稿：两个照片格改成「设置·模式建议」那套材质的实色中间值。
    #313432 = rgb(49,52,50)，正好夹在 v8.72 的 #111412（格内实测 17,20,18）
    和「模式建议」白 8.5%（实测 60,62,61）的正中间。
