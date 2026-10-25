@@ -1740,12 +1740,10 @@ body.add-open .sheet-mask.on {
 #pane-photo, #pane-text { display: block; }
 #pane-photo:not([hidden]) { display: block; }
 #pane-photo:not([hidden]) .drop.photobox {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-rows: auto;
-  gap: 12px;
+  /* v9.48：保留外框（去框那版网格会溢出：两格 239 宽塞进 398 的盒子） */
+  flex: 0 0 auto; min-height: 0;
   align-items: start;
-  padding: 12px;
+  grid-template-rows: auto auto;
   overflow: visible;
 }
 /* 格子高度由 JS 按列宽算好（宽 : 高 = 1 : 1.3），写成 --slot-h */

@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.48', d: '10-26', items: [
+    '改：两个照片格稍微放大（1:1.3 → 1:1.36）；外框这次先保留 —— 去掉外框那版两格会各自撑到 239 宽、塞不进 398 的盒子，渲染错乱',
+  ] },
   { v: 'v9.43', d: '10-26', items: [
     '修：搜索页那道缝往下拖会变宽、重开才恢复 —— 不再用 JS 每次量搜索框高度重写上内边距（iOS 地址栏/键盘变化都会触发重算，量值一变那排按钮就上下跳），改成 CSS 固定值',
   ] },
@@ -2619,7 +2622,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.43';
+const APP_VERSION = 'v9.48';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3345,8 +3348,8 @@ function syncSlotH() {
   if (!box) return;
   const w = box.clientWidth;
   if (!w) return;
-  const inner = w - 24 - 12;            // 左右 padding 12*2 + 两列间距 12
-  const slotH = Math.round((inner / 2) * 1.3);
+  const inner = w - 24 - 12;       // 左右内边距 12*2 + 两列间距 12
+  const slotH = Math.round((inner / 2) * 1.36);   // v9.48：外框保留，格子略微放大（1 : 1.36）
   if (slotH > 40) document.documentElement.style.setProperty('--slot-h', slotH + 'px');
 }
 
