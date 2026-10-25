@@ -1444,6 +1444,17 @@ body.add-open .sheet-mask.on {
 }
 /* 有照片 / 有已选食材时卡片自然按内容变高（height:auto 已覆盖），这里只留一个标记位 */
 
+/* v9.19 用户口径：滑起来时被裁的那条边永远是直角（iOS 不给滚动内容做圆角裁切）。
+   解法：照片区不再跟着滚 —— 让「已添加」这一段自己成为一个圆角滚动框，
+   内容在框内滚，框的四个角是圆的，卡片顶边再也不会切到照片区。 */
+#resultArea {
+  max-height: calc(var(--add-static-h, 480px) * 0.62);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border-radius: 18px;
+}
+
 #addSheet .sh-foot {
   background: transparent;
   border-top: 0;
