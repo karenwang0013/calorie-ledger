@@ -1489,7 +1489,7 @@ body.add-open .sheet-mask.on {
 
 /* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡。 */
 #photoActions {
-  border-radius: 28px;
+  border-radius: 18px;      /* v8.82：跟「模式建议」那张卡同圆角 */
   padding: 12px;
 }
 /* 三个输入比原来矮一档（44 → 40）：只收上下内边距，字号仍 16（低于 16 iOS 会自动放大页面） */
@@ -1516,6 +1516,22 @@ body.add-open .sheet-mask.on {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
+}
+/* v8.82 用户定稿：这张「识别热量 / 食材 / 克数 / 补充说明」卡 + 「描述」大框，
+   整块换成设置里「饮食目标 · 模式建议」那张卡（.rec-card）的样式：
+     白 8.5% 底 + edge-gloss 1px 描边 + inset 顶高光 8% + 圆角 18，且不带模糊（参照物本来就没有）。
+   只换 颜色 / 材质 / 质感 / 圆角 —— 尺寸、内边距、字号、按钮位置一个都不动。 */
+#photoActions,
+#textInput {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(255, 255, 255, .085), rgba(255, 255, 255, .085)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 /* v8.78 用户定稿：两个照片格改成「设置·模式建议」那套材质的实色中间值。
    #313432 = rgb(49,52,50)，正好夹在 v8.72 的 #111412（格内实测 17,20,18）
