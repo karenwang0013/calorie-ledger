@@ -25,6 +25,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.41', d: '10-26', items: [
+    '改：搜索页内容消失的起始线，落到「常用词按钮底边 ↔ 结果首行文字顶」那道缝的正中（缝宽 21 → 中心线 10.5px）',
+  ] },
   { v: 'v9.40', d: '10-26', items: [
     '改：①号缝按「卡片顶边 → 拍照/搜索按钮顶边」算（= 21px），搜索页「常用词底 → 结果首行文字顶」也调到 21px，两者一致',
   ] },
@@ -2610,7 +2613,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.40';
+const APP_VERSION = 'v9.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
