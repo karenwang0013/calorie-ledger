@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.87', d: '10-26', items: [
+    '改：食物名字不再一路顶到右边的数字跟前 —— 最长只比下面那行「150g · 蛋15·碳6·脂0」再长一点点，超出就是省略号（长菜名如「中式盖浇饭套餐：白米饭配红烧鸡块…」不会再横穿整行）',
+    '新增：「雪菜肉丝面 · 5 项」这种多条合并成的一行，右边也有复制按钮了 —— 点开显示「N 项 · 共 xxx 千卡」，选好餐次按「记一条」就整组复制过去（还是并成一行，不拆开）',
+    '修：点复制后小卡一打开就自动弹键盘、数字还全选着（带两个蓝色手柄，看着像莫名其妙冒出个光标）—— 现在打开不抢焦点，点一下克数才聚焦',
+  ] },
   { v: 'v9.86', d: '10-26', items: [
     '改：搜索页那条绿色的「在网上找「X」 / 找 ↗」（AI 估值入口）从列表最下面挪到**最上面第一行** —— 以前本地结果一多就要往下翻才看得到，现在一搜就在眼前，点一下直接让 AI 估',
     '说明：本地库里已经有「一字不差」这个食物时，这一行仍然不出现（不然白花钱问 AI）；本地结果、常用词、原来的排序都没动',
@@ -2794,7 +2799,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.86';
+const APP_VERSION = 'v9.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3247,6 +3252,7 @@ function renderMeals() {
         </div>
         <div class="k">${kcal}</div>
         <span class="chev">›</span>
+        <button class="cp" data-cpg="${esc(g.key)}" aria-label="复制这一组">${COPY_ICON}</button>
         <button class="del" data-gdel-g="${esc(g.key)}">×</button>
       </div>`;
     }).join('');
@@ -3269,6 +3275,7 @@ function renderMeals() {
   }).join('');
 
   groupMap = groupsById;
+  fitMealNames();          // v9.87：名字最长只比下面那行「营养成分」长一点
   $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
   $$('[data-item]', box).forEach(b => b.onclick = ev => {
     if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]') || ev.target.closest('[data-cp]')) return;
@@ -3327,10 +3334,15 @@ function renderMeals() {
     } catch (e) { toast(e.message); }
   });
 
-  // v9.85：复制这一条（弹出克数 + 餐次的小卡）
+  // v9.85：复制这一条（弹出克数 + 餐次的小卡）；v9.87 起「多项合并成一行」的也能整组复制
   $$('[data-cp]', box).forEach(b => b.onclick = ev => {
     ev.stopPropagation();
     openCopy(d.logs.find(l => String(l.id) === b.dataset.cp));
+  });
+  $$('[data-cpg]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    const g = groupMap.get(b.dataset.cpg);
+    if (g) openCopyGroup(g);
   });
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
@@ -4125,6 +4137,31 @@ function historyFoods() {
     .sort((a, b) => (b.at || 0) - (a.at || 0))
     .map(x => ({ name: x.n, kcal: x.k, p: x.p, c: x.c, f: x.f, grams: x.g, cat: x.cat || '以前记过' }));
 }
+
+/* v9.87（用户口径）：食物名不要一直顶到右边的数字跟前 —— 最长「比下面那行营养成分再长一点」，
+   超出就是省略号。量的是副标题里那串文字的真实宽度（不含旁边的小铅笔按钮），+26px 就是"一点"。 */
+function fitMealNames() {
+  const box = $('#meals');
+  if (!box) return;
+  $$('.mitem .n', box).forEach(n => {
+    const sub = n.querySelector('.sub');
+    const line = n.querySelector('.nameline');
+    if (!sub || !line) return;
+    let w = 0;
+    sub.childNodes.forEach(nd => {
+      if (nd.nodeType !== 3 || !nd.textContent.trim()) return;
+      try {
+        const r = document.createRange();
+        r.selectNodeContents(nd);
+        w += r.getBoundingClientRect().width;
+      } catch (e) {}
+    });
+    if (!(w > 1)) { line.style.maxWidth = ''; return; }
+    // +50 = 「一点」（26）+ 名字后面那个小铅笔/三点的宽度（22~24），保证**文字**这一段比副标题长 26 左右
+    line.style.maxWidth = Math.round(Math.max(w + 50, 156)) + 'px';
+  });
+}
+window.addEventListener('resize', () => { try { fitMealNames(); } catch (e) {} });
 
 /* 有结果在下面时先把搜索列表收起来（选完直接看到记录区）；结果清空后再放出来 */
 function syncSearchList() {
@@ -5144,6 +5181,7 @@ function wireRename() {
    点那条记录右边的 ⧉ → 这张小卡：克数可以改（热量当场按比例算）、
    餐次自己挑（默认停在这条原来那一餐）、按「记一条」＝新增一条，原来那条不动。 */
 let cpLog = null;
+let cpGroup = null;      // 非空 = 正在整组复制（「5 项」那种合并行）
 let cpMeal = 'lunch';
 
 function cpPer100(v) {
@@ -5165,17 +5203,74 @@ function openCopy(l) {
   $('#cpG').value = g0 > 0 ? Math.round(g0 * 10) / 10 : 100;
   syncCpKcal();
   $$('#cpMealPick [data-cmeal]').forEach(b => b.classList.toggle('on', b.dataset.cmeal === cpMeal));
+  cpGroup = null;
+  const ttl = $('#cpTitle'); if (ttl) ttl.textContent = '复制这一条';
+  const gr = $('#cpGramsRow'), sum = $('#cpSum');
+  if (gr) gr.hidden = false;
+  if (sum) sum.hidden = true;
   $('#cpMask').classList.add('on');
   $('#cpSheet').classList.add('on');
-  setTimeout(() => { const i = $('#cpG'); try { i.focus(); i.select(); } catch (e) {} }, 180);
+  // v9.87：不再自动 focus + select —— 以前一打开就弹出键盘、数字还是全选状态（带两个蓝色手柄），
+  // 看着像"莫名其妙出现光标"。改成点输入框才聚焦。
+}
+
+/* 整组复制：「雪菜肉丝面 · 5 项」这种合并行 —— 克数不给改（一组有好几条），整组原样复制到选定餐次 */
+function openCopyGroup(g) {
+  if (!g || !g.logs || !g.logs.length) return;
+  cpLog = null;
+  cpGroup = g.logs.slice();
+  cpMeal = g.logs[0].meal || 'other';
+  $('#cpName').textContent = g.name || '未命名';
+  const ttl = $('#cpTitle'); if (ttl) ttl.textContent = '复制这一组';
+  const total = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
+  const gr = $('#cpGramsRow'), sum = $('#cpSum');
+  if (gr) gr.hidden = true;
+  if (sum) { sum.hidden = false; sum.textContent = `${g.logs.length} 项 · 共 ${total} 千卡`; }
+  $$('#cpMealPick [data-cmeal]').forEach(b => b.classList.toggle('on', b.dataset.cmeal === cpMeal));
+  $('#cpMask').classList.add('on');
+  $('#cpSheet').classList.add('on');
 }
 function closeCopy() {
   const inp = $('#cpG'); if (inp) inp.blur();
   $('#cpMask').classList.remove('on');
   $('#cpSheet').classList.remove('on');
   cpLog = null;
+  cpGroup = null;
 }
 async function saveCopy() {
+  if (cpGroup) {
+    const logs = cpGroup.slice();
+    const meal = cpMeal;
+    const items = logs.map(l => {
+      const g0 = Number(l.grams) || 0;
+      const per = v => g0 > 0 ? (Number(v) || 0) / g0 * 100 : (Number(v) || 0);
+      return {
+        name: l.name,
+        grams: g0 > 0 ? g0 : 100,
+        kcal_per_100g: per(l.kcal),
+        protein_per_100g: per(l.p),
+        carb_per_100g: per(l.c),
+        fat_per_100g: per(l.f),
+        confidence: Number(l.confidence ?? 1),
+      };
+    });
+    const total = Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0));
+    const batch = 'b' + Date.now();
+    closeCopy();
+    try {
+      await api('/api/logs', {
+        date: S.date, meal, items,
+        source: logs[0].source || 'manual',
+        batch, batchName: logs[0].batchName || '',
+      });
+      toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'} · ${total} 千卡`);
+      await loadDay();
+      if (S.view === 'trends') loadTrends();
+    } catch (e) {
+      toast(e.message, 4000);
+    }
+    return;
+  }
   if (!cpLog) return;
   const g = Number($('#cpG').value) || 0;
   if (!(g > 0)) { const i = $('#cpG'); if (i) i.focus(); return toast('先填克数（这次吃了多少克）', 2600); }

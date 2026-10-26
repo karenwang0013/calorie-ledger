@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=970">
+<link rel="stylesheet" href="style.css?v=971">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -397,15 +397,16 @@
 <div class="sheet-mask" id="cpMask"></div>
 <div class="rnalert cpcard" id="cpSheet">
   <div class="cp-head">
-    <span class="cp-title">复制这一条</span>
+    <span class="cp-title" id="cpTitle">复制这一条</span>
     <span class="cp-name" id="cpName">—</span>
   </div>
-  <div class="cp-row">
+  <div class="cp-row" id="cpGramsRow">
     <label for="cpG">克数</label>
     <input id="cpG" type="number" inputmode="decimal" step="1" min="1" autocomplete="off">
     <span class="unit">g</span>
     <span class="cp-kcal" id="cpKcal">—</span>
   </div>
+  <div class="cp-sum" id="cpSum" hidden></div>
   <div class="chips-wrap cp-meals" id="cpMealPick">
     <button class="chip" data-cmeal="breakfast">早餐</button>
     <button class="chip" data-cmeal="lunch">午餐</button>
@@ -455,10 +456,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=970"></script>
-<script src="icons.js?v=970"></script>
-<script src="api.js?v=970"></script>
-<script src="app.js?v=970"></script>
+<script src="foods.js?v=971"></script>
+<script src="icons.js?v=971"></script>
+<script src="api.js?v=971"></script>
+<script src="app.js?v=971"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

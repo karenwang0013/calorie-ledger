@@ -1412,6 +1412,8 @@ body.add-open .sheet-mask.on {
 .cp-row #cpG::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .cp-row #cpG { -moz-appearance: textfield; appearance: textfield; }
 .cp-meals { justify-content: center; }
+/* 整组复制时：不显示克数那一行，改成一行「N 项 · 共 xxx 千卡」 */
+.cp-sum { text-align: center; font-size: 13.5px; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
