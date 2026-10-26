@@ -15,8 +15,14 @@ const REMOVE_SLOTS = ['tab.text'];          // 功能已经没了的槽位（每
 const REMOVE_DEFAULTS = ['tab.text', 'btn.text'];   // 已经没有元素用到的默认值
 
 // 每个位置追加的实心候选（不含默认那个；名字是 Material Symbols 原名，脚本会自动加 -fill）
-// btn.go 的说明里原来写着「拍照 / 描述共用」——「描述」已经没了，赶紧一并改掉
-const LABEL_FIX = { 'btn.go': '按钮·识别热量（拍照页）' };
+// 栏目标题要跟着界面实际情况走：
+//  - btn.go 原来写「拍照 / 描述共用」，描述页已经没了
+//  - tab.photo / tab.search 原来写「三格·…」，描述那格删掉后记录卡只剩两格（v9.96）
+const LABEL_FIX = {
+  'btn.go': '按钮·识别热量（拍照页）',
+  'tab.photo': '两格·拍照',
+  'tab.search': '两格·搜索',
+};
 
 const CURATED = {
   'set.body': ['person', 'group', 'directions_walk', 'self_improvement', 'fitness_center', 'monitor_heart', 'sports_gymnastics', 'man', 'woman', 'accessibility_new'],

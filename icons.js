@@ -498,7 +498,7 @@ window.ICON_SLOTS = [
  },
  {
   "k": "tab.photo",
-  "label": "三格·拍照",
+  "label": "两格·拍照",
   "def": "photo_camera",
   "opts": [
    "add_a_photo",
@@ -513,7 +513,7 @@ window.ICON_SLOTS = [
  },
  {
   "k": "tab.search",
-  "label": "三格·搜索",
+  "label": "两格·搜索",
   "def": "travel_explore",
   "opts": [
    "search",
