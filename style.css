@@ -2904,7 +2904,10 @@ html.kb #setSheet {
 #setBody .card,
 #setBody .setrows,
 /* v8.92：铃铛打开的「提醒记录」卡里也是同一套行卡，一起跟上 */
-#nlogList .setrows {
+#nlogList .setrows,
+/* v9.73 用户口径：提醒记录卡底部「共 N 条 / 清空记录」那一栏，颜色和材质以设置里「强制更新」那一栏为基准
+   （原来这里是母版 .setrows：圆角 22 + 黑 40% 填充，比设置那边浓得多，看起来是两块不同的东西） */
+#nlogFoot .setrows {
   background-color: transparent;
   background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
   background-origin: border-box;
