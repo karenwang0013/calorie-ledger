@@ -407,7 +407,7 @@ html.kb .sc-body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 24px 56px rgba(0,0,0,.55);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
 }
 #nlogSheet .sh-foot {
   background: transparent;
@@ -738,7 +738,7 @@ body.add-open .sheet-mask.on {
   background: var(--bg2);
   border: 1px solid var(--line2);
   border-radius: 28px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.65);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   display: flex; flex-direction: column;
   overflow: hidden;
 }
@@ -873,8 +873,8 @@ body.add-open .sheet-mask.on {
   background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--dock-r);
-  /* 浮起来的那一层：底部投影 + 顶边一道细高光。阴影按用户要求缩小（原 0 12 30 / 0 2 8） */
-  box-shadow: var(--glass-shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* v9.91：用户要求「阴影全去掉」，Dock 只留顶边那道细高光（原来这里还有一层外投影） */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .tab {
   position: relative; z-index: 1;   /* 图标永远在液态滑块上面 */
@@ -1263,7 +1263,7 @@ body.add-open .sheet-mask.on {
   /* 手机屏幕的角是超椭圆（squircle），支持就跟着用，不支持自动忽略 */
   corner-shape: squircle;
   border: 1px solid var(--line2);
-  box-shadow: 0 22px 60px rgba(0,0,0,.6);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   transform: translateY(calc(100% + 24px)) scale(.98);
   opacity: 0;
   transition: transform .42s cubic-bezier(.32,.72,0,1), opacity .25s ease-out;
@@ -1359,7 +1359,7 @@ body.add-open .sheet-mask.on {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
   /* 外投影保留（这是浮在中间的对话框，需要比 Dock 更明确的"离层"），但顶边高光和 Dock 同一句 */
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);    /* 以营养卡为基准：去掉那条 inset 内高光 */
+  box-shadow: none;    /* v9.91：去掉外投影（用户要求） */
   transform: translateY(12px) scale(.97);
   opacity: 0; pointer-events: none;
   transition: transform .30s cubic-bezier(.22,.8,.3,1), opacity .22s ease-out;
@@ -1867,7 +1867,7 @@ body.add-open .sheet-mask.on {
   width: 30px; height: 30px; border-radius: 50%;
   background: rgba(0,0,0,.55); color: #fff;
   display: grid; place-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   backdrop-filter: blur(6px);
 }
 .preview {
@@ -2064,7 +2064,7 @@ body.add-open .sheet-mask.on {
   max-width: 86vw;
   text-align: center;
   white-space: pre-line;
-  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
 }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
@@ -2192,16 +2192,12 @@ body.add-open .sheet-mask.on {
   position: absolute; inset: 0; border-radius: 15px;
   overflow: hidden;                       /* 圆钮的投影裁在管子里，不往外溢 */
   background: linear-gradient(180deg, #3a4147 0%, #272d31 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),  /* 只有一条很淡的顶边高光 */
-    0 3px 8px rgba(0,0,0,.30);            /* 影子落在开关下面 */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);   /* v9.91：只留顶边高光，外面那层投影去掉 */
   transition: background .22s ease, box-shadow .22s ease, transform .2s cubic-bezier(.2,1.3,.4,1);
 }
 .sw input:checked + i {
   background: linear-gradient(180deg, #dcff74 0%, #ccf231 55%, #bbe41f 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.40),
-    0 3px 8px rgba(86,112,0,.32);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.40);   /* v9.91：去掉外投影 */
 }
 /* 圆钮：一颗玻璃珠 —— 顶上一道高光，底下自己的影子落在管子底 */
 .sw i:after {
@@ -2209,18 +2205,12 @@ body.add-open .sheet-mask.on {
   width: 24px; height: 24px; border-radius: 50%;
   background:
     radial-gradient(72% 66% at 34% 18%, #ffffff 0%, #ffffff 40%, #f4f7f4 66%, #eaeeea 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.95),
-    0 2px 4px rgba(0,0,0,.22),
-    0 4px 8px rgba(0,0,0,.14);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.95);   /* v9.91：玻璃珠只留内部高光 */
   transition: transform .22s cubic-bezier(.2,1.3,.4,1), width .22s cubic-bezier(.2,1.3,.4,1), border-radius .22s ease;
 }
 .sw input:checked + i:after {
   transform: translateX(20px);
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.95),
-    0 2px 4px rgba(52,72,0,.30),
-    0 4px 9px rgba(52,72,0,.22);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.95);   /* v9.91：玻璃珠只留内部高光 */
 }
 /* 按下去的液态感：底盘轻压、玻璃珠被"拉长"再弹回 */
 .sw:active i { transform: scale(.96); filter: brightness(1.10); }
@@ -2400,7 +2390,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   /* 2026-10-23 用户反馈「打开就发烫」：全局磨砂 20px → 10px。
      模糊半径越小，iOS 每帧重算的成本越低（首屏同时有 3 块卡在用这个变量）。 */
   --glass-blur-2: blur(10px) saturate(150%);
-  --glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
+  /* v9.91：用户要求「阴影全去掉」（含 Dock），母版投影直接置 none；
+     以后想加回来只改这一行，别在各处单独写 0 4 12。 */
+  --glass-shadow-2: none;
   --btn-solid: rgba(255, 255, 255, 0.085);   /* 按钮/滑块停稳后的实色（Dock 那颗为准） */
   --glass-card: rgba(21, 24, 27, 0.70);
   --glass-card2: rgba(27, 31, 35, 0.66);
@@ -2611,7 +2603,7 @@ input, textarea, select {
   background-clip: padding-box, border-box;
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
 }
 
 /* ③ 个性化颜色选择：每一行照 Dock 卡牌材质 */
@@ -2846,7 +2838,7 @@ select:focus {
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
   border-radius: var(--dock-r, 26px);
   padding: 18px 0 20px;   /* 顶部多留 18px：卡的上沿再高一点（内容不动） */
-  box-shadow: 0 24px 56px rgba(0,0,0,.55);
+  box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
 }
 /* 打开时遮罩浅一档（和提醒记录同一档 28%），不盖顶栏 */
 body.set-open .sheet-mask.on {

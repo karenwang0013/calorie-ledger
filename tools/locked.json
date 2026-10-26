@@ -76,8 +76,8 @@
   },
   {
     "file": "style.css",
-    "find": "--glass-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.22);",
-    "why": "玻璃阴影母版（含 Dock）"
+    "find": "--glass-shadow-2: none;",
+    "why": "外投影母版 = none（2026-10-26 用户要求「阴影全去掉」，含 Dock 栏）：以后要加回来必须先问用户，别在各处单独写 0 4 12"
   },
   {
     "file": "style.css",
