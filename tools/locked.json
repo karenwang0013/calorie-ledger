@@ -88,5 +88,15 @@
     "file": "style.css",
     "find": "#addSheet.no-items #pane-photo { padding-bottom: 20px; }",
     "why": "记录卡底部留白 20（+1 边框 = 21），和设置卡底边距一致 —— v9.57 用户确认（v9.54 的 31 作废）"
+  },
+  {
+    "file": "style.css",
+    "find": "padding-top: var(--pill-nudge, 1.3px);",
+    "why": "v9.79 按钮中文视觉居中：字体度量居中会让字偏上 0.63px，这里补 1.3px（内容中心下移 0.65px）"
+  },
+  {
+    "file": "style.css",
+    "find": "#nlogFoot .setrow.ver .ttl { transform: translateY(var(--pill-nudge-half, .65px)); }",
+    "why": "v9.79 底部「共 N 条」同款补偿（只作用于这一行）"
   }
 ]

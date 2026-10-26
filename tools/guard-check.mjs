@@ -246,6 +246,9 @@ const checks = [
   ['营养卡说明文字上下等距（上 10 / 下 10，文字在间隙正中）',
     /#nutSheet \.hint \{ line-height: 1\.5; margin: 10px 0 0; \}/.test(css)
       && /#nutSheet \.sh-body \{ padding: 24px 26px 2px; \}/.test(css)],
+  ['按钮里的中文要视觉居中（.setpill 内容下补 1.3px；底部「共 N 条」补 0.65px）',
+    /padding-top: var\(--pill-nudge, 1\.3px\);/.test(css)
+      && /#nlogFoot \.setrow\.ver \.ttl \{ transform: translateY\(var\(--pill-nudge-half, \.65px\)\); \}/.test(css)],
 ];
 
 let bad = 0;

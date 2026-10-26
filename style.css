@@ -2960,10 +2960,15 @@ html.kb #setSheet {
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 12.5px; font-weight: 650; color: #111; line-height: 1;
   height: 33px; padding: 0 14px; border-radius: 12px;
+  /* v9.79 用户口径：中文要**视觉居中**，不是盒子居中。PingFang 的字面（ascent 1.06 / descent 0.34）
+     让 flex 居中的字实际偏上 0.63px（截图量像素得出的），所以内容区往下补 1.3px（= 视觉中心 +0.65px）。 */
+  padding-top: var(--pill-nudge, 1.3px);
   background-image: linear-gradient(var(--lime), var(--lime)), var(--edge-gloss);
   background-origin: border-box; background-clip: padding-box, border-box;
   border: 1px solid transparent;
 }
+/* v9.79：底部「共 N 条」同一个毛病（同样偏上 0.63px），单独抬回来；只动这一行，别的设置行不碰 */
+#nlogFoot .setrow.ver .ttl { transform: translateY(var(--pill-nudge-half, .65px)); }
 /* v9.78：底部那栏「清空记录」仍然靠右（原来是 .setpill.danger 的 margin-left:auto 在撑，
    那条删掉后要补回来；只作用于这一颗，别动设置里「强制更新」的位置） */
 #nlogFoot .setpill { margin-left: auto; }
