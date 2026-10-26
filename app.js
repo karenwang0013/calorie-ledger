@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.66', d: '10-26', items: [
+    '改：卡片向下拖关闭的手势收窄了 —— 以前整张卡随便哪里往下拖都会把卡拖走/关掉，现在**只有把手指按在卡片顶部那条横杠上往下拖**才关闭；在卡身、列表里怎么拖都不会动卡片',
+    '这条对设置、记录、提醒记录、身体数据里的体重卡、营养卡、说明卡一视同仁（都是同一个手势）',
+    '修：清空数据后又自己长回来 —— 以前云端的体重/体脂是「按日期并集」合并的，清空过一次的记录会被旧镜像重新并回来（实测删完 135 条又回来了）；现在「清空」会带一个标记，别的设备拉到就以整份为准，不再并集',
+  ] },
   { v: 'v9.65', d: '10-26', items: [
     '改：目标（每日可吃）和首页「消耗」统一到实测消耗 —— 就是趋势页那个"用体重变化反推"的数，它把所有估算误差都吃掉了；有实测就全用它，没有才退回手表/公式',
     '改：不再按「到现在为止」折算消耗（凌晨会显示消耗 1 千卡那种），现在全用全天口径；实测：消耗 2067 − 摄入 1538 = 可吃 529 = 圆环里的 529，三个数能互相验算',
@@ -2690,7 +2695,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.65';
+const APP_VERSION = 'v9.66';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5654,23 +5659,23 @@ function wireSheetDrag(sheet, list, closeFn) {
   if (!sheet || sheet.dataset.dragWired) return;
   sheet.dataset.dragWired = '1';
   let y0 = 0, x0 = 0, dy = 0, dragging = false, armed = false, horiz = false;
-  /* 找到手指底下那个「能滚的容器」（搜索列表 / 结果区 / 卡片身体）——
-     v9.31：以前只看 list（卡片身体）的 scrollTop，身体被改成 overflow:hidden 之后
-     这里永远是 0，但实际在滚的是内层列表，于是往下拖时被内层列表吃掉，卡片就关不掉了。 */
-  const scrollerAt = (t) => {
-    let el = t;
-    while (el && el !== sheet && el.nodeType === 1) {
-      const cs = getComputedStyle(el);
-      if (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
-      el = el.parentElement;
-    }
-    return null;
+  /* 2026-10-26 用户要求：**只有卡片顶部那条横杠区域**往下拖才关闭，
+     卡片其它地方（列表、正文）怎么拖都不许把卡拖走、更不许关掉。
+     横杠本身只有 4px，手指点不准，所以把热区放宽到「横杠下沿 + 14px」。 */
+  const grabZone = () => {
+    const r = sheet.getBoundingClientRect();
+    const g = sheet.querySelector('.grab');
+    if (!g) return Math.min(40, Math.max(22, r.height * 0.06));
+    const bottom = g.getBoundingClientRect().bottom - r.top;
+    return Math.min(48, Math.max(22, bottom + 14));
   };
   sheet.addEventListener('touchstart', (e) => {
     if (!sheet.classList.contains('on')) return;
+    const r = sheet.getBoundingClientRect();
+    const relY = e.touches[0].clientY - r.top;
     y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; dragging = false; horiz = false;
-    const sc = scrollerAt(e.target);
-    armed = (!list || list.scrollTop <= 0) && (!sc || sc.scrollTop <= 0);
+    // 不在顶部横杠那一条 → 这个手势跟关闭无关
+    armed = relY >= -2 && relY <= grabZone();
   }, { passive: true, capture: true });
   sheet.addEventListener('touchmove', (e) => {
     if (!armed || !sheet.classList.contains('on')) return;
@@ -5717,14 +5722,13 @@ function wireSheetDrag(sheet, list, closeFn) {
   sheet.addEventListener('touchcancel', end);   // 系统打断也要复位，否则会卡在拖到一半的位置
   sheet.addEventListener('touchcancel', end);
 }
+/* 2026-10-26：所有卡片统一走同一个「拖顶部横杠关闭」，热区在 wireSheetDrag 里收窄到横杠那一条。 */
 function wireNotifyDrag() { wireSheetDrag($('#nlogSheet'), $('#nlogList'), closeNotifyLog); }
 function wireSetDrag() { wireSheetDrag($('#setSheet'), $('#setBody'), closeSetCard); }
-/* 记录卡片：同一套下滑关闭（内容滚到顶才生效，别和内部滚动打架） */
-function wireAddDrag() {
-  /* 记录卡不再用「下拉关闭」：那个手势会把整张卡（连三格条）跟着手指往下拖，
-     用户要求拍照/搜索/描述这一条完全固定 → 只能点卡外或按系统返回关闭。
-     提醒记录卡的下拉关闭仍然保留（wireNotifyDrag）。 */
-}
+function wireAddDrag() { wireSheetDrag($('#addSheet'), null, closeAdd); }
+function wireWeightDrag() { wireSheetDrag($('#weightSheet'), null, closeWeight); }
+function wireNutDrag() { wireSheetDrag($('#nutSheet'), null, closeNutEdit); }
+function wireHelpDrag() { wireSheetDrag($('#helpSheet'), null, closeHelp); }
 
 function runNotifyChecks() {
   if (setting('notify_inapp', true) === false) return false;   // 总开关关掉就全部静音
@@ -8557,13 +8561,18 @@ function init() {
     }
   } catch (e) {}
   renderNotifyDot();
+  // 2026-10-26：所有卡片统一「拖顶部横杠才关闭」（热区在 wireSheetDrag 里收窄）
   wireNotifyDrag();
-  // 设置卡：完成 / 点遮罩 / 下滑 都能关
+  wireSetDrag();
+  wireAddDrag();
+  wireWeightDrag();
+  wireNutDrag();
+  wireHelpDrag();
+  // 设置卡：完成 / 点遮罩 / 返回 / 拖顶部横杠 都能关
   const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask'), setBackBtn = $('#setBack');
   if (setDoneBtn) setDoneBtn.onclick = () => closeSetCard();
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
-  wireSetDrag();
   try { applyStaticIcons(); } catch (e) {}
   if (!window.ICON_LIB || !window.ICON_DEFAULT) console.warn('[icons] icons.js 没加载，已回退到内置图标');
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）

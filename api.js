@@ -1510,12 +1510,17 @@ async function cloudPull(force) {
           if (force || (rAt0 && rAt0 > lAt0)) {
             const rd0 = remote0.data || {};
             _keepFreshBody(local0, rd0, rAt0);   // v8.21：刚称的数不许被旧数据盖回去
-            const lb0 = local0.body || {}, lw0 = local0.weights || {};
+            // v9.66：云端带了更新的一次「清空」（resetAt）→ 整份覆盖，不许再按日期并集。
+            // 起因：清空数据后，并集又把 135 条体重从旧镜像里合并回来，等于永远删不掉。
+            const resetWins0 = !!(rd0.resetAt && (!local0.resetAt || Number(rd0.resetAt) > Number(local0.resetAt)));
+            const lb0 = resetWins0 ? {} : (local0.body || {});
+            const lw0 = resetWins0 ? {} : (local0.weights || {});
             Object.assign(local0, rd0, { settings: Object.assign({}, local0.settings, rd0.settings) });
             local0.body = Object.assign({}, lb0, rd0.body || {});
             local0.weights = Object.assign({}, lw0, rd0.weights || {});
             // 照片：云端为了体积会裁掉最旧的缩略图，本机**已有的绝不删**（v7.71）
             local0.shots = Object.assign({}, rd0.shots || {}, local0.shots || {});
+            if (resetWins0) local0.resetAt = rd0.resetAt;
             local0.settings.updatedAt = rAt0;
             localStorage.setItem(Store.KEY, JSON.stringify(local0));
             if (typeof absorbLegacyShots === 'function') absorbLegacyShots().catch(() => {});
@@ -1546,7 +1551,10 @@ async function cloudPull(force) {
     if (force || (rAt && rAt > lAt)) {
       const rd = remote.data || {};
       _keepFreshBody(local, rd, rAt);   // v8.21：同上
-      const lBody = local.body || {}, lWts = local.weights || {};
+      // v9.66：云端带 resetAt（用户主动清空过）→ 整份覆盖；否则仍按日期并集（保住导入的历史）
+      const resetWins = !!(rd.resetAt && (!local.resetAt || Number(rd.resetAt) > Number(local.resetAt)));
+      const lBody = resetWins ? {} : (local.body || {});
+      const lWts = resetWins ? {} : (local.weights || {});
       Object.assign(local, rd, { settings: Object.assign({}, local.settings, rd.settings) });
       // body / weights 按日期合并，别让云端旧数据把本机导入的历史覆盖掉
       local.body = Object.assign({}, lBody, rd.body || {});
@@ -1554,6 +1562,7 @@ async function cloudPull(force) {
       // 照片：云端超过体积上限时会按"最旧优先"裁掉缩略图；本机已有的照片**绝不许被云端删掉**。
       // （2026-10-23 就是这里整份覆盖，把 10-20 那几条的照片从本机一起删了，界面显示"这条是旧版本记的"）
       local.shots = Object.assign({}, rd.shots || {}, local.shots || {});
+      if (resetWins) local.resetAt = rd.resetAt;
       // 食物历史：按名字取并集（云端没有的保留本机），删掉的按名字记进 foodHistDel
       const fh = new Map();
       for (const f of (rd.foodHist || [])) if (f && f.n) fh.set(f.n, f);
