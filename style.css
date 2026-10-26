@@ -2020,8 +2020,9 @@ body.add-open .sheet-mask.on {
 
 .toast {
   position: fixed; left: 50%;
-  /* 提示条要落在 Dock 上方，不能压上去 */
-  bottom: calc(var(--dock-bottom) + var(--dock-h) + 24px + var(--safe-b));
+  /* 提示条要落在 Dock 上方，不能压上去。
+     v9.82：间距和「贴卡牌」统一成 12px（用户口径：无卡牌时离 Dock 也 12） */
+  bottom: calc(var(--dock-bottom) + var(--dock-h) + 12px + var(--safe-b));
   transform: translate(-50%, 12px);
   z-index: 90;
   background: #24292e;

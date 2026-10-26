@@ -113,5 +113,10 @@
     "file": "style.css",
     "find": ".toast[data-at=\"card\"] {",
     "why": "提示条跟卡牌走的定位规则（用 bottom 定位，跟提示条高度无关）——删掉就退回死贴顶栏"
+  },
+  {
+    "file": "style.css",
+    "find": "bottom: calc(var(--dock-bottom) + var(--dock-h) + 12px + var(--safe-b));",
+    "why": "无卡牌时提示条离 Dock 12px（2026-10-26 用户定：和贴卡牌用同一个数 12px）"
   }
 ]
