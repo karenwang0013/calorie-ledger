@@ -2989,7 +2989,15 @@ html.kb #setSheet {
 #nlogSheet .sh-body { padding: 0; display: block; overflow: hidden; }
 #nlogList { max-height: none; flex: 1 1 auto; height: 100%; padding: 0; display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 #nlogSheet .sh-foot { background: transparent; border-top: 0; padding: 0; flex: 0 0 auto; }   /* 和设置卡版本行同一位置：margin 0 16px、离卡底 20 */
-#nlogEmpty { padding: 18px 20px 22px; font-size: 13px; color: var(--muted2); line-height: 1.6; }
+/* v9.75 用户口径：没有记录时，框里那两行小字要**居中**（原来贴在左上角，大框空着一大片）。
+   字号、颜色、行距、文案都不动，只改对齐。 */
+#nlogList > .setrows { display: flex; }
+#nlogEmpty {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 18px 20px; font-size: 13px; color: var(--muted2); line-height: 1.6;
+}
 #nlogEmpty span { display: block; font-size: 12px; margin-top: 4px; color: var(--muted2); opacity: .8; }
 /* v9.72 用户口径：所有信息装在同一个大框里，一行一行排（不再是「一条一个框」、「今天/更早」各一个框）。
    分组标题「今天 / 更早」变成框内的一行小淡字，两块之间只留一道细分隔线。
