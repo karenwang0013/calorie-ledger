@@ -2828,7 +2828,7 @@ let toastRetryT = 0;
 function toastGap() {
   const tb = document.querySelector('.topbar');
   if (!tb) return null;
-  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const vh = document.documentElement.clientHeight || window.innerHeight;   // 和 getBoundingClientRect 同一套坐标（window.innerHeight 在有滚动条时会差 2px）
   const top = tb.getBoundingClientRect().bottom;
   // 所有浮层卡都算：设置 / 提醒记录 / 记录卡 / 体重 / 营养 / 帮助（.sheet）、详情卡（.modal）、改名小卡（.rnalert）
   const tops = [...document.querySelectorAll('.sheet.on, .modal.on, .rnalert.on')]
@@ -2854,7 +2854,7 @@ function placeToast() {
     return;
   }
   // 用 bottom 定位：跟提示条自己有几行无关，离卡牌顶边永远是 TOAST_CARD_GAP
-  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const vh = document.documentElement.clientHeight || window.innerHeight;
   let bottom = vh - g.cardTop + TOAST_CARD_GAP;
   const h = t.offsetHeight || 44;
   const maxBottom = vh - (g.top + 4) - h;        // 缝太窄时的下限：不压顶栏
@@ -2905,6 +2905,10 @@ function toast(msg, ms = 2200, alt) {
   }
   clearTimeout(toastTimer);
   placeToast();                                 // 卡牌开着时：贴到卡牌顶边上方固定距离（v9.81）
+  // 卡牌从屏幕外滑上来时第一次量到的还不是最终位置：落稳后再对两次（1.2s 内一定停住）
+  [300, 700, 1200].forEach(ms => setTimeout(() => {
+    if (t.classList.contains('on')) placeToast();
+  }, ms));
   toastTimer = setTimeout(() => {
     t.classList.remove('on');
     toastTimer = null;

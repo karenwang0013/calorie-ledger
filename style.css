@@ -3057,6 +3057,8 @@ html.kb #setSheet {
 .toast[data-at="card"] {
   top: auto;
   bottom: var(--toast-bottom);
+  /* 只在淡入 / 上滑上做过渡：bottom 变就立刻落位，不然每次重算都在那儿慢慢滑 */
+  transition-property: opacity, transform;
 }
 
 /* 记录卡里的按钮也带图标：和文字同一中心线，尺寸固定 18，圆角和间距不动 */
