@@ -98,5 +98,10 @@
     "file": "style.css",
     "find": "#nlogFoot .setrow.ver .ttl { transform: translateY(var(--pill-nudge-half, .65px)); }",
     "why": "v9.79 底部「共 N 条」同款补偿（只作用于这一行）"
+  },
+  {
+    "file": "style.css",
+    "find": "#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px 16px; }",
+    "why": "v9.80 提醒记录内容区底部留 16px：滚到底时最后一行文字不再贴着底部栏消失（改前 12px → 改后 28px）"
   }
 ]

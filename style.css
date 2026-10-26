@@ -3009,7 +3009,7 @@ html.kb #setSheet {
    信息多到放不下时，在框里自己滚（框边和圆角始终不动）。
    v9.78 用户口径：这个「框」本身去掉（不要那层内层卡）——文字直接显示在卡牌里，像搜索页的行列表一样；
    底下「共 N 条 / 清空记录」那一栏保留不动。高度固定这条规则不变。 */
-#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px; }
+#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px 16px; }
 #nlogList > .setrows {
   flex: 1 1 auto; min-height: 0;
   margin: 0; border: 0; border-radius: 0;
