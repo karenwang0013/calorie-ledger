@@ -473,11 +473,13 @@ function daySummary(date) {
     protein: Math.round(protein * 10) / 10,
     carb: Math.round(carb * 10) / 10,
     fat: Math.round(fat * 10) / 10,
-    expenditure: baseExp,
+    expenditure: exp,              // v9.68：这一格回到「当天自己的值」（手表/沿用/公式），不再用实测平均值
     expenditure_day: exp,
-    expenditure_source: baseSrc,
+    expenditure_base: baseExp,     // 只给「目标」用：有实测就用实测，保证每天目标稳定
+    expenditure_source: src,
+    expenditure_base_source: baseSrc,
     expenditure_detail: detail,
-    balance: Math.round(baseExp - intake),
+    balance: Math.round(exp - intake),
     watch,
     targets: targetsOf(p, baseExp),
     profile: p,

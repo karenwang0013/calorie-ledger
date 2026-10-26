@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.68', d: '10-26', items: [
+    '修：每一天的「消耗」都显示成同一个数（2067）—— 上一版把实测平均值当成了每天的实际消耗，现在这一格回到当天自己的值：今天按"到现在"折算（上午 11 点显示 785，不是全天的 2067），历史日期是那天的全天值（10-25 是 1889、10-22 是 2045）',
+    '改：今天圆环里的字改成「还可以吃」—— 那个数本来就是"日目标 − 已吃"，写成"热量缺口 2067"会让人以为已经缺了 2067；历史日期仍然显示那天的实际缺口/盈余',
+    '目标（每日可吃）保持不变：还是按实测 2067 算，所以每天的目标是稳定的，不会因为你上午没戴表就变',
+  ] },
   { v: 'v9.67', d: '10-26', items: [
     '修：刚打开卡片、马上向下拖却没反应，要停一会儿才行 —— 判断「手是不是按在横杠上」用的是卡片自己的位置，而卡片打开时有一段 0.42 秒的上滑动画，动画期间那个位置还在屏幕外，于是怎么拖都不算数',
     '现在改成按横杠自己的位置判断（它跟着卡片一起动），并且按下就会响应（原来要先滑 4px 才算，现在 2px），刚打开也能立刻拖着关',
@@ -2699,7 +2704,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.67';
+const APP_VERSION = 'v9.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2864,10 +2869,17 @@ function renderToday() {
   const expFull = d.expenditure;          // 全天预估/实际
   const balFull = d.balance;
 
-  // v9.65：不再按「到现在为止」折算。折算值只对"今天"成立，历史日期是全天值，
-  // 结果同一个屏上「消耗 − 摄入」永远不等于「还可以吃」（凌晨还会显示消耗 1 千卡）。
-  // 现在全用全天口径，圆环里的数就等于「还可以吃」，三个数能互相验算。
-  const exp = expFull;
+  // v9.68：今天这一格回到「到现在为止」——上午显示全天消耗会被看成"我没动怎么烧了 2000"。
+  // 目标（可吃）仍然按「实测/估算的日目标」算，两者是两回事，标签上写清。
+  let exp = expFull;
+  if (d.date === S.today) {
+    const start = new Date(d.date + 'T00:00:00').getTime();
+    const frac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
+    const det = d.expenditure_detail || {};
+    if (det.active && det.resting) exp = Math.round(det.resting * frac) + det.active;
+    else if (det.total) exp = Math.round(det.total * frac);
+    else exp = Math.round(expFull * frac);
+  }
   const left = t.kcal_budget - intake;
   const bal = left;
 
@@ -2938,21 +2950,26 @@ function renderToday() {
 
   const goalDef = Math.round(t.deficit);   // 正=缺口，负=盈余
   let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
-  if (bal < 0) {
+  // v9.68：今天圆环显示「还可以吃」（= 日目标 − 已吃）；历史日期显示那天的实际缺口/盈余。
+  // 以前两处都写「热量缺口」，但今天那个数其实是目标余额，读起来像"已经缺了 2067"。
+  if (d.date === S.today) {
+    hero.classList.remove('surplus');
+    if (left < 0) { hero.classList.add('surplus'); $('#heroLbl').textContent = '已经超出'; $('#heroNum').textContent = Math.abs(left); }
+    else { $('#heroLbl').textContent = '还可以吃'; $('#heroNum').textContent = left; }
+  } else if (balFull < 0) {
     hero.classList.add('surplus');
     $('#heroLbl').textContent = '热量盈余';
-    $('#heroNum').textContent = Math.abs(bal);
+    $('#heroNum').textContent = Math.abs(balFull);
   } else {
     $('#heroLbl').textContent = '热量缺口';
-    $('#heroNum').textContent = bal;
+    $('#heroNum').textContent = balFull;
   }
   $('#heroSub').textContent = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
-  // v9.65：这一格用统一口径（优先实测），标一下来源，省得以为和手表对不上。
+  // v9.68：这一格是「当天到现在」的实际/估算；目标（可吃）另算，别再混为一谈
   const expLbl = $('#stExpLbl');
-  const isMeasured = /实测/.test(String(d.expenditure_source || ''));
-  if (expLbl) expLbl.textContent = isMeasured ? '消耗（实测）' : '消耗';
+  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
@@ -6257,7 +6274,7 @@ function renderMe() {
         <div class="field">
           <label>每日可吃（千卡）</label>
           <input id="nKcal" type="number" inputmode="numeric" value="${d.targets.kcal_budget}">
-          <div class="hint" id="nKcalHint">= 全天消耗 ${d.expenditure} ${d.targets.deficit >= 0 ? '− 缺口 ' + Math.abs(d.targets.deficit) : '+ 盈余 ' + Math.abs(d.targets.deficit)}<br><span style="color:var(--muted2)">全天消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
+          <div class="hint" id="nKcalHint">= ${d.expenditure_base && d.expenditure_base !== d.expenditure ? `实测/估算的日目标 ${d.expenditure_base}` : `全天消耗 ${d.expenditure}`} ${d.targets.deficit >= 0 ? '− 缺口 ' + Math.abs(d.targets.deficit) : '+ 盈余 ' + Math.abs(d.targets.deficit)}<br><span style="color:var(--muted2)">今天的消耗 = 基础代谢 ${(d.expenditure_detail && d.expenditure_detail.resting) ? Math.round(d.expenditure_detail.resting) : '—'} + 手表活动 ${(d.expenditure_detail && d.expenditure_detail.active) ? Math.round(d.expenditure_detail.active) : '—'}</span></div>
         </div>
         <div class="field">
           <label>蛋白质（g）</label>
