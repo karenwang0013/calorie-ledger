@@ -3052,10 +3052,11 @@ html.kb #setSheet {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
 }
 
-/* 信息卡打开时：提示条挪到顶栏下面，别压住卡里「版本更新 / 清空记录」那一行 */
-body.set-open .toast, body.nlog-open .toast {
-  top: calc(var(--topbar-h, 64px) + 8px);
-  bottom: auto;
+/* 卡牌打开时：提示条跟着卡牌走，贴在这张卡顶边上方固定距离（--toast-bottom 由 JS 的 placeToast() 现算）。
+   以前写死「顶栏下 8px」，卡牌一高就离得很远。 */
+.toast[data-at="card"] {
+  top: auto;
+  bottom: var(--toast-bottom);
 }
 
 /* 记录卡里的按钮也带图标：和文字同一中心线，尺寸固定 18，圆角和间距不动 */

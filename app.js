@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.81', d: '10-26', items: [
+    '改：应用内提示条（「数据刷新成功」「手表同步成功」这类弹窗）不再死贴在顶栏下面 —— 现在跟着卡牌走：不管开的是设置卡、提醒记录卡、记录卡（搜索/拍照）、体重或营养卡，提示条都贴在**这张卡顶边上方 12px**，卡大卡小都是这 12px，跟卡一起上下',
+    '说明：提示条有 1 行 / 2 行 / 3 行都同一个间距（按底边算，不会因为折行变远）；没有卡牌打开时，仍然停在 Dock 上方（和以前一样，24px）',
+  ] },
   { v: 'v9.80', d: '10-26', items: [
     '改：提醒记录的内容区底部留了 16px 空隙 —— 原来滚到底时最后一行文字离下面「共 N 条 / 清空记录」那一栏只有 12px，几乎是贴着按钮顶边消失的；现在滚到底有 28px（16px 留白 + 行自己的下内边距）',
     '没动的：卡片高度仍然固定（4 条 / 6 条 / 14 条都是同一个高度，只在里面滚）；顶部到「今天」小字还是 2px；底部那一栏位置不变',
@@ -2766,7 +2770,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.80';
+const APP_VERSION = 'v9.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2814,6 +2818,64 @@ function updToast(what, date, device, ms = 2600) {
   toast(main, ms, alt);
 }
 
+/* v9.81：卡牌（设置卡 / 提醒记录 / 记录卡…）打开时，提示条跟着这张卡走 ——
+   贴在卡牌顶边上方，**离卡牌的距离固定**（TOAST_CARD_GAP），不管卡牌高矮都同一个数。
+   以前是死贴在顶栏下面 8px，卡一高就显得飘在半空、离卡很远。
+   距离由 JS 现算写进 --toast-bottom（用 bottom 定位，和提示条几行无关）；
+   没有卡牌打开时清掉，退回「Dock 上方」那条老规则（底部那条没动）。 */
+const TOAST_CARD_GAP = 12;   // 提示条底边 ↔ 卡牌顶边（定死，不随卡牌大小、也不随提示条几行变）
+let toastRetryT = 0;
+function toastGap() {
+  const tb = document.querySelector('.topbar');
+  if (!tb) return null;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const top = tb.getBoundingClientRect().bottom;
+  // 所有浮层卡都算：设置 / 提醒记录 / 记录卡 / 体重 / 营养 / 帮助（.sheet）、详情卡（.modal）、改名小卡（.rnalert）
+  const tops = [...document.querySelectorAll('.sheet.on, .modal.on, .rnalert.on')]
+    .map(s => s.getBoundingClientRect())
+    .filter(r => r.height > 2 && r.top > top + 2 && r.top < vh - 4)   // 还在屏幕外往上滑的那一下不算
+    .map(r => r.top);
+  if (!tops.length) return null;
+  return { top, cardTop: Math.min(...tops) };   // 多张卡叠着时按最高的那张算
+}
+function placeToast() {
+  const t = $('#toast');
+  if (!t) return;
+  const g = toastGap();
+  if (!g) {
+    // 卡刚点开、还在往屏幕里滑：先别动，等它落稳再量（否则会用量到屏幕外的位置）
+    if (document.querySelector('.sheet.on, .modal.on, .rnalert.on')) {
+      clearTimeout(toastRetryT);
+      toastRetryT = setTimeout(placeToast, 240);
+      return;
+    }
+    t.removeAttribute('data-at');
+    t.style.removeProperty('--toast-bottom');
+    return;
+  }
+  // 用 bottom 定位：跟提示条自己有几行无关，离卡牌顶边永远是 TOAST_CARD_GAP
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  let bottom = vh - g.cardTop + TOAST_CARD_GAP;
+  const h = t.offsetHeight || 44;
+  const maxBottom = vh - (g.top + 4) - h;        // 缝太窄时的下限：不压顶栏
+  if (bottom > maxBottom) bottom = maxBottom;
+  if (bottom < 0) bottom = 0;                    // 兜底：绝不让它跑出屏幕
+  t.setAttribute('data-at', 'card');
+  t.style.setProperty('--toast-bottom', bottom.toFixed(1) + 'px');   // 保留小数，免得整 px 取整让间距差 0.5px
+}
+/* 卡牌开 / 关、换一张卡的那一下重新落位（只在提示条正显示时做） */
+try {
+  new MutationObserver((muts) => {
+    const t = $('#toast');
+    if (!t || !t.classList.contains('on')) return;
+    const relevant = muts.some(m => m.target === document.body ||
+      (m.target.matches && m.target.matches('.sheet, .modal, .rnalert')));
+    if (!relevant) return;
+    requestAnimationFrame(placeToast);
+    setTimeout(placeToast, 360);                // 卡牌滑上来约 .3s，落稳后再量一次
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+} catch (e) {}
+
 /* v9.76：提示条改成「排队」，不再互相顶掉。
    以前两条提示挨着来（比如「热量采集成功」+「体重采集成功」）后一条直接把前一条盖掉，
    用户就只看到一条、甚至以为没提示。现在：正在显示时，新的先排队，最多排 3 条，逐条显示。 */
@@ -2842,6 +2904,7 @@ function toast(msg, ms = 2200, alt) {
     } catch (e) {}
   }
   clearTimeout(toastTimer);
+  placeToast();                                 // 卡牌开着时：贴到卡牌顶边上方固定距离（v9.81）
   toastTimer = setTimeout(() => {
     t.classList.remove('on');
     toastTimer = null;

@@ -103,5 +103,15 @@
     "file": "style.css",
     "find": "#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px 16px; }",
     "why": "v9.80 提醒记录内容区底部留 16px：滚到底时最后一行文字不再贴着底部栏消失（改前 12px → 改后 28px）"
+  },
+  {
+    "file": "app.js",
+    "find": "const TOAST_CARD_GAP = 12;",
+    "why": "提示条离卡牌顶边 12px（2026-10-26 用户定：不管卡片大小、不管几行提示，距离定死；没有卡牌才回 Dock 上方）"
+  },
+  {
+    "file": "style.css",
+    "find": ".toast[data-at=\"card\"] {",
+    "why": "提示条跟卡牌走的定位规则（用 bottom 定位，跟提示条高度无关）——删掉就退回死贴顶栏"
   }
 ]
