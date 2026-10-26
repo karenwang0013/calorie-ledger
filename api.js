@@ -448,16 +448,37 @@ function daySummary(date) {
   const [exp0, src0, detail] = tdeeOf(p, watchForCalc, latestWeight());
   const exp = exp0;
   const src = carried ? `${src0}（沿用 ${carried.slice(5)} 的手表数据）` : src0;
-  // v9.65：目标和首页那一格统一到「实测消耗」—— 体重反推出来的那个数才是把所有估算误差
-  // （拍照、克重、手表）都吃掉之后的结果。有它就全用它；没有才退回手表/公式那一天的值。
-  // 这样「消耗 − 摄入 = 还可以吃」能对上，同一天也不会因为手表数据晚到而跳。
-  let measured = null;
+  // v9.69：目标用哪个数，分三档（都要求「和今天的当次读数无关」，否则一天里会跳）：
+  //   ① 实测（体重反推）可信（置信度 中等/较高：≥7 天 + 饮食覆盖 ≥50%）→ 用它，最接近真实
+  //   ② 否则用「最近 7 个完整日」的手表均值（不含今天，避免把半天的数据当全天）
+  //   ③ 连手表历史都没有 → 当天这个值
+  // 上一版（v9.65）只要有实测就用，可实测当时只有 40% 覆盖、r²=0.40，事实上是个低置信度估算，
+  // 却被当成每日目标 → 一整天都在用一个偏高的数。
+  let measured = null, measuredOk = false;
   try {
     const rt = computeRealTdee(d).real;
-    if (rt && rt.tdee > 800 && rt.tdee < 6000) measured = rt.tdee;
+    if (rt && rt.tdee > 800 && rt.tdee < 6000) {
+      measured = rt.tdee;
+      measuredOk = (rt.span_days >= 7 && rt.coverage >= 50 && rt.confidence !== '偏低');
+    }
   } catch (e) { /* 没数据就算了 */ }
-  const baseExp = measured || exp;
-  const baseSrc = measured ? '实测（体重反推）' : src;
+  const bmrNow = bmrOf(p);
+  let watchAvg = null, watchAvgN = 0;
+  const doneDays = Object.keys(d.daily || {})
+    .filter(k => String(k) < String(todayISO()) && hasWatch(d.daily[k]))
+    .sort().slice(-7);
+  if (doneDays.length >= 3) {
+    let s = 0;
+    doneDays.forEach(k => {
+      const w = d.daily[k];
+      const v = (Number(w.total) > 500) ? Number(w.total) : bmrNow + Number(w.active || 0);
+      if (v > 500) { s += v; watchAvgN++; }
+    });
+    if (watchAvgN) watchAvg = Math.round(s / watchAvgN);
+  }
+  const baseExp = measuredOk ? measured : (watchAvg || exp);
+  const baseSrc = measuredOk ? '实测（体重反推）'
+    : (watchAvg ? `最近 ${watchAvgN} 天手表均值` : src);
   // 只把当天这几条记录的小图带出来（现在图在 IndexedDB 的内存镜像里，不占 localStorage）
   const shots = {};
   logs.forEach(l => {
@@ -610,7 +631,8 @@ function computeTrends(days) {
     });
   }
 
-  const logged = series.filter(s => s.intake);
+  // v9.69：今天还没过完，把它算进"平均缺口"会把平均值拉低（中午只有半天摄入）
+  const logged = series.filter(s => s.intake && s.date !== todayISO());
   const avgIntake = logged.length
     ? Math.round(logged.reduce((a, b) => a + b.intake, 0) / logged.length) : 0;
   const avgExp = series.length
@@ -630,8 +652,9 @@ function computeTrends(days) {
     days, start, end: today, series,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
-    // v9.65：有实测就用实测（同一批日子、和体重曲线同源），否则才用手表/公式那批
-    avg_balance: avgIntake ? Math.round((real ? real.tdee : avgExpLogged) - avgIntake) : null,
+    // v9.69：回到「同一批有记录的日子、按手表口径」——和下面那排柱子一一对应。
+    // 实测（体重反推）在置信度不够时只是个粗估（现在只有 40% 覆盖），单独展示、不参与这个平均值。
+    avg_balance: avgIntake ? Math.round(avgExpLogged - avgIntake) : null,
     logged_days: logged.length,
     real_tdee: real,
     real_missing: realMissing,
