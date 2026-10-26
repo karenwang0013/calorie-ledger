@@ -18,6 +18,9 @@ const MEAL_NAME = Object.fromEntries(MEALS.map(m => [m.k, m.n]));
 // 名字边上的小铅笔（记录列表 / 识别结果都用它）
 const PEN_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.2" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.8" cy="12" r="2"/></svg>`;
 
+// v9.85：复制一条记录用的图标（Material Symbols content_copy，和别的图标同一套内联 SVG）
+const COPY_ICON = `<svg viewBox="0 -960 960 960" fill="currentColor"><path d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/></svg>`;
+
 // 名字 + 后面那个小铅笔：永远同一行，名字太长就省略尾巴，铅笔不会被挤到下一行
 function nameLine(name, attr) {
   return `<span class="nameline"><span class="nmtxt">${esc(name || '')}</span>`
@@ -25,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.85', d: '10-26', items: [
+    '新增：每一条记录右边多了一个「复制」按钮（⧉，在 × 左边）—— 上午记过的酸奶、下午还想再来一份，不用拍照也不用重新识别：点一下就知道克数、热量，改克数热量当场跟着算，餐次自己挑（早/午/点心/晚/加餐），按「记一条」就多一条，原来那条一个字不动',
+    '说明：合并成一行的多条（比如「雪菜肉丝面 5 项」）这次先不做复制；点开那一组以后仍然可以看明细',
+  ] },
   { v: 'v9.84', d: '10-26', items: [
     '改：每餐右上角那个千卡数字（「445 千卡」）改成跟前面的餐名（「早餐」）同一个字号、同一个白色 —— 原来它是灰的、还小一号（12px 灰 vs 13.5px 白）',
     '说明：iPad 和手机横屏也跟着同号（15 / 16px 两档一起对齐）；没动字重、没动位置（数字还是贴右边，和餐名同一中心线）',
@@ -2783,7 +2790,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.84';
+const APP_VERSION = 'v9.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3201,6 +3208,7 @@ function renderMeals() {
         </div>
         <div class="k">${Math.round(l.kcal)}${l.source === 'photo' || l.source === 'ai' ? ' <span class="ai">AI</span>' : ''}</div>
         <span class="chev">›</span>
+        <button class="cp" data-cp="${l.id}" aria-label="复制这一条">${COPY_ICON}</button>
         <button class="del" data-del="${l.id}">×</button>
       </div>`;
 
@@ -3259,7 +3267,7 @@ function renderMeals() {
   groupMap = groupsById;
   $$('[data-group]', box).forEach(b => b.onclick = () => openGroup(b.dataset.group));
   $$('[data-item]', box).forEach(b => b.onclick = ev => {
-    if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]')) return;
+    if (ev.target.closest('[data-del]') || ev.target.closest('[data-pen]') || ev.target.closest('[data-gdel-g]') || ev.target.closest('[data-cp]')) return;
     openDetail([d.logs.find(l => String(l.id) === b.dataset.item)].filter(Boolean), false);
   });
 
@@ -3315,6 +3323,11 @@ function renderMeals() {
     } catch (e) { toast(e.message); }
   });
 
+  // v9.85：复制这一条（弹出克数 + 餐次的小卡）
+  $$('[data-cp]', box).forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    openCopy(d.logs.find(l => String(l.id) === b.dataset.cp));
+  });
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     try {
@@ -5120,6 +5133,81 @@ function wireRename() {
   mask.onclick = () => closeRename(null);
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
 }
+/* ---------------- 复制一条记录（v9.85） ----------------
+   场景：上午已经记过酸奶，下午还想再来一杯，不想再拍照 / 重新识别。
+   点那条记录右边的 ⧉ → 这张小卡：克数可以改（热量当场按比例算）、
+   餐次自己挑（默认停在这条原来那一餐）、按「记一条」＝新增一条，原来那条不动。 */
+let cpLog = null;
+let cpMeal = 'lunch';
+
+function cpPer100(v) {
+  const g0 = Number(cpLog && cpLog.grams) || 0;
+  return g0 > 0 ? (Number(v) || 0) / g0 * 100 : (Number(v) || 0);
+}
+function syncCpKcal() {
+  const out = $('#cpKcal');
+  if (!out || !cpLog) return;
+  const g = Number($('#cpG').value) || 0;
+  out.textContent = Math.round(cpPer100(cpLog.kcal) * g / 100) + ' 千卡';
+}
+function openCopy(l) {
+  if (!l) return;
+  cpLog = l;
+  cpMeal = l.meal || 'other';
+  $('#cpName').textContent = l.name || '未命名';
+  const g0 = Number(l.grams) || 0;
+  $('#cpG').value = g0 > 0 ? Math.round(g0 * 10) / 10 : 100;
+  syncCpKcal();
+  $$('#cpMealPick [data-cmeal]').forEach(b => b.classList.toggle('on', b.dataset.cmeal === cpMeal));
+  $('#cpMask').classList.add('on');
+  $('#cpSheet').classList.add('on');
+  setTimeout(() => { const i = $('#cpG'); try { i.focus(); i.select(); } catch (e) {} }, 180);
+}
+function closeCopy() {
+  const inp = $('#cpG'); if (inp) inp.blur();
+  $('#cpMask').classList.remove('on');
+  $('#cpSheet').classList.remove('on');
+  cpLog = null;
+}
+async function saveCopy() {
+  if (!cpLog) return;
+  const g = Number($('#cpG').value) || 0;
+  if (!(g > 0)) { const i = $('#cpG'); if (i) i.focus(); return toast('先填克数（这次吃了多少克）', 2600); }
+  const src = cpLog;
+  const it = {
+    name: src.name,
+    grams: g,
+    kcal_per_100g: cpPer100(src.kcal),
+    protein_per_100g: cpPer100(src.p),
+    carb_per_100g: cpPer100(src.c),
+    fat_per_100g: cpPer100(src.f),
+    confidence: Number(src.confidence ?? 1),
+  };
+  const meal = cpMeal;
+  closeCopy();
+  try {
+    await api('/api/logs', { date: S.date, meal, items: [it], source: src.source || 'manual' });
+    toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
+    await loadDay();
+    if (S.view === 'trends') loadTrends();
+  } catch (e) {
+    toast(e.message, 4000);
+  }
+}
+function wireCopy() {
+  const save = $('#cpSave'), cancel = $('#cpCancel'), mask = $('#cpMask'), inp = $('#cpG');
+  if (!save || !inp) return;
+  save.onclick = saveCopy;
+  cancel.onclick = closeCopy;
+  mask.onclick = closeCopy;
+  inp.addEventListener('input', syncCpKcal);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveCopy(); } });
+  $$('#cpMealPick [data-cmeal]').forEach(b => b.onclick = () => {
+    cpMeal = b.dataset.cmeal;
+    $$('#cpMealPick [data-cmeal]').forEach(x => x.classList.toggle('on', x === b));
+  });
+}
+
 /* 系统确认框 / 提示框，同样带磨砂背景 */
 const confirmFrosted = msg => frostedSystemCall(() => confirm(msg));
 const alertFrosted = msg => frostedSystemCall(() => alert(msg));
@@ -7952,6 +8040,7 @@ function init() {
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
   wireAddDrag();   // 记录卡片：下滑关闭
   wireRename();    // 改名小卡（和营养编辑共用同一层遮罩）
+  wireCopy();      // 复制一条记录的小卡（v9.85）
   $$('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});

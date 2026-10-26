@@ -673,6 +673,13 @@ body.add-open .sheet-mask.on {
 }
 .mitem .k .ai { color: var(--blue); font-size: 10px; }
 .mitem .del { color: var(--muted2); font-size: 15px; padding: 2px 0 2px 8px; }
+/* v9.85：每条右边的「复制这一条」按钮（在 × 左边，图标用 SVG，不用字符） */
+.mitem .cp {
+  flex: 0 0 auto; width: 24px; height: 24px; padding: 0; border: 0; background: none;
+  color: var(--muted2); display: grid; place-items: center;
+}
+.mitem .cp svg { width: 16px; height: 16px; }
+.mitem .cp:active { opacity: .55; }
 
 /* 通知页里可直接复制的文字块 */
 .copybox {
@@ -1383,6 +1390,28 @@ body.add-open .sheet-mask.on {
 }
 .rnalert-btns button.prim { background: var(--lime); color: #0a0b0c; }
 .rnalert-btns button:active { opacity: .75; }
+
+/* v9.85：复制一条记录的小卡（照改名小卡的卡体，多出「克数 + 餐次」两行） */
+.cpcard { width: min(88vw, 342px); }
+.cp-head { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.cp-head .cp-title { font-size: 11.5px; color: var(--muted); letter-spacing: .4px; }
+.cp-head .cp-name {
+  max-width: 100%; font-size: 15.5px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cp-row { display: flex; align-items: center; gap: 8px; }
+.cp-row label { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); }
+.cp-row #cpG {
+  flex: 1 1 auto; min-width: 0; height: 44px; padding: 0 10px;
+  text-align: center; font-size: 16px; font-weight: 600; border-radius: 14px;
+}
+.cp-row .unit { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); }
+.cp-row .cp-kcal { margin-left: auto; flex: 0 0 auto; white-space: nowrap; font-size: 13.5px; color: var(--text); font-variant-numeric: tabular-nums; }
+/* 数字框别显示系统上下箭头（桌面上会挤掉一半宽度） */
+.cp-row #cpG::-webkit-outer-spin-button,
+.cp-row #cpG::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cp-row #cpG { -moz-appearance: textfield; appearance: textfield; }
+.cp-meals { justify-content: center; }
 
 /* 弹在中间的卡片（提醒记录 / 营养编辑）不该从屏幕底部一路滑上来 ——
    那样最后一步看着像"往上跳一下"。改成原地轻轻浮起 24px + 淡入 */
