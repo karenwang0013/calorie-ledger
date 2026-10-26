@@ -655,7 +655,8 @@ body.add-open .sheet-mask.on {
 .meal .hd .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted2); }
 .meal.has .hd .dot { background: var(--lime); }
 .meal .hd .nm { font-size: 13.5px; font-weight: 560; }
-.meal .hd .kc { margin-left: auto; font-size: 12px; color: var(--muted2); font-variant-numeric: tabular-nums; }
+/* v9.84：千卡数字的字号和颜色跟前面的餐名一样（用户口径：和「早餐」那种字一样大、一样白） */
+.meal .hd .kc { margin-left: auto; font-size: 13.5px; color: var(--text); font-variant-numeric: tabular-nums; }
 .meal .items { padding: 0 14px 4px; }
 .mitem {
   display: flex; align-items: center; gap: 10px;
@@ -2268,7 +2269,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .meal { border-radius: 18px; }
   .meal .hd { padding: 15px 16px 13px; }
   .meal .hd .nm { font-size: 15px; }
-  .meal .hd .kc { font-size: 13px; }
+  .meal .hd .kc { font-size: 15px; }   /* v9.84：跟着餐名一起放 */
   .meal .items { padding: 0 16px 6px; }
   .mitem { padding: 12px 0; font-size: 15px; gap: 11px; }
   .mitem .n .sub { font-size: 12px; margin-top: 3px; }
@@ -2339,6 +2340,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .stats .v { font-size: 28px; }
   .stats .k { font-size: 12.5px; }
   .meal .hd .nm { font-size: 16px; }
+  .meal .hd .kc { font-size: 16px; }   /* v9.84：横屏跟餐名同号 */
   .mitem { font-size: 15.5px; }
   .mitem .n .sub { font-size: 12.5px; }
   .barchart { height: 210px; }
