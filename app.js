@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.88', d: '10-26', items: [
+    '改：复制的时候照片也一起复制 —— 复制出来的那条（或那一组）照样带原来的缩略图，原来那条不动；整组复制时整组共用这一张',
+    '说明：原来没有照片的（手记的、老数据）复制出来也没有照片；照片是本地 + 云端各存一份副本，换设备后照样能拉回来',
+  ] },
   { v: 'v9.87', d: '10-26', items: [
     '改：食物名字不再一路顶到右边的数字跟前 —— 最长只比下面那行「150g · 蛋15·碳6·脂0」再长一点点，超出就是省略号（长菜名如「中式盖浇饭套餐：白米饭配红烧鸡块…」不会再横穿整行）',
     '新增：「雪菜肉丝面 · 5 项」这种多条合并成的一行，右边也有复制按钮了 —— 点开显示「N 项 · 共 xxx 千卡」，选好餐次按「记一条」就整组复制过去（还是并成一行，不拆开）',
@@ -2799,7 +2803,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.87';
+const APP_VERSION = 'v9.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5184,6 +5188,16 @@ let cpLog = null;
 let cpGroup = null;      // 非空 = 正在整组复制（「5 项」那种合并行）
 let cpMeal = 'lunch';
 
+/* 复制时把照片一起搬过来：优先内存里的（刚拍过/刚看过），没有就从云端按需拉一次。
+   拿不到就返回空串（老数据没图、或换过设备云端也没有）—— 不能因为这个把记账搞失败。 */
+async function copyPhotoOf(batch) {
+  const b = String(batch || '');
+  if (!b) return '';
+  const local = shotUrl(b);
+  if (local) return local;
+  try { return (await ensurePhoto(b)) || ''; } catch (e) { return ''; }
+}
+
 function cpPer100(v) {
   const g0 = Number(cpLog && cpLog.grams) || 0;
   return g0 > 0 ? (Number(v) || 0) / g0 * 100 : (Number(v) || 0);
@@ -5255,13 +5269,15 @@ async function saveCopy() {
       };
     });
     const total = Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0));
-    const batch = 'b' + Date.now();
+    const shot = await copyPhotoOf(logs[0].batch);     // v9.88：整组复制也把那张照片带过来
+    const batch = shot ? ('c' + Date.now()) : ('b' + Date.now());
     closeCopy();
     try {
       await api('/api/logs', {
         date: S.date, meal, items,
         source: logs[0].source || 'manual',
         batch, batchName: logs[0].batchName || '',
+        shot: shot || undefined,
       });
       toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'} · ${total} 千卡`);
       await loadDay();
@@ -5285,9 +5301,16 @@ async function saveCopy() {
     confidence: Number(src.confidence ?? 1),
   };
   const meal = cpMeal;
+  const shot = await copyPhotoOf(src.batch);          // v9.88：照片跟着一起复制
+  const nb = shot ? ('c' + Date.now()) : '';          // 新 batch（不共用原组的 id，否则会被并回原来那一行）
   closeCopy();
   try {
-    await api('/api/logs', { date: S.date, meal, items: [it], source: src.source || 'manual' });
+    await api('/api/logs', {
+      date: S.date, meal, items: [it], source: src.source || 'manual',
+      batch: nb || undefined,
+      batchName: nb ? (src.batchName || '') : undefined,
+      shot: shot || undefined,
+    });
     toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
     await loadDay();
     if (S.view === 'trends') loadTrends();
