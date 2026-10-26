@@ -25,6 +25,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.70', d: '10-26', items: [
+    '修（iPad 横屏）：点开记录卡后，卡顶的「拍照 / 搜索」两个按钮被顶栏挡住、点不到 —— 卡片量出来的高度（743）比可用高度（644）还大，而 CSS 里 min-height 会压过 max-height，卡片就比屏幕还高、顶边钻到顶栏后面',
+    '修：横屏/iPad 上两个照片格被撑得极大（半屏宽 ×1.36 = 499px 高），整张卡跟着变得过高；现在加了「不超过可视高度 40%」的上限',
+    '修：卡片内容比卡高时不会自己缩、也不会滚 —— 少了 min-height:0，内容被卡片底边裁掉，「拍照 / 从相册选」点不到；现在内容区会缩并在卡内滚动',
+    '修：横竖屏切换后仍沿用上一个方向量出来的卡片高度；现在转屏会自动清掉重量',
+    '说明：手机横屏（高度只有 394）时，记录卡内容仍需要上滑才能看到「从相册选」—— 这块屏幕本来放不下，能滑到就是正常',
+  ] },
   { v: 'v9.69', d: '10-26', items: [
     '改：每日目标不再用「体重反推的实测值」—— 它现在只有 40% 的天数有饮食记录、拟合度 0.40，属于低置信度估算（App 自己都标着「偏低」），拿它当目标等于把误差摊到每天',
     '现在目标的取法：实测达到「中等」以上才用它；否则用「最近 7 个完整日的手表均值」（今天 1938 千卡），跟当天读数无关，所以一天里不会跳',
@@ -2710,7 +2717,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.69';
+const APP_VERSION = 'v9.70';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3442,9 +3449,12 @@ function syncSlotH() {
   if (!box) return;
   const w = box.clientWidth;
   if (!w) return;
-  /* v9.52：照片大框去掉了 → 盒子不再有 12×2 的内边距，只剩两列之间那道 12 */
+  /* v9.70：横屏 / iPad 上这条会算出巨大的高度（半屏宽 ×1.36，iPad 横屏一半宽 367 → 高 499），
+     整张记录卡被撑得比屏幕还高，顶到顶栏后面，把「拍照 / 搜索」两个按钮挡住。
+     现在再加一条「不超过可视高度 40%」的上限。 */
   const inner = w - 12;            // 两列之间的间距 12
-  const slotH = Math.round((inner / 2) * 1.36);   // 1 : 1.36（v9.48 定的比例）
+  const cap = Math.round(window.innerHeight * 0.40);
+  const slotH = Math.min(Math.round((inner / 2) * 1.36), cap);
   if (slotH > 40) document.documentElement.style.setProperty('--slot-h', slotH + 'px');
 }
 
@@ -7262,9 +7272,13 @@ async function pullBodyHistory() {
     let txt = '';
     try { const r0 = await fetchT('body-history.json?t=' + Date.now(), { cache: 'no-store' }, 4000); if (r0.ok) txt = await r0.text(); } catch (e) {}
     if (!txt) txt = await giteeGetText('body-history.json');
-    const j = JSON.parse(txt);
+    // v9.71：{"items":[]} = 还没有历史，属于正常，不算错误（以前每次打开都弹 E07「文件内容被改坏了」）
+    let j;
+    try { j = JSON.parse(txt); } catch (e) {
+      logError('err-history', '身体历史读取失败', 'body-history.json 解析失败（文件被改坏）'); return 0;
+    }
     const items = Array.isArray(j && j.items) ? j.items : [];
-    if (!items.length) { logError('err-history', '身体历史读取失败', 'body-history.json 是空的或格式不对'); return 0; }
+    if (!items.length) return 0;
     const d = Store.load();
     d.body = d.body || {}; d.weights = d.weights || {};
     let n = 0;
@@ -7357,7 +7371,10 @@ async function pullBodyJson(forceFresh, light) {
       return { i: 0, d: String(j.d || '').slice(0, 10), hasVal, t: isFinite(tNum) ? tNum : 0 };
     };
     const cands = [];
-    got.forEach((t, i) => { const inf = infoOf(t); if (inf) { inf.i = i; cands.push(inf); } });
+    // v9.71：全空模板（{"d":"","w":"","bf":"","bmi":"","ffm":""}）不能当候选。
+    // 起因：GitHub 上的 body.json 停在 10-24 快捷指令写坏的那份全空文件，
+    // 每 60 秒轻量轮询只读镜像 + raw 两路 → 两路都是空 → 以前会当成「云端身体数据是空的」弹 E99。
+    got.forEach((t, i) => { const inf = infoOf(t); if (inf && inf.hasVal) { inf.i = i; cands.push(inf); } });
     // v8.26：镜像比本机这份还旧（GitHub 常常晚几分钟才发布）→ 当作没读到，回退问 Gitee
     if (light && cands.length && Date.now() - _giteeLightAt > 90000 && giteeBlockedUntil < Date.now()) {
       try {
@@ -8528,6 +8545,13 @@ function init() {
     syncDockR();
     // 横竖屏切换后「关于」页的铺满高度要重算，否则会照搬竖屏的高度
     if (typeof fitAboutFill === 'function') fitAboutFill();
+    // v9.70：--add-static-h 是按"当时那个方向"量出来的（竖屏 517 / 横屏 743），
+    // 转屏后必须清掉重量，否则会拿竖屏的高度去撑横屏的卡（顶栏把按钮盖住就是这个引起的）。
+    try {
+      document.documentElement.style.removeProperty('--add-static-h');
+      syncSlotH();
+      if (addCardOn()) syncAddSheetFit();
+    } catch (e) {}
   };
   window.addEventListener('resize', relayout);
   window.addEventListener('orientationchange', relayout);
@@ -8641,7 +8665,7 @@ function init() {
   const grabBody = (retry) => pullBodyJson().then(j => {
     if (j) {
       try { refreshBodyViews(); } catch (e) {}   // v8.21：停在「设置→身体数据」时也要重画
-      try { clearErr('err-body'); clearErr('err-history'); } catch (e) {}
+      try { clearErr('err-body'); clearErr('err-history'); clearErr('err-body-empty'); } catch (e) {}
       // v9.62：只有值真的变了才弹「✅ 已更新」。以前每次打开都弹，
       // 还会把用户刚触发的提示（记入成功 / 备份完成 / 找不到食物）顶掉。
       const fresh = !j.same && !j.stale;
