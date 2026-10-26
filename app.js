@@ -2831,12 +2831,14 @@ function toastGap() {
   const vh = document.documentElement.clientHeight || window.innerHeight;   // 和 getBoundingClientRect 同一套坐标（window.innerHeight 在有滚动条时会差 2px）
   const top = tb.getBoundingClientRect().bottom;
   // 所有浮层卡都算：设置 / 提醒记录 / 记录卡 / 体重 / 营养 / 帮助（.sheet）、详情卡（.modal）、改名小卡（.rnalert）
-  const tops = [...document.querySelectorAll('.sheet.on, .modal.on, .rnalert.on')]
-    .map(s => s.getBoundingClientRect())
-    .filter(r => r.height > 2 && r.top > top + 2 && r.top < vh - 4)   // 还在屏幕外往上滑的那一下不算
-    .map(r => r.top);
-  if (!tops.length) return null;
-  return { top, cardTop: Math.min(...tops) };   // 多张卡叠着时按最高的那张算
+  let el = null, cardTop = Infinity;
+  for (const s of document.querySelectorAll('.sheet.on, .modal.on, .rnalert.on')) {
+    const r = s.getBoundingClientRect();
+    // 还在屏幕外往上滑的那一下不算；多张卡叠着时按最高的那张算
+    if (r.height > 2 && r.top > top + 2 && r.top < vh - 4 && r.top < cardTop) { cardTop = r.top; el = s; }
+  }
+  if (!el) return null;
+  return { top, cardTop, el };
 }
 function placeToast() {
   const t = $('#toast');
@@ -2862,6 +2864,14 @@ function placeToast() {
   if (bottom < 0) bottom = 0;                    // 兜底：绝不让它跑出屏幕
   t.setAttribute('data-at', 'card');
   t.style.setProperty('--toast-bottom', bottom.toFixed(1) + 'px');   // 保留小数，免得整 px 取整让间距差 0.5px
+  // 卡牌还在滑 / 还在量高度：它一停（transitionend）就再对一次，别停在半路那 1~2px 上
+  if (!t.dataset.settle) {
+    t.dataset.settle = '1';
+    g.el.addEventListener('transitionend', () => {
+      delete t.dataset.settle;
+      if (t.classList.contains('on')) placeToast();
+    }, { once: true });
+  }
 }
 /* 卡牌开 / 关、换一张卡的那一下重新落位（只在提示条正显示时做） */
 try {
@@ -2904,9 +2914,10 @@ function toast(msg, ms = 2200, alt) {
     } catch (e) {}
   }
   clearTimeout(toastTimer);
+  delete t.dataset.settle;
   placeToast();                                 // 卡牌开着时：贴到卡牌顶边上方固定距离（v9.81）
-  // 卡牌从屏幕外滑上来时第一次量到的还不是最终位置：落稳后再对两次（1.2s 内一定停住）
-  [300, 700, 1200].forEach(ms => setTimeout(() => {
+  // 卡牌从屏幕外滑上来时第一次量到的还不是最终位置：落稳后再对几次（2s 内一定停住）
+  [300, 700, 1300, 2000].forEach(ms => setTimeout(() => {
     if (t.classList.contains('on')) placeToast();
   }, ms));
   toastTimer = setTimeout(() => {
