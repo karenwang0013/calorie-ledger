@@ -25,12 +25,18 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
-  { v: 'v9.72', d: '10-26', items: [
-    '修（崩溃）：记一条食物超过 1 项时必崩、弹「启动出错了 · null is not an object」并挡住整页 —— 保存前那段代码还在找「组名输入框」并要求必须填，可那个框早就从界面上去掉了，于是点「记入」就空指针。现在没有这个框就不再要求起名，直接保存',
-    '顺手把整个项目扫了一遍「直接对不存在的元素取属性」的写法，只剩这一处，其它都安全',
+  { v: 'v9.73', d: '10-26', items: [
+    '加：识别结果最上面那张「食物照片」的标题后面也加了三个点（和其它行一样的位置和样式）。点它能给这一份起个名字（比如「沙县小吃」），记入后首页那一组就显示这个名字',
+    '改：三个点离文字的距离统一成同一个值 —— 标题、每一行、每一餐的名字都用同一套（实测五处全是同一个间距，不再是各行看着不一样）',
+  ] },
+  { v: 'v9.72b', d: '10-26', items: [
     '改：铃铛里「提醒记录」不再一条信息一个框 —— 所有记录装进同一个大框，一行一行往下排；「今天 / 更早」变成框内的小淡字，两块之间只留一道细线',
     '改：这个大框的高度固定（永远占满卡片剩下的位置），不跟信息条数变高变矮；信息多到放不下时在框内滚动，框边和圆角始终不动',
     '改：底部「共 N 条 / 清空记录」那一栏的圆角和底色以设置里「强制更新」那一栏为基准（原来是母版那套：圆角 22 + 黑 40% 填充，比设置那边浓一倍多）。实测现在两处完全一致：圆角 18、填充 rgba(2,4,3,.08)、顶边高光 .08、离卡片左右各 17、离卡底 21',
+  ] },
+  { v: 'v9.72', d: '10-26', items: [
+    '修（崩溃）：记一条食物超过 1 项时必崩、弹「启动出错了 · null is not an object」并挡住整页 —— 保存前那段代码还在找「组名输入框」并要求必须填，可那个框早就从界面上去掉了，于是点「记入」就空指针。现在没有这个框就不再要求起名，直接保存',
+    '顺手把整个项目扫了一遍「直接对不存在的元素取属性」的写法，只剩这一处，其它都安全',
   ] },
   { v: 'v9.71', d: '10-26', items: [
     '修：每天反复弹「云端身体数据是空的 / E99」—— GitHub 上那份 body.json 停在 10-24 被写坏的全空文件（{"w":"","bf":""…}），60 秒轮询只读镜像 + raw 两路，两路都是空就被当成「云端没数据」；现在全空文件不参与比较，直接忽略',
@@ -2729,7 +2735,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.72';
+const APP_VERSION = 'v9.73';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4159,7 +4165,7 @@ function renderResult() {
       <button class="del" id="shotClose" aria-label="删掉这张照片和下面的全部">×</button>
       <div class="sthumbs">${thumbs}</div>
       <div class="sinfo">
-        <b>${title}</b>
+        <span class="nameline"><b class="nmtxt">${esc(S.batchName || title)}</b><button class="pen inl" id="shotMenu" aria-label="给这份起个名字">${PEN_ICON}</button></span>
         <span>${sub}</span>
       </div>
     </div>`;
@@ -4167,6 +4173,14 @@ function renderResult() {
   $('#shotBox').innerHTML = shot;
   // v9.55 用户口径（纠正 v9.53）：这张照片卡和下面那些项是**一组** —— 上面是食物，下面的是它的配料，
   // 食物都删了配料留着没意义。所以这个 × 是「整组删掉」：照片（两张）+ 下面所有项一起清掉。
+  const shotMenu = $('#shotMenu');
+  if (shotMenu) shotMenu.onclick = async ev => {
+    ev.stopPropagation();
+    const v = await askName('这份叫什么？（比如：沙县小吃）', S.batchName || '');
+    if (v === null) return;
+    S.batchName = v.trim().slice(0, 20) || null;
+    renderResult();
+  };
   const shotClose = $('#shotClose');
   if (shotClose) shotClose.onclick = ev => {
     ev.stopPropagation();
@@ -4809,7 +4823,7 @@ async function saveItems() {
     return toast('还有一项没填克数，先填上再记入', 3000);
   }
   const bnEl = $('#batchName');
-  const dishName = (bnEl ? bnEl.value : '').trim().slice(0, 20);
+  const dishName = ((bnEl ? bnEl.value : '') || S.batchName || '').trim().slice(0, 20);
   // v9.72：组名输入框已经从界面上去掉了，这里却还硬要 focus 它 —— 一记两条以上就
   // `null is not an object (evaluating '$('#batchName').focus')` 直接崩，弹「启动出错了」。
   // 现在只有输入框真的存在时才要求命名；不存在就按「不起名」处理（列表显示第一条的名字）。
