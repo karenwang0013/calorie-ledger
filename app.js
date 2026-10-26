@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.92', d: '10-26', items: [
+    '修：切主题之后「个性化 → 图标」那一栏变成空白（用户报「图标全部都不见了」）—— 根因是图标库 icons.js 这次没加载成功，而那一栏是照着图标库画的，库没了就什么都不画',
+    '现在：库里缺失时那一栏不再空白，会写明「图标库没加载出来」并给一颗「重新加载图标」，点一下就地重拉、当场补上；App 启动时发现库缺失也会自己静默重试一次',
+  ] },
   { v: 'v9.91', d: '10-26', items: [
     '改：所有外投影（阴影）全去掉 —— 主屏卡、设置卡、提醒记录卡、记录卡、详情卡、改名小卡、提示条、开关底盘、**Dock 栏**（连 Dock 底下那层投影也一起去了）',
     '说明：玻璃卡顶边那道「细高光」（inset，不是阴影）保留了 —— 一起删掉卡会摊成一块平色块；铃铛上红点外面那 2px 是描边环，也不是投影，保留',
@@ -2811,7 +2815,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.91';
+const APP_VERSION = 'v9.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6236,12 +6240,32 @@ function iconPath(slot){
 }
 
 /* 图标选择卡：v8.80 起并入「个性化」页（不再单独占设置首页一行） */
+/* v9.92：图标库（icons.js）没加载出来时，这一栏以前是一片空白（用户报「切换主题后图标全都不见了」）。
+   现在改成：照样给一行可点的「重新加载图标」，点一下重新拉 icons.js 再重画，绝不留空白。 */
+function iconLibOk() {
+  return !!(window.ICON_LIB && (window.ICON_SLOTS || []).length);
+}
+function reloadIcons() {
+  return new Promise((resolve) => {
+    const old = document.querySelector('script[data-icons-loader]');
+    if (old) old.remove();
+    const s = document.createElement('script');
+    s.src = 'icons.js?reload=' + Date.now();      // 带 cache-buster，绕过缓存里那份坏的
+    s.setAttribute('data-icons-loader', '1');
+    s.onload = () => resolve(iconLibOk());
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
 function iconPickerCard() {
   const ov = iconOverride();
+  const ok = iconLibOk();
   return `<div class="card">
       <h3>图标</h3>
       <div class="hint" style="margin:0 0 10px">点一下立刻替换；排在第一格的是你正在用的那个，想回出厂那套就点「默认」。</div>
       <button class="btn ghost sm" id="icReset" style="margin-bottom:12px">恢复全部默认</button>
+      ${ok ? '' : `<div class="hint" id="icMissing" style="margin:0 0 10px">图标库这次没加载出来（网络或缓存的问题），点下面这颗重新拉一次，不用重装。</div>
+      <button class="btn ghost sm" id="icReload" style="margin-bottom:12px">重新加载图标</button>`}
       ${(window.ICON_SLOTS || []).map(s => {
         /* v8.88 用户口径：第一格永远是「当前正在用的那个」——选了别的图标，它排到第一位，
            「默认」退到第二位；没改过时第一位就是「默认」。其余候选保持原来的顺序。
@@ -6943,6 +6967,14 @@ function wireMe() {
     }
   });
 
+  const icReload = $('#icReload');
+  if (icReload) icReload.onclick = async () => {
+    icReload.textContent = '正在加载…';
+    const ok = await reloadIcons();
+    applyStaticIcons();
+    renderMe();
+    toast(ok ? '图标库已加载' : '还是没加载出来，先点「关于与更新 → 强制更新」', ok ? 1600 : 3200);
+  };
   const icReset = $('#icReset');
   if (icReset) icReset.onclick = () => {
     try { localStorage.removeItem('icon_override'); } catch (e) {}
@@ -9017,7 +9049,15 @@ function init() {
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
   if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
   try { applyStaticIcons(); } catch (e) {}
-  if (!window.ICON_LIB || !window.ICON_DEFAULT) console.warn('[icons] icons.js 没加载，已回退到内置图标');
+  if (!window.ICON_LIB || !window.ICON_DEFAULT) {
+    console.warn('[icons] icons.js 没加载，已回退到内置图标，正在自动重试一次');
+    setTimeout(async () => {
+      const ok = await reloadIcons();
+      if (!ok) return;
+      try { applyStaticIcons(); } catch (e) {}
+      try { if (setCardOn()) renderMe(); } catch (e) {}      // 设置卡正开着就当场补上
+    }, 900);
+  }
   // 设置卡：记住可视视口高度 —— 键盘弹起时卡要贴在键盘上沿（style.css 的 html.kb #setSheet）
   if (window.visualViewport) {
     const vv = window.visualViewport;
