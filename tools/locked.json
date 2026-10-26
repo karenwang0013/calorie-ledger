@@ -21,8 +21,8 @@
   },
   {
     "file": "style.css",
-    "find": "width: 26px; height: 24px; margin: 0; padding: 0;",
-    "why": "所有「⋯」统一成食品名后面那个的尺寸（盒子 26×24、图标 20×20、离字 5px）—— 用户要求全部一致"
+    "find": "width: 22px; height: 24px; margin: 0; padding: 0;",
+    "why": "所有「⋯」统一成 22×24、图标 20×20、离字 2px（2026-10-26 用户要求把间距收窄：原来 26×24 / 离字 5px）"
   },
   {
     "file": "style.css",
