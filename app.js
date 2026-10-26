@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.86', d: '10-26', items: [
+    '改：搜索页那条绿色的「在网上找「X」 / 找 ↗」（AI 估值入口）从列表最下面挪到**最上面第一行** —— 以前本地结果一多就要往下翻才看得到，现在一搜就在眼前，点一下直接让 AI 估',
+    '说明：本地库里已经有「一字不差」这个食物时，这一行仍然不出现（不然白花钱问 AI）；本地结果、常用词、原来的排序都没动',
+  ] },
   { v: 'v9.85', d: '10-26', items: [
     '新增：每一条记录右边多了一个「复制」按钮（⧉，在 × 左边）—— 上午记过的酸奶、下午还想再来一份，不用拍照也不用重新识别：点一下就知道克数、热量，改克数热量当场跟着算，餐次自己挑（早/午/点心/晚/加餐），按「记一条」就多一条，原来那条一个字不动',
     '说明：合并成一行的多条（比如「雪菜肉丝面 5 项」）这次先不做复制；点开那一组以后仍然可以看明细',
@@ -2790,7 +2794,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.85';
+const APP_VERSION = 'v9.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4149,7 +4153,9 @@ function nutCacheFood(q) {
   return { name: one.canon || one.n, kcal: one.k, p: one.p, c: one.c, f: one.f, cat: '网上估值' };
 }
 
-/* 列表末尾那一行「在网上找」：点了才真的去问 AI（不做成边打字边请求，否则每敲一个字都花钱） */
+/* 「在网上找」那一行：点了才真的去问 AI（不做成边打字边请求，否则每敲一个字都花钱）。
+   v9.86：这一行**排在最上面**（原来在列表末尾，本地结果一多就要往下翻才看得到，
+   用户来搜本来就是为了拿 AI 这份估值）。 */
 function netFindRow(q) {
   const name = esc(String(q || '').trim().slice(0, 20));
   return `
@@ -4188,7 +4194,7 @@ function runSearch(q) {
     if (ai) list.unshift({ f: ai, h: false, ai: true });
   }
 
-  // 本地没有「一字不差就是这个食物」时，列表末尾放一行「在网上找」
+  // 本地没有「一字不差就是这个食物」时，给一行「在网上找」—— 永远排第一行
   const netRow = (key && !exactFoodHit(q)) ? netFindRow(q) : '';
 
   if (!list.length && !netRow) {
@@ -4196,7 +4202,7 @@ function runSearch(q) {
     return;
   }
 
-  box.innerHTML = list.map((x, i) => `
+  box.innerHTML = netRow + list.map((x, i) => `
     <div class="sitem" data-i="${i}">
       <div>
         <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}${x.ai ? ' <span class="aiTag">AI 估</span>' : ''}</div>
@@ -4206,7 +4212,7 @@ function runSearch(q) {
       ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
       </button>` : ''}
-    </div>`).join('') + netRow;
+    </div>`).join('');
 
   // 「在网上找」：点了才请求（AI 估出来的值进 nutCache，下次同一个词直接出、不再花钱）
   const netBtn = $('#netFindRow', box);
