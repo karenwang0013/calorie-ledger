@@ -9,7 +9,15 @@ const CACHE = '/tmp/ledger-test/iconcache';
 fs.mkdirSync(CACHE, { recursive: true });
 const CDN = 'https://cdn.jsdelivr.net/npm/@material-symbols/svg-400@latest/rounded';
 
+// ⚠️ 规矩（2026-10-26 用户定）：**某个功能被移除时，这里和 ICON_SLOTS 里对应的那一栏必须一起删掉**，
+//    别让设置里还留着一个「已经不存在的位置」的图标可选（v9.95 删掉的就是「三格·描述」tab.text）。
+const REMOVE_SLOTS = ['tab.text'];          // 功能已经没了的槽位（每次删功能都往这里加）
+const REMOVE_DEFAULTS = ['tab.text', 'btn.text'];   // 已经没有元素用到的默认值
+
 // 每个位置追加的实心候选（不含默认那个；名字是 Material Symbols 原名，脚本会自动加 -fill）
+// btn.go 的说明里原来写着「拍照 / 描述共用」——「描述」已经没了，赶紧一并改掉
+const LABEL_FIX = { 'btn.go': '按钮·识别热量（拍照页）' };
+
 const CURATED = {
   'set.body': ['person', 'group', 'directions_walk', 'self_improvement', 'fitness_center', 'monitor_heart', 'sports_gymnastics', 'man', 'woman', 'accessibility_new'],
   'set.goal': ['gps_fixed', 'flag', 'flag_circle', 'local_fire_department', 'donut_small', 'sports_score', 'ads_click', 'my_location', 'bolt', 'track_changes'],
@@ -33,7 +41,6 @@ const CURATED = {
   'dk.trend': ['bar_chart', 'show_chart', 'insights', 'monitoring', 'trending_up', 'query_stats', 'stacked_line_chart', 'analytics'],
   'tab.photo': ['photo_camera', 'camera_alt', 'photo', 'add_a_photo', 'camera', 'photo_camera_front', 'party_mode'],
   'tab.search': ['travel_explore', 'search', 'manage_search', 'saved_search', 'public', 'language', 'explore'],
-  'tab.text': ['description', 'subject', 'article', 'notes', 'text_snippet', 'short_text', 'edit_note', 'draft'],
   'btn.cam': ['photo_camera', 'camera_alt', 'add_a_photo', 'camera', 'photo_camera_front', 'photo'],
   'btn.album': ['collections', 'photo_library', 'image', 'perm_media', 'wallpaper', 'burst_mode', 'add_photo_alternate', 'landscape'],
   'btn.save': ['bookmark_added', 'check', 'done', 'save', 'library_add_check', 'playlist_add_check', 'task_alt', 'bookmark_add'],
@@ -67,11 +74,13 @@ const box = { window: {} };
 vm.createContext(box);
 vm.runInContext(src, box);
 const LIB = box.window.ICON_LIB;
-const SLOTS = box.window.ICON_SLOTS;
+const SLOTS = box.window.ICON_SLOTS.filter(s => !REMOVE_SLOTS.includes(s.k));
 const DEFAULTS = box.window.ICON_DEFAULT;
+for (const k of REMOVE_DEFAULTS) delete DEFAULTS[k];
 
 let added = 0, miss = [];
 for (const s of SLOTS) {
+  if (LABEL_FIX[s.k]) s.label = LABEL_FIX[s.k];
   const extra = CURATED[s.k] || [];
   const out = [];
   for (const n of extra) {

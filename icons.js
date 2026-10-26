@@ -527,20 +527,6 @@ window.ICON_SLOTS = [
   ]
  },
  {
-  "k": "tab.text",
-  "label": "三格·描述",
-  "def": "description",
-  "opts": [
-   "edit_note",
-   "short_text",
-   "article",
-   "notes",
-   "subject",
-   "text_snippet",
-   "draft"
-  ]
- },
- {
   "k": "btn.cam",
   "label": "按钮·拍照",
   "def": "photo_camera",
@@ -584,7 +570,7 @@ window.ICON_SLOTS = [
  },
  {
   "k": "btn.go",
-  "label": "按钮·识别热量（拍照 / 描述共用）",
+  "label": "按钮·识别热量（拍照页）",
   "def": "local_fire_department",
   "opts": [
    "manage_search",
@@ -600,4 +586,4 @@ window.ICON_SLOTS = [
   ]
  }
 ];
-window.ICON_DEFAULT = {"set.body":"accessibility_new","set.goal":"track_changes","set.weight":"insights","set.ai":"auto_awesome","set.theme":"palette","set.notify":"notifications_active","set.backup":"cloud_upload","set.about":"info","nlog.weight":"monitor_weight","nlog.goal":"local_fire_department","nlog.day":"sticky_note_2","nlog.watch":"watch","nlog.fail":"dangerous","st.sync":"cached","st.reload":"refresh","st.bell":"notifications","st.gear":"settings","dk.today":"calendar_today","dk.add":"edit_note","dk.trend":"bar_chart","tab.photo":"photo_camera","tab.search":"travel_explore","tab.text":"description","btn.cam":"photo_camera","btn.album":"collections","btn.save":"bookmark_added","btn.go":"local_fire_department","btn.text":"local_fire_department"};
+window.ICON_DEFAULT = {"set.body":"accessibility_new","set.goal":"track_changes","set.weight":"insights","set.ai":"auto_awesome","set.theme":"palette","set.notify":"notifications_active","set.backup":"cloud_upload","set.about":"info","nlog.weight":"monitor_weight","nlog.goal":"local_fire_department","nlog.day":"sticky_note_2","nlog.watch":"watch","nlog.fail":"dangerous","st.sync":"cached","st.reload":"refresh","st.bell":"notifications","st.gear":"settings","dk.today":"calendar_today","dk.add":"edit_note","dk.trend":"bar_chart","tab.photo":"photo_camera","tab.search":"travel_explore","btn.cam":"photo_camera","btn.album":"collections","btn.save":"bookmark_added","btn.go":"local_fire_department"};
