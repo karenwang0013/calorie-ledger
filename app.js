@@ -25,6 +25,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.65', d: '10-26', items: [
+    '改：目标（每日可吃）和首页「消耗」统一到实测消耗 —— 就是趋势页那个"用体重变化反推"的数，它把所有估算误差都吃掉了；有实测就全用它，没有才退回手表/公式',
+    '改：不再按「到现在为止」折算消耗（凌晨会显示消耗 1 千卡那种），现在全用全天口径；实测：消耗 2067 − 摄入 1538 = 可吃 529 = 圆环里的 529，三个数能互相验算',
+    '改：趋势页「平均缺口」也用实测口径 —— 880 千卡/天，和同一屏体重曲线的 0.8 kg/周 对上了（以前写 1122，等于 1.0 kg/周，两个数互相打脸）',
+    '说明：没有足够数据时（至少要 7 天体重 + 一半天数有饮食记录）还是按手表/公式算，这时标签会写「消耗」而不是「消耗（实测）」',
+  ] },
   { v: 'v9.64', d: '10-26', items: [
     '修：手动记体重后 BMI 不跟着重算 —— 存 63.5kg，BMI 还是按上一次 64kg 算的 21.1；现在会按新体重重算（63.5 → 21.0）',
     '修：今天还没有手表数据、改用最近一天估的时候，顶栏还写「今天 · 实时」，现在写清「今天 · 沿用 10-25 的数据」',
@@ -2684,7 +2690,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.64';
+const APP_VERSION = 'v9.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2849,24 +2855,12 @@ function renderToday() {
   const expFull = d.expenditure;          // 全天预估/实际
   const balFull = d.balance;
 
-  // 今天只算“到现在为止”的消耗，历史日期用全天值
-  let dayFrac = 1;
-  if (d.date === S.today) {
-    const start = new Date(d.date + 'T00:00:00').getTime();
-    dayFrac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
-  }
-  // 今天：基础代谢按时间折算，手表的活动能量是“到现在为止”的，全额计入
-  const det = d.expenditure_detail || {};
-  let exp;
-  if (d.date === S.today) {
-    if (det.active && det.resting) exp = Math.round(det.resting * dayFrac) + det.active;
-    else if (det.total) exp = Math.round(det.total * dayFrac);
-    else exp = Math.round(expFull * dayFrac);
-  } else {
-    exp = expFull;
-  }
-  const bal = d.date === S.today ? exp - intake : balFull;
+  // v9.65：不再按「到现在为止」折算。折算值只对"今天"成立，历史日期是全天值，
+  // 结果同一个屏上「消耗 − 摄入」永远不等于「还可以吃」（凌晨还会显示消耗 1 千卡）。
+  // 现在全用全天口径，圆环里的数就等于「还可以吃」，三个数能互相验算。
+  const exp = expFull;
   const left = t.kcal_budget - intake;
+  const bal = left;
 
   // 首次使用提示
   const sb = $('#setupBanner');
@@ -2946,10 +2940,10 @@ function renderToday() {
   $('#heroSub').textContent = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
-  // v9.63：今天这一格是"到现在为止"的折算值，历史日期才是全天值 —— 标清楚，
-  // 省得拿「消耗 − 摄入」去核对「还可以吃」（后者按全天预算算，本来就不等）。
+  // v9.65：这一格用统一口径（优先实测），标一下来源，省得以为和手表对不上。
   const expLbl = $('#stExpLbl');
-  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
+  const isMeasured = /实测/.test(String(d.expenditure_source || ''));
+  if (expLbl) expLbl.textContent = isMeasured ? '消耗（实测）' : '消耗';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';

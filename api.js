@@ -448,6 +448,16 @@ function daySummary(date) {
   const [exp0, src0, detail] = tdeeOf(p, watchForCalc, latestWeight());
   const exp = exp0;
   const src = carried ? `${src0}（沿用 ${carried.slice(5)} 的手表数据）` : src0;
+  // v9.65：目标和首页那一格统一到「实测消耗」—— 体重反推出来的那个数才是把所有估算误差
+  // （拍照、克重、手表）都吃掉之后的结果。有它就全用它；没有才退回手表/公式那一天的值。
+  // 这样「消耗 − 摄入 = 还可以吃」能对上，同一天也不会因为手表数据晚到而跳。
+  let measured = null;
+  try {
+    const rt = computeRealTdee(d).real;
+    if (rt && rt.tdee > 800 && rt.tdee < 6000) measured = rt.tdee;
+  } catch (e) { /* 没数据就算了 */ }
+  const baseExp = measured || exp;
+  const baseSrc = measured ? '实测（体重反推）' : src;
   // 只把当天这几条记录的小图带出来（现在图在 IndexedDB 的内存镜像里，不占 localStorage）
   const shots = {};
   logs.forEach(l => {
@@ -463,12 +473,13 @@ function daySummary(date) {
     protein: Math.round(protein * 10) / 10,
     carb: Math.round(carb * 10) / 10,
     fat: Math.round(fat * 10) / 10,
-    expenditure: exp,
-    expenditure_source: src,
+    expenditure: baseExp,
+    expenditure_day: exp,
+    expenditure_source: baseSrc,
     expenditure_detail: detail,
-    balance: Math.round(exp - intake),
+    balance: Math.round(baseExp - intake),
     watch,
-    targets: targetsOf(p, exp),
+    targets: targetsOf(p, baseExp),
     profile: p,
     has_key: !!(d.settings.dashscope_key || '').trim(),
     theme: d.settings.theme || 'lime',
@@ -617,7 +628,8 @@ function computeTrends(days) {
     days, start, end: today, series,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
-    avg_balance: avgIntake ? Math.round(avgExpLogged - avgIntake) : null,
+    // v9.65：有实测就用实测（同一批日子、和体重曲线同源），否则才用手表/公式那批
+    avg_balance: avgIntake ? Math.round((real ? real.tdee : avgExpLogged) - avgIntake) : null,
     logged_days: logged.length,
     real_tdee: real,
     real_missing: realMissing,
