@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.72', d: '10-26', items: [
+    '修（崩溃）：记一条食物超过 1 项时必崩、弹「启动出错了 · null is not an object」并挡住整页 —— 保存前那段代码还在找「组名输入框」并要求必须填，可那个框早就从界面上去掉了，于是点「记入」就空指针。现在没有这个框就不再要求起名，直接保存',
+    '顺手把整个项目扫了一遍「直接对不存在的元素取属性」的写法，只剩这一处，其它都安全',
+  ] },
   { v: 'v9.71', d: '10-26', items: [
     '修：每天反复弹「云端身体数据是空的 / E99」—— GitHub 上那份 body.json 停在 10-24 被写坏的全空文件（{"w":"","bf":""…}），60 秒轮询只读镜像 + raw 两路，两路都是空就被当成「云端没数据」；现在全空文件不参与比较，直接忽略',
     '修：每天反复弹「身体历史读取失败 / E07 数据格式不对 · 文件内容被改坏了」—— body-history.json 内容是 {"items":[]}（还没写过历史），属于正常，以前被当成文件损坏；现在只有真解析不了才报错',
@@ -2722,7 +2726,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.71';
+const APP_VERSION = 'v9.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4803,8 +4807,11 @@ async function saveItems() {
   }
   const bnEl = $('#batchName');
   const dishName = (bnEl ? bnEl.value : '').trim().slice(0, 20);
-  if (items.length > 1 && !dishName) {
-    $('#batchName').focus();
+  // v9.72：组名输入框已经从界面上去掉了，这里却还硬要 focus 它 —— 一记两条以上就
+  // `null is not an object (evaluating '$('#batchName').focus')` 直接崩，弹「启动出错了」。
+  // 现在只有输入框真的存在时才要求命名；不存在就按「不起名」处理（列表显示第一条的名字）。
+  if (bnEl && items.length > 1 && !dishName) {
+    bnEl.focus();
     return toast('先给这一餐起个名字，比如「沙县小吃」', 3000);
   }
   const btn = $('#saveItems');
@@ -5657,10 +5664,16 @@ function openNotifyLog() {
     if (list.length) {
       const today = list.filter(x => isoOf(x.ts) === todayISO());
       const older = list.filter(x => isoOf(x.ts) !== todayISO());
-      box.innerHTML = [['今天', today], ['更早', older]]
-        .filter(g => g[1].length)
-        .map(([label, arr]) => `<div class="setlabel">${label}</div><div class="setrows">${arr.map(rowOf).join('')}</div>`)
-        .join('');
+      // v9.72 用户口径：所有信息装在**同一个大框**里，一行一行往下排（像设置卡里那样），
+      // 不再按「今天 / 更早」各开一个框；分组小标题改成框内的一行淡字，块与块之间只有一道细线。
+      const groups = [['今天', today], ['更早', older]].filter(g => g[1].length);
+      box.innerHTML = `<div class="setrows nlogone">`
+        + groups.map(([label, arr], gi) =>
+          (gi ? `<div class="nlogdiv"></div>` : '')
+          + `<div class="nlogday">${label}</div>`
+          + arr.map(rowOf).join('')
+        ).join('')
+        + `</div>`;
     } else {
       box.innerHTML = `<div class="setrows"><div id="nlogEmpty">还没有提醒记录<span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div></div>`;
     }

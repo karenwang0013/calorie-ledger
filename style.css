@@ -2981,6 +2981,22 @@ html.kb #setSheet {
 #nlogSheet .sh-foot { background: transparent; border-top: 0; padding: 0; flex: 0 0 auto; }   /* 和设置卡版本行同一位置：margin 0 16px、离卡底 20 */
 #nlogEmpty { padding: 18px 20px 22px; font-size: 13px; color: var(--muted2); line-height: 1.6; }
 #nlogEmpty span { display: block; font-size: 12px; margin-top: 4px; color: var(--muted2); opacity: .8; }
+/* v9.72 用户口径：所有信息装在同一个大框里，一行一行排（不再是「一条一个框」、「今天/更早」各一个框）。
+   分组标题「今天 / 更早」变成框内的一行小淡字，两块之间只留一道细分隔线。
+   v9.72b：这个框**高度固定**——永远占满卡片剩下那块地方，不跟信息条数变高变矮；
+   信息多到放不下时，在框里自己滚（框边和圆角始终不动）。 */
+#nlogList { display: flex; flex-direction: column; overflow: hidden; }
+#nlogList > .setrows { flex: 1 1 auto; min-height: 0; }
+#nlogList .nlogone {
+  padding: 2px 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#nlogList .nlogone .setrow:first-child::before { display: none; }
+#nlogList .nlogday {
+  padding: 9px 15px 3px; font-size: 12px; letter-spacing: .4px; line-height: 17px;
+  color: var(--muted2);
+}
+#nlogList .nlogdiv { height: 1px; margin: 7px 15px 3px; background: rgba(255,255,255,.08); }
 
 /* 信息条深浅预览（临时）：A–F 六个小钮 */
 .shadepill {
