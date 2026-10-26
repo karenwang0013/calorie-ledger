@@ -25,6 +25,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.67', d: '10-26', items: [
+    '修：刚打开卡片、马上向下拖却没反应，要停一会儿才行 —— 判断「手是不是按在横杠上」用的是卡片自己的位置，而卡片打开时有一段 0.42 秒的上滑动画，动画期间那个位置还在屏幕外，于是怎么拖都不算数',
+    '现在改成按横杠自己的位置判断（它跟着卡片一起动），并且按下就会响应（原来要先滑 4px 才算，现在 2px），刚打开也能立刻拖着关',
+  ] },
   { v: 'v9.66', d: '10-26', items: [
     '改：卡片向下拖关闭的手势收窄了 —— 以前整张卡随便哪里往下拖都会把卡拖走/关掉，现在**只有把手指按在卡片顶部那条横杠上往下拖**才关闭；在卡身、列表里怎么拖都不会动卡片',
     '这条对设置、记录、提醒记录、身体数据里的体重卡、营养卡、说明卡一视同仁（都是同一个手势）',
@@ -2695,7 +2699,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.66';
+const APP_VERSION = 'v9.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5661,21 +5665,26 @@ function wireSheetDrag(sheet, list, closeFn) {
   let y0 = 0, x0 = 0, dy = 0, dragging = false, armed = false, horiz = false;
   /* 2026-10-26 用户要求：**只有卡片顶部那条横杠区域**往下拖才关闭，
      卡片其它地方（列表、正文）怎么拖都不许把卡拖走、更不许关掉。
-     横杠本身只有 4px，手指点不准，所以把热区放宽到「横杠下沿 + 14px」。 */
-  const grabZone = () => {
-    const r = sheet.getBoundingClientRect();
+     注意：不能用「卡片自己的 rect」来算这个区域 —— 卡片打开时有一段 0.42s 的上滑动画，
+     动画期间卡片还在屏幕外，按 rect 算出来的位置是错的，表现就是「刚打开时怎么滑都没反应，
+     要等一会儿」。（用户 10-26 反馈的就是这个）
+     改成按「横杠元素自己的 rect」算，它跟着卡片一起动，任何时刻都是所见即所得。 */
+  const inGrabZone = (x, y) => {
     const g = sheet.querySelector('.grab');
-    if (!g) return Math.min(40, Math.max(22, r.height * 0.06));
-    const bottom = g.getBoundingClientRect().bottom - r.top;
-    return Math.min(48, Math.max(22, bottom + 14));
+    if (!g) {
+      const r = sheet.getBoundingClientRect();
+      return (y - r.top) <= 34;
+    }
+    const gr = g.getBoundingClientRect();
+    const padY = 16;                  // 横杠只有 4px 高，上下各给 16px 容错，手指才点得准
+    const padX = 60;                  // 横向也放宽一点（横杠 66px 宽）
+    return y >= gr.top - padY && y <= gr.bottom + padY && x >= gr.left - padX && x <= gr.right + padX;
   };
   sheet.addEventListener('touchstart', (e) => {
     if (!sheet.classList.contains('on')) return;
-    const r = sheet.getBoundingClientRect();
-    const relY = e.touches[0].clientY - r.top;
-    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; dragging = false; horiz = false;
-    // 不在顶部横杠那一条 → 这个手势跟关闭无关
-    armed = relY >= -2 && relY <= grabZone();
+    const t0 = e.touches[0];
+    y0 = t0.clientY; x0 = t0.clientX; dy = 0; dragging = false; horiz = false;
+    armed = inGrabZone(t0.clientX, t0.clientY);
   }, { passive: true, capture: true });
   sheet.addEventListener('touchmove', (e) => {
     if (!armed || !sheet.classList.contains('on')) return;
@@ -5695,7 +5704,7 @@ function wireSheetDrag(sheet, list, closeFn) {
       return;
     }
     dy = d;
-    if (dy > 4) {
+    if (dy > 2) {
       dragging = true;
       sheet.classList.add('dragging');
       sheet.style.transform = 'translateY(' + dy + 'px)';
