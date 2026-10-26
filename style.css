@@ -155,6 +155,12 @@ select {
 
 /* 内容滚动容器：页面本身不滚，只有这一层滚。
    overscroll-behavior 在容器上才有效 → 滑到底就是停住，不会被系统再拉出一片空白 */
+/* v9.89（用户口径）：内容**不在屏幕最底部消失**，而是在「Dock 顶边」和「最后一张卡底边」
+   这段缝的**正中**就消失。做法：滚动容器的底边上移到缝的中点（原来一直延伸到屏幕底，
+   内容从 Dock 后面漏出去）；.sc-body 的底部留白相应只留半个缝 —— 滑到底时最后一张卡的位置
+   和改之前一样，只是「消失线」从屏幕底上移到了缝中间。
+   键盘弹起时 Dock 收起，这段让位取消，仍交给原来的 --kb-pad。 */
+:root { --sc-bottom-gap: 11px; }   /* 半条缝：实测缝 22.3px → 取一半 */
 .scroller {
   flex: 1 1 auto;
   min-height: 0;
@@ -164,13 +170,17 @@ select {
   /* 关掉越界回弹：滑到底就是停住，不会被再拽出一片空白 */
   overscroll-behavior: none;
   padding-top: var(--topbar-h, 64px);
+  /* 底边停在「缝的中点」——内容到这条线就消失，不会一路漏到屏幕底再被 Dock 挡住 */
+  margin-bottom: calc(var(--safe-b) + var(--dock-bottom) + var(--dock-h) + var(--sc-bottom-gap));
   /* 背景交给不滚动的那一层去画：滚动层自己画背景，iOS 会漏画，露出纯黑 */
   background: transparent;
 }
+html.kb .scroller { margin-bottom: 0; }
 .sc-body {
   /* 不要给这一层加 backface-visibility / will-change：会让 iOS 单独合成，滚动到底会漏画成纯黑 */
-  /* 底部留白 = Dock 高度 + 一点缝：滑到底时最后一张卡就贴着 Dock 上方，不再留一大片空 */
-  padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 2px + var(--safe-b));
+  /* 容器底边已经让开了 Dock（见 .scroller 的 margin-bottom），这里只留半条缝：
+     滑到底时最后一张卡底边仍落在改之前那个位置 */
+  padding-bottom: var(--sc-bottom-gap);
 }
 /* 键盘弹起后：底部留白由脚本精确算好，
    结果就是"往下滑不动、往上还能滑"，卡片不会被滑出键盘 */
@@ -2346,7 +2356,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .fab { font-size: 13.5px; }
   .fab { font-size: 13.5px; }
   .fab svg { width: 34px; height: 34px; }
-  .sc-body { padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 4px + var(--safe-b)); }
+  .sc-body { padding-bottom: var(--sc-bottom-gap); }
 
   /* 弹层：同一套结构，整体加大 */
   .sheet { max-width: 560px; }

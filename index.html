@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=972">
+<link rel="stylesheet" href="style.css?v=973">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -142,8 +142,8 @@
       <button class="act" id="addTop">＋ 记录</button>
     </div>
     <div class="meals" id="meals"></div>
-
-    <div style="height:20px"></div>
+    <!-- v9.89：原来这里有一块 20px 的空白，已经被「滚动容器底边停到缝中间 + .sc-body 留半条缝」取代；
+         留着会让滑到底时最后一张卡离 Dock 变成 42px（缝隙不再是 22px），消失点也就不在缝中间了 -->
   </section>
 
   <!-- ============ 趋势 ============ -->
@@ -456,10 +456,10 @@
   </div>
 </div>
 
-<script src="foods.js?v=972"></script>
-<script src="icons.js?v=972"></script>
-<script src="api.js?v=972"></script>
-<script src="app.js?v=972"></script>
+<script src="foods.js?v=973"></script>
+<script src="icons.js?v=973"></script>
+<script src="api.js?v=973"></script>
+<script src="app.js?v=973"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
