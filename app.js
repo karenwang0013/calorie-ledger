@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.64', d: '10-26', items: [
+    '修：手动记体重后 BMI 不跟着重算 —— 存 63.5kg，BMI 还是按上一次 64kg 算的 21.1；现在会按新体重重算（63.5 → 21.0）',
+    '修：今天还没有手表数据、改用最近一天估的时候，顶栏还写「今天 · 实时」，现在写清「今天 · 沿用 10-25 的数据」',
+    '修：镜像同步后的 Pages 部署其实部署的是旧数据（工作流里第二个 job 默认拿的是启动那一刻的提交）；现在显式取 main 最新，实测线上三份数据文件和 main 完全一致',
+  ] },
   { v: 'v9.63', d: '10-26', items: [
     '修：身体数据每打开两次就有一次翻到几年前 —— 体重曲线的分页刚挂上去就误判成"用户滑到了最老一页"，页码一路加到底；现在等真正量到宽度再落位，落位完成前不理滑动',
     '修：同一次里「所选那天」和下面的图各算一套页码，会显示"所选那天 10-12"配一张 2021 年的图、日期区间甚至倒着写；现在共用一套',
@@ -2679,7 +2684,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.63';
+const APP_VERSION = 'v9.64';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2831,8 +2836,10 @@ function renderToday() {
   const isToday = d.date === S.today;
   // 日期下面那行：直接写清"这份数据是几点同步的"，不用再往下找
   const watchAt = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11, 16) : '';
+  // v9.64：今天还没有手表数据、改用「最近一天」估的，就别再写「实时」了
+  const carried = (String(d.expenditure_source || '').match(/沿用 (\d{2}-\d{2})/) || [])[1] || '';
   $('#dateSub').textContent = isToday
-    ? (watchAt ? `今天 · ${watchAt} 更新` : '今天 · 实时')
+    ? (watchAt ? `今天 · ${watchAt} 更新` : (carried ? `今天 · 沿用 ${carried} 的数据` : '今天 · 实时'))
     : (watchAt ? `${WEEK[dt.getDay()]} · ${watchAt}` : WEEK[dt.getDay()]);
   $('#nextDay').disabled = isToday;
   $('#nextDay').style.opacity = isToday ? 0.45 : 1;

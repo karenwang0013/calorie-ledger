@@ -1123,8 +1123,9 @@ async function api(path, body, method) {
   if (pathname === '/api/weight' && m === 'POST') {
     const d = Store.load();
     const date = body.date || today;
-    d.weights[date] = Number(body.kg);
-    d.profile.weight_kg = Number(body.kg);
+    const kg = Number(body.kg);
+    d.weights[date] = kg;
+    d.profile.weight_kg = kg;
     const bf = Number(body.bf), bmi = Number(body.bmi), ffm = Number(body.ffm);
     if (isFinite(bf) || isFinite(bmi) || isFinite(ffm)) {
       d.body = d.body || {};
@@ -1133,6 +1134,11 @@ async function api(path, body, method) {
         bmi: isFinite(bmi) && bmi ? bmi : null,
         ffm: isFinite(ffm) && ffm ? ffm : null,
       };
+    } else if (d.body && d.body[date]) {
+      // v9.64：手动记体重时 BMI 要跟着新体重重算 —— 以前只改体重，BMI 还是上一次
+      // 体脂秤按旧体重算的那个数（存 63.5kg、BMI 仍显示 21.1 = 64kg 的值）。
+      const h = Number(d.profile.height_cm) || 0;
+      if (h > 0 && kg > 0) d.body[date].bmi = Math.round((kg / Math.pow(h / 100, 2)) * 10) / 10;
     }
     Store.save();
     return { ok: true, day: daySummary(date) };
