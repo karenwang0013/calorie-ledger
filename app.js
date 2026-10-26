@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.76', d: '10-26', items: [
+    '修：「热量采集 / 健康采集」跑完之后没有任何提示了 —— 上一版按「数值有没有变」判断，所以称了同样的体重、或者活动差不多，就一声不响。现在改成按「这次是不是新的一次采集」（看文件里的写入时刻），每次真跑过都会提示一次',
+    '修：两条提示挨着来时，后一条会把前一条顶掉（你只看到一条）。现在改成排队，一条一条显示，最多排 3 条',
+    '说明：单纯重开 App 不会重复弹（时间戳没变就不提示）——保留你上次说的「不要每次打开都弹」',
+  ] },
   { v: 'v9.75', d: '10-26', items: [
     '改：铃铛里「提醒记录」没有记录时，框内那两行小字（「还没有提醒记录 / 称重、超出目标…」）改成**居中**——原来贴在左上角，下面一大片空着；字号、颜色、文案都没动',
   ] },
@@ -2743,7 +2748,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.75';
+const APP_VERSION = 'v9.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -2791,8 +2796,16 @@ function updToast(what, date, device, ms = 2600) {
   toast(main, ms, alt);
 }
 
+/* v9.76：提示条改成「排队」，不再互相顶掉。
+   以前两条提示挨着来（比如「热量采集成功」+「体重采集成功」）后一条直接把前一条盖掉，
+   用户就只看到一条、甚至以为没提示。现在：正在显示时，新的先排队，最多排 3 条，逐条显示。 */
+let toastQ = [];
 function toast(msg, ms = 2200, alt) {
   const t = $('#toast');
+  if (t.classList.contains('on') && toastTimer) {
+    if (toastQ.length < 3 && toastQ[toastQ.length - 1] !== msg) toastQ.push([msg, ms, alt]);
+    return;
+  }
   t.textContent = msg;
   t.classList.add('on');
   // 精确判断这行字会不会折行：量一遍不换行时有多宽，超过可用宽度就把「·」去掉
@@ -2811,7 +2824,12 @@ function toast(msg, ms = 2200, alt) {
     } catch (e) {}
   }
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), ms);
+  toastTimer = setTimeout(() => {
+    t.classList.remove('on');
+    toastTimer = null;
+    const nx = toastQ.shift();
+    if (nx) setTimeout(() => toast(nx[0], nx[1], nx[2]), 160);
+  }, ms);
 }
 
 /* ---------------- 状态 ---------------- */
@@ -8711,8 +8729,14 @@ function init() {
       try { clearErr('err-body'); clearErr('err-history'); clearErr('err-body-empty'); } catch (e) {}
       // v9.62：只有值真的变了才弹「✅ 已更新」。以前每次打开都弹，
       // 还会把用户刚触发的提示（记入成功 / 备份完成 / 找不到食物）顶掉。
+      // v9.76：但「又采集了一次、数值没变」也要给个反馈 —— 按文件里的写入时刻 t 判断，
+      // 这样每次真跑过「健康采集」都会提示一次，而单纯重开 App 不会。
       const fresh = !j.same && !j.stale;
-      if (fresh) {
+      const wAt = String(j.t || j._at || '');
+      const prevW = localStorage.getItem('body_toast_t') || '';
+      const freshByTime = !!(wAt && wAt > prevW);
+      if (wAt && freshByTime) localStorage.setItem('body_toast_t', wAt);
+      if (fresh || freshByTime) {
         updToast((j.w && j.bf) ? '体重+体脂数据' : (j.bf ? '体脂数据' : '体重数据'), j.d, SCALE_NAME, 2600);
         try {
           // 从已保存的数据里取（四项都带上）
@@ -8746,9 +8770,15 @@ function init() {
 
   // 打开时拉一次云端数据（不阻塞界面）
   pullCloudData().then(date => {
-    if (!date) return;
+    // v9.76：只要这次读到的是「一次新的采集」（文件头的时间戳比以前新），就提示一次；
+    // 数值没变也提示 —— 用户要的是"采集成功了"这个反馈，不是"数值变了"才给。
+    const at = (lastCloud && lastCloud.at) || '';
+    const prevAt = localStorage.getItem('health_toast_at') || '';
+    const freshByTime = !!(at && at > prevAt);
+    if (!date && !freshByTime) return;
+    if (at) localStorage.setItem('health_toast_at', at);
     loadDay();
-    updToast('热量数据', date, WATCH_NAME, 2600);
+    updToast('热量数据', date || at, WATCH_NAME, 2600);
   });
 
   // 跨天检测：放在后台过夜，第二天打开要自动切到今天
