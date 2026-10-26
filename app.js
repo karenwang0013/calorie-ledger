@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.83', d: '10-26', items: [
+    '改：早餐 / 午餐 / 晚餐 / 点心 / 加餐 每张卡右上角那个圆「＋」按钮去掉了（用户口径：不要后面这种加号）',
+    '加菜的入口还在：「今天吃了什么」右上角的「+ 记录」，或 Dock 中间那颗「记录」（按当前时间自动归到早/午/晚餐）',
+    '没动的：每餐的卡、圆点、千卡数字、里面每一条食物、删除 × / 铅笔 / 换行排版',
+  ] },
   { v: 'v9.82', d: '10-26', items: [
     '改：没有卡牌打开时，提示条离 Dock 的那条缝也从 24px 收成 12px —— 和「贴卡牌」用同一个距离（现在全 App 就一个数：12px）',
     '没动的：Dock 的位置、提示条的材质/字号/内边距、卡牌打开时的表现（v9.81 已经很贴卡牌顶边 12px）',
@@ -2774,7 +2779,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.82';
+const APP_VERSION = 'v9.83';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3241,7 +3246,6 @@ function renderMeals() {
           <span class="dot"></span>
           <span class="nm">${m.n}</span>
           <span class="kc">${items.length ? Math.round(kcal) + ' 千卡' : ''}</span>
-          <button class="add" data-add="${m.k}">＋</button>
         </div>
         ${items.length ? `<div class="items">${rows}</div>`
                        : `<div class="empty">还没记录</div>`}
@@ -3316,9 +3320,6 @@ function renderMeals() {
     } catch (e) { toast(e.message); }
   });
 
-  $$('[data-add]', box).forEach(b => b.onclick = () => {
-    openAdd(b.dataset.add);
-  });
 }
 
 /* ---------------- 弹层叠放顺序 ---------------- */
