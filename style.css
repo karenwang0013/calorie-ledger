@@ -689,7 +689,7 @@ body.add-open .sheet-mask.on {
 
 /* 名字 + 小铅笔：名字一行，铅笔永远贴在名字右边同一行，放不下就把名字尾巴省略，
    绝不把铅笔挤到下一行去 */
-.nameline { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; }
+.nameline { display: flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; }
 .nameline .nmtxt {
   min-width: 0; flex: 0 1 auto;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -697,7 +697,7 @@ body.add-open .sheet-mask.on {
 .pen {
   flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 24px; padding: 0; border: 0;
+  width: 22px; height: 24px; padding: 0; border: 0;
   background: none;
   color: var(--muted2);   /* 和「还没记录」那种小字一个灰 */
 }
@@ -706,13 +706,13 @@ body.add-open .sheet-mask.on {
 /* 一次识别出来的一组：一行汇总，点开看明细 */
 /* 列表/明细里紧跟在营养文字后面的「…」：和文字共用一条中心线（行内弹性居中，不用 baseline 对齐） */
 .mitem .sub, .gitem .sub {
-  display: inline-flex; align-items: center; gap: 5px;   /* 和食品名那行一样：离字 5px */
+  display: inline-flex; align-items: center; gap: 2px;   /* 和食品名那行一样：离字 2px（v9.74：原来 5px，用户觉得太宽） */
   line-height: 14px;                       /* 文字行高和三点的盒子同高，中心线才对得死 */
 }
 /* 全 App 的「⋯」统一成食品名后面那个：盒子 26×24、图标 20×20、离字 5px。
    营养行 / 明细行的小「⋯」也一样 —— 用户要求"只要后面带三个点，都是这个大小这个宽度这个距离" */
 .pen.inl {
-  width: 26px; height: 24px; margin: 0; padding: 0;
+  width: 22px; height: 24px; margin: 0; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   vertical-align: middle;
   position: static;
@@ -1363,19 +1363,26 @@ body.add-open .sheet-mask.on {
 .rnalert.on { transform: none; opacity: 1; pointer-events: auto; }
 /* 标题那行已经去掉（用户要求）；输入框内容居中，输入框和按钮都在卡里居中放 [v8.14]
    用户又说「输入框和两个按钮太大了」→ 高度/字号/左右留白各收一档 [v8.15] */
-/* 用户要求：里面的东西可以缩，但「框框」尺寸不许变 → 卡片改成固定尺寸 + 内容垂直居中，
-   以后调输入框/按钮的大小都不会再带着卡一起变 [v8.16] */
+/* v9.74（用户选的效果图右侧）：卡片贴合内容，不再是一个大胶囊里飘着三个小件。
+   · 卡宽 320（内容 292）· 四边留白 14 · 高度由内容决定（14+44+12+44+14 = 128）
+   · 卡圆角 28 = 留白 14 + 内圆 14 —— 和里面的输入框/按钮同心
+   · 输入框和按钮统一 44 高、圆角 14、间距 12（以前 33/32、圆角 12、卡 130 固定） */
 .rnalert {
-  height: 130px;                                  /* 框框固定高度（= 定稿前那版的样子） */
-  padding: 0 30px;                                 /* 左右留白（再收一档）；上下交给 flex 居中 */
-  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  width: min(84vw, 320px);
+  height: max-content;
+  padding: 14px;
+  border-radius: 28px;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
 }
-.rnalert input { width: 100%; text-align: center; padding: 7px 14px; font-size: 14px; }
+.rnalert input {
+  width: 100%; height: 44px; text-align: center; padding: 0 14px;
+  font-size: 15.5px; border-radius: 14px;
+}
 .rnalert-btns { display: flex; gap: 10px; margin: 0; }
 .rnalert-btns button {
-  flex: 1 1 0; padding: 7px; border-radius: 12px; border: 0;
+  flex: 1 1 0; height: 44px; padding: 0; border-radius: 14px; border: 0;
   background: rgba(255, 255, 255, 0.08); color: var(--text);
-  font-size: 13px; font-weight: 600;
+  font-size: 15px; font-weight: 600;
 }
 .rnalert-btns button.prim { background: var(--lime); color: #0a0b0c; }
 .rnalert-btns button:active { opacity: .75; }
