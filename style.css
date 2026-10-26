@@ -2910,8 +2910,7 @@ html.kb #setSheet {
    ⚠️ 必须写在 #setBody .card / .setrows 之后，否则会被原来那套（--setrow-fill 黑 40% / 圆角 22）盖回去。 */
 #setBody .card,
 #setBody .setrows,
-/* v8.92：铃铛打开的「提醒记录」卡里也是同一套行卡，一起跟上 */
-#nlogList .setrows,
+/* v9.78：提醒记录里那个内层「框」已按用户要求去掉，所以这里不再包含 #nlogList .setrows */
 /* v9.73 用户口径：提醒记录卡底部「共 N 条 / 清空记录」那一栏，颜色和材质以设置里「强制更新」那一栏为基准
    （原来这里是母版 .setrows：圆角 22 + 黑 40% 填充，比设置那边浓得多，看起来是两块不同的东西） */
 #nlogFoot .setrows {
@@ -2952,11 +2951,8 @@ html.kb #setSheet {
   flex: 0 0 auto; margin-left: auto; font-size: 13.5px; color: var(--muted);
   font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
 }
-/* 危险动作的胶囊：只用红字，不新增颜色（和「危险操作用红字」那条一致） */
-.setpill.danger {
-  margin-left: auto; color: #ff7b7b;
-  background-image: linear-gradient(rgba(255,93,93,.10), rgba(255,93,93,.10)), var(--edge-gloss);
-}
+/* v9.78 用户口径：这一颗改成**实色绿底 + 黑字**（不再是红字胶囊），
+   所以这里删掉了 .setpill.danger 那条覆盖，直接用它下面 .setpill 的母版。 */
 /* 版本行：没图标、没箭头，右侧一颗荧光绿胶囊 */
 .setrow.ver { padding-left: 15px; }
 .setrow.ver em { margin-right: 12px; }
@@ -2968,6 +2964,9 @@ html.kb #setSheet {
   background-origin: border-box; background-clip: padding-box, border-box;
   border: 1px solid transparent;
 }
+/* v9.78：底部那栏「清空记录」仍然靠右（原来是 .setpill.danger 的 margin-left:auto 在撑，
+   那条删掉后要补回来；只作用于这一颗，别动设置里「强制更新」的位置） */
+#nlogFoot .setpill { margin-left: auto; }
 
 /* ==================================================================
    提醒记录卡：外形 / 材质 / 位置 / 圆角 / 底边 / 高度 全部照设置卡
@@ -3002,9 +3001,15 @@ html.kb #setSheet {
 /* v9.72 用户口径：所有信息装在同一个大框里，一行一行排（不再是「一条一个框」、「今天/更早」各一个框）。
    分组标题「今天 / 更早」变成框内的一行小淡字，两块之间只留一道细分隔线。
    v9.72b：这个框**高度固定**——永远占满卡片剩下那块地方，不跟信息条数变高变矮；
-   信息多到放不下时，在框里自己滚（框边和圆角始终不动）。 */
-#nlogList { display: flex; flex-direction: column; overflow: hidden; }
-#nlogList > .setrows { flex: 1 1 auto; min-height: 0; }
+   信息多到放不下时，在框里自己滚（框边和圆角始终不动）。
+   v9.78 用户口径：这个「框」本身去掉（不要那层内层卡）——文字直接显示在卡牌里，像搜索页的行列表一样；
+   底下「共 N 条 / 清空记录」那一栏保留不动。高度固定这条规则不变。 */
+#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px; }
+#nlogList > .setrows {
+  flex: 1 1 auto; min-height: 0;
+  margin: 0; border: 0; border-radius: 0;
+  background: none; box-shadow: none;
+}
 #nlogList .nlogone {
   padding: 2px 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
