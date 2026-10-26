@@ -25,6 +25,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.77', d: '10-26', items: [
+    '修（我做坏又修回来的）：提醒记录里有数据时，「今天」两个字被挤成竖排一列、记录条被推到框中间 —— 上一条为了把空状态文字居中，写了条 flex 规则，把有数据的普通列表也一起改了',
+    '现在那条规则只作用在「空状态」那一层；有数据时恢复原来的布局：今天/更早 各一行小字，记录一行一条从上往下排（实测：日期标签单行 29 高、第一条紧贴其下）',
+    '空状态仍然居中（水平偏差 0）',
+  ] },
   { v: 'v9.76', d: '10-26', items: [
     '修：「热量采集 / 健康采集」跑完之后没有任何提示了 —— 上一版按「数值有没有变」判断，所以称了同样的体重、或者活动差不多，就一声不响。现在改成按「这次是不是新的一次采集」（看文件里的写入时刻），每次真跑过都会提示一次',
     '修：两条提示挨着来时，后一条会把前一条顶掉（你只看到一条）。现在改成排队，一条一条显示，最多排 3 条',
@@ -2748,7 +2753,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.76';
+const APP_VERSION = 'v9.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5718,7 +5723,7 @@ function openNotifyLog() {
         ).join('')
         + `</div>`;
     } else {
-      box.innerHTML = `<div class="setrows"><div id="nlogEmpty">还没有提醒记录<span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div></div>`;
+      box.innerHTML = `<div class="setrows nlog-empty"><div id="nlogEmpty">还没有提醒记录<span>称重、超出目标、今天没记录这类提醒，都会记在这里</span></div></div>`;
     }
   }
   const cnt = $('#nlogCount');

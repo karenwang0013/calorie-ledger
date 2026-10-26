@@ -2991,7 +2991,7 @@ html.kb #setSheet {
 #nlogSheet .sh-foot { background: transparent; border-top: 0; padding: 0; flex: 0 0 auto; }   /* 和设置卡版本行同一位置：margin 0 16px、离卡底 20 */
 /* v9.75 用户口径：没有记录时，框里那两行小字要**居中**（原来贴在左上角，大框空着一大片）。
    字号、颜色、行距、文案都不动，只改对齐。 */
-#nlogList > .setrows { display: flex; }
+#nlogList > .setrows.nlog-empty { display: flex; }
 #nlogEmpty {
   flex: 1 1 auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
