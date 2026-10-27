@@ -20,7 +20,11 @@
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
   /* v10.05：用户口径 —— 不要「横条居中」，要让 home 横条的**顶边**正好贴住 Dock 的**底边**（相接、不重叠）：
      横条距底 8pt、高 5pt → 横条顶边在距底 13pt，所以 Dock 四边都取 13。 */
-  --dock-inset: 13px;      /* 卡牌 / 弹层左右 = Dock 左右（卡牌宽度永远跟 Dock 走，用户口径） */
+  --dock-inset: 13px;      /* 弹层卡（记录/设置/提醒）左右 = Dock 左右（用户：点出来的卡要跟 Dock 同宽） */
+  /* v10.09：主页那些卡（统计/营养素/餐卡/标题）比 Dock 窄一点 —— 用户要求「Dock 比主页卡宽一点」，
+     但弹出来的卡要和 Dock 一样宽。所以分成两个变量：--dock-inset（弹层/Dock=13）、--page-pad（主页=18）。 */
+  --page-pad: 18px;        /* 主页卡牌/标题左右（比 Dock 的 13 多 5 → Dock 每边宽 5） */
+  /* 层级：Dock = 弹层卡（13）> 主页卡（18）。用户口径：Dock 比主页卡宽一点，但点出来的卡跟 Dock 一样宽。 */
   --dock-max: 100%;        /* Dock 最大宽度；和 Dock 重叠的卡牌也用这个值 */
   --dock-bottom: 13px;     /* 下边离屏幕底（= home 横条顶边所在的 13pt） */
   /* v10.08：Dock 左右 = 底部 = 卡牌左右，全部 13 —— 圆角处那道缝和底缝一样宽（用户：之前 8 vs 13 对不上）。
@@ -248,7 +252,7 @@ html.kb .sc-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px var(--dock-inset) 14px;
+  padding: 6px var(--page-pad) 14px;
 }
 .daterow .d { text-align: center; }
 .daterow .d b { font-size: 17px; font-weight: 620; letter-spacing: 0.3px; }
@@ -325,7 +329,7 @@ html.kb .sc-body {
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  margin: 8px var(--dock-inset) 0;
+  margin: 8px var(--page-pad) 0;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -618,7 +622,7 @@ body.add-open .sheet-mask.on {
 
 /* ---------- 营养素 ---------- */
 .macros {
-  margin: 12px var(--dock-inset) 0;
+  margin: 12px var(--page-pad) 0;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -648,7 +652,7 @@ body.add-open .sheet-mask.on {
 .sec .act { font-size: 12px; color: var(--lime); }
 
 /* ---------- 餐次 ---------- */
-.meals { padding: 0 var(--dock-inset); display: grid; gap: 10px; }
+.meals { padding: 0 var(--page-pad); display: grid; gap: 10px; }
 .meal {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1116,7 +1120,7 @@ body.add-open .sheet-mask.on {
 
 /* ---------- 卡片 ---------- */
 .card {
-  margin: 0 var(--dock-inset) 12px;
+  margin: 0 var(--page-pad) 12px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -1194,7 +1198,7 @@ body.add-open .sheet-mask.on {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 4px;
   background: var(--card); border: 1px solid var(--line);
   /* 左右两端做成整个圆（像 Dock 的胶囊），整体扁一点 */
-  border-radius: 999px; margin: 0 var(--dock-inset) 12px; padding: 2px;
+  border-radius: 999px; margin: 0 var(--page-pad) 12px; padding: 2px;
   --seg-btn-r: 999px;
 }
 .seg button {
@@ -2227,7 +2231,7 @@ body.add-open .sheet-mask.on {
 .sw input:checked:active + i:after { transform: translateX(16px); width: 28px; border-radius: 12px; }
 .meh1 { padding: 0 18px 12px; font-size: 19px; font-weight: 650; }
 
-.pagetitle { margin: 0; padding: 4px var(--dock-inset) 16px; font-size: 29px; font-weight: 700; letter-spacing: .5px; }
+.pagetitle { margin: 0; padding: 4px var(--page-pad) 16px; font-size: 29px; font-weight: 700; letter-spacing: .5px; }
 
 html.kb .tabbar, html.kb .fab { display: none !important; }
 

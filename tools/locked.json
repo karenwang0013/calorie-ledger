@@ -151,12 +151,12 @@
   },
   {
     "file": "style.css",
-    "find": "margin: 0 var(--dock-inset) 12px;",
-    "why": "首页卡牌/统计卡/餐卡的左右必须与 Dock 同一个值（--dock-inset）；写死 18/14 会立刻参差"
+    "find": "--dock-w: 13px;",
+    "why": "Dock 左右必须等于底部（13），否则圆角处那道缝和底缝对不上；Dock 比卡牌宽靠\"卡牌 18 > Dock 13\"实现"
   },
   {
     "file": "style.css",
-    "find": "--dock-w: 13px;",
-    "why": "Dock 左右必须等于底部（13），否则圆角处那道缝和底缝对不上；Dock 比卡牌宽靠\"卡牌 18 > Dock 13\"实现"
+    "find": "margin: 0 var(--page-pad) 12px;",
+    "why": "主页卡牌左右用 --page-pad(18)，比 Dock/弹层的 13 窄 → Dock 比主页卡每边宽 5；写成 --dock-inset 会变成同宽"
   }
 ]
