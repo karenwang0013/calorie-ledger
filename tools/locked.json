@@ -123,5 +123,10 @@
     "file": "style.css",
     "find": ".meal .hd .kc { margin-left: auto; font-size: 13.5px; color: var(--text);",
     "why": "每餐右上角千卡的字号/颜色必须跟餐名一致（2026-10-26 用户定：不许改回 12px 灰字）"
+  },
+  {
+    "file": "app.js",
+    "find": "const pg0 = $('#photoGrams'); if (pg0) pg0.value = '';",
+    "why": "记录卡每次打开都清空克数框（上一轮的 130 不许带到下一轮）"
   }
 ]

@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.97', d: '10-27', items: [
+    '修：在记录卡里填过的克数会留到下一轮 —— 记完一种食物，下一次再记，那个克数框里还挂着上次的数字（比如 130），一不小心就按老克数记了',
+    '现在每次打开记录卡，克数框都是空的；「食材（可选）」「补充说明」本来就跟着清空',
+  ] },
   { v: 'v9.96', d: '10-26', items: [
     '改：图标设置里那两栏的名字跟着界面改了 —— 「三格·拍照 / 三格·搜索」→「两格·拍照 / 两格·搜索」（描述那格删掉以后记录卡只剩两格，名字还写着三格就自相矛盾了）',
   ] },
@@ -2831,7 +2835,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.96';
+const APP_VERSION = 'v9.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3429,6 +3433,8 @@ function openAdd(meal) {
   resetPhotoUI();
   restoreDraft();
   $('#photoHint').value = '';
+  // v9.97：上一轮填过的克数不许带到这一轮（用户口径：「上一轮输入过克重，下一次记的时候这个克重要清掉」）
+  const pg0 = $('#photoGrams'); if (pg0) pg0.value = '';
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
   $('#searchInput').value = '';
