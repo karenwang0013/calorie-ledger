@@ -2961,11 +2961,14 @@ body.nlog-open .bellbtn { color: var(--lime); }
      否则圆弧落在外卡边上、内容本身的角根本没被裁到 —— 这就是之前一直看到直角的原因 */
   --set-clip-x: 16px;
   border-radius: 0;
-  /* v10.25 退回 v10.23 的做法（用户：「刚刚是对的，你怎么又把框框和消失的圆角加进来了」）：
-     裁切窗口**不带 round**，内容是直边消失，不再出现一圈圆角轮廓。
-     唯一保留的是「消失位置」—— 卡片底部内边距已改成 0，所以消失线就落在卡牌自己的底边上。 */
-  -webkit-clip-path: inset(0 var(--set-clip-x));
-  clip-path: inset(0 var(--set-clip-x));
+  /* v10.26 用户口径：「关于与更新里为什么还有一个框框？不要底了，不要框框底了」
+     → 原来那条直切的裁切线，看起来就是"框的底边"（内容被硬切一刀）。
+     现在底部改成**渐隐**：最后 26px 内容渐渐化开，没有硬边、也看不出一个框；
+     左右不再裁（内容本来就有 16~18 的内边距），顶部仍直接到卡片上沿。 */
+  -webkit-clip-path: none;
+  clip-path: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent 100%);
 }
 
 :root {
