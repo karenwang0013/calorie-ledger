@@ -103,6 +103,19 @@ const checks = [
   })()],
   ['分段滑块按下就认手指那一格，松手不许先弹回旧格再滑过来（和 Dock 一样用 target）', /function initSegLens[\s\S]{0,6000}?target = b;/.test(app) && !/function initSegLens[\s\S]{0,9000}?place\(wrap\.querySelector\('button\.on'\) \|\| el/.test(app)],
   ['Dock 三格等宽居中（加号永远在正中那格，左右各一格）', /grid-template-columns: 1fr 1fr 1fr/.test(css)],
+  // v10.05 用户定的硬规矩（2026-10-27）：
+  //   Dock 的 left / right / bottom 三个边距永远相等；圆角 = 屏幕圆角 − 边距（同心）；
+  //   高度必须装得下这个圆角（否则 CSS 会把圆角砍到高度一半，弧线变小、就不呼应了）。
+  // 改任何一个参数都要按这三条一起重算，不许单独调一个。
+  ['Dock 四边等距 + 圆角能装下（改高度/圆角/边距必须一起按公式动）', (() => {
+    const num = k => { const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px')); return m ? parseFloat(m[1]) : null; };
+    const inset = num('dock-inset'), bottom = num('dock-bottom'), h = num('dock-h');
+    if (inset == null || bottom == null || h == null) return false;
+    if (Math.abs(inset - bottom) > 0.01) return false;        // ① 左右底必须同一个值
+    const maxScreenR = 62;                                     // ② 手机最大屏幕圆角（iPhone 16 Pro/17/17 Pro/17 Pro Max）
+    const wantR = maxScreenR - inset;                           //    同心圆角 = 屏幕圆角 − 边距
+    return h >= 2 * wantR - 0.01;                              // ③ 高度至少 2×圆角，否则圆角被砍
+  })()],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
