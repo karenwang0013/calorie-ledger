@@ -126,7 +126,7 @@
   },
   {
     "file": "app.js",
-    "find": "const pg0 = $('#photoGrams'); if (pg0) pg0.value = '';",
-    "why": "记录卡每次打开都清空克数框（上一轮的 130 不许带到下一轮）"
+    "find": "function resetAddInputs() {",
+    "why": "记录卡三个输入框（食材/克数/补充说明）每轮结束都清空，上一轮的信息不许带到下一轮"
   }
 ]

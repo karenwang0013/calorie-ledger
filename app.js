@@ -28,9 +28,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.98', d: '10-27', items: [
+    '修：记录卡里的「食材（可选）」「克数」「补充说明（可选）」三个框，上一轮填过的内容还会留到下一轮 —— 记完一种食物再记下一种时，这些框里还挂着上次的字和数字，一不小心就按老内容记了',
+    '现在「记入」成功那一刻就把三个框清空；下次打开记录卡再确认一次也是空的（v9.97 只清了克数，这一版把另外两个也一起收进来）',
+  ] },
   { v: 'v9.97', d: '10-27', items: [
     '修：在记录卡里填过的克数会留到下一轮 —— 记完一种食物，下一次再记，那个克数框里还挂着上次的数字（比如 130），一不小心就按老克数记了',
-    '现在每次打开记录卡，克数框都是空的；「食材（可选）」「补充说明」本来就跟着清空',
+    '现在每次打开记录卡，克数框都是空的（「食材」「补充说明」这两个框见 v9.98 一起收）',
   ] },
   { v: 'v9.96', d: '10-26', items: [
     '改：图标设置里那两栏的名字跟着界面改了 —— 「三格·拍照 / 三格·搜索」→「两格·拍照 / 两格·搜索」（描述那格删掉以后记录卡只剩两格，名字还写着三格就自相矛盾了）',
@@ -2835,7 +2839,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.97';
+const APP_VERSION = 'v9.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3432,9 +3436,7 @@ function openAdd(meal) {
   const bn0 = $('#batchName'); if (bn0) bn0.value = '';
   resetPhotoUI();
   restoreDraft();
-  $('#photoHint').value = '';
-  // v9.97：上一轮填过的克数不许带到这一轮（用户口径：「上一轮输入过克重，下一次记的时候这个克重要清掉」）
-  const pg0 = $('#photoGrams'); if (pg0) pg0.value = '';
+  resetAddInputs();   // v9.98：上一轮填的食材 / 克数 / 补充说明一个都不带来（见函数说明）
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
   $('#searchInput').value = '';
@@ -3886,6 +3888,17 @@ function restoreDraft() {
   }
   if (d.photo || d.photo2) $('#photoActions').hidden = false;
   try { syncAddSheetFit(); } catch (e) {}
+}
+
+/* 记录卡里那三个输入框（食材 / 克数 / 补充说明）：
+   一轮记录完成后全部清空，下一轮不许显示上一轮填过的内容。
+   用户口径：「不光是克重，另外两个框也是同样的道理。如果一轮已经记录完成了，那么下一轮就不应该显示上一轮的信息了」。
+   打开记录卡时清一次（openAdd），点「记入」成功后也清一次（saveItems）—— 两条路都兜住。 */
+function resetAddInputs() {
+  ['#photoName', '#photoGrams', '#photoHint'].forEach(sel => {
+    const el = $(sel);
+    if (el) el.value = '';
+  });
 }
 
 /* 把拍照区恢复成「还没选图」的样子 */
@@ -5078,6 +5091,7 @@ async function saveItems() {
     });
     rememberFoods(items);                 // 记过的食物永久留档（搜索里能找到，× 才删）
     closeAdd();
+    resetAddInputs();                     // v9.98：这一轮记完了，食材 / 克数 / 补充说明当场清空
     S.batchName = null;
     clearDraft();
     toast(`已记入${MEAL_NAME[S.meal]} · ${Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0))} 千卡`);
