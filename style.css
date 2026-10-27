@@ -3004,10 +3004,10 @@ html.kb #setSheet {
   background: none; border: 0; color: var(--text); text-align: left;
   font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: .1px;
 }
-.setrow + .setrow::before {
-  content: ''; position: absolute; top: 0; left: 48px; right: 0; height: 1px;
-  background: rgba(255,255,255,.065);
-}
+/* v10.21 用户口径：「间隔的那个线也要（去掉）—— 信息栏里面不是有间隔的线吗」
+   → 行与行之间那条 1px 浅线整条撤掉（设置卡 / 提醒记录 / 关于页同一个选择器都生效）。
+   只去掉线，行高、图标、字的居中、点击反馈都不动。 */
+.setrow + .setrow::before { content: none; }
 .setrow:active { background: var(--btn-solid); }
 .setrow .ico { flex: 0 0 21px; display: flex; align-items: center; justify-content: center; color: var(--lime); }
 .setrow .ico svg { width: 21px; height: 21px; fill: currentColor; }
