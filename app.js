@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v9.99', d: '10-27', items: [
+    '修：饮食目标页的「目标缺口」以前要用负号填（负数=缺口），可手机数字键盘根本没有负号键 —— 只能打正数，结果填 500 被当成「盈余 500」，方向正好反过来了',
+    '改：现在拆成「缺口 · 少吃 / 盈余 · 多吃」两个方向，下面只填正数，不用管负号。填 0 就是维持（以前填 0 会失效，实际按原来的数在算）',
+    '修：编辑时「每日可吃」那句提示用的是「当天到现在的消耗」，保存后却按「目标用的日消耗」算，两边差几百千卡，看着像没生效；现在统一按目标口径算',
+  ] },
   { v: 'v9.98', d: '10-27', items: [
     '修：记录卡里的「食材（可选）」「克数」「补充说明（可选）」三个框，上一轮填过的内容还会留到下一轮 —— 记完一种食物再记下一种时，这些框里还挂着上次的字和数字，一不小心就按老内容记了',
     '现在「记入」成功那一刻就把三个框清空；下次打开记录卡再确认一次也是空的（v9.97 只清了克数，这一版把另外两个也一起收进来）',
@@ -2839,7 +2844,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v9.98';
+const APP_VERSION = 'v9.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6729,8 +6734,12 @@ function renderMe() {
         <div class="hint" id="modeHint" style="margin:10px 0 16px">${modeHintHTML(setting('diet_mode', 'maintain'))}</div>
         <div class="field">
           <label>目标缺口 / 盈余（千卡 / 天）</label>
-          <input id="nDef" type="number" inputmode="numeric" value="${-d.targets.deficit}">
-          <div class="hint"><b>负数 = 缺口</b>（如 -300），<b>正数 = 盈余</b>（如 300）。填 0 就等于维持。</div>
+          <div class="modes two" id="defDir">
+            <button data-dir="deficit" class="${d.targets.deficit >= 0 ? 'on' : ''}"><b>缺口 · 少吃</b></button>
+            <button data-dir="surplus" class="${d.targets.deficit < 0 ? 'on' : ''}"><b>盈余 · 多吃</b></button>
+          </div>
+          <input id="nDef" type="number" inputmode="numeric" min="0" step="50" value="${Math.abs(d.targets.deficit)}" style="margin-top:10px">
+          <div class="hint">先选方向，下面只填<b>正数</b>（不用打负号）：缺口 = 每天比消耗少吃多少，盈余 = 多吃多少。<b>填 0 = 维持</b>。例：减脂选「缺口 · 少吃」填 300。</div>
           <div class="warnline" id="nDefWarn" hidden></div>
         </div>
         <div class="field">
@@ -7039,12 +7048,32 @@ function wireMe() {
 
   const nd = $('#nDef'), nk = $('#nKcal');
   if (nd && nk) {
-    const exp = (S.day && S.day.expenditure) || 0;
+    // v9.99：这里用「目标用的日消耗」（expenditure_base）做联动，不再用「当天到现在」的
+    // expenditure —— 否则编辑时显示 1707−300=1407，保存后却按 1857−300=1557 算，用户会以为没生效
+    const exp = (S.day && (S.day.expenditure_base || S.day.expenditure)) || 0;
     const bmr = Math.round((S.day && S.day.expenditure_detail && S.day.expenditure_detail.resting) || 0);
+    // v9.99：方向单独选、数字只填正数 —— iOS 数字键盘打不出负号，以前填 500 会被存成「盈余 500」（方向反了）
+    // 内部口径不变：signed 正 = 缺口，负 = 盈余
+    let dir = (Number((S.day && S.day.targets && S.day.targets.deficit) || 0) < 0) ? 'surplus' : 'deficit';
+    const paintDir = () => {
+      $$('#defDir button').forEach(b => b.classList.toggle('on', b.dataset.dir === dir));
+      const w = $('#defDir');
+      if (w && w.__lensSync) w.__lensSync(true, true);   // 换了方向直接把滑块拍到位，不滑
+    };
+    const signedNow = () => {
+      const n = Math.abs(Number(nd.value) || 0);
+      return dir === 'surplus' ? -n : n;
+    };
+    const setSigned = (v) => {                            // 「每日可吃」反推方向 + 数字
+      const val = Math.round(Number(v) || 0);
+      dir = val < 0 ? 'surplus' : 'deficit';
+      nd.value = Math.abs(val);
+      paintDir();
+    };
     const paintWarn = () => {
       const box = $('#nDefWarn');
       if (!box) return null;
-      const adv = deficitAdvice(exp, -Number(nd.value || 0), bmr);
+      const adv = deficitAdvice(exp, signedNow(), bmr);
       if (!adv) { box.hidden = true; box.textContent = ''; box.className = 'warnline'; return null; }
       box.hidden = false;
       box.className = 'warnline' + (adv.lv === 'hard' ? ' hard' : '');
@@ -7054,16 +7083,22 @@ function wireMe() {
     const paintKcalHint = () => {
       const box = $('#nKcalHint');
       if (!box) return;
-      const d = -Number(nd.value || 0);
+      const d = signedNow();
       const tail = box.querySelector('span') ? box.querySelector('span').outerHTML : '';
       box.innerHTML = `= 全天消耗 ${exp} ${d >= 0 ? '− 缺口 ' + abs0(d) : '+ 盈余 ' + abs0(d)}<br>${tail}`;
     };
     const abs0 = (n) => Math.abs(Math.round(n));
-    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp + (Number(nd.value) || 0))); paintWarn(); paintKcalHint(); };
-    nk.oninput = () => { nd.value = Math.round((Number(nk.value) || 0) - exp); paintWarn(); };
+    nd.oninput = () => { nk.value = Math.max(600, Math.round(exp - signedNow())); paintWarn(); paintKcalHint(); };
+    nk.oninput = () => { setSigned((Number(nk.value) || 0) - exp); paintWarn(); paintKcalHint(); };
+    $$('#defDir button').forEach(b => b.onclick = () => {
+      dir = b.dataset.dir === 'surplus' ? 'surplus' : 'deficit';
+      paintDir();
+      nd.oninput();                                       // 方向一变，可吃那句提示跟着重算
+    });
     paintWarn();
   }
   initSegLens($('#dietModes'));   // 目标模式三格也挂玻璃滑块
+  initSegLens($('#defDir'));      // 「缺口 / 盈余」两格：和 Dock 同一套玻璃滑块
   $$('#dietModes button').forEach(b => b.onclick = async () => {
     const k = b.dataset.mode;
     const m = DIET_MODES[k];
@@ -7090,15 +7125,25 @@ function wireMe() {
     const d = S.day;
     if (!d || !d.targets) return;
     const set = (sel, v) => { const el = $(sel); if (el && document.activeElement !== el) el.value = v; };
-    set('#nDef', -d.targets.deficit);
+    const signedTarget = Math.round(d.targets.deficit);          // 正=缺口，负=盈余
+    set('#nDef', Math.abs(signedTarget));                        // 数字框只放正数
+    const dwrap = $('#defDir');                                  // 方向跟着缺口的正负走
+    if (dwrap) {
+      const dirNow = signedTarget < 0 ? 'surplus' : 'deficit';
+      $$('#defDir button').forEach(b => b.classList.toggle('on', b.dataset.dir === dirNow));
+      if (dwrap.__lensSync) dwrap.__lensSync(true, true);
+    }
     set('#nKcal', d.targets.kcal_budget);
     set('#nProt', d.targets.protein_g);
     set('#nCarb', d.targets.carb_g);
     set('#nFat', d.targets.fat_g);
     const hint = $('#nKcalHint');
     if (hint) {
-      const def = -Number(($('#nDef') || {}).value || 0);
-      const exp = d.expenditure || 0;
+      const num = Math.abs(Number(($('#nDef') || {}).value || 0));
+      const onBtn = $('#defDir button.on');
+      const isSurplus = !!(onBtn && onBtn.dataset.dir === 'surplus');
+      const def = isSurplus ? -num : num;
+      const exp = d.expenditure_base || d.expenditure || 0;
       const tail = hint.querySelector('span') ? hint.querySelector('span').outerHTML : '';
       hint.innerHTML = `= 全天消耗 ${exp} ${def >= 0 ? '− 缺口 ' + Math.abs(Math.round(def)) : '+ 盈余 ' + Math.abs(Math.round(def))}<br>${tail}`;
     }
@@ -7115,9 +7160,16 @@ function wireMe() {
         if (autoVal && Math.abs(v - autoVal) < 1) return undefined;
         return v;
       };
-      const defRaw = Number(($('#nDef') || {}).value);
+      const numDef = Math.abs(Number(($('#nDef') || {}).value));
+      const dirBtn = $('#defDir button.on');
+      const isSurplus = !!(dirBtn && dirBtn.dataset.dir === 'surplus');
+      const defSigned = isSurplus ? -numDef : numDef;      // 内部口径：正=缺口，负=盈余
       const autoDef = Number(a.deficit || 0);
-      const defValue = (isFinite(defRaw) && defRaw !== 0 && Math.abs(-defRaw - autoDef) >= 1) ? -defRaw : undefined;
+      // v9.99：填 0 要真的存成「不缺口不盈余」；以前 0 会被跳过，结果转去存「每日可吃」，
+      // 明明是填 0 却变成了一个 150 的缺口（用户看到的「填 0 = 维持」不生效）
+      const defValue = !isFinite(numDef) ? undefined
+        : (numDef === 0 ? 0
+          : (Math.abs(defSigned - autoDef) >= 1 ? defSigned : undefined));
       const ov = {
         deficit: defValue,
         // 填了缺口/盈余就不用再存「每日可吃」，否则两者会打架
@@ -7129,9 +7181,9 @@ function wireMe() {
       Object.keys(ov).forEach(k => ov[k] === undefined && delete ov[k]);
       await api('/api/settings', { target_override: ov });
       const adv = (function () {
-        const e = (S.day && S.day.expenditure) || 0;
+        const e = (S.day && (S.day.expenditure_base || S.day.expenditure)) || 0;
         const b = Math.round((S.day && S.day.expenditure_detail && S.day.expenditure_detail.resting) || 0);
-        return deficitAdvice(e, -defRaw, b);
+        return deficitAdvice(e, defSigned, b);
       })();
       if (adv) toast(adv.t, adv.lv === 'hard' ? 5200 : 4200);
       else toast(Object.keys(ov).length ? '已保存饮食目标' : '已恢复为建议值');

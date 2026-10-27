@@ -128,5 +128,10 @@
     "file": "app.js",
     "find": "function resetAddInputs() {",
     "why": "记录卡三个输入框（食材/克数/补充说明）每轮结束都清空，上一轮的信息不许带到下一轮"
+  },
+  {
+    "file": "app.js",
+    "find": "<div class=\"modes two\" id=\"defDir\">",
+    "why": "目标缺口必须是「方向 + 正数」两件套：iOS 数字键盘打不出负号，单框输入会把缺口变成盈余（v9.99 用户实测）"
   }
 ]
