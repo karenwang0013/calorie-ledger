@@ -2961,12 +2961,11 @@ body.nlog-open .bellbtn { color: var(--lime); }
      否则圆弧落在外卡边上、内容本身的角根本没被裁到 —— 这就是之前一直看到直角的原因 */
   --set-clip-x: 16px;
   border-radius: 0;
-  /* v10.24 用户口径（推翻 v10.23 的直线）：「不要是直线，卡牌是怎样的曲线就消失在哪里，
-     消失界面要和卡牌底部形状融为一体，不是单独拿一条线消失」。
-     → 裁切窗口直接取卡片的圆角（--dock-r），并且不再内缩左右：
-       内容在卡牌自己的弧线上消失，四个角都是卡片的弧，看不出单独的一条切线。 */
-  -webkit-clip-path: inset(0 round calc(var(--dock-r, 26px) - 1px));
-  clip-path: inset(0 round calc(var(--dock-r, 26px) - 1px));
+  /* v10.25 退回 v10.23 的做法（用户：「刚刚是对的，你怎么又把框框和消失的圆角加进来了」）：
+     裁切窗口**不带 round**，内容是直边消失，不再出现一圈圆角轮廓。
+     唯一保留的是「消失位置」—— 卡片底部内边距已改成 0，所以消失线就落在卡牌自己的底边上。 */
+  -webkit-clip-path: inset(0 var(--set-clip-x));
+  clip-path: inset(0 var(--set-clip-x));
 }
 
 :root {
