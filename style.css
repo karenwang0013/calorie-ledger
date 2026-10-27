@@ -34,11 +34,27 @@
   /* Dock 高度（固定，圆角上限要看它）—— v10.05 94 → 98：同心圆角要 62−13=49，49 必须 ≤ 高度一半（49），
      否则又会被"不能超过一半"卡住、圆角变小就不呼应了 */
   --dock-h: 108px;
-  /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
-  --dock-r: 44px;
+  /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR）。
+     ⚠️ v10.15：这里必须同时用媒体查询写一份静态值（紧随 :root 之后）——
+     因为启动/buffer 的那一瞬间 JS 还没跑，圆角还停在这个默认值上，
+     屏幕上看就是「圆角处的缝比左右那两条缝宽」= 不等距（用户 2026-10-28 的截图就是这个）。
+     --dock-w 是 8，所以静态值 = 屏幕圆角 − 8。 */
+  --dock-r: 31px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
+
+/* Dock 圆角：按屏宽查「屏幕圆角表」，纯 CSS 先算一份（和 app.js 的 SCREEN_R 同一张表）。
+   作用是首帧就正确，不必等 JS 的 syncDockR —— buffer / 启动瞬间圆角不再和左右缝隙对不上。 */
+@media (min-width: 375px) { :root { --dock-r: 31px; } }  /* 39 − 8 */
+@media (min-width: 390px) { :root { --dock-r: 39px; } }  /* 47.3 − 8 */
+@media (min-width: 393px) { :root { --dock-r: 47px; } }  /* 55 − 8 */
+@media (min-width: 402px) { :root { --dock-r: 54px; } }  /* 62 − 8 */
+@media (min-width: 414px) { :root { --dock-r: 34px; } }  /* 41.5 − 8 */
+@media (min-width: 420px) { :root { --dock-r: 54px; } }  /* 62 − 8 */
+@media (min-width: 428px) { :root { --dock-r: 45px; } }  /* 53.3 − 8 */
+@media (min-width: 430px) { :root { --dock-r: 47px; } }  /* 55 − 8 */
+@media (min-width: 440px) { :root { --dock-r: 54px; } }  /* 62 − 8 */
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -2252,7 +2268,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
        封在 40 才不至于离谱 —— 大屏上四边略有差别，小屏（mini / Air / Pro 11）是完全相等的。 */
     --dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));
     --dock-h: 104px;
-    --dock-r: 16px;
+    --dock-r: 26px;   /* v10.15：和 JS 最终算出来的一致，首帧就别再是 16 了 */
   }
   /* 顶栏两端与内容列对齐 */
   .topbar {
