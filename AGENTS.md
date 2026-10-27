@@ -298,6 +298,7 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 | `--dock-w`（Dock 左右） | **必须 ≤ `--dock-inset`**（卡牌左右）。比卡牌小多少，Dock 就每边宽多少。当前 **8**（卡牌 13）→ 每边宽出 5pt |
 | `--dock-r`（Dock 圆角） | = **屏幕圆角 − `--dock-w`**（按 Dock 自己的左右边距同心，弧线处处等距）。屏幕圆角查 `app.js` 的 `SCREEN_R` |
 | `--dock-h`（Dock 高度） | 必须 **≥ 2 × `--dock-r`**。CSS 圆角超过高度一半会被自动砍小 → 弧线变小就不呼应 |
+| Dock 里的图标 / 文字 | **必须用 calc 跟着 `--dock-h` 走**：图标 = `calc(var(--dock-h) * 0.335)`、文字 = `calc(var(--dock-h) * 0.125)`（v10.17 起）。写死 px 就会出现「Dock 缩了、图标不缩」（v10.16 用户当场抓到） |
 | `--dock-inset`（弹层卡左右） | = **13** = Dock 左右。记录卡 / 设置卡 / 提醒记录卡都用它 → **点出来的卡与 Dock 同宽** |
 | `--page-pad`（主页卡左右） | = **18**。`.card/.stats/.macros/.meals/.seg/.daterow/.pagetitle` 用它 → **主页卡比 Dock 窄，Dock 每边宽 5** |
 
@@ -314,8 +315,11 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 **卡片吃同一套**：`.card` / `.stats` / `.macros` / `.meals` / `.seg` / `.daterow` / `.pagetitle` 的左右一律
 `var(--dock-inset)`（v10.06 统一，之前 18/14 参差）。**改卡牌边距 → 所有卡一起变。**
 
-**自动化**：`tools/guard-check.mjs` 的「Dock 与屏幕的等距/同心规则」会拦下四类错误：
-① 底部不是 13（离开白杠）② `--dock-w` > `--dock-inset`（Dock 比卡牌窄）③ 高度装不下同心圆角 ④ 公式被删。
+**自动化**：`tools/guard-check.mjs` 有两条会拦：
+- 「Dock 与屏幕的等距/同心规则 + 卡牌层级」：① Dock 左右 ≠ 底部 ② 弹层卡 ≠ Dock ③ 主页卡不比 Dock 窄 ④ 高度装不下圆角 ⑤ 底部超出 8~13
+- 「Dock 图标/文字必须跟 Dock 高度联动」：图标/文字写死 px 直接报错（v10.18 加）
+
+**一句话总规矩（用户 2026-10-28 亲口定的）**：Dock 变宽或变矮时，**圆角间隙、底部间隙、里面的图标和文字**必须一起跟着调整 —— 不是只改一个尺寸。
 
 **别再这么做**：只把底部从 14 改成 8 就完事（v10.03 干过，圆角还是旧的、四边不等距）；
 只调圆角不管高度（v10.04 之前：想给 54 被 94÷2=47 砍掉，看着一直是胶囊、"永远不呼应"）；

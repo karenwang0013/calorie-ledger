@@ -107,6 +107,12 @@ const checks = [
   //   Dock 的 left / right / bottom 三个边距永远相等；圆角 = 屏幕圆角 − 边距（同心）；
   //   高度必须装得下这个圆角（否则 CSS 会把圆角砍到高度一半，弧线变小、就不呼应了）。
   // 改任何一个参数都要按这三条一起重算，不许单独调一个。
+  // v10.18 用户口径（2026-10-28）：「Dock 如果变宽或者变低，圆角间隙、底部间隙要跟着调整，包括里面的图标。」
+  // 图标和文字必须用 calc 跟 --dock-h 联动，写死 px 就会"Dock 缩了、图标不缩"（v10.16 就是这样被用户抓到的）。
+  ['Dock 图标/文字必须跟 Dock 高度联动（calc(--dock-h × 系数)，不许写死 px）',
+    /\.tab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.335\)/.test(css)
+    && /\.fab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.335\)/.test(css)
+    && (css.match(/font-size: calc\(var\(--dock-h\) \* 0\.125\)/g) || []).length >= 2],
   ['Dock 与屏幕的等距/同心规则 + 卡牌层级（Dock=弹层=底部，主页卡更窄）', (() => {
     const num = k => { const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px')); return m ? parseFloat(m[1]) : null; };
     const inset = num('dock-inset');     // 弹层卡（记录/设置/提醒）左右
