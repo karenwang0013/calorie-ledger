@@ -812,6 +812,15 @@ body.add-open .sheet-mask.on {
    只留左右 18 的内边距（和别的页对齐），字距行距、分组、滚动都不动。 */
 /* 注意：这一页是渲染在 #setBody 里的，`#setBody .card` 带 ID 权重更高，必须同样带 #setBody 才压得住 */
 #setBody .about-fill > .card,
+/* v10.24：上面那条 `flex: 0 0 auto` 带 #setBody 权重更高，会把关于页第一张卡的
+   `flex: 1 1 auto`（滚动区）盖掉 → 内容全展开、滚不动。这里按同一权重补回来。 */
+#setBody .about-fill > .card:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 #setBody .about-fill > .card.tight {
   margin: 0 0 12px;
   padding: 0 18px;
@@ -2900,7 +2909,9 @@ select:focus {
   min-height: 0;
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
   border-radius: var(--dock-r, 26px);
-  padding: 18px 0 20px;   /* 顶部多留 18px：卡的上沿再高一点（内容不动） */
+  /* v10.24：底部不再留 20px —— 内容要一直画到卡底、沿着卡牌自己的圆角消失（用户口径：
+     「消失界面和卡牌底部形状融为一体，不是单独拿一条线去消失」） */
+  padding: 18px 0 0;
   box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
 }
 /* 打开时遮罩浅一档（和提醒记录同一档 28%），不盖顶栏 */
@@ -2938,7 +2949,9 @@ body.nlog-open .bellbtn { color: var(--lime); }
 #setSheet .sh-hd .backbtn:active { opacity: .6; }
 #setSheet .grab { width: 66px; height: 4px; }   /* 和提醒记录卡的横杠同一尺寸 */
 #setBody {
-  padding: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block;
+  /* v10.24：底部留 20 的内边距 —— 让最后一行的内容和卡底之间还有一点呼吸，
+     但裁切边界仍在卡片底边（padding 不影响 clip 的位置），所以滚到底时内容照样沿卡底圆角消失 */
+  padding: 0 0 20px; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: block;
   /* 卡内滚动区：四个角跟着外层卡片走（原来是直角，滑动时内容被切出方角）
      上下再各加一条 14px 的柔和过渡，内容钻到边缘时不出现硬切线 */
   /* 四个角都裁成圆弧，半径 = 卡内行卡/小卡的圆角（22px），和「目标模式」这类内部卡牌呼应
@@ -2948,9 +2961,12 @@ body.nlog-open .bellbtn { color: var(--lime); }
      否则圆弧落在外卡边上、内容本身的角根本没被裁到 —— 这就是之前一直看到直角的原因 */
   --set-clip-x: 16px;
   border-radius: 0;
-  /* v10.23 用户口径：「顶部和底部消失的界限就不要有圆角了，直接平行直线，下面直接到卡牌底部消失」
-     → 去掉 round：上下消失线是水平直线，不再是弧；左右仍内缩 16 贴住内容边（不会切到内容）。 */
-  clip-path: inset(0 var(--set-clip-x));
+  /* v10.24 用户口径（推翻 v10.23 的直线）：「不要是直线，卡牌是怎样的曲线就消失在哪里，
+     消失界面要和卡牌底部形状融为一体，不是单独拿一条线消失」。
+     → 裁切窗口直接取卡片的圆角（--dock-r），并且不再内缩左右：
+       内容在卡牌自己的弧线上消失，四个角都是卡片的弧，看不出单独的一条切线。 */
+  -webkit-clip-path: inset(0 round calc(var(--dock-r, 26px) - 1px));
+  clip-path: inset(0 round calc(var(--dock-r, 26px) - 1px));
 }
 
 :root {
