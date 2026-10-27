@@ -298,10 +298,13 @@ settings  { theme, target_override, dashscope_key, gh_token, ai_model, updatedAt
 | `--dock-w`（Dock 左右） | **必须 ≤ `--dock-inset`**（卡牌左右）。比卡牌小多少，Dock 就每边宽多少。当前 **8**（卡牌 13）→ 每边宽出 5pt |
 | `--dock-r`（Dock 圆角） | = **屏幕圆角 − `--dock-w`**（按 Dock 自己的左右边距同心，弧线处处等距）。屏幕圆角查 `app.js` 的 `SCREEN_R` |
 | `--dock-h`（Dock 高度） | 必须 **≥ 2 × `--dock-r`**。CSS 圆角超过高度一半会被自动砍小 → 弧线变小就不呼应 |
-| `--dock-inset`（卡牌/弹层左右） | = 13（与 `--dock-bottom` 同值）。`.card/.stats/.macros/.meals/.seg/.daterow/.pagetitle` 全部用它 |
+| `--dock-inset`（弹层卡左右） | = **13** = Dock 左右。记录卡 / 设置卡 / 提醒记录卡都用它 → **点出来的卡与 Dock 同宽** |
+| `--page-pad`（主页卡左右） | = **18**。`.card/.stats/.macros/.meals/.seg/.daterow/.pagetitle` 用它 → **主页卡比 Dock 窄，Dock 每边宽 5** |
 
-**当前一组（v10.07 起，手机）**：`--dock-w` 8、`--dock-bottom` 13、圆角 = 62−8 = **54**、高度 = **108**（54×2）；卡牌左右 13。
-实测 iPhone 17 Pro Max(440)：Dock 左右 8 / 宽 **424**，卡牌左右 13 / 宽 **414**（每边宽 5）；430 → 圆角 47；402 → 54；390 → 39。
+**当前一组（v10.09 起，手机）**：Dock 左右 = 底部 = 13、圆角 = 62−13 = **49**、高度 = **98**（49×2）；
+弹层卡（记录/设置/提醒）左右 13；主页卡左右 **18**。
+实测 iPhone 17 Pro Max(440)：Dock **414**、设置卡 **414**、主页卡 **404** —— Dock 比主页卡每边宽 5。
+层级记忆：**Dock = 弹层卡 > 主页卡**（宽度上）。
 
 **屏幕圆角数据来源（不许估）**：kylebshr/ScreenCorners 实测表
 16 Pro / 16 Pro Max / 17 / 17 Pro / 17 Pro Max / Air = **62pt**；15/15 Pro/16/16 Plus = 55；14/12/13 = 47.33；
