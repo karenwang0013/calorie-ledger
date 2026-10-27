@@ -18,15 +18,14 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
-  /* v10.04：左右/底部统一 21 —— 这个数是量出来的，不是拍的：
-     iPhone 17 Pro Max 安全区底部 34pt，白色 home 横条距底 8pt、高 5pt → 横条中心在 10.5pt，
-     要让横条正好落在「Dock 底边 ↔ 屏幕底」这条缝的正中，缝就得多宽？ 2 × 10.5 = 21。
-     左右也用 21，四边才是同一个宽度。 */
-  --dock-inset: 21px;      /* 左右离屏幕边（= 底部那条缝，四边等宽） */
+  /* v10.05：用户口径 —— 不要「横条居中」，要让 home 横条的**顶边**正好贴住 Dock 的**底边**（相接、不重叠）：
+     横条距底 8pt、高 5pt → 横条顶边在距底 13pt，所以 Dock 四边都取 13。 */
+  --dock-inset: 13px;      /* 左右离屏幕边（= 底部那条缝，四边等宽） */
   --dock-max: 100%;        /* Dock 最大宽度；和 Dock 重叠的卡牌也用这个值 */
-  --dock-bottom: 21px;     /* 下边离屏幕底（v10.04：和左右、和 home 横条居中都对上） */
-  /* Dock 高度（固定，圆角上限要看它） */
-  --dock-h: 94px;
+  --dock-bottom: 13px;     /* 下边离屏幕底（= home 横条顶边所在的 13pt） */
+  /* Dock 高度（固定，圆角上限要看它）—— v10.05 94 → 98：同心圆角要 62−13=49，49 必须 ≤ 高度一半（49），
+     否则又会被"不能超过一半"卡住、圆角变小就不呼应了 */
+  --dock-h: 98px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
   --dock-r: 44px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
@@ -877,6 +876,8 @@ body.add-open .sheet-mask.on {
   background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--dock-r);
+  /* v10.05：屏幕的角是超椭圆（squircle），支持的话 Dock 也跟着用同一种曲线，圆角才真的"贴着屏幕的弧" */
+  corner-shape: squircle;
   /* v9.91：用户要求「阴影全去掉」，Dock 只留顶边那道细高光（原来这里还有一层外投影） */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }

@@ -146,7 +146,7 @@
   },
   {
     "file": "style.css",
-    "find": "--dock-bottom: 21px;",
-    "why": "手机上 Dock 四边都是 21：与左右等宽，且白色 home 横条（距底 8 + 高 5，中心 10.5）正好落在缝正中（2×10.5=21）"
+    "find": "--dock-bottom: 13px;",
+    "why": "手机上 Dock 底边要正好贴住 home 横条的顶边（距底 8+5=13），左右同为 13；圆角=屏幕圆角−13（iPhone 17 Pro Max 为 49，所以 Dock 高度提到 98）"
   }
 ]
