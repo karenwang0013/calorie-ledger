@@ -883,6 +883,13 @@ body.add-open .sheet-mask.on {
   font-size: 11.5px; color: var(--muted); line-height: 1.75;
 }
 .rel-list li { margin: 0 0 3px; }
+/* v10.22 用户口径：「关于更新这里也要像信息栏那样有间隔线」（v10.21 我误删了全局那条线，已还原）。
+   线的粗细/颜色与设置行卡那条完全一致；关于页没有图标，所以从文字起点开始，不需要 48 的偏移。 */
+#setBody .rel-list li + li {
+  border-top: 1px solid rgba(255,255,255,.065);
+  padding-top: 6px;
+  margin-top: 6px;
+}
 .card.tight { padding: 13px 14px; }
 .card.tight h3 { margin-bottom: 8px; }
 
@@ -3004,10 +3011,10 @@ html.kb #setSheet {
   background: none; border: 0; color: var(--text); text-align: left;
   font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: .1px;
 }
-/* v10.21 用户口径：「间隔的那个线也要（去掉）—— 信息栏里面不是有间隔的线吗」
-   → 行与行之间那条 1px 浅线整条撤掉（设置卡 / 提醒记录 / 关于页同一个选择器都生效）。
-   只去掉线，行高、图标、字的居中、点击反馈都不动。 */
-.setrow + .setrow::before { content: none; }
+.setrow + .setrow::before {
+  content: ''; position: absolute; top: 0; left: 48px; right: 0; height: 1px;
+  background: rgba(255,255,255,.065);
+}
 .setrow:active { background: var(--btn-solid); }
 .setrow .ico { flex: 0 0 21px; display: flex; align-items: center; justify-content: center; color: var(--lime); }
 .setrow .ico svg { width: 21px; height: 21px; fill: currentColor; }
