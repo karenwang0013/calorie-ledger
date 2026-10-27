@@ -826,8 +826,6 @@ body.add-open .sheet-mask.on {
 .modes button i { display: none; }   /* 每格下面那行小字不要了 */
 .modes button.on { background: transparent; border-color: transparent; }
 .modes button.on b { color: var(--lime); }
-/* 两格版（饮食目标页的「缺口 / 盈余」方向） */
-.modes.two { grid-template-columns: repeat(2, 1fr); }
 
 /* 关于页的更新日志 */
 .rel-date {
