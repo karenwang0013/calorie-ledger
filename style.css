@@ -2232,7 +2232,11 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   :root {
     --dock-inset: 8px;
     --dock-max: 780px;      /* iPad 上 Dock 也加宽一档 */
-    --dock-bottom: 26px;
+    /* v10.01：Dock 离屏幕底的距离 = 卡牌左右离屏幕边的距离（用户口径：「卡牌左右间隙是多少，Dock 离底就多少」）。
+       iPad 上卡宽受 --dock-max 限制并居中，左右间隙 = (100vw - 卡宽) / 2；屏宽放不下 780 时左右就是 --dock-inset（8）。
+       上限 40：12.9 英寸那种大屏算出来会是 122，Dock 会悬到屏幕中间去（实测过截图），
+       封在 40 才不至于离谱 —— 大屏上四边略有差别，小屏（mini / Air / Pro 11）是完全相等的。 */
+    --dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));
     --dock-h: 104px;
     --dock-r: 16px;
   }

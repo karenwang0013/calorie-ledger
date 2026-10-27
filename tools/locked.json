@@ -133,5 +133,10 @@
     "file": "app.js",
     "find": "<label>每天少吃 / 多吃（千卡）</label>",
     "why": "缺口输入框只填正数、方向由「目标模式」决定（减脂=缺口/增肌=盈余/维持=0）；不许再塞回「负数=缺口」那种要打负号的写法"
+  },
+  {
+    "file": "style.css",
+    "find": "--dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));",
+    "why": "iPad 上 Dock 离底 = 卡牌左右离屏的间隙（用户口径：卡牌两边是多少、底下就多少），不许改回固定值"
   }
 ]
