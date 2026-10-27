@@ -107,14 +107,17 @@ const checks = [
   //   Dock 的 left / right / bottom 三个边距永远相等；圆角 = 屏幕圆角 − 边距（同心）；
   //   高度必须装得下这个圆角（否则 CSS 会把圆角砍到高度一半，弧线变小、就不呼应了）。
   // 改任何一个参数都要按这三条一起重算，不许单独调一个。
-  ['Dock 四边等距 + 圆角能装下（改高度/圆角/边距必须一起按公式动）', (() => {
+  ['Dock 与屏幕的等距/同心规则（Dock 只许比卡牌宽，圆角必须按 Dock 边距算，高度要装得下）', (() => {
     const num = k => { const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px')); return m ? parseFloat(m[1]) : null; };
-    const inset = num('dock-inset'), bottom = num('dock-bottom'), h = num('dock-h');
-    if (inset == null || bottom == null || h == null) return false;
-    if (Math.abs(inset - bottom) > 0.01) return false;        // ① 左右底必须同一个值
-    const maxScreenR = 62;                                     // ② 手机最大屏幕圆角（iPhone 16 Pro/17/17 Pro/17 Pro Max）
-    const wantR = maxScreenR - inset;                           //    同心圆角 = 屏幕圆角 − 边距
-    return h >= 2 * wantR - 0.01;                              // ③ 高度至少 2×圆角，否则圆角被砍
+    const inset = num('dock-inset');     // 卡牌/弹层的左右
+    const bottom = num('dock-bottom');   // 底部（贴 home 横条顶边 13）
+    const dockW = num('dock-w');         // Dock 自己的左右（v10.07：比 inset 小 → Dock 更宽）
+    const h = num('dock-h');
+    if ([inset, bottom, dockW, h].some(v => v == null)) return false;
+    if (bottom !== 13) return false;                          // ① 底边必须贴住白杠顶边（8+5=13）
+    if (dockW > inset + 0.01) return false;                    // ② Dock 只能比卡牌宽（或一样），不许更窄
+    const wantR = 62 - dockW;                                  // ③ 圆角按 Dock 自己的左右边距同心
+    return h >= 2 * wantR - 0.01;                              // ④ 高度至少 2×圆角，否则圆角被砍半
   })()],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],

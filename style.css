@@ -20,12 +20,16 @@
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
   /* v10.05：用户口径 —— 不要「横条居中」，要让 home 横条的**顶边**正好贴住 Dock 的**底边**（相接、不重叠）：
      横条距底 8pt、高 5pt → 横条顶边在距底 13pt，所以 Dock 四边都取 13。 */
-  --dock-inset: 13px;      /* 左右离屏幕边（= 底部那条缝，四边等宽） */
+  --dock-inset: 13px;      /* 卡牌 / 弹层左右离屏幕边（= 底部那条缝） */
   --dock-max: 100%;        /* Dock 最大宽度；和 Dock 重叠的卡牌也用这个值 */
   --dock-bottom: 13px;     /* 下边离屏幕底（= home 横条顶边所在的 13pt） */
+  /* v10.07：Dock 比卡牌宽一点（用户要求）—— Dock 自己的左右边距，比卡牌的 13 窄 5pt，
+     所以 Dock 每边都比卡牌多出 5pt。圆角仍按「屏幕圆角 − Dock 左右边距」算（= 62−8 = 54），
+     高度必须 ≥ 2×54 = 108，否则又被砍半。底部仍是 13（贴住 home 横条顶边，这条不变）。 */
+  --dock-w: 8px;
   /* Dock 高度（固定，圆角上限要看它）—— v10.05 94 → 98：同心圆角要 62−13=49，49 必须 ≤ 高度一半（49），
      否则又会被"不能超过一半"卡住、圆角变小就不呼应了 */
-  --dock-h: 98px;
+  --dock-h: 108px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR） */
   --dock-r: 44px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
@@ -854,8 +858,8 @@ body.add-open .sheet-mask.on {
    所以不写死一个值：手机按屏宽微调，iPad 单独一套（--dock-r / --dock-inset / --dock-bottom）。 */
 .tabbar {
   position: fixed;
-  left: var(--dock-inset);
-  right: var(--dock-inset);
+  left: var(--dock-w);
+  right: var(--dock-w);
   bottom: calc(var(--dock-bottom) + var(--safe-b));
   z-index: 30;
   display: flex;

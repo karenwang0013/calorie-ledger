@@ -28,6 +28,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.07', d: '10-28', items: [
+    '改：Dock 栏比卡牌宽一点 —— Dock 左右各 8，卡牌（统计卡 / 营养素卡 / 餐卡）各 13，所以 Dock 每边比卡牌多出 5pt（440 宽实测：Dock 424、卡牌 414）',
+    '连带：Dock 圆角按它自己的边距重算 = 屏幕圆角 − 8，iPhone 17 Pro Max 是 62−8 = 54；高度提到 108（54×2，不提高度 CSS 会把圆角砍小、又不呼应）',
+    '没动：Dock 底边仍然贴住白色 home 横条的顶边（13），这条是你定的，保持不变',
+    '各机型实测圆角：440→54、430→47、402→54、390→39（都是「屏幕圆角 − 8」）',
+  ] },
   { v: 'v10.06', d: '10-27', items: [
     '修（对齐）：查下来首页卡牌的左右边距和 Dock 根本不是同一个值 —— Dock 左右 13，统计卡/营养素卡是 18，餐卡是 14，所以看着参差',
     '现在全部统一成 Dock 那 13：统计卡 414、营养素卡 414、餐卡 414、Dock 414（iPhone 17 Pro Max 440 宽实测），右边也全是 13',
@@ -2889,7 +2895,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.06';
+const APP_VERSION = 'v10.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8983,7 +8989,9 @@ function init() {
     const pad = window.matchMedia('(min-width: 700px)').matches;
     // 两边的边距、高度都以 CSS 里那份为准，避免脚本和样式各写一个值
     const cs = getComputedStyle(document.documentElement);
-    const inset = parseFloat(cs.getPropertyValue('--dock-inset')) || 14;
+    // v10.07：Dock 的左右边距是 --dock-w（比卡牌的 --dock-inset 窄 → Dock 比卡牌宽），
+    // 圆角必须按 Dock 自己的边距算，否则同心就断了
+    const inset = parseFloat(cs.getPropertyValue('--dock-w') || cs.getPropertyValue('--dock-inset')) || 14;
     const h = parseFloat(cs.getPropertyValue('--dock-h')) || (pad ? 96 : 88);
     let r;
     if (pad) {
