@@ -917,7 +917,7 @@ body.add-open .sheet-mask.on {
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { display: block; width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
@@ -1804,9 +1804,10 @@ body.add-open .sheet-mask.on {
 }
 .tabs3 button svg { width: 20px; height: 20px; opacity: .95; }
 .tabs3 button.on { color: var(--lime); }
-/* Dock 三格：图标在上、文字在下，两者的"墨迹"合起来视觉重心偏低 2px（字有下缘空白、图标是环形），
-   所以整体上提 1px，让墨迹到上下边相等（实测 15/13 → 14/14） */
-.tabbar .tab, .tabbar .fab { padding-top: 1px; }
+/* Dock 三格：图标在上、文字在下。
+   v10.19：原来这里 padding-top 只有 1px（老 Dock 94 高时上提 1px 刚好），Dock 加到 104、图标变大后
+   墨迹实测偏上 2.5pt（上 25 / 下 30），就把上内边距补回和下面一样的 6px，让整组在按钮里真正居中。 */
+.tabbar .tab, .tabbar .fab { padding-top: 6px; }
 
 /* 玻璃滑块（记录卡片的三格、趋势页的三格共用）：和 Dock 那颗**完全同一套**。
    外层只负责"位置"（transform 一条 .62s 过冲曲线），压扁/回弹交给里面的 .lens-body（.24s）。
