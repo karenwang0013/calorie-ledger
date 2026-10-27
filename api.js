@@ -384,6 +384,9 @@ function targetsOf(p, exp) {
   if (hasDefOv) want = Number(ov0.deficit);
 
   // —— 自动建议值 ——
+  // v10.02：这里必须用「当前真正生效的缺口 want」（含手动设置），不能用纯自动的 wantAuto。
+  // 用 wantAuto 会得到另一套前提下的数字：面板上「脂肪 建议 49」而实际生效 58，
+  // 用户拿建议去核对永远是错的。auto.deficit 那一项才保留纯自动建议（给"模式建议"看）。
   const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
   const budgetAuto = Math.max(1000, exp - want);
   const fatRatio = Math.min(0.4, Math.max(0.15, Number(setting('fat_ratio', 0.28)) || 0.28));
@@ -589,7 +592,7 @@ function computeRealTdee(d) {
         coverage: Math.round(pick.coverage * 100),
         avg_intake: Math.round(meanIntake),
         confidence: (pick.span >= 21 && pick.coverage >= 0.7 && r2 > 0.3) ? '较高'
-          : (pick.span >= 7 && pick.coverage >= 0.5) ? '中等' : '偏低',
+          : (pick.span >= 7 && pick.coverage >= 0.5 && r2 > 0.3) ? '中等' : '偏低',
       };
     } else if (lastD && allDates.length >= 2) {
       // 有体重但没有一段覆盖够的：说清"再记几天饮食"
@@ -652,6 +655,9 @@ function computeTrends(days) {
     days, start, end: today, series,
     avg_intake: avgIntake,
     avg_expenditure: avgExp,
+    // v10.02：「平均消耗」必须和「平均摄入」是同一批日子，否则一屏里 1208 / 2274 / 缺口 652 三个数互相算不通
+    // （2274 是连没记录的 23 天一起平均的，那 23 天是公式估算 2422）
+    avg_expenditure_logged: avgExpLogged,
     // v9.69：回到「同一批有记录的日子、按手表口径」——和下面那排柱子一一对应。
     // 实测（体重反推）在置信度不够时只是个粗估（现在只有 40% 覆盖），单独展示、不参与这个平均值。
     avg_balance: avgIntake ? Math.round(avgExpLogged - avgIntake) : null,

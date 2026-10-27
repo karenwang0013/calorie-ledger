@@ -28,6 +28,14 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.02', d: '10-27', items: [
+    '改（首页）：今天这一格「消耗」改成「日目标」口径 —— 现在三个数能直接验算：消耗 1859 − 摄入 1602 = 还可以吃 257。「到现在」的估算值放在那格下面一行小字里（现在 1488 · 09:26），两个都在，不再是两个数互相打架',
+    '改（首页·历史日期）：右下那格以前标签写「还可以吃」、数字却按全天预算算，和旁边的「消耗」「圆环里的缺口」对不上；现在改回「热量缺口 / 热量盈余」= 当天消耗 − 当天摄入，和圆环同一个数',
+    '改（趋势）：区间统计里的「平均消耗」以前是连没记录的 23 天一起平均（2274），而「平均摄入」只算有记录的 7 天（1208），同屏算出缺口 1066、标签却写 652；现在两边都是同一批有记录的日子：1208 / 1860 / 缺口 652，能对上',
+    '改（趋势）：置信度升级门槛补上「体重曲线 R² > 0.3」——以前只看天数和饮食覆盖，体重忽上忽下也会被判成「中等」并拿它当每日目标；现在卡住的那一条会直接写出来',
+    '改（趋势）：「目标缺口」标注成「你设的」，和实测算出来的实际缺口区分开（你现在设 0，实际缺口 652）',
+    '改（饮食目标）：面板上的「建议 xx」恢复成按你当前生效的缺口算，和实际生效的营养值一致（不再出现「建议 49、实际 58」）',
+  ] },
   { v: 'v10.01', d: '10-27', items: [
     '改（iPad）：Dock 离屏幕底部的距离改成跟「卡牌左右离屏幕边的距离」完全一样 —— 原来底下是固定 26，卡牌左右是随屏幕算的（mini 8 / Air 20 / Pro 11 27），两边不一样，看着就像没对齐',
     '实测：iPad mini 四边各 8、iPad Air 各 20、iPad Pro 11 各 27，卡牌和 Dock 那一圈留白现在是一样宽的',
@@ -2857,7 +2865,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.01';
+const APP_VERSION = 'v10.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3109,8 +3117,11 @@ function renderToday() {
   const expFull = d.expenditure;          // 全天预估/实际
   const balFull = d.balance;
 
-  // v9.68：今天这一格回到「到现在为止」——上午显示全天消耗会被看成"我没动怎么烧了 2000"。
-  // 目标（可吃）仍然按「实测/估算的日目标」算，两者是两回事，标签上写清。
+  // v10.02：今天这一格改成「日目标口径」（= 还可以吃 用的那个数），三个数才能互相验算：
+  //   消耗(1859) − 摄入(1602) = 还可以吃(257)
+  // v9.68 当年改回「到现在」是因为上午显示全天数会被看成"我没动怎么烧了 2000"；
+  // 现在标签直接写「消耗（日目标）」，「到现在」那个数放在下面那行小字里，两个都在，不会误读。
+  const expBase = Math.round(d.expenditure_base || expFull);
   let exp = expFull;
   if (d.date === S.today) {
     const start = new Date(d.date + 'T00:00:00').getTime();
@@ -3207,10 +3218,11 @@ function renderToday() {
   $('#heroSub').textContent = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
-  // v9.68：这一格是「当天到现在」的实际/估算；目标（可吃）另算，别再混为一谈
+  // v10.02：今天这一格显示「日目标口径」的消耗（和 还可以吃 用的是同一个数，三格能互相验算）。
+  // 「到现在」那个估算放在下面那行小字里，两个都给，不再让人猜哪个是哪个。
   const expLbl = $('#stExpLbl');
-  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
-  $('#stExp').innerHTML = exp + ' <small>kcal</small>';
+  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（日目标）' : '消耗';
+  $('#stExp').innerHTML = (d.date === S.today ? expBase : exp) + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
   // 看今天、但数据已经超过 90 分钟没更新 → 标一句「偏旧」，不用等发现数字不对
@@ -3220,10 +3232,18 @@ function renderToday() {
     if (hm) { const t0 = parseISO(d.date); t0.setHours(+hm[1], +hm[2], 0, 0); stale = (Date.now() - t0.getTime()) > 90 * 60000; }
   }
   // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
-  $('#stExpAt').textContent = at ? (at + (stale ? ' · 数据偏旧' : '')) : '';
+  // v10.02：这一行同时给出「到现在」的估算，省得只看到日目标数以为没在动
+  const nowTxt = isToday ? `现在 ${exp}` : '';
+  const atLine = [nowTxt, at].filter(Boolean).join(' · ');
+  $('#stExpAt').textContent = atLine + (stale ? ' · 数据偏旧' : '');
   $('#stExpAt').style.color = stale ? 'var(--orange)' : '';
-  leftEl.innerHTML = (left >= 0 ? left : left) + ' <small>kcal</small>';
-  leftEl.style.color = left < 0 ? 'var(--orange)' : '';
+  // v10.02：历史日期这一格给的是「那天实际缺口/盈余」（= 当天消耗 − 摄入），不是"还可以吃"。
+  // 以前标签写死「还可以吃」、数字用的却是全天预算 − 摄入，跟上面「消耗」和圆环里的缺口对不上。
+  const leftLbl = $('#stLeftLbl');
+  if (leftLbl) leftLbl.textContent = isToday ? '还可以吃' : (balFull >= 0 ? '热量缺口' : '热量盈余');
+  const leftShow = isToday ? left : Math.abs(balFull);
+  leftEl.innerHTML = leftShow + ' <small>kcal</small>';
+  leftEl.style.color = (isToday ? left : balFull) < 0 ? 'var(--orange)' : '';
 
   // 营养素
   const pr = d.protein, cb = d.carb, ft = d.fat;
@@ -5456,6 +5476,7 @@ function renderTrends() {
   const tierTip = (r) => {
     const span = Number(r.span_days) || 0;
     const cov = Number(r.coverage) || 0;
+    const r2 = Number(r.r2) || 0;
     const table = { 偏低: { name: '中等', span: 7, cov: 50 }, 中等: { name: '较高', span: 21, cov: 70 } };
     const next = table[r.confidence];
     if (!next) return '';
@@ -5464,6 +5485,12 @@ function renderTrends() {
     const target = `<span style="white-space:nowrap">「${nm}」</span>`;
     const d = Math.max(0, next.span - span);
     if (d > 0) return `再称 ${d} 天就能到${target}`;
+    // v10.02：升级都要体重曲线够直（R² > 0.3）。天数/覆盖都够了但曲线乱时，
+    // 以前会一直说「记上饮食就能到」，永远到不了 —— 现在把真正卡住的那一条说出来
+    if (r2 <= 0.3) {
+      return `体重波动比较大，再稳一点才能到${target}
+        <br><span style="color:var(--muted);font-size:12px;font-weight:400">体重曲线 R² ${r2.toFixed(2)} → 需要 &gt; 0.30</span>`;
+    }
     // 天数够了但覆盖率不够 → 主句说人话，数字另起一行小字，不再塞一长串括号
     return `这几天把饮食记上就能到${target}
       <br><span style="color:var(--muted);font-size:12px;font-weight:400">饮食覆盖 ${cov}% → 需要 ${next.cov}%</span>`;
@@ -5482,7 +5509,7 @@ function renderTrends() {
           <span style="display:inline-block;margin-top:4px;color:var(--text);font-size:13.5px;font-weight:600">累计 ${real.weigh_count || 1} 天${tierTip(real) ? `<br>${tierTip(real)}` : ''}</span>
         </div>
         <div class="grid2" style="margin-top:14px">
-          <div class="mini"><div class="k">目标缺口</div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
+          <div class="mini"><div class="k">目标缺口<small style="color:var(--muted2);font-weight:400"> 你设的</small></div><div class="v">${S.day?.targets.deficit ?? '—'}<small>千卡</small></div></div>
           <div class="mini"><div class="k">相对误差</div><div class="v">${
             (real.est_avg && real.tdee) ? Math.round(Math.abs(real.tdee - real.est_avg) / real.tdee * 100) : '—'}<small>%</small></div></div>
         </div>
@@ -5604,7 +5631,7 @@ function renderTrends() {
       <h3>区间统计</h3>
       <div class="grid2">
         <div class="mini"><div class="k">平均摄入</div><div class="v">${t.avg_intake || '—'}<small>千卡</small></div></div>
-        <div class="mini"><div class="k">平均消耗</div><div class="v">${t.avg_expenditure || '—'}<small>千卡</small></div></div>
+        <div class="mini"><div class="k">平均消耗</div><div class="v">${t.avg_expenditure_logged || t.avg_expenditure || '—'}<small>千卡</small></div></div>
         <div class="mini"><div class="k">记录天数</div><div class="v">${t.logged_days}<small>/ ${t.days}</small></div></div>
         <div class="mini"><div class="k">体重变化</div><div class="v">${
           weights.length >= 2
