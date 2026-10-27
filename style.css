@@ -807,20 +807,11 @@ body.add-open .sheet-mask.on {
   display: flex; flex-direction: column;
   overflow: hidden;
 }
-/* v10.20 用户口径：「关于与更新这个界面，也不要这方框了，改成和当时改通知栏的方式一样」
-   → 和 v9.78 的提醒记录同一套做法：去掉内层卡的边框/底色/圆角/投影，文字直接排在页面里。
-   只留左右 18 的内边距（和别的页对齐），字距行距、分组、滚动都不动。 */
-/* 注意：这一页是渲染在 #setBody 里的，`#setBody .card` 带 ID 权重更高，必须同样带 #setBody 才压得住 */
+/* v10.20 用户口径：关于与更新页去掉内层框（和 v9.78 提醒记录同一套做法）。
+   ⚠️ v10.27 修：之前插入注释时把选择器列表打断了（注释夹在 `.card,` 和 `.card:first-child` 中间），
+   结果「最近更新」那张卡根本没吃到去框规则，背景/边框/圆角都还在 —— 用户看到"文字下面有个框"。
+   现在两张卡共用同一条去框规则，滚动那条单独写。 */
 #setBody .about-fill > .card,
-/* v10.24：上面那条 `flex: 0 0 auto` 带 #setBody 权重更高，会把关于页第一张卡的
-   `flex: 1 1 auto`（滚动区）盖掉 → 内容全展开、滚不动。这里按同一权重补回来。 */
-#setBody .about-fill > .card:first-child {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
 #setBody .about-fill > .card.tight {
   margin: 0 0 12px;
   padding: 0 18px;
@@ -829,7 +820,14 @@ body.add-open .sheet-mask.on {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  flex: 0 0 auto;
+}
+/* 第一张是滚动区：必须 flex: 1 1 auto + 可滚（写成 0 0 auto 会让内容全展开、滚不动） */
+#setBody .about-fill > .card:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .about-fill > .card:first-child {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
