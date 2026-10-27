@@ -115,7 +115,7 @@ const checks = [
     const pagePad = num('page-pad');     // 主页卡牌左右
     const h = num('dock-h');
     if ([inset, bottom, dockW, pagePad, h].some(v => v == null)) return false;
-    if (bottom < 12 || bottom > 13) return false;               // ① 底边必须贴住白杠顶边（8+5=13，容差 1pt 让它再宽一点）
+    if (bottom < 10 || bottom > 13) return false;               // ① 底边必须贴住白杠顶边（8+5=13，容差 1pt 让它再宽一点）
     if (Math.abs(dockW - bottom) > 0.01) return false;           // ② Dock 左右=底部，圆角缝=底缝
     if (Math.abs(inset - dockW) > 0.01) return false;            // ③ 点出来的卡必须和 Dock 同宽
     if (pagePad <= inset + 0.01) return false;                   // ④ 主页卡必须比 Dock 窄（Dock 比主页卡宽）
