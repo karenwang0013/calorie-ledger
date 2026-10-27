@@ -146,13 +146,13 @@
   },
   {
     "file": "style.css",
-    "find": "--dock-bottom: 10px;",
-    "why": "Dock 四边 10（圆角=62-10=52、底部 10，三者等距）；代价：白杠顶在 13，Dock 底边 10 会压住白杠 3pt"
+    "find": "--dock-bottom: 8px;",
+    "why": "Dock 四边 8（圆角=62-8=54、高度108）；代价：白杠(8~13)整个落在 Dock 范围内，白杠会画在 Dock 底部里面"
   },
   {
     "file": "style.css",
-    "find": "--dock-w: 10px;",
-    "why": "Dock 左右必须=底部（10），圆角缝与底缝才等距"
+    "find": "--dock-w: 8px;",
+    "why": "Dock 左右必须=底部（8），圆角缝与底缝才等距"
   },
   {
     "file": "style.css",
