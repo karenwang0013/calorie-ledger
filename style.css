@@ -953,10 +953,15 @@ body.add-open .sheet-mask.on {
 .dock-lens {
   --lens-solid: var(--btn-solid);   /* 停稳后的实色：取按钮母版（Dock 那颗） */
   position: absolute; left: 0; top: 0;
-  width: var(--lens-w, 84px); height: var(--lens-h, 46px);
-  border-radius: var(--lens-r, 36px);
-  z-index: 0; pointer-events: none; opacity: 0;
-  transform: translate3d(var(--lens-x, 0px), var(--lens-y, 0px), 0);
+  /* v10.18：缓冲/启动那一瞬间脚本还没跑，这里必须自己就是「停在第一格」的正确样子 ——
+     数值和 JS 的 place() 完全同一套算法（PAD 10、内边距 12、边框 1）：
+       宽 = (100% − 24) / 3 + 4、高 = dock-h − 22、圆角 = dock-r − 11、x=10、y=10
+     以前默认 opacity: 0 + 84×46 的占位尺寸 → 用户看到的就是「Dock 没有选中块、像变形了」。 */
+  width: var(--lens-w, calc((100% - 24px) / 3 + 4px));
+  height: var(--lens-h, calc(var(--dock-h) - 22px));
+  border-radius: var(--lens-r, calc(var(--dock-r) - 11px));
+  z-index: 0; pointer-events: none; opacity: 1;
+  transform: translate3d(var(--lens-x, 10px), var(--lens-y, 10px), 0);
   transition: transform .62s cubic-bezier(.33, 1.06, .32, 1), opacity .3s ease;
   will-change: transform;
 }
