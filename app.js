@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.31', d: '10-28', items: [
+    '改：图标地址加上版本号（apple-touch-icon.png?v=1030、manifest 里的 192/512 同理）',
+    '原因：iOS 把主屏图标存在 web clip 里，光换服务器上的图它不重新下；地址变了它才会去重新抓。以后每次换图标都要改这三个 ?v=',
+  ] },
   { v: 'v10.30', d: '10-28', items: [
     '换：App 图标换成「me + CALORIES」字标（Futura Condensed ExtraBold、15° 斜切、荧光绿 #C4FF3D）',
     '底色不再是纯黑/暗绿，改成 iOS 18 深色图标那种「上亮下暗」的黑灰渐变（#303033 → #1C1C1E → #08080A），四张图（1024/512/192/180）一起换',
@@ -3005,7 +3009,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.30';
+const APP_VERSION = 'v10.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
