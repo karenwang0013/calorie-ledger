@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.32', d: '10-28', items: [
+    '加：删记录前先弹一次确认框（单条 ×、整组 ×、组详情里的 × 三处都加了）。点了 × 再点「确定」才真删，不怕手滑',
+    '修：删记录不再连照片一起删 —— 以前是「这条记录删了 → 本机和云端那张照片一起删掉」，所以误删之后走云端恢复只剩文字没有图；现在照片留着，恢复回来图会自己回来',
+    '代价：云端会留一些暂时没人引用的照片（160×160 小图，一张约 5KB）',
+  ] },
   { v: 'v10.31', d: '10-28', items: [
     '改：图标地址加上版本号（apple-touch-icon.png?v=1030、manifest 里的 192/512 同理）',
     '原因：iOS 把主屏图标存在 web clip 里，光换服务器上的图它不重新下；地址变了它才会去重新抓。以后每次换图标都要改这三个 ?v=',
@@ -3009,7 +3014,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.31';
+const APP_VERSION = 'v10.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3546,11 +3551,12 @@ function renderMeals() {
     } catch (e) { toast(e.message); }
   });
 
-  // 整组那一行的 × ：删掉这一组的所有条目
+  // 整组那一行的 × ：删掉这一组的所有条目（v10.32：先确认一次，删了只能靠云端找回）
   $$('[data-gdel-g]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
     const g = groupsById.get(b.dataset.gdelG);
     if (!g) return;
+    if (!await confirmFrosted(`删掉这一组（${g.logs.length} 条）？\n删除后只能点「云端覆盖本机」找回，照片会一起回来。`)) return;
     try {
       for (const l of g.logs) await api('/api/logs/' + l.id, null, 'DELETE');
       await loadDay();
@@ -3571,6 +3577,9 @@ function renderMeals() {
   });
   $$('[data-del]', box).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
+    const goneLog = d.logs.find(x => String(x.id) === String(b.dataset.del));
+    if (!goneLog) return;
+    if (!await confirmFrosted(`删除「${goneLog.name}」？\n删除后只能点「云端覆盖本机」找回，照片会一起回来。`)) return;
     try {
       await api('/api/logs/' + b.dataset.del, null, 'DELETE');
       await loadDay();
@@ -5342,6 +5351,9 @@ function openDetail(logs, isGroup, title) {
   });
   $$('[data-gdel]', $('#grpItems')).forEach(b => b.onclick = async ev => {
     ev.stopPropagation();
+    const item = (logs || []).find(x => String(x.id) === String(b.dataset.gdel));
+    if (!item) return;
+    if (!await confirmFrosted(`删除「${item.name}」？\n删除后只能点「云端覆盖本机」找回，照片会一起回来。`)) return;
     try {
       await api('/api/logs/' + b.dataset.gdel, null, 'DELETE');
       closeGroup();

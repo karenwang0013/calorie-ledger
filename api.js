@@ -1110,11 +1110,11 @@ async function api(path, body, method) {
       const id = Number(mm[1]);
       const gone = d.logs.find(l => l.id === id);
       d.logs = d.logs.filter(l => l.id !== id);
-      // 这一组的记录都删光了，顺带删掉它的照片（本机 IndexedDB + 云端那个文件）
-      if (gone && gone.batch && !d.logs.some(l => l.batch === gone.batch)) {
-        if (d.shots) delete d.shots[gone.batch];
-        try { await photoRemove(gone.batch); } catch (e) {}
-      }
+      // 2026-10-28（用户要求）：删记录**不再连带删照片** —— 本机 IndexedDB 和云端 photos/ 都留着。
+      // 原因：误删之后唯一的救命路是「云端覆盖本机」，而照片是单独的云端文件；
+      // 以前跟着记录一起删掉，恢复回来就只有文字、没有图（用户实测踩到）。
+      // 代价：云端会留一些暂时没人引用的照片（160×160 小图，一张约 5KB）。
+      if (gone && gone.batch) { /* 有意保留照片，见上 */ }
       Store.save();
       return { ok: true };
     }
