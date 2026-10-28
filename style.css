@@ -365,7 +365,13 @@ html.kb .sc-body {
   font-variant-numeric: tabular-nums;
 }
 .stats .v small { font-size: 10px; color: var(--muted2); font-weight: 400; margin-left: 2px; }
-.stats .at { font-size: 10px; color: var(--muted2); margin: 3px auto 0; letter-spacing: .2px; min-height: 12px; white-space: nowrap; width: max-content; max-width: 190%; }
+.stats .at {
+  font-size: 10px; color: var(--muted2); margin: 3px auto 0; letter-spacing: .2px;
+  min-height: 12px; line-height: 1.35;
+  /* v10.29：以前是 nowrap + max-width 190%，一行太长会顶到左右两格的分隔线；
+     现在允许换行、宽度限制在本格内，最多两行（"现在 xxx" / "时间 · 偏旧"） */
+  white-space: normal; width: auto; max-width: 100%; text-align: center;
+}
 
 /* 身体数据 · 最近一次（不套小框） */
 .bstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0 4px; }

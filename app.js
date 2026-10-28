@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.29', d: '10-28', items: [
+    '修：首页「消耗」下面那行橙色小字（现在 719 · 08:50 · 数据偏旧）以前挤成一条，宽度按 190% 算，直接顶到左右两格的分隔线上',
+    '现在拆成两行 —— 第一行「现在 719」，第二行「08:50 · 偏旧」，宽度限制在本格内居中，不再压线',
+  ] },
   { v: 'v10.28', d: '10-28', items: [
     '删：底部那层渐隐（你说得对，那是我自己加的，没人要求过）',
     '现在什么都不加 —— 由卡片自己裁内容（卡片本身有圆角、加了裁切），内容滚到卡底就顺着卡片的边消失，既没有额外的线，也没有渐变',
@@ -2997,7 +3001,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.28';
+const APP_VERSION = 'v10.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3365,10 +3369,13 @@ function renderToday() {
   }
   // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
   // v10.02：这一行同时给出「到现在」的估算，省得只看到日目标数以为没在动
-  const nowTxt = isToday ? `现在 ${exp}` : '';
-  const atLine = [nowTxt, at].filter(Boolean).join(' · ');
-  $('#stExpAt').textContent = atLine + (stale ? ' · 数据偏旧' : '');
-  $('#stExpAt').style.color = stale ? 'var(--orange)' : '';
+  // v10.29：这行小字以前是一条长串（现在 718 · 08:50 · 数据偏旧），宽度算成 max-content 190%，
+  // 直接顶到左右两格的分隔线上。现在拆成两行："现在 xxx" 一行，时间和状态一行，宽度限制在格子里。
+  const line1 = (isToday && exp) ? `现在 ${exp}` : '';
+  const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
+  const atEl = $('#stExpAt');
+  atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
+  atEl.style.color = stale ? 'var(--orange)' : '';
   // v10.02：历史日期这一格给的是「那天实际缺口/盈余」（= 当天消耗 − 摄入），不是"还可以吃"。
   // 以前标签写死「还可以吃」、数字用的却是全天预算 − 摄入，跟上面「消耗」和圆环里的缺口对不上。
   const leftLbl = $('#stLeftLbl');
