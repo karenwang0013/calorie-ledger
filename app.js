@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.51', d: '10-30', items: [
+    '修：点照片框时那个灰圆/预览块 —— 是 iOS 系统菜单自带的，网页关不掉（v10.50 撤模糊那招反而让卡片发虚、出现重影，已撤回）。这版改成：两个照片小框只负责显示，取图统一走下面「拍照 / 从相册选」两颗按钮',
+    '改：「食材 / 克数 / 补充说明」抬到和「识别热量」一样高（52），下板块变成 52 / 52 / 104 / 52 四块，缝还是统一 10',
+    '说明：「从相册选」连点两次就是先填食物照片、再填营养成分表（和「拍照」同一套规则）',
+  ] },
   { v: 'v10.50', d: '10-30', items: [
     '修：点「食物照片 / 营养成分表」框时框里留下的那团虚圆（iPad 上最明显）—— 那是 iOS 弹「照片图库 / 拍照 / 选取文件」菜单时，把触点那块磨砂抠成圆形做的快照',
     '做法：调起相册 / 相机的那一下先把磨砂临时收掉（肉眼几乎看不出差别），选完回到 App 立刻恢复；平时 blur 一点没变',
@@ -3098,7 +3103,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.50';
+const APP_VERSION = 'v10.51';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4193,40 +4198,6 @@ function restoreDraft() {
   }
   if (d.photo || d.photo2) $('#photoActions').hidden = false;
   try { syncAddSheetFit(); } catch (e) {}
-}
-
-/* ---------------- 调起系统相册 / 相机时临时收掉磨砂 ----------------
-   v10.50 用户口径（iPad 上最明显）：点「食物照片 / 营养成分表」框时，框里会留下一个发虚的圆圈，
-   有时有有时没有。那是 iOS 弹「照片图库 / 拍照 / 选取文件」菜单时，把触点那块模糊层抠成圆形做的快照；
-   只要这下面还挂着 backdrop-filter，那个圆就留在原地不走。
-   做法：调起选择器之前先把弹层的模糊临时关掉（肉眼几乎看不出差别），选完回到 App 立刻恢复。 */
-let pickerGuardT = 0;
-let pickerOff = null;      // 收回磨砂的那些监听器（成对摘掉，别漏）
-function resumeGlass() {
-  document.documentElement.classList.remove('picking');
-  if (pickerGuardT) { clearTimeout(pickerGuardT); pickerGuardT = 0; }
-  if (pickerOff) {
-    window.removeEventListener('focus', pickerOff);
-    document.removeEventListener('visibilitychange', pickerOff);
-    pickerOff = null;
-  }
-}
-function openFilePicker(input) {
-  if (!input) return;
-  const root = document.documentElement;
-  const startedAt = Date.now();
-  resumeGlass();                          // 上一次的定时器/监听器先清干净
-  root.classList.add('picking');
-  void root.offsetHeight;                 // 强制让样式先算好，菜单是 click() 之后立刻弹的
-  pickerGuardT = setTimeout(resumeGlass, 120000);
-  pickerOff = (ev) => {
-    // 菜单刚弹出来那一下也可能触发一次 focus，300ms 内的不算「选完了」
-    if (ev && ev.type === 'focus' && Date.now() - startedAt < 300) return;
-    resumeGlass();
-  };
-  window.addEventListener('focus', pickerOff);
-  document.addEventListener('visibilitychange', pickerOff);
-  try { input.click(); } catch (e) { resumeGlass(); }
 }
 
 /* 记录卡里那三个输入框（食材 / 克数 / 补充说明）：
@@ -8685,23 +8656,19 @@ function init() {
     saveDraft();
   };
 
-  // 点两个照片框本身也能调起系统相册
-  let pickTarget = 0;
-  const pickFor = slot => { pickTarget = slot; openFilePicker($('#photoAlbum')); };
-  $$('.pslot').forEach(el => el.onclick = ev => {
-    if (ev.target.closest('[data-del]') || ev.target.closest('.shotdel')) return;
-    pickFor(Number(el.dataset.slot) || 0);
-  });
+  /* v10.51 用户口径：点两个照片框本身**不再**调起系统相册 ——
+     iOS 弹出「照片图库 / 拍照 / 选取文件」那个菜单时，会在触点上留下一个灰圆/预览块，
+     网页这边关不掉（试过 tap-highlight、user-select、cursor、临时撤模糊，都无效；撤模糊还会让卡片发虚=重影）。
+     所以改成：两个小框只负责「显示」，取图统一走下面「拍照 / 从相册选」两颗按钮。 */
   $('#photoAlbum').onchange = e => {
     const f = e.target.files[0];
     e.target.value = '';
     if (!f) return;
-    if (pickTarget === 2) handlePhoto2(f); else handlePhoto(f);
-    pickTarget = 0;
+    handlePick(f);          // 先填「食物照片」，再填「营养成分表」（和「拍照」同一条规则）
   };
 
-  const pickCam = () => openFilePicker($('#photoInput'));
-  const pickAlb = () => openFilePicker($('#photoAlbum'));
+  const pickCam = () => $('#photoInput').click();
+  const pickAlb = () => $('#photoAlbum').click();
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
