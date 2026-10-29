@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.58', d: '10-30', items: [
+    '改：去掉我自己加的绿框和提示条 —— 点照片框不再有任何视觉变化，只是把「下一次取图」指定到那一格，照片直接落进去',
+    '说明：两个格子仍然是分开的（食物本体 / 营养成分表），放错格子照样认不出来',
+  ] },
   { v: 'v10.57', d: '10-30', items: [
     '修（关键）：修掉了「文字说了两片 60 克、结果克数还是 100」的老毛病 —— 以前只要照片是营养表，克数就会被强行改成标签的「每 100 克」，热量跟着少算',
     '现在：只要描述里写了份量（如 60g、两片），克数以你写的为准，标签只提供每 100 克那四项；没写份量时才用标签的净含量 / 每份克数',
@@ -3126,7 +3130,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.57';
+const APP_VERSION = 'v10.58';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8724,11 +8728,11 @@ function init() {
      所以两步：先点格子选目标，再点下面按钮取图。默认目标是「食物照片」；
      一格已经有照片后，默认自动切到另一格。 */
   markPickSlot(defaultPickSlot());
+  /* v10.58 用户口径：别再加看得见的东西（绿框/提示条都去掉）——
+     点格子就是「把下一次取图指定到这一格」，界面上什么都不变，照片会直接落到那一格。 */
   $$('.pslot').forEach(el => el.onclick = ev => {
     if (ev.target.closest('[data-del]') || ev.target.closest('.shotdel')) return;
-    const n = Number(el.dataset.slot) || 1;
-    markPickSlot(n);
-    toast(n === 2 ? '下一次取图会放进「营养成分表」' : '下一次取图会放进「食物照片」', 1600);
+    markPickSlot(Number(el.dataset.slot) || 1);
   });
   const tgtCam = () => (pickSlot === 2 ? $('#photo2Cam') : $('#photoInput'));
   const tgtAlb = () => (pickSlot === 2 ? $('#photo2Alb') : $('#photoAlbum'));
