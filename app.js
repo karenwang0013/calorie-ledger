@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.36', d: '10-29', items: [
+    '改：me 换成 Helvetica Neue Condensed Bold + 4px 同色描边 —— 你说 W3（Condensed Black）字腔堵死了，实测它墨占 68.8%、字腔只剩 1.28%',
+    '这版墨占 60.7%、字腔 1.94%（字腔面积比 W3 大 52%），笔画还是粗的，但 m 的两个拱、e 的口都通得出来',
+    '换图标地址版本号（?v=1034）',
+  ] },
   { v: 'v10.35', d: '10-29', items: [
     '改：图标里的 me 加粗 —— 同款 Futura Condensed ExtraBold 加 10px 同色描边（不是换字体，骨架还是耐克那支）',
     '每档加粗都重新做了像素对齐：视觉中心偏离 (0, 0)，四边留白 122 / 121 / 297 / 296',
@@ -3027,7 +3032,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.35';
+const APP_VERSION = 'v10.36';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
