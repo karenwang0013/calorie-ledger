@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.55', d: '10-30', items: [
+    '修：只放「营养成分表」照片时，「食材 / 克数 / 补充说明」三个框没出现（只有放食物照片才出现）——现在任意一张照片都会出现',
+  ] },
   { v: 'v10.54', d: '10-30', items: [
     '改：「食物照片」和「营养成分表」两格彻底分开 —— 点一下格子把它选中（描边亮起来），下一次「拍照 / 从相册选」就放进这一格；不会再出现「营养成分表的照片跑进食物照片里」',
     '改：填完一格，默认目标自动切到另一格（先食物照片、再营养成分表），照旧可以连拍两张',
@@ -3116,7 +3119,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.54';
+const APP_VERSION = 'v10.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4180,6 +4183,7 @@ async function handlePhoto2(file) {
     $('#del2').hidden = false;
     $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
+    $('#photoActions').hidden = false;      // v10.55：只拍了成分表时，「食材/克数/补充说明」也要出现
     markPickSlot(defaultPickSlot());        // v10.54：填完成分表，默认目标回到「食物照片」
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
