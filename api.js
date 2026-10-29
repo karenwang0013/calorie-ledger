@@ -918,8 +918,15 @@ function cleanItems(obj, opt) {
     const name = String(it.name || '').trim();
     let grams = num(it.grams, 0);
     if (!name) return;
+    /* v10.57 用户口径：只要用户说了吃了多少（描述里有份量、或填了克数），
+       **克数以用户说的为准**，绝不能被「标签是每 100 克」这件事改成 100。
+       （以前这条会把「两片 × 一片 60 克 = 120」硬改成 100，热量跟着少算。） */
+    /* 只看用户自己写的东西（描述框 / 克数框）——
+       不能拿 hint 一起判断：hint 里有「每 100 克」这种模板文字，会永远命中。 */
+    const userGaveAmount = (num(opt && opt.userGrams, 0) > 0)
+      || /\d+\s*(克|g|G|片|个|碗|杯|瓶|罐|包|份|勺|匙|kg|公斤|毫升|ml|ML)/.test(String((opt && opt.desc) || ''));
     // 拍到营养成分表：包装上写了克数就自动填（净含量优先，其次"每份 X 克"）；没写就留空，由用户必填
-    if (it.label || it.net_grams) {
+    if ((it.label || it.net_grams) && !userGaveAmount) {
       grams = num(it.net_grams, 0) || num(it.label && it.label.basis_grams, 0) || 0;
     }
     // 不设兜底：估不出就留空，让用户改用「描述」按食物名让 AI 估份量（那种估得准）
@@ -977,11 +984,11 @@ function cleanItems(obj, opt) {
   return { items, dish: obj.dish || '', note: obj.note || '' };
 }
 
-async function analyzeFood(image, hint, image2) {
+async function analyzeFood(image, hint, image2, extra) {
   const content = [{ type: 'image_url', image_url: { url: image } }];
   if (image2) content.push({ type: 'image_url', image_url: { url: image2 } });
   content.push({ type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') });
-  return cleanItems(extractJson(await callModel(content)), { hint });
+  return cleanItems(extractJson(await callModel(content)), Object.assign({ hint }, extra || {}));
 }
 
 async function analyzeText(text) {
@@ -1245,7 +1252,8 @@ async function api(path, body, method) {
   }
 
   if (pathname === '/api/ai/food' && m === 'POST') {
-    return Object.assign({ ok: true }, await analyzeFood(body.image, body.hint || '', body.image2 || null));
+    return Object.assign({ ok: true }, await analyzeFood(body.image, body.hint || '', body.image2 || null,
+      { desc: String(body.desc || ''), userGrams: Number(body.grams) || 0 }));
   }
   if (pathname === '/api/ai/text' && m === 'POST') {
     return Object.assign({ ok: true }, await analyzeText(body.text || ''));
