@@ -3295,8 +3295,37 @@ html.kb #setSheet {
    v9.25：下边距 6 → 7 —— 滚动裁切线要落在第 2 道缝的中心线（三格条下方 7px），
    首行内容再由 .sh-body 的 7px 内边距补到缝底，视觉上缝 2 仍 = 14。 */
 #addSheet #addTabs { margin: 13px var(--card-gap) 7px; }
-/* v9.03 起记录卡只有「拍照 / 搜索」两格（v9.07 把描述板块整个去掉） */
+/* 记录卡顶部仍是「拍照 / 搜索」两格；描述不占格，是拍照页下面单独一块（#descBlock） */
 #addTabs { grid-template-columns: 1fr 1fr; }
+/* v10.41：描述板块加回来（v9.03 的形态），材质/圆角/间距照 v9.05 定稿那版一模一样 */
+#descBlock {
+  flex: 0 0 auto;
+  /* v10.41：缝 = 14，和三格条→照片大框 那道一样宽（v9.05 时写 13.2 是因为整页 zoom 1.06，
+     v9.10 撤掉 zoom 后按 14 写才真的是 14） */
+  margin-top: 14px;
+  padding: 12px;
+  background-color: transparent;
+  background-image: linear-gradient(rgba(2, 4, 3, .08), rgba(2, 4, 3, .08)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  border-radius: 27px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+#descBlock .twrap { flex: 0 0 auto; height: 132px; }
+#descBlock #textInput { height: 100%; }
+#descBlock #textGo { margin-top: 12px; }
+/* v10.41：描述这颗「识别热量」和拍照页那颗是**同一个动作**（v9.61 起拍照那颗是橙色实底），
+   所以这里也照它同一套 —— 不新增第三种按钮样式，也不在卡里出现第二根实心绿。 */
+#addSheet #textGo {
+  background-color: transparent;
+  background-image: linear-gradient(var(--orange), var(--orange)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  color: #0a0b0c;
+  box-shadow: none;
+}
 /* v8.94 用户口径：拍照 / 描述两页里的内容整体等比例放大一点（v8.95 把「搜索」页也一起放大，三页尺寸一致）。
    用 zoom 而不是 transform:scale —— zoom 会参与布局，不会出现"放大后压到边、留一圈空白"的问题。
    当前 1.06（放大 6%）；要更大 / 更小只改这一个数。 */

@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.41', d: '10-29', items: [
+    '加：记录卡里「描述」加回来了 —— 拍照页下面一块输入框 + 「识别热量」，打一句「一碗牛肉面加两个卤蛋」就能估算，不用拍照也不用先搜',
+    '说明：写在拍照页里（不另占一格），顶部还是「拍照 / 搜索」两格；识别完自动把结果累加到下面，和搜索选中一样可以改克数、看成分',
+    '修：打开记录卡时「文字描述」那行提示会正常出现（打完字再重开也不会消失）；卡片高度按「照片区 + 描述区」整块算，不再把描述框挤出卡片',
+  ] },
   { v: 'v10.40', d: '10-29', items: [
     '修：App 开着的时候收到提醒，原来会从屏幕最顶上滑一条系统横幅下来，跟 App 内所有卡片（都从底部上滑）不统一',
     '现在前台只在底部出提示条（和删除提示、同步提示同一个样式），同时记进「提醒记录」；只有 App 不在前台 / 锁屏时才发系统通知 —— 那是 iOS 唯一的表现方式',
@@ -3051,7 +3056,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.40';
+const APP_VERSION = 'v10.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3671,7 +3676,8 @@ function openAdd(meal) {
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
   $('#searchInput').value = '';
-  const ta = $('#textInput'); if (ta) ta.value = '';   // v9.07 描述板块已移除
+  const ta = $('#textInput'); if (ta) ta.value = '';   // 描述框（v10.41 加回）
+  syncTextPh();                                        // 清空后「文字描述」那层提示要重新出现
   $('#searchList').innerHTML = '';
   $('#searchList').hidden = false;
   $('#addTabs').hidden = false;
@@ -3913,11 +3919,13 @@ function measureAddStaticH() {
   if (S.photoData || S.photo2Data || (S.items || []).length) return;   // 只在空闲态量
   if (!s.classList.contains('on')) return;                             // 只在卡片打开时量
   try { syncSlotH(); } catch (e) {}
-  const pb = pane.querySelector('.drop.photobox');
+  // v10.41：描述板块加回来后，拍照页最后一个块是 #descBlock —— 要量到它才算「内容到底」，
+  //   否则空闲时卡片会矮一截，描述框被挤到卡片外面（要滚才看得到）。
+  const pb = pane.querySelector('#descBlock') || pane.querySelector('.drop.photobox');
   if (!pb) return;
   // 不再「临时摘掉下限再量整张卡」—— 那套在真机上量到过动画中的高度，把 --add-static-h 写大，
   // 之后每次都撑出一大块空白。现在直接用内容算：
-  //   卡片顶 → 照片大框底，再加上内容区底部内边距 = 空闲时卡片应该有的高度
+  //   卡片顶 → 最后一个块的底，再加上内容区底部内边距 = 空闲时卡片应该有的高度
   const sr = s.getBoundingClientRect(), pr = pb.getBoundingClientRect();
   const body = s.querySelector('.sh-body');
   const z = (pane.offsetHeight ? (pane.getBoundingClientRect().height / pane.offsetHeight) : 1) || 1;
@@ -4273,7 +4281,7 @@ async function makeThumb(dataUrl, side = 160, q = 0.5) {
 
 /* ---- 文字 ---- */
 async function runText() {
-  const taEl = $('#textInput');                       // v9.07 描述板块已移除，这里防空
+  const taEl = $('#textInput');                       // v10.41 描述框加回来了
   const text = taEl ? taEl.value.trim() : '';
   if (!text) return toast('先描述一下吃了什么');
   const btn = $('#textGo');
@@ -8577,7 +8585,7 @@ function init() {
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
   $('#photoGo').onclick = runPhoto;
-  const tgo = $('#textGo'); if (tgo) tgo.onclick = runText;   // v9.07 描述板块已移除，这里要防空
+  const tgo = $('#textGo'); if (tgo) tgo.onclick = runText;   // 描述框的「识别热量」（v10.41 加回）
   // 描述框里的示例文字：框里没字才显示（居中那层，见 .tph），一打字就收起
   const _ta = $('#textInput');
   if (_ta) _ta.addEventListener('input', syncTextPh);
