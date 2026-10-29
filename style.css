@@ -1708,6 +1708,17 @@ body.add-open .sheet-mask.on {
   -webkit-touch-callout: none;
 }
 
+/* v10.50：调起系统相册/相机的那一下，先把弹层的磨砂收掉 ——
+   iOS 弹出「照片图库 / 拍照 / 选取文件」菜单时会把触点那块模糊层抠成圆形做快照，
+   只要下面还挂着 backdrop-filter，那个虚圆就留在框里不走（iPad 半径更大、更明显）。 */
+html.picking #addSheet,
+html.picking #addSheet *,
+html.picking #addMask,
+html.picking #addMask * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 /* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡。 */
 #photoActions {
   border-radius: 18px;      /* v8.82：跟「模式建议」那张卡同圆角 */
