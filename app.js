@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.35', d: '10-29', items: [
+    '改：图标里的 me 加粗 —— 同款 Futura Condensed ExtraBold 加 10px 同色描边（不是换字体，骨架还是耐克那支）',
+    '每档加粗都重新做了像素对齐：视觉中心偏离 (0, 0)，四边留白 122 / 121 / 297 / 296',
+  ] },
   { v: 'v10.34', d: '10-28', items: [
     '修：图标里 CALORIES 原来没跟 me 对齐 —— me 是斜切的，墨迹中心比盒子中心偏 16px，所以小字看着往右歪；现在两者墨迹中心都在 x=512.5，实测差 0.0px',
     '改：小字和 me 之间拉开一点（原来贴着，间距 35px → 61px），整体仍居中（视觉中心 512.5 / 512，四边留白 128 / 126 / 300 / 299）',
@@ -3023,7 +3027,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.34';
+const APP_VERSION = 'v10.35';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
