@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.43', d: '10-30', items: [
+    '改：加了照片之后，最底下的「识别热量」不再被裁掉一半、也不用往下滑 —— 按钮的位置、大小和没照片时一模一样',
+    '做法：多出来的高度全部从照片格里扣（照片格只减高度、宽度不动，图片按「填满框再裁掉多余」，不会被压扁），所以不管大图小图、竖图横图，下面的按钮都不动',
+    '照片框同时是「空框 / 有图」两种状态的统一样子；删掉照片就自动长回原来的高度',
+  ] },
   { v: 'v10.42', d: '10-30', items: [
     '改：描述那一块不再套大框 —— 只剩「一个输入框 + 一个按钮」，和上面「实物照片 / 营养成分表」两个格子一样，框自己就是那一块',
     '改：「识别热量」和上面「拍照 / 从相册选」对齐：圆角 15 → 18、宽度拉到和它们一样（原来是左右各缩 4px）、补上同一层顶部高光',
@@ -3061,7 +3066,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.42';
+const APP_VERSION = 'v10.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3902,6 +3907,7 @@ let addMode = 'photo';
 /* v9.15：按列宽算出「照片格」的高度（宽 : 高 = 1 : 1.3），写成 --slot-h。
    不在 CSS 里用 aspect-ratio —— iOS Safari 在网格里算出来的高度有偏差，
    会让「从相册选」按钮溢出盒子、和下面的「已添加」叠在一起。 */
+let __slotBase = 0;   // 照片格的「空闲高度」（v10.43：扣减时以它为基准）
 function syncSlotH() {
   const pane = $('#pane-photo');
   if (!pane) return;
@@ -3915,7 +3921,48 @@ function syncSlotH() {
   const inner = w - 12;            // 两列之间的间距 12
   const cap = Math.round(window.innerHeight * 0.40);
   const slotH = Math.min(Math.round((inner / 2) * 1.36), cap);
-  if (slotH > 40) document.documentElement.style.setProperty('--slot-h', slotH + 'px');
+  if (slotH > 40) {
+    __slotBase = slotH;
+    document.documentElement.style.setProperty('--slot-h', slotH + 'px');
+    try { fitSlotsToActions(slotH); } catch (e) {}
+  }
+}
+
+/* v10.43 用户口径：「照片适配按钮，不是按钮适配照片」。
+   加照片之后，下面会多出「识别热量 + 食材/克数/补充说明」那一块（实测 152px），
+   卡片被撑高 → 最底下那颗「识别热量」被裁掉一半，得往下滑才点得到。
+   现在反着来：最底下的按钮位置不动（= 没照片时的位置），多出来的高度全部从「照片格」里扣，
+   照片格只减高度、宽度不变（预览图是 object-fit:cover，只会多裁一点，不会被压扁）。
+   只在「拍了照片、还没识别出结果」这一段生效；出了结果（items 有内容）本来就该在卡内滚。 */
+function fitSlotsToActions(base) {
+  const pane = $('#pane-photo'), s = $('#addSheet');
+  if (!pane || !s || pane.hidden) return;
+  const actions = $('#photoActions');
+  if (!actions || actions.hidden || (S.items || []).length) return;
+  const root = document.documentElement;
+  const pb = pane.querySelector('#descBlock') || pane.querySelector('.drop.photobox');
+  if (!pb) return;
+  const body = s.querySelector('.sh-body');
+  root.style.setProperty('--slot-h', base + 'px');
+  /* 量「内容到底」需要的高度。传 true 时临时把 #photoActions 藏起来 →
+     量到的就是「没有那块内容时」的高度（= 没照片时的卡片高度），用来做基准。
+     这一步发生在同一帧里、前后都有读，浏览器不会绘制中间态，不会闪。 */
+  const measure = (hideActions) => {
+    const prev = actions.getAttribute('style');
+    if (hideActions) actions.style.display = 'none';
+    const sr = s.getBoundingClientRect(), pr = pb.getBoundingClientRect();
+    const st = body ? body.scrollTop : 0;
+    const padB = body ? (parseFloat(getComputedStyle(body).paddingBottom) || 0) : 0;
+    const panePadB = parseFloat(getComputedStyle(pane).paddingBottom) || 0;
+    const h = pr.bottom - sr.top + st + padB + panePadB;
+    if (hideActions) { if (prev === null) actions.removeAttribute('style'); else actions.setAttribute('style', prev); }
+    return h;
+  };
+  const over = Math.round(measure(false) - measure(true));
+  if (over <= 0) return;
+  const floor = Math.max(72, Math.round(base * 0.36));   // 兜底：再挤也不小于 72（或 36%）
+  const next = Math.max(floor, base - over);
+  if (next < base) root.style.setProperty('--slot-h', next + 'px');
 }
 
 function measureAddStaticH() {
@@ -3947,7 +3994,9 @@ function syncAddSheetFit() {
   const busy = !!(S.photoData || S.photo2Data || (S.items || []).length);
   s.classList.toggle('fitted', busy);
   // 空闲时量一次静态高度（切回拍照页 / 清空之后）
+  // v10.43：拍了照片还没出结果时也要重算照片格高度（按钮位置不动、照片格让位）
   if (!busy) { try { measureAddStaticH(); } catch (e) {} }
+  else { try { syncSlotH(); } catch (e) {} }
 }
 
 function syncResultVisibility() {
