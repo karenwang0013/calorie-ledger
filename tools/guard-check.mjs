@@ -173,8 +173,8 @@ const checks = [
   ['拍照按钮不许带荧光外发光（会和「从相册选」上方那 8px 的缝糊成一层荧光渐变）',
     !/\.pickbtn\.on \{[\s\S]{0,200}?box-shadow: 0 8px 22px rgba\(214,255,75/.test(css)],
   ['「识别热量」是实色按钮，用的就是首页「脂肪」那条的橙（var(--orange)）+ edge-gloss 描边 + 深色字，和「拍照」同一种做法',
-    /#addSheet #photoGo \{[\s\S]*?linear-gradient\(var\(--orange\), var\(--orange\)\), var\(--edge-gloss\)[\s\S]*?color: #0a0b0c;/.test(css)
-      && !/class="btn primary" id="photoGo"/.test(html)],
+    /#addSheet #textGo \{[\s\S]*?linear-gradient\(var\(--orange\), var\(--orange\)\), var\(--edge-gloss\)[\s\S]*?color: #0a0b0c;/.test(css)
+      && !/id="photoGo"/.test(html)],
   ['分段滑块的过渡里不许出现 width / height（会逐帧排版 → 抖）', /#?\.?seg-lens|seg-lens \{/.test(css) && (() => {
     const i = css.indexOf('.seg-lens {');
     if (i < 0) return false;

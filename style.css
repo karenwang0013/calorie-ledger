@@ -1301,13 +1301,7 @@ body.add-open .sheet-mask.on {
   border-radius: 2px;
 }
 
-/* 识别热量：做成和「拍照」一样的大按钮 */
-#photoGo {
-  padding: 16px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 15px;
-}
+/* v10.45：#photoGo 已删除（卡里只留最下面那一颗 #textGo），尺寸/颜色规则一并清掉 */
 
 /* ---------- 弹出卡片 ---------- */
 .sheet-mask {
@@ -3174,27 +3168,9 @@ html.kb #setSheet {
 #addSheet .sh-foot .btn svg { width: 18px; height: 18px; flex: 0 0 18px; }
 #addSheet .prow-pick .pickbtn, #addSheet .sh-foot .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 
-/* 「识别热量」按钮的图标：18px、和文字同一中心线 */
-#photoGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
-/* v9.52 用户口径：「识别热量」按钮换颜色 —— 去掉两个框以后，这张卡里「拍照」已经是一根
-   荧光绿大条，识别热量再来一根实心绿就抢了。改成和 .chip.on / .photomode button.on
-   同一档的「淡绿底 + 绿字 + 绿描边」：全卡只剩一个实心绿按钮 = 拍照。
-   尺寸/字号/圆角不动（16px / 600 / 圆角 15 / 内边距 16 一项都没改）。
-   ⚠️ 必须用 #addSheet #photoGo（两个 id）才能压过上面第 2981 行那条
-   `#addSheet .btn:not(.primary)` 的灰底 + 透明描边。 */
-/* v9.61 用户口径：「识别热量」做成实色，颜色就用首页「脂肪」那条的橙（.bar.f i 的 var(--orange) #ff8a4c）。
-   和「拍照」那颗同一种做法：实色底 + var(--edge-gloss) 光泽描边 + 深色字。
-   尺寸 / 字号 / 圆角（18）/ 内边距一项都不动，只换填充和字色。 */
-#addSheet #photoGo {
-  background-color: transparent;
-  background-image: linear-gradient(var(--orange), var(--orange)), var(--edge-gloss);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  border: 1px solid transparent;
-  color: #0a0b0c;
-  box-shadow: none;
-}
-#photoGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+/* v10.45：#photoGo 删掉了 —— 它那套「18px 图标 / 橙色实底」的规则跟着一起删，
+   现在唯一的「识别热量」是描述框下面那颗 #textGo（同一套橙色实底，见 #addSheet #textGo）。 */
+#textGo svg { width: 18px; height: 18px; flex: 0 0 18px; }
 
 /* 「图标」设置页：每一行 = 位置名 + 一排候选（横向可滚） */
 .icrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -3253,7 +3229,7 @@ html.kb #setSheet {
 #textGo { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 
 /* 「描述」页的「识别热量」按钮：字号/字重/内边距/圆角跟拍照页那颗完全一样
-   （拍照页 #photoGo 实测 16px / 600 / padding 16 / radius 18；v10.42 圆角 15 → 18 与 pickbtn 对齐） */
+   （和「拍照 / 从相册选」实测一致：16px / 600 / padding 16 / radius 18；v10.42 圆角 15 → 18 对齐） */
 #textGo { font-size: 16px; font-weight: 600; padding: 16px; border-radius: 18px; }
 
 /* 记录卡 · 搜索：结果区自己滚，内容到「搜索栏下沿」就被裁住，
@@ -3370,7 +3346,6 @@ html.kb #setSheet {
 #addSheet .pslot-body .preview,
 #addSheet #photoActions input,
 #addSheet .pickbtn,
-#addSheet #photoGo,
 #addSheet .sh-foot .btn,
 #addSheet .mealpick .chip,
 #addSheet .ritem,

@@ -28,6 +28,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.45', d: '10-30', items: [
+    '改：卡片里原来上下两颗「识别热量」重复了，删掉上面那颗（拍照 / 从相册选 下面那颗）；整张卡只留最下面一颗',
+    '结果：那颗按钮不管有没有照片都在同一个位置（实测两种状态都停在 y811–863，完全不挪），加了照片也不用往下滑',
+    '改：照片一律正方形（宽 = 高），装不下就让卡片往上长一点（实测 681 → 718），不裁成横条、不压扁',
+    '说明：那颗唯一的「识别热量」没照片时按文字描述算，有照片时按「照片 + 文字」一起算',
+  ] },
   { v: 'v10.44', d: '10-30', items: [
     '改：传上去的照片一律是正方形，不再被裁成一条横的；正方形装不下就把卡片往上长（照片格 = 格子宽 × 格子宽）',
     '改（关键）：照片 + 文字描述现在是同一顿饭一起算 —— 识别时把描述原文一并交给模型：图里看得出的按图，看不见的份量 / 做法 / 加料 / 吃了多少按文字，两边都提到的不会算两遍',
@@ -3071,7 +3077,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.44';
+const APP_VERSION = 'v10.45';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4204,7 +4210,8 @@ function resetPhotoUI() {
 async function runPhoto() {
   const main = S.photoData || S.photo2Data;
   if (!main) return toast('先拍一张照片');
-  const btn = $('#photoGo');
+  // v10.45：卡里只剩最下面那一颗「识别热量」（#textGo），它就是拍照识别的按钮
+  const btn = $('#textGo');
   const old = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 识别中…';
@@ -8640,8 +8647,9 @@ function init() {
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
   $('#photoInput').onchange = e => { handlePick(e.target.files[0]); e.target.value = ''; };
-  $('#photoGo').onclick = runPhoto;
-  const tgo = $('#textGo'); if (tgo) tgo.onclick = runText;   // 描述框的「识别热量」（v10.41 加回）
+  // v10.45：#photoGo 删掉了，识别只有一颗按钮（描述框下面那颗 #textGo），
+  // 没照片时它按文字算、有照片时它按「图 + 文字」一起算（见 runText 的转派）。
+  const tgo = $('#textGo'); if (tgo) tgo.onclick = runText;
   // 描述框里的示例文字：框里没字才显示（居中那层，见 .tph），一打字就收起
   const _ta = $('#textInput');
   if (_ta) _ta.addEventListener('input', syncTextPh);
