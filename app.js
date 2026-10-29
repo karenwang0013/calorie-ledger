@@ -28,6 +28,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.46', d: '10-30', items: [
+    '改：记录卡分成上下两块 —— 上面是「实物照片 / 营养成分表 + 拍照 / 从相册选」，中间一条分割线，下面是「食材克数 / 补充说明 / 文字描述 / 识别热量」',
+    '改：下面那块里四个块之间的缝全部一样宽（14）：食材·克数 ↔ 补充说明 ↔ 文字描述 ↔ 识别热量；分割线上下也是同样的 14',
+    '说明：「识别热量」的高度一点没动（还是 52），改的只是它和上面框之间的那道缝',
+    '修：点「实物照片 / 营养成分表」框时会出现的那圈高亮（iOS 自己画的点按高亮 / 焦点圈），已经关掉',
+  ] },
   { v: 'v10.45', d: '10-30', items: [
     '改：卡片里原来上下两颗「识别热量」重复了，删掉上面那颗（拍照 / 从相册选 下面那颗）；整张卡只留最下面一颗',
     '结果：那颗按钮不管有没有照片都在同一个位置（实测两种状态都停在 y811–863，完全不挪），加了照片也不用往下滑',
@@ -3077,7 +3083,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.45';
+const APP_VERSION = 'v10.46';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4196,6 +4202,8 @@ function resetPhotoUI() {
   S.photoData = null;
   S.photoAt = null;
   $('#photoDrop').hidden = false;
+  // v10.46：上板块回来了，那条分割线也跟着回来
+  const _sp0 = $('#addSplit'); if (_sp0) _sp0.hidden = false;
   $('#pane-photo').classList.remove('done');
   $('#photoActions').hidden = true;
   if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
@@ -4285,6 +4293,8 @@ async function runPhoto() {
     // 识别完就把大图收起，结果区（左小图 + 右数值）直接露出来
     $('#photoDrop').hidden = true;
     $('#photoActions').hidden = true;
+    // v10.46：上板块收起来了，分割线跟着收（不然结果区上面凭空多一条线）
+    const _sp1 = $('#addSplit'); if (_sp1) _sp1.hidden = true;
     $('#pane-photo').classList.add('done');
     S.batchName = r.dish || '';
     const bn1 = $('#batchName'); if (bn1) bn1.value = S.batchName;

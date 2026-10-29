@@ -1674,6 +1674,25 @@ body.add-open .sheet-mask.on {
 .prow2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 10px; }
 .prow2 input { width: 100%; font-size: 16px; padding-left: 11px; padding-right: 8px; }
 
+/* v10.46 用户口径：点「实物照片 / 营养成分表」那个框时，会出现一个圆圈 ——
+   那是 iOS 自己画的点按高亮 / 焦点圈（框里的图片和空框各自还会画一次）。
+   这里把这一整块的系统点按反馈关掉：高亮透明、不要系统菜单、不要焦点描边。
+   只作用于照片区，别的按钮的手感一点不动。 */
+#pane-photo .pslot,
+#pane-photo .pslot *,
+#pane-photo .pslot-body,
+#pane-photo .drop.photobox {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  outline: none;
+}
+#pane-photo .pslot:active,
+#pane-photo .pslot:focus,
+#pane-photo .pslot:focus-visible,
+#pane-photo .pslot *:focus,
+#pane-photo .pslot *:focus-visible { outline: none !important; }
+#photoInput, #photoAlbum, #photo2Cam, #photo2Alb { outline: none; }
+
 /* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡。 */
 #photoActions {
   border-radius: 18px;      /* v8.82：跟「模式建议」那张卡同圆角 */
@@ -3277,10 +3296,25 @@ html.kb #setSheet {
    和上面「实物照片 / 营养成分表」两个格子一样：框自己就是那一块，外面没有第二层材质。
    所以这里去掉 padding / 背景 / 描边 / 圆角 / 高光，变成一个纯排版的竖向栈，
    左右宽度靠 .sh-body 的内容边（和拍照框、按钮同一列：实测 x27 / w386）。 */
+/* v10.46 用户口径：记录卡分成上下两块 ——
+   上：两个照片格 + 拍照 / 从相册选；中间一条分割线；下：食材/克数、补充说明、文字描述、识别热量。
+   这几块之间（含分割线上下一道）的缝统一成 14，和卡里其他缝同一档。 */
+#pane-photo { --add-gap: 14px; }
+#addSplit {
+  height: 1px;
+  margin: var(--add-gap) 0;
+  background: rgba(255, 255, 255, .065);   /* 和设置卡那几条间隔线同一档 */
+}
+#addSplit[hidden] { display: none; }
+#addContent { display: flex; flex-direction: column; gap: var(--add-gap); }
+/* 这一块原来在拍照大框里面，靠自己的 margin-top 14 拉缝；现在由 #addContent 的 gap 管 */
+#addContent #photoActions { margin-top: 0; }
+/* 食材/克数 → 补充说明：原来 10，按用户要求跟其他缝一样 14 */
+#photoActions .prow2 { margin-bottom: var(--add-gap); }
+/* 描述框容器：从「一个框 + 一个按钮」的竖向栈，缝 12 → 14（和上面一致） */
 #descBlock {
   flex: 0 0 auto;
-  /* 缝 = 14，和三格条→照片大框 那道一样宽 */
-  margin-top: 14px;
+  margin-top: 0;
   padding: 0;
   background: none;
   border: 0;
@@ -3288,7 +3322,7 @@ html.kb #setSheet {
   box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--add-gap);
 }
 /* v10.42：框比原来矮一截（132 → 104；三行字 77 + 上下内边距 24 ≈ 101，正好三行满） */
 #descBlock .twrap { flex: 0 0 auto; height: 104px; }
