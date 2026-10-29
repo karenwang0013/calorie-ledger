@@ -1622,7 +1622,9 @@ body.add-open .sheet-mask.on {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 0 12px; padding: 12px; align-items: start;
 }
-.pslot { min-width: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* v10.48 用户口径：点「食物照片 / 营养成分表」框时，iOS 会把这个框当成「可按的按钮」抬起来（带白灰底 + 里面显示框上那几个字），
+   有时有有时没有。`cursor: pointer` 就是让它被判成「可按元素」的那条线索，这里去掉（手机上本来也看不到鼠标指针）。 */
+.pslot { min-width: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
 .prow-hd {
   display: inline-block;
   margin-bottom: 7px;
