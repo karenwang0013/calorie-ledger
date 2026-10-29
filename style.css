@@ -1692,6 +1692,19 @@ body.add-open .sheet-mask.on {
 #pane-photo .pslot *:focus,
 #pane-photo .pslot *:focus-visible { outline: none !important; }
 #photoInput, #photoAlbum, #photo2Cam, #photo2Alb { outline: none; }
+/* v10.47 用户口径：那个圆圈 = iOS 的长按「放大镜（loupe）」——
+   照片格里写着「食物照片 / 营养成分表」这几个字，手指按住（哪怕稍长一点点）iOS 就把这里当可选中文字，
+   弹出一圈带模糊的放大镜；菜单（照片图库 / 拍照 / 选取文件）出来以后它就卡在那儿不走。
+   关掉这一块的文字选中，放大镜就不会再被唤起。 */
+#pane-photo .pslot,
+#pane-photo .pslot *,
+#pane-photo .pslot-empty,
+#pane-photo .pslot-body .preview {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 
 /* 记录卡：下面这组「食材 / 克数 / 补充说明 / 识别热量」也装进一张卡。 */
 #photoActions {
