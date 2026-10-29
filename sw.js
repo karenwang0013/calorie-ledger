@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v1023';
+const CACHE = 'ledger-v1024';
 const ASSETS = [
   './',
   './index.html',
@@ -82,15 +82,35 @@ self.addEventListener('fetch', e => {
 // 读同源的 data.json，算出今天记了多少、有没有记录。
 self.addEventListener('push', (e) => {
   e.waitUntil((async () => {
+    /* 2026-10-29（用户要求）：App 在前台时不许再从屏幕顶上滑一条系统横幅下来 ——
+       App 内所有卡片/提示都是统一的，只有系统通知是从上往下，用户觉得不统一。
+       所以：有可见的窗口就把内容交给页面（页面用底部提示条显示 + 记进提醒记录），
+       只有在 App 不在前台（锁屏 / 切走了）时，才发系统通知。 */
+    const show = async (title, body) => {
+      try {
+        const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const c of cs) {
+          if (c.focused || c.visibilityState === 'visible') {
+            c.postMessage({ type: 'inapp-notify', title, body });
+            return;
+          }
+        }
+      } catch (err) {}
+      await self.registration.showNotification(title, {
+        body,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: 'ledger-daily',
+        renotify: false,
+      });
+    };
     let body = '点开看看今天的记录';
     // 服务端（GitHub Actions）会带正文过来，优先用它
     try {
       if (e.data) {
         const p = e.data.json();
         if (p && p.body) {
-          await self.registration.showNotification(p.title || '热量账本', {
-            body: p.body, icon: './icon-192.png', badge: './icon-192.png', tag: 'ledger-daily',
-          });
+          await show(p.title || '热量账本', p.body);
           return;
         }
       }
@@ -131,13 +151,7 @@ self.addEventListener('push', (e) => {
         }
       }
     } catch (err) { /* 没网就用默认文案 */ }
-    await self.registration.showNotification('热量账本', {
-      body,
-      icon: './icon-192.png',
-      badge: './icon-192.png',
-      tag: 'ledger-daily',
-      renotify: false,
-    });
+    await show('热量账本', body);
   })());
 });
 

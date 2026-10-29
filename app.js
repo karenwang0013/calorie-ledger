@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.40', d: '10-29', items: [
+    '修：App 开着的时候收到提醒，原来会从屏幕最顶上滑一条系统横幅下来，跟 App 内所有卡片（都从底部上滑）不统一',
+    '现在前台只在底部出提示条（和删除提示、同步提示同一个样式），同时记进「提醒记录」；只有 App 不在前台 / 锁屏时才发系统通知 —— 那是 iOS 唯一的表现方式',
+  ] },
   { v: 'v10.39', d: '10-29', items: [
     '改：图标取中间尺寸 —— v10.37 太小（墨迹宽 683）、v10.38 太大（854），这版 me 630 号字，墨迹宽 768，正好在中点',
     'CALORIES 73（37 版 66、38 版 80 的中间值），对齐实测偏离 (0, 0)，四边留白 128 / 127 / 267 / 266',
@@ -3047,7 +3051,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.39';
+const APP_VERSION = 'v10.40';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8514,6 +8518,16 @@ function init() {
     // 刚点过"强制更新"时这页本来就是最新下载的，再刷一次就是白刷（表现为"刷一遍又刷一遍、参数先没了又回来"）；
     // 真出了新版本，由 checkVersion 比对 version.txt 负责刷一次。
     navigator.serviceWorker.addEventListener('controllerchange', () => {});
+    // 2026-10-29：App 在前台时，推送不再弹系统横幅（那条是从屏幕顶上滑下来的，和 App 内所有卡片不统一），
+    // Service Worker 会把内容发到这里 → 用底部提示条显示，并记进「提醒记录」。
+    navigator.serviceWorker.addEventListener('message', ev => {
+      const m = ev.data || {};
+      if (m.type !== 'inapp-notify') return;
+      const title = String(m.title || '提醒');
+      const body = String(m.body || '');
+      try { logNotify('push', title, body); } catch (e) {}
+      toast(body ? `${title} · ${body}` : title, 3200);
+    });
   }
   $('#prevDay').onclick = () => { S.date = addDays(S.date, -1); loadDay(); };
   $('#nextDay').onclick = () => {
