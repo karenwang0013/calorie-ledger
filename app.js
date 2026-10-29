@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.44', d: '10-30', items: [
+    '改：传上去的照片一律是正方形，不再被裁成一条横的；正方形装不下就把卡片往上长（照片格 = 格子宽 × 格子宽）',
+    '改（关键）：照片 + 文字描述现在是同一顿饭一起算 —— 识别时把描述原文一并交给模型：图里看得出的按图，看不见的份量 / 做法 / 加料 / 吃了多少按文字，两边都提到的不会算两遍',
+    '改：有照片时点描述框底下那颗「识别热量」也走同一条图文合并，不会再单独按文字算一遍',
+  ] },
   { v: 'v10.43', d: '10-30', items: [
     '改：加了照片之后，最底下的「识别热量」不再被裁掉一半、也不用往下滑 —— 按钮的位置、大小和没照片时一模一样',
     '做法：多出来的高度全部从照片格里扣（照片格只减高度、宽度不动，图片按「填满框再裁掉多余」，不会被压扁），所以不管大图小图、竖图横图，下面的按钮都不动',
@@ -3066,7 +3071,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.43';
+const APP_VERSION = 'v10.44';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3928,41 +3933,21 @@ function syncSlotH() {
   }
 }
 
-/* v10.43 用户口径：「照片适配按钮，不是按钮适配照片」。
-   加照片之后，下面会多出「识别热量 + 食材/克数/补充说明」那一块（实测 152px），
-   卡片被撑高 → 最底下那颗「识别热量」被裁掉一半，得往下滑才点得到。
-   现在反着来：最底下的按钮位置不动（= 没照片时的位置），多出来的高度全部从「照片格」里扣，
-   照片格只减高度、宽度不变（预览图是 object-fit:cover，只会多裁一点，不会被压扁）。
-   只在「拍了照片、还没识别出结果」这一段生效；出了结果（items 有内容）本来就该在卡内滚。 */
-function fitSlotsToActions(base) {
+/* v10.43 用户口径：「照片适配按钮，不是按钮适配照片」——
+   加照片之后，下面会多出「识别热量 + 食材/克数/补充说明」那一块（实测 152px）。
+   v10.44 用户口径修正：传上去的照片**必须正方形**，不许被裁成横条；位置不够就把卡片拉高
+   （卡片本来就是「下限 = 空闲高度、上限 = 屏幕可用高度」，内容多了自己会长）。
+   所以这里：有照片 → 照片格高度 = 格子宽度（正方）；没照片 → 用 .pslot 的空态比例（宽 : 高 = 1 : 1.36）。 */
+function fitSlotsToActions() {
   const pane = $('#pane-photo'), s = $('#addSheet');
   if (!pane || !s || pane.hidden) return;
   const actions = $('#photoActions');
-  if (!actions || actions.hidden || (S.items || []).length) return;
-  const root = document.documentElement;
-  const pb = pane.querySelector('#descBlock') || pane.querySelector('.drop.photobox');
-  if (!pb) return;
-  const body = s.querySelector('.sh-body');
-  root.style.setProperty('--slot-h', base + 'px');
-  /* 量「内容到底」需要的高度。传 true 时临时把 #photoActions 藏起来 →
-     量到的就是「没有那块内容时」的高度（= 没照片时的卡片高度），用来做基准。
-     这一步发生在同一帧里、前后都有读，浏览器不会绘制中间态，不会闪。 */
-  const measure = (hideActions) => {
-    const prev = actions.getAttribute('style');
-    if (hideActions) actions.style.display = 'none';
-    const sr = s.getBoundingClientRect(), pr = pb.getBoundingClientRect();
-    const st = body ? body.scrollTop : 0;
-    const padB = body ? (parseFloat(getComputedStyle(body).paddingBottom) || 0) : 0;
-    const panePadB = parseFloat(getComputedStyle(pane).paddingBottom) || 0;
-    const h = pr.bottom - sr.top + st + padB + panePadB;
-    if (hideActions) { if (prev === null) actions.removeAttribute('style'); else actions.setAttribute('style', prev); }
-    return h;
-  };
-  const over = Math.round(measure(false) - measure(true));
-  if (over <= 0) return;
-  const floor = Math.max(72, Math.round(base * 0.36));   // 兜底：再挤也不小于 72（或 36%）
-  const next = Math.max(floor, base - over);
-  if (next < base) root.style.setProperty('--slot-h', next + 'px');
+  if (!actions || actions.hidden) return;          // 没照片：保持空态比例（syncSlotH 已经写好）
+  const slot = pane.querySelector('.pslot');
+  const w = slot ? slot.getBoundingClientRect().width : 0;
+  if (!(w > 40)) return;
+  const square = Math.round(w);
+  document.documentElement.style.setProperty('--slot-h', square + 'px');
 }
 
 function measureAddStaticH() {
@@ -4240,6 +4225,15 @@ async function runPhoto() {
     }
     hint = hint ? modeHint + '；' + hint : modeHint;
     if (grams > 0) hint = hint + `；我实际吃了 ${grams} 克`;
+    /* v10.44 用户口径（关键）：照片下面的「文字描述」和照片是**同一顿饭**，必须一起算。
+       图里看得出的按图，图里看不出的（份量、做法、加了什么酱、吃了多少）以文字为准；
+       两边都提到的不要算两遍 —— 一条都不能漏、也不能重复。 */
+    const desc = (($('#textInput') || {}).value || '').trim();
+    if (desc) {
+      hint = hint + '；用户还用文字补充了这一餐：' + desc
+        + '（这句话和图是同一餐，必须合在一起算：图里看不清的份量/做法/加料/吃了多少按文字，'
+        + '图里已经能看出来的内容不要因为文字又重复算一遍）';
+    }
     // 有食物图就用它当主图；只拍了成分表就反过来
     const hasFood = !!S.photoData;
     const r = await api('/api/ai/food', {
@@ -4251,7 +4245,10 @@ async function runPhoto() {
        以前这里直接 `S.items = 识别结果`，会把搜索里已经加进来的全冲掉。
        现在：搜索加的（_src !== 'photo'）原样保留，识别出来的接在后面。 */
     const fromPhoto = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
-    const kept = (S.items || []).filter(it => it && it._src !== 'photo');
+    /* v10.44：这段话之前要是已经单独按文字算过（items 上留着 _text），
+       这次「图文合并」的结果就是同一顿饭的最终答案 → 把那一份换掉，不许算两遍。
+       别处搜进来的、或者描述不一样的（另一顿）原样留着。 */
+    const kept = (S.items || []).filter(it => it && it._src !== 'photo' && !(desc && it._text === desc));
     const photoBase = kept.length;                 // 识别结果从这一位开始
     S.items = kept.concat(fromPhoto);
     // 读表读串了（碳水/脂肪串行、数字多一位）→ App 自己用营养表那张照片重读一次，
@@ -4337,6 +4334,10 @@ async function makeThumb(dataUrl, side = 160, q = 0.5) {
 async function runText() {
   const taEl = $('#textInput');                       // v10.41 描述框加回来了
   const text = taEl ? taEl.value.trim() : '';
+  /* v10.44 用户口径：有照片时，描述和照片是**同一顿饭**，必须一起算。
+     所以这里不再单独发「只按文字算」的请求（那会把同一顿饭算两遍），
+     直接走照片那条识别 —— 它会把描述原文一起带给模型（见 runPhoto 里的 desc）。 */
+  if (S.photoData || S.photo2Data) return runPhoto();
   if (!text) return toast('先描述一下吃了什么');
   const btn = $('#textGo');
   const old = btn.innerHTML;
@@ -4346,7 +4347,8 @@ async function runText() {
     const r = await api('/api/ai/text', { text });
     // 累加：描述好几次的结果要叠加（第一次鸡蛋 + 第二次鸡蛋 = 两个鸡蛋）
     const prevN = (S.items || []).length;
-    S.items = (S.items || []).concat(r.items.map(x => applyKnownFood({ ...x, _src: 'ai' })));
+    // _text 记下这句话来自哪段描述：之后又拍了照片、描述没改，就用「图文合并」的结果替换掉它，不重复算
+    S.items = (S.items || []).concat(r.items.map(x => applyKnownFood({ ...x, _src: 'ai', _text: text })));
     if (!prevN) S.batchName = r.dish || '';
     const bn2 = $('#batchName'); if (bn2) bn2.value = S.batchName || '';
     showResult((prevN ? '已累加：' : '估算：') + (r.dish || ''), r.note);
