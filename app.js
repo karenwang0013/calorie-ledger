@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.38', d: '10-29', items: [
+    '改：图标整体放大 —— me 从 560 → 700（墨迹宽 683 → 854，占画布 83%），CALORIES 66 → 80，字距保持',
+    '对齐重新实测：视觉中心偏离 (0, 0)，四边留白 85 / 84 / 242 / 241',
+    '换图标地址版本号（?v=1036）',
+  ] },
   { v: 'v10.37', d: '10-29', items: [
     '改：me 用 Helvetica Neue Condensed Bold + 2px 同色描边（比 v10.36 再细一档）—— 墨占 59.5%、字腔 2.08%，w10.36 是 60.7% / 1.94%，W3 是 68.8% / 1.28%',
     '对齐沿用像素实测：视觉中心偏离 (-0.5, 0)',
@@ -3037,7 +3042,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.37';
+const APP_VERSION = 'v10.38';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
