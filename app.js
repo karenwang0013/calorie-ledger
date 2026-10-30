@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.63', d: '10-30', items: [
+    '修：称完体重身体数据一直不变旧数 —— 以前只认 Gitee 那一份，Gitee 落后时别处再新也不用；现在按写入时间比，谁新用谁，Gitee/镜像/GitHub 哪条断了都不影响显示',
+  ] },
   { v: 'v10.62', d: '10-30', items: [
     '改：下板块再收紧一档 —— 缝 10 → 8，食材/克数/补充说明 52 → 48，文字描述框 104 → 88，「识别热量」高度还是 52 没动',
   ] },
@@ -3144,7 +3147,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.62';
+const APP_VERSION = 'v10.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8240,11 +8243,12 @@ async function pullBodyJson(forceFresh, light) {
         if (gf) { got.push(gf); jobs.push('gitee'); }
       } catch (e) { /* 限流/没网，下一轮再说 */ }
     }
-    // v8.21 到底用哪一份（以前是「字符串日期大的赢，一样大就后者赢」，Gitee 是第 3 路，永远输）：
-    // ① Gitee 有值 → 直接用 Gitee（它是源；同源镜像和 GitHub raw 都可能落后几小时）
-    // ② 没有 Gitee（定时轮询 / 被限流）→ 看文件里的写入时刻 t，谁的 t 新用谁
-    // ③ 都没有 t → 比日期，日期新的优先
-    // ④ 日期一样 → 同源镜像优先（跟网页同源、最不容易被 CDN 缓存坑）
+    // v10.63 到底用哪一份（v10.63 之前是「Gitee 有值就无条件用 Gitee」——
+    // 2026-10-30 就栽在这里：Gitee 停在 10-29 的 65.0，GitHub/镜像早就是 10-30 的 64.2，
+    // App 却只认 Gitee，用户看到的永远是旧体重）：
+    // ① 有写入时刻 t → 谁的 t 新用谁（t 秒/毫秒混用过，先统一成毫秒）
+    // ② 都没有 t → 比日期，日期新的优先
+    // ③ t 和日期都一样 → Gitee 优先（它是源），再退同源镜像（最不容易被 CDN 缓存坑）
     const infoOf = t => {
       if (!t) return null;
       let j = null;
@@ -8254,7 +8258,8 @@ async function pullBodyJson(forceFresh, light) {
       if (!j || typeof j !== 'object') return null;
       const hasVal = Array.isArray(j.items) || ['w', 'bf', 'bmi', 'ffm'].some(k => String(j[k] == null ? '' : j[k]).trim() !== '');
       const tRaw = j.t ? String(j.t) : '';
-      const tNum = tRaw ? (Number(tRaw) || (Date.parse(tRaw) || 0)) : 0;
+      let tNum = tRaw ? (Number(tRaw) || (Date.parse(tRaw) || 0)) : 0;
+      if (tNum > 0 && tNum < 1e12) tNum *= 1000;   // v10.63：秒 → 毫秒，秒/毫秒混着比会误判成「旧数据」
       return { i: 0, d: String(j.d || '').slice(0, 10), hasVal, t: isFinite(tNum) ? tNum : 0 };
     };
     const cands = [];
@@ -8280,18 +8285,16 @@ async function pullBodyJson(forceFresh, light) {
     }
     let bodyText = '';
     if (cands.length) {
-      const gitee = cands.find(c => c.i === 2 && c.hasVal);
-      if (gitee) bodyText = got[gitee.i];
-      else {
-        const eff = c => c.d || (c.hasVal ? todayISO() : '');
-        cands.sort((a, b) => {
-          if (a.t !== b.t) return b.t - a.t;                      // 有写入时刻就按它
-          const da = eff(a), db = eff(b);
-          if (da !== db) return da < db ? 1 : -1;                  // 日期新的优先
-          return a.i - b.i;                                        // 同一天：镜像（第 1 路）优先
-        });
-        bodyText = got[cands[0].i];
-      }
+      const eff = c => c.d || (c.hasVal ? todayISO() : '');
+      cands.sort((a, b) => {
+        if (a.t !== b.t) return b.t - a.t;                        // 有写入时刻就按它
+        const da = eff(a), db = eff(b);
+        if (da !== db) return da < db ? 1 : -1;                    // 日期新的优先
+        const ga = (a.i === 2 ? 1 : 0), gb = (b.i === 2 ? 1 : 0);  // v10.63：一样新 → Gitee（源）优先
+        if (ga !== gb) return gb - ga;
+        return a.i - b.i;                                          // 再退：镜像（第 1 路）优先
+      });
+      bodyText = got[cands[0].i];
     }
     // 定时轮询（light）读不到是常事（没网、CDN 抖），别往错误记录里写，免得每 60 秒刷一条
     if (!bodyText) { if (!light) logError('err-body', '体脂数据读取失败', 'body.json 三路都没读到'); return false; }
