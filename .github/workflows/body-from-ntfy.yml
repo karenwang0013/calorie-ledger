@@ -1,0 +1,134 @@
+name: body sync from ntfy
+
+# 背景（2026-10-30）：
+#   手机上「健康采集」快捷指令的最后一步，本该 PUT 到仓库 body.json，
+#   但现状是：它把整理好的 base64 数据 POST 到 ntfy.sh/ledger-kw-9c6f2d 就停了（调试版本没还原）。
+#   在手机上改快捷指令风险太大（元素索引错位、容易删多），所以先在这里接住：
+#   定时把这个 topic 里最新的一条消息解码，写回 body.json。
+#   快捷指令那边以后修好了（直接 PUT 到 gitee），这个 workflow 会自然停止更新（t 不比当前新就跳过）。
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: body-from-ntfy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch newest payload from ntfy and write body.json
+        env:
+          TOPIC: ledger-kw-9c6f2d
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, re, sys, urllib.request
+          from datetime import datetime, timezone, timedelta
+
+          topic = os.environ["TOPIC"]
+          url = f"https://ntfy.sh/{topic}/json?poll=1&since=48h"
+          try:
+              raw = urllib.request.urlopen(url, timeout=25).read().decode("utf-8", "replace")
+          except Exception as e:
+              print("ntfy fetch failed:", e); sys.exit(0)
+
+          msgs = []
+          for line in raw.splitlines():
+              line = line.strip()
+              if not line:
+                  continue
+              try:
+                  j = json.loads(line)
+              except Exception:
+                  continue
+              if j.get("event") == "message" and j.get("message"):
+                  msgs.append(j)
+          if not msgs:
+              print("no messages"); sys.exit(0)
+
+          def decode(m):
+              try:
+                  txt = base64.b64decode(str(m["message"]) + "==", validate=False).decode("utf-8", "replace")
+                  obj = json.loads(txt)
+              except Exception:
+                  return None
+              if not isinstance(obj, dict):
+                  return None
+              if not all(k in obj for k in ("d", "w", "bf", "bmi", "ffm")):
+                  return None
+              d = str(obj.get("d") or "")
+              if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", d):
+                  # 快捷指令这两版有时不给 d（只给了四项数值）→ 用消息时间（北京时间）补上
+                  try:
+                      d = datetime.fromtimestamp(int(m.get("time", 0)), timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+                  except Exception:
+                      return None
+              def num(v):
+                  try:
+                      float(str(v))
+                      return True
+                  except Exception:
+                      return False
+              # 至少体重得像个数，防止别人往公开 topic 里塞垃圾
+              if not num(obj.get("w")):
+                  return None
+              return {k: str(obj.get(k, "") if obj.get(k) is not None else "") for k in ("d", "w", "bf", "bmi", "ffm")} | {"t": m.get("time", 0)}
+
+          newest = None
+          for m in sorted(msgs, key=lambda x: x.get("time", 0)):
+              got = decode(m)
+              if got:
+                  newest = got
+          if not newest:
+              print("no decodable payload"); sys.exit(0)
+
+          cur = {}
+          try:
+              with open("body.json", encoding="utf-8") as f:
+                  cur = json.load(f) or {}
+          except Exception:
+              cur = {}
+
+          def t_of(o):
+              try:
+                  return int(o.get("t") or 0)
+              except Exception:
+                  return 0
+
+          if t_of(cur) >= t_of(newest):
+              print("current is not older, skip:", cur.get("d"), ">=", newest.get("d"))
+              sys.exit(0)
+
+          # 只许比北京时间「今天或昨天」更新的数据，防止把很久以前的旧消息写成新数据
+          cst = timezone(timedelta(hours=8))
+          today = datetime.now(cst).strftime("%Y-%m-%d")
+          yday = (datetime.now(cst) - timedelta(days=1)).strftime("%Y-%m-%d")
+          if newest["d"] not in (today, yday):
+              print("stale date, skip:", newest["d"], "vs", today); sys.exit(0)
+
+          out = {k: newest[k] for k in ("d", "w", "bf", "bmi", "ffm")}
+          out["t"] = int(newest["t"])
+          with open("body.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, separators=(", ", ": "))
+          print("wrote body.json:", out)
+          PY
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- body.json; then
+            echo "no change"
+            exit 0
+          fi
+          git config user.name "KarenWang"
+          git config user.email "karenwang0013@users.noreply.github.com"
+          git add body.json
+          git commit -m "body sync from ntfy ($(date -u +%m-%d\ %H:%M) UTC)"
+          git push
