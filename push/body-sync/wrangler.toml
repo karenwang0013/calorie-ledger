@@ -1,0 +1,13 @@
+name = "ledger-body-sync"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# 每 5 分钟扫一次 ntfy，把手机推上来的体重写进 Gitee 的 body.json。
+# 这条是「Mac 关机 / launchd 没跑」时的独立兜底，不依赖本机。
+[triggers]
+crons = ["*/5 * * * *"]
+
+# 只存两件事：lastRun（cron 心跳，证明它真的在跑）、lastAction（最近一次有动作/有异常）
+[[kv_namespaces]]
+binding = "STATE"
+id = "3cb937691f9d4d148c7ce1d147c49c52"
