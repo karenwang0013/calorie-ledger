@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.60', d: '10-30', items: [
+    '改：点「食物照片 / 营养成分表」框时，底部会给一句提示 ——「下一次取图会放进「营养成分表」」（配着那一圈描边，说清点的是哪一格）',
+  ] },
   { v: 'v10.59', d: '10-30', items: [
     '改：选中那一格的描边回来了，而且是**一圈**——跟着格子的圆角走（上一版画了两层：一个方框 + 里面一个框，所以看着割裂）',
     '说明：点哪一格，那一格就亮一圈黄绿描边，下一次「拍照 / 从相册选」放进这一格；没有提示条、没有别的变化',
@@ -3134,7 +3137,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.59';
+const APP_VERSION = 'v10.60';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8732,10 +8735,13 @@ function init() {
      所以两步：先点格子选目标，再点下面按钮取图。默认目标是「食物照片」；
      一格已经有照片后，默认自动切到另一格。 */
   markPickSlot(defaultPickSlot());
-  /* v10.59：点格子 = 把「下一次取图」指定到这一格，格子上只亮一圈描边（不加提示条、不加别的）。 */
+  /* v10.60 用户口径：点格子要有提示（说清「下一次取图会放进哪一格」），
+     描边保持 v10.59 的「只有一圈」。 */
   $$('.pslot').forEach(el => el.onclick = ev => {
     if (ev.target.closest('[data-del]') || ev.target.closest('.shotdel')) return;
-    markPickSlot(Number(el.dataset.slot) || 1);
+    const n = Number(el.dataset.slot) || 1;
+    markPickSlot(n);
+    toast(n === 2 ? '下一次取图会放进「营养成分表」' : '下一次取图会放进「食物照片」', 1600);
   });
   const tgtCam = () => (pickSlot === 2 ? $('#photo2Cam') : $('#photoInput'));
   const tgtAlb = () => (pickSlot === 2 ? $('#photo2Alb') : $('#photoAlbum'));
