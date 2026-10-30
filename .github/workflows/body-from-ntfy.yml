@@ -97,14 +97,20 @@ jobs:
           except Exception:
               cur = {}
 
-          def t_of(o):
+          def t_ms(o):
+              # 仓库里的 t 是毫秒，快捷指令给的可能是秒 —— 统一成毫秒再比
               try:
-                  return int(o.get("t") or 0)
+                  t = int(o.get("t") or 0)
               except Exception:
-                  return 0
+                  t = 0
+              return t * 1000 if 0 < t < 10 ** 12 else t
 
-          if t_of(cur) >= t_of(newest):
-              print("current is not older, skip:", cur.get("d"), ">=", newest.get("d"))
+          # 先比日期，再比时间戳（旧文件里 t 的单位和现在不一样，只靠 t 会误判）
+          if str(cur.get("d") or "") > str(newest.get("d") or ""):
+              print("current date is newer, skip:", cur.get("d"))
+              sys.exit(0)
+          if str(cur.get("d") or "") == str(newest.get("d") or "") and t_ms(cur) >= t_ms(newest):
+              print("same date and not older, skip:", cur.get("d"))
               sys.exit(0)
 
           # 只许比北京时间「今天或昨天」更新的数据，防止把很久以前的旧消息写成新数据
