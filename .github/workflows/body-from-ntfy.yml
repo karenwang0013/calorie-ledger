@@ -80,7 +80,10 @@ jobs:
               # 至少体重得像个数，防止别人往公开 topic 里塞垃圾
               if not num(obj.get("w")):
                   return None
-              return {k: str(obj.get(k, "") if obj.get(k) is not None else "") for k in ("d", "w", "bf", "bmi", "ffm")} | {"t": m.get("time", 0)}
+              out = {k: str(obj.get(k, "") if obj.get(k) is not None else "") for k in ("w", "bf", "bmi", "ffm")}
+              out["d"] = d          # 用上面补过日期的那个 d，不是 obj 里的空值
+              out["t"] = m.get("time", 0)
+              return out
 
           newest = None
           for m in sorted(msgs, key=lambda x: x.get("time", 0)):
