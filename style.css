@@ -1622,6 +1622,24 @@ body.add-open .sheet-mask.on {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 0 12px; padding: 12px; align-items: start;
 }
+/* v10.59 用户口径：选中那一格要有描边，但**只能是一圈**、跟着格子的圆角走 ——
+   上一版把描边同时画在 .pslot-body 和 .pslot-empty 上，.pslot-body 又没有圆角，
+   于是出现「一个正方形 + 里面一个圆角框」两层，非常割裂。
+   现在只在格子上画一圈 outline（outline-offset 收进去，圆角跟格子一致），
+   空框和有照片两种状态都是同一圈，没有第二层。 */
+#pane-photo .pslot { border-radius: 18px; position: relative; }
+/* 描边必须画在最上层：照片（.preview）是定位元素，会盖住父元素的 outline。
+   所以用一层绝对定位的覆盖框，只画 2px 边、不接收点击。 */
+#pane-photo .pslot.sel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(214, 255, 75, .60);
+  border-radius: 18px;
+  pointer-events: none;
+  z-index: 3;
+}
+
 /* v10.48 用户口径：点「食物照片 / 营养成分表」框时，iOS 会把这个框当成「可按的按钮」抬起来（带白灰底 + 里面显示框上那几个字），
    有时有有时没有。`cursor: pointer` 就是让它被判成「可按元素」的那条线索，这里去掉（手机上本来也看不到鼠标指针）。 */
 .pslot { min-width: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
