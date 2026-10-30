@@ -1719,7 +1719,7 @@ body.add-open .sheet-mask.on {
 /* v10.51 用户口径：这一栏的格子「平均放大」—— 食材 / 克数 / 补充说明 抬到和「识别热量」一样高（52），
    这样下板块是 52 / 52 / 104（文字描述）/ 52（识别热量）四块，缝还是统一 10，看着就均匀了。 */
 #photoActions .prow2 input,
-#photoActions #photoHint { min-height: 52px; padding-top: 0; padding-bottom: 0; }
+#photoActions #photoHint { min-height: 48px; padding-top: 0; padding-bottom: 0; }   /* v10.62：52 → 48 */
 /* v8.86 用户口径：识别热量下面那几个框（食材 / 克数 / 补充说明）同用「黑 8%」这一档 */
 #photoActions .prow2 input,
 #photoActions #photoHint {
@@ -3315,8 +3315,9 @@ html.kb #setSheet {
    左右宽度靠 .sh-body 的内容边（和拍照框、按钮同一列：实测 x27 / w386）。 */
 /* v10.46 用户口径：记录卡分成上下两块 ——
    上：两个照片格 + 拍照 / 从相册选；中间一条分割线；下：食材/克数、补充说明、文字描述、识别热量。
-   v10.49 用户口径：缝统一是统一的，但 14 太开了 → 收紧到 10（还是同一套变量，一处改全变）。 */
-#pane-photo { --add-gap: 10px; }
+   v10.49 用户口径：缝统一是统一的，但 14 太开了 → 收紧到 10。
+   v10.62 用户口径：「这里再紧凑点」→ 再收到 8（还是同一个变量，一处改全变）。 */
+#pane-photo { --add-gap: 8px; }
 #addSplit {
   height: 1px;
   margin: var(--add-gap) 0;
@@ -3341,8 +3342,9 @@ html.kb #setSheet {
   flex-direction: column;
   gap: var(--add-gap);
 }
-/* v10.42：框比原来矮一截（132 → 104；三行字 77 + 上下内边距 24 ≈ 101，正好三行满） */
-#descBlock .twrap { flex: 0 0 auto; height: 104px; }
+/* v10.42：框比原来矮一截（132 → 104；三行字 77 + 上下内边距 24 ≈ 101，正好三行满）
+   v10.62：用户要更紧凑 → 104 → 88（约 2.5 行） */
+#descBlock .twrap { flex: 0 0 auto; height: 88px; }
 #descBlock #textInput { height: 100%; }
 /* 按钮和上面「拍照 / 从相册选」同一列同一宽度（386），不再左右各缩 4 */
 #descBlock #textGo { margin: 0; width: 100%; align-self: stretch; }
