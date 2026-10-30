@@ -125,7 +125,8 @@ jobs:
               print("stale date, skip:", newest["d"], "vs", today); sys.exit(0)
 
           out = {k: newest[k] for k in ("d", "w", "bf", "bmi", "ffm")}
-          out["t"] = int(newest["t"])
+          t = int(newest["t"])
+          out["t"] = t * 1000 if 0 < t < 10 ** 12 else t   # 仓库里的 t 一直是毫秒，别写成秒
           with open("body.json", "w", encoding="utf-8") as f:
               json.dump(out, f, ensure_ascii=False, separators=(", ", ": "))
           print("wrote body.json:", out)
