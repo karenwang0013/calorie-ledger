@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.61', d: '10-30', items: [
+    '改：取图完全自动，不用先选格子 —— 点「拍照 / 从相册选」先填「食物照片」，已经满了就填「营养成分表」，不会放错；点照片框不再有任何反应（描边、提示条都去掉了）',
+    '改：只放一张照片时不假设它是食物本体 —— 是营养表就按标签读数，是食物就按外观估重量',
+  ] },
   { v: 'v10.60', d: '10-30', items: [
     '改：点「食物照片 / 营养成分表」框时，底部会给一句提示 ——「下一次取图会放进「营养成分表」」（配着那一圈描边，说清点的是哪一格）',
   ] },
@@ -3137,7 +3141,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.60';
+const APP_VERSION = 'v10.61';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3978,22 +3982,6 @@ let addMode = 'photo';
 /* v9.15：按列宽算出「照片格」的高度（宽 : 高 = 1 : 1.3），写成 --slot-h。
    不在 CSS 里用 aspect-ratio —— iOS Safari 在网格里算出来的高度有偏差，
    会让「从相册选」按钮溢出盒子、和下面的「已添加」叠在一起。 */
-/* v10.54：记录卡里两个照片格是**分开的两个目标** —— 食物本体 / 营养成分表。
-   点一下格子就选中它（描边亮起来），下一次「拍照 / 从相册选」放进这一格。
-   默认目标：食物照片空 → 1；食物照片已有、成分表空 → 2。 */
-let pickSlot = 1;
-function markPickSlot(n) {
-  pickSlot = (n === 2) ? 2 : 1;
-  document.querySelectorAll('#pane-photo .pslot').forEach(el => {
-    el.classList.toggle('sel', Number(el.dataset.slot) === pickSlot);
-  });
-}
-function defaultPickSlot() {
-  if (!S.photoData) return 1;
-  if (!S.photo2Data) return 2;
-  return 1;
-}
-
 let __slotBase = 0;   // 照片格的「空闲高度」（v10.43：扣减时以它为基准）
 function syncSlotH() {
   const pane = $('#pane-photo');
@@ -4175,7 +4163,6 @@ async function handlePhoto(file) {
     S.photoData = await compress(file);
     S.photoAt = Date.now();
     $('#photoActions').hidden = false;
-    markPickSlot(defaultPickSlot());        // v10.54：填完食物照片，默认目标自动切到「营养成分表」
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
@@ -4202,7 +4189,6 @@ async function handlePhoto2(file) {
     $('#emptyB').hidden = true;
     S.photo2Data = await compress(file, 1024, 0.8);
     $('#photoActions').hidden = false;      // v10.55：只拍了成分表时，「食材/克数/补充说明」也要出现
-    markPickSlot(defaultPickSlot());        // v10.54：填完成分表，默认目标回到「食物照片」
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
@@ -4285,7 +4271,6 @@ function resetPhotoUI() {
   $('#pv2').hidden = true;
   $('#del2').hidden = true;
   $('#emptyB').hidden = false;
-  markPickSlot(1);
   try { syncAddSheetFit(); } catch (e) {}
 }
 
@@ -4309,9 +4294,11 @@ async function runPhoto() {
         + '请按第二张的标签读每 100 克的能量/蛋白质/碳水/脂肪（不要用外观估算这几项），'
         + '再按第一张估算实际吃掉了多少克；两两相乘得到总量。';
     } else if (S.photoData) {
-      /* v10.54：两格现在分得清楚了（点格子才决定照片进哪格），所以这里恢复严格口径：
-         只有「食物照片」有图 = 食物本体；只有「营养成分表」有图 = 标签。 */
-      modeHint = '这张图是食物本体：按外观和常见餐具尺寸估算实际吃掉的重量。';
+      /* v10.61：现在取图是「自动进第一个空格」，用户想只放一张营养成分表时，
+         它也会落在「食物照片」格里。所以单张图不再假设是食物本体 —— 让模型自己看图的性质。 */
+      modeHint = '这张图可能是实际吃的食物，也可能是包装上的营养成分表：'
+        + '如果是营养表，就按标签读每 100 克的能量/蛋白质/碳水/脂肪（不要用外观估算这几项）；'
+        + '如果是食物，就按外观和常见餐具尺寸估算实际吃掉的重量。';
     } else {
       modeHint = '这张图是包装上的营养成分表：每 100 克数值只按标签读数；name 用产品名。';
     }
@@ -8715,9 +8702,8 @@ function init() {
   $('#addMask').onclick = closeAdd;
 
   $$('#addTabs button').forEach(b => b.onclick = () => setAddMode(b.dataset.m));
-  // v10.54：这两个输入专供「营养成分表」格（点下面两个按钮取图时按当前选中的格走）
-  $('#photo2Cam').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) handlePhoto2(f); };
-  $('#photo2Alb').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) handlePhoto2(f); };
+  $('#photo2Cam').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) handlePick(f); };
+  $('#photo2Alb').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) handlePick(f); };
   $('#del2').onclick = ev => {
     ev.stopPropagation();
     if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
@@ -8734,26 +8720,18 @@ function init() {
      点格子本身不弹系统菜单（iOS 那个菜单会在格子上留一圈灰圆，网页关不掉），
      所以两步：先点格子选目标，再点下面按钮取图。默认目标是「食物照片」；
      一格已经有照片后，默认自动切到另一格。 */
-  markPickSlot(defaultPickSlot());
-  /* v10.60 用户口径：点格子要有提示（说清「下一次取图会放进哪一格」），
-     描边保持 v10.59 的「只有一圈」。 */
-  $$('.pslot').forEach(el => el.onclick = ev => {
-    if (ev.target.closest('[data-del]') || ev.target.closest('.shotdel')) return;
-    const n = Number(el.dataset.slot) || 1;
-    markPickSlot(n);
-    toast(n === 2 ? '下一次取图会放进「营养成分表」' : '下一次取图会放进「食物照片」', 1600);
-  });
-  const tgtCam = () => (pickSlot === 2 ? $('#photo2Cam') : $('#photoInput'));
-  const tgtAlb = () => (pickSlot === 2 ? $('#photo2Alb') : $('#photoAlbum'));
+  /* v10.61 用户口径：不要「先点格子再取图」这一套（多此一举）——
+     取图完全自动：点「拍照 / 从相册选」→ 先填「食物照片」，已经满了就填「营养成分表」，
+     两张都满了再提示去换。格子只负责显示，点它不再有任何反应（没有描边、没有提示条）。 */
   $('#photoAlbum').onchange = e => {
     const f = e.target.files[0];
     e.target.value = '';
     if (!f) return;
-    handlePhoto(f);         // 「食物照片」格
+    handlePick(f);          // 自动进第一个空格
   };
 
-  const pickCam = () => tgtCam().click();
-  const pickAlb = () => tgtAlb().click();
+  const pickCam = () => $('#photoInput').click();
+  const pickAlb = () => $('#photoAlbum').click();
   $('#pickCamera').onclick = ev => { ev.stopPropagation(); pickCam(); };
   $('#pickAlbum').onclick = ev => { ev.stopPropagation(); pickAlb(); };
   $('#photoDel').onclick = ev => { ev.stopPropagation(); resetPhotoUI(); saveDraft(); };
