@@ -89,6 +89,7 @@ jobs:
                   newest = got
           if not newest:
               print("no decodable payload"); sys.exit(0)
+          print("DEBUG newest:", newest)
 
           cur = {}
           try:
