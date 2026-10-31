@@ -141,8 +141,9 @@
   },
   {
     "file": "app.js",
-    "find": "const line1 = (isToday && exp) ? `现在 ${exp}` : '';",
-    "why": "首页「消耗」用日目标口径、「现在 xxx」放小字里（两行显示，宽度限制在格子内，不许顶到分隔线）"
+    "find": "const line1 = (isToday && expBase) ? `日目标 ${expBase}` : '';",
+    "why": "首页「消耗」用到现在口径（会随走路涨）、「日目标 xxx」放小字里（两行显示，宽度限制在格子内，不许顶到分隔线）",
+    "at": "2026-10-31"
   },
   {
     "file": "style.css",
