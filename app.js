@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.71', d: '10-31', items: [
+    '改：首页四个数统一成同一套基数 —— 小字写「要烧到 2581 · 再运动 704」：前者是达标的总消耗，后者是你真正还要额外运动多少（已经超出的那 704 就是它，两个是对得上的）',
+    '为什么不是 1031：从现在到今晚，你不动也会再烧约 327 千卡，所以「2581 − 现在 1550」多算了这部分。自己验算：现在 1550 + 不动也烧的 327 + 再运动 704 = 2581',
+  ] },
   { v: 'v10.70', d: '10-31', items: [
     '改：首页那行小字只写「要烧到 2481」—— 现在多少上面大数字已经有了，不用重复写两遍；增肌模式写「烧到 1931 就够」',
   ] },
@@ -3174,7 +3178,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.70';
+const APP_VERSION = 'v10.71';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3557,9 +3561,15 @@ function renderToday() {
   // 减脂/维持：现在 1525 · 要烧到 2581（= 已吃 + 缺口）
   // 增肌（盈余）：现在 1525 · 烧到 1931 就够（= 已吃 − 盈余），烧多了就没盈余了
   // v10.29：这行小字以前是一条长串，宽度算成 max-content 190%，直接顶到左右两格的分隔线上。现在拆成两行
-  const line1 = isToday ? (goalDef >= 0
-    ? `要烧到 ${Calc.targetBurn(intake, goalDef)}`
-    : `烧到 ${Calc.targetBurn(intake, goalDef)} 就够`) : '';
+  // v10.71 用户口径：「吃了多少 / 消耗了多少 / 还要再吃多少或再消耗多少」——四个数必须同一套基数。
+  // 关键：到今晚你不动也会再烧一点（expFc − exp），所以「要烧到 2581」跟「现在 1550」差 1031 里
+  // 有 327 是不动也会烧的；真正要额外运动的只有 targetBurn − expFc（= 已经超出的那个数）。
+  // 两个数一起写出来，自己心算就能对上：现在 + 剩余正常消耗 + 再运动 = 要烧到。
+  const needMove = Math.max(0, -left);
+  const line1 = isToday
+    ? (needMove > 0 ? `要烧到 ${Calc.targetBurn(intake, goalDef)} · 再运动 ${needMove}`
+                    : `要烧到 ${Calc.targetBurn(intake, goalDef)}`)
+    : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
   atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
