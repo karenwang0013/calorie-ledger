@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.84', d: '10-31', items: [
+    '改：圆环里的「目标缺口 400」加粗到 600、字号跟「消耗」下面那句「需消耗 2581」一致',
+  ] },
   { v: 'v10.83', d: '10-31', items: [
     '修：圆环整体偏下 —— 实测日期到圆环顶 20px、圆环底到卡牌 14px。上边距减 3、下边距加 3（总高不变），现在上下都是 17px（iPad 23/23）',
   ] },
@@ -3217,7 +3220,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.83';
+const APP_VERSION = 'v10.84';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
