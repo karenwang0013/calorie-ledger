@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.72', d: '10-31', items: [
+    '改：只在「吃超了」的时候才显示「要烧到 2581 · 再运动 704」；没吃超就不显示 —— 蛋白质/碳水/脂肪三条进度条已经能看到还差多少，不用再说一遍',
+  ] },
   { v: 'v10.71', d: '10-31', items: [
     '改：首页四个数统一成同一套基数 —— 小字写「要烧到 2581 · 再运动 704」：前者是达标的总消耗，后者是你真正还要额外运动多少（已经超出的那 704 就是它，两个是对得上的）',
     '为什么不是 1031：从现在到今晚，你不动也会再烧约 327 千卡，所以「2581 − 现在 1550」多算了这部分。自己验算：现在 1550 + 不动也烧的 327 + 再运动 704 = 2581',
@@ -3178,7 +3181,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.71';
+const APP_VERSION = 'v10.72';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3565,10 +3568,11 @@ function renderToday() {
   // 关键：到今晚你不动也会再烧一点（expFc − exp），所以「要烧到 2581」跟「现在 1550」差 1031 里
   // 有 327 是不动也会烧的；真正要额外运动的只有 targetBurn − expFc（= 已经超出的那个数）。
   // 两个数一起写出来，自己心算就能对上：现在 + 剩余正常消耗 + 再运动 = 要烧到。
+  // v10.72 用户口径：只有「吃超了」才需要提示要再消耗多少；没吃超就什么都不用写
+  //（蛋白质/碳水/脂肪三条进度条已经能看到还差多少，不用再用一句话重复）
   const needMove = Math.max(0, -left);
-  const line1 = isToday
-    ? (needMove > 0 ? `要烧到 ${Calc.targetBurn(intake, goalDef)} · 再运动 ${needMove}`
-                    : `要烧到 ${Calc.targetBurn(intake, goalDef)}`)
+  const line1 = (isToday && needMove > 0)
+    ? `要烧到 ${Calc.targetBurn(intake, goalDef)} · 再运动 ${needMove}`
     : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
