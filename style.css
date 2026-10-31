@@ -15,6 +15,9 @@
   --orange: #ff8a4c;
   --red: #ff5d5d;
   --blue: #6ea8ff;
+  /* v10.76：这两个值以前只在 var() 里写了 fallback，没有真正定义，补成变量 */
+  --pill-nudge: 1.3px;
+  --pill-nudge-half: .65px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   /* 悬浮 Dock：内缩 + 圆角半径要跟屏幕圆角同心，手机上按屏宽微调 */
@@ -596,7 +599,7 @@ body.add-open .sheet-mask.on {
 .pager { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; height: 26px; }
 .pgbtn {
   width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line);
-  background: rgba(255,255,255,.05); color: var(--fg);
+  background: rgba(255,255,255,.05); color: var(--text);
   display: flex; align-items: center; justify-content: center;
   padding: 0; cursor: pointer; flex: none;
 }
