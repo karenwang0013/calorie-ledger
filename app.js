@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.75', d: '10-31', items: [
+    '改：「消耗（到现在）」改回「消耗」—— 下面那行已经写着更新时间，不用再强调“到现在”',
+  ] },
   { v: 'v10.74', d: '10-31', items: [
     '改：「要烧到 2581」换成「需消耗 2581」（“烧”太口语）',
   ] },
@@ -3187,7 +3190,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.74';
+const APP_VERSION = 'v10.75';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3554,8 +3557,9 @@ function renderToday() {
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
   // v10.65：「消耗」这格今天改成「到现在」（会随走路涨）；「日目标」挪到下面小字，
   // 「还可以吃」仍然按日目标算（不然早上一起来就显示已经超出）。
+  // v10.75：下面那行已经写着更新时间（19:58），标签再写「到现在」是重复，统一就叫「消耗」
   const expLbl = $('#stExpLbl');
-  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
+  if (expLbl) expLbl.textContent = '消耗';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
