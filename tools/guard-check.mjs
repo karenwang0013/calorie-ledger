@@ -1,5 +1,7 @@
 // 发版前自检：把已经"锁死"的行为用代码卡住，谁改坏了这里就先失败
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
+const requireCjs = createRequire(import.meta.url);
 
 const app = fs.readFileSync('app.js', 'utf8');
 const css = fs.readFileSync('style.css', 'utf8');
@@ -52,7 +54,39 @@ const lockedOk = () => {
 };
 const lockedBad = lockedOk();
 
+// 2026-10-31 用户要求：首页数值「以后所有情况都要算得对」，不只是今天。
+// 所以把 calc.js 里的算式拿真实范围跑一遍矩阵，任何一条不自洽就不许发版。
+const Calc = requireCjs('../calc.js');
+const calcOk = (() => {
+  const deficits = [500, 300, 1, 0, -1, -250, -600];     // 减脂 / 维持 / 增肌（盈余）
+  const intakes = [0, 1200, 2181, 3500];
+  const fracs = [0, 0.1, 0.25, 0.5, 0.8, 1];
+  const bases = [1500, 1815, 2400];
+  const dets = [{ active: 265, resting: 1564 }, { total: 2100 }, {}];
+  for (const def of deficits) {
+    for (const intake of intakes) {
+      // 要达成缺口，全天得烧到「已吃 + 缺口」——反算回去必须正好等于缺口
+      if (Calc.targetBurn(intake, def) - intake !== def) return false;
+      for (const det of dets) {
+        for (const f of fracs) {
+          for (const b of bases) {
+            const now = Calc.expNow(det, 1800, f);
+            const fc = Calc.expForecast(now, b, f);
+            const bud = Calc.budget(fc, def);
+            if (Calc.left(bud, intake) !== bud - intake) return false;      // 还可以吃 = 可吃 − 已吃
+            if (Calc.gapNow(now, intake) !== now - intake) return false;    // 到现在缺口 = 现在消耗 − 已吃
+            if (f === 1 && bud !== now - def) return false;                 // 走完一天 → 预算收敛到当天真实消耗
+            if (now < 0 || now > 6000) return false;                        // 消耗算不出负数/离谱值
+          }
+        }
+      }
+    }
+  }
+  return true;
+})();
+
 const checks = [
+  ['首页数值三种模式（减脂/维持/增肌）算式自洽：目标消耗=已吃+缺口、走完一天预算收敛到当天实际消耗', calcOk],
   ['顶部状态栏实色带存在且层级为 25', /\.statusbg \{[\s\S]*?z-index: 25;/.test(css)],
   ['顶栏必须是 fixed', /\.topbar \{\n  position: fixed;/.test(css)],
   ['顶栏颜色锁死 #0d0f0e（任何情况下都不许改）', /\.topbar \{[\s\S]{0,400}?background: #0d0f0e;/.test(css) && !/\.topbar \{[\s\S]{0,400}?background: #(?!0d0f0e)/.test(css)],
