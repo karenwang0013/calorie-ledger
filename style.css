@@ -353,8 +353,9 @@ html.kb .sc-body {
    这样一眼能看出现在是缺口、维持还是盈余。上面三组之间的距离不动。 */
 /* v10.84：用户口径 —— 「目标缺口」的字重/字号跟「消耗」下面那句「需消耗 2581」保持一致 */
 .hero .sub { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.80); margin-top: 12px; max-width: 156px; line-height: 1.5; letter-spacing: .2px; }
-/* v10.85：实际缺口/盈余 —— 紧跟「目标缺口」下面，字号字重与它一致，颜色再压暗一档区分主次 */
-.hero .gapnow { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.56); margin-top: 4px; letter-spacing: .2px; line-height: 1.4; }
+/* v10.85：实际缺口/盈余 —— 紧跟「目标缺口」下面，字号字重与它一致
+   v10.86：用户口径 —— 这个数字的颜色跟着圆环走（绿→橙→红），而不是固定灰白 */
+.hero .gapnow { font-size: 11px; font-weight: 600; color: var(--hero-c, rgba(255,255,255,.56)); margin-top: 4px; letter-spacing: .2px; line-height: 1.4; }
 .hero .gapnow:empty { display: none; }
 .hero.surplus .num { color: var(--hero-c, var(--orange)); }
 .hero.over .num { color: var(--hero-c, var(--red)); }
