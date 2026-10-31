@@ -28,6 +28,16 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.70', d: '10-31', items: [
+    '改：首页那行小字只写「要烧到 2481」—— 现在多少上面大数字已经有了，不用重复写两遍；增肌模式写「烧到 1931 就够」',
+  ] },
+  { v: 'v10.69', d: '10-31', items: [
+    '改：首页那几个数字（到现在消耗 / 可吃 / 还可以吃 / 到现在的缺口 / 要烧到多少）的算式全部收进一个文件（calc.js），只留一套',
+    '加：发版前自检会拿「减脂 / 维持 / 增肌」× 不同吃的量 × 不同时间点 × 不同活动量跑一遍，只要有一条算不通就不许发版',
+  ] },
+  { v: 'v10.68', d: '10-31', items: [
+    '改：首页那行小字去掉「缺口 400」字样，只写现在多少、要烧到多少；减脂/维持/增肌三种模式都验过',
+  ] },
   { v: 'v10.67', d: '10-31', items: [
     '改（首页）：「预计全天」那行去掉 —— 没人在意今天会烧多少。现在直接写你关心的那个数：缺口 400 → 消耗 2581（= 已吃 + 缺口），也就是今天要烧到这个数才算完成 400 缺口',
     '补：如果只是想看自己现在离目标还差多少，用圆环下面那行「到现在缺口 / 盈余」—— 那个是实际的（到现在消耗 − 已吃）',
@@ -3164,7 +3174,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.68';
+const APP_VERSION = 'v10.70';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3421,29 +3431,20 @@ function renderToday() {
   // v9.68 当年改回「到现在」是因为上午显示全天数会被看成"我没动怎么烧了 2000"；
   // 现在标签直接写「消耗（日目标）」，「到现在」那个数放在下面那行小字里，两个都在，不会误读。
   const expBase = Math.round(d.expenditure_base || expFull);
-  let exp = expFull;
+  const todayOn = d.date === S.today;
   let dayFrac = 1;
-  if (d.date === S.today) {
+  if (todayOn) {
     const start = new Date(d.date + 'T00:00:00').getTime();
     dayFrac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
-    const det = d.expenditure_detail || {};
-    if (det.active && det.resting) exp = Math.round(det.resting * dayFrac) + det.active;
-    else if (det.total) exp = Math.round(det.total * dayFrac);
-    else exp = Math.round(expFull * dayFrac);
   }
-  // v10.66 用户口径：「运动量上去了，中间那个大数字应该跟着变」——
-  // 以前「还可以吃」用的是钉死的全天日目标，走一整天都不动，超出 766 一直写着 766。
-  // 现在今天用「预计全天消耗」= 到现在 + 剩下的时间按平时的节奏继续烧：
-  //   08:00 ≈ 到现在 + 日目标×(1-进度)    → 和日目标几乎一样，早上不会一睁眼就"已超出"
-  //   23:00 → 进度≈1 → 就等于今天的实际消耗
-  // 所以多走一步就多一分额度，深夜自动收敛到真实值。
-  let budgetDisp = t.kcal_budget;
-  let expForecast = expBase;
-  if (d.date === S.today) {
-    expForecast = Math.round(exp + expBase * (1 - dayFrac));
-    budgetDisp = Math.round(expForecast - Math.round(t.deficit));
-  }
-  const left = budgetDisp - intake;
+  // v10.69：算式全部收到 calc.js（唯一入口）+ tools 里的自动检查锁住。
+  // 用户要求「以后所有数值都要算得对」，所以这里只算「取哪些数」，怎么算交给 Calc。
+  const exp = todayOn ? Calc.expNow(d.expenditure_detail, expFull, dayFrac) : expFull;
+  // v10.66：「还可以吃」要跟着当天走动变 —— 用「预计全天消耗」而不是钉死的日目标
+  //（进度→1 时收敛成今天真实消耗；进度→0 时等于日目标，早上不会一睁眼就"已超出"）
+  const expFc = todayOn ? Calc.expForecast(exp, expBase, dayFrac) : expBase;
+  const budgetDisp = todayOn ? Calc.budget(expFc, t.deficit) : t.kcal_budget;
+  const left = Calc.left(budgetDisp, intake);
   const bal = left;
 
   // 首次使用提示
@@ -3516,7 +3517,7 @@ function renderToday() {
   // v10.65 用户口径：「走完路消耗应该往上涨、缺口跟着变」—— 以前这一格写「消耗（日目标）」，
   // 用的是钉死的 expenditure_base（实测/最近 7 天均值），走一天都不动，看着像没走路。
   // 现在大数字 = 到现在；日目标挪到小字；圆环下的「到现在缺口」= 到现在消耗 − 已吃，跟着动。
-  const balNow = Math.round(exp - intake);   // 正=到现在为止的缺口，负=已超
+  const balNow = Calc.gapNow(exp, intake);   // 正=到现在为止的缺口，负=已超
   let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
   if (d.date === S.today) {
     sub += `<br>到现在${balNow >= 0 ? '缺口 ' + balNow : '盈余 ' + Math.abs(balNow)}`;
@@ -3557,8 +3558,8 @@ function renderToday() {
   // 增肌（盈余）：现在 1525 · 烧到 1931 就够（= 已吃 − 盈余），烧多了就没盈余了
   // v10.29：这行小字以前是一条长串，宽度算成 max-content 190%，直接顶到左右两格的分隔线上。现在拆成两行
   const line1 = isToday ? (goalDef >= 0
-    ? `现在 ${exp} · 要烧到 ${intake + goalDef}`
-    : `现在 ${exp} · 烧到 ${intake + goalDef} 就够`) : '';
+    ? `要烧到 ${Calc.targetBurn(intake, goalDef)}`
+    : `烧到 ${Calc.targetBurn(intake, goalDef)} 就够`) : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
   atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
