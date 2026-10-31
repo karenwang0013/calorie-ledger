@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.65', d: '10-31', items: [
+    '改（首页）：走完路数字终于会动了 ——「消耗」这格改成「到现在」的真实消耗（基础代谢 × 当天进度 + 手表活动），走一段就往上走；原来的「日目标」挪到下面小字',
+    '改（首页）：圆环下面加一行「到现在缺口」= 到现在消耗 − 已吃，走路、吃东西都会立刻变；上面那行「目标缺口 400」是你自己设的目标，本来就不该动',
+    '说明：「还可以吃」仍然是按全天日目标算的（不是按现在），否则早上刚起来就会显示已经吃超',
+  ] },
   { v: 'v10.64', d: '10-31', items: [
     '修：一桌菜拍下来，它默认你把整桌都吃完了 —— 现在按你写的「饭能全部吃下去、菜不是全部」分开算：说吃完的按整份，说没吃完的只算吃掉的那部分（家常菜按 1/2～2/3），并在结果里写明按几成算',
   ] },
@@ -3150,7 +3155,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.64';
+const APP_VERSION = 'v10.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3485,7 +3490,14 @@ function renderToday() {
   hero.style.setProperty('--hero-c', c1);
 
   const goalDef = Math.round(t.deficit);   // 正=缺口，负=盈余
+  // v10.65 用户口径：「走完路消耗应该往上涨、缺口跟着变」—— 以前这一格写「消耗（日目标）」，
+  // 用的是钉死的 expenditure_base（实测/最近 7 天均值），走一天都不动，看着像没走路。
+  // 现在大数字 = 到现在；日目标挪到小字；圆环下的「到现在缺口」= 到现在消耗 − 已吃，跟着动。
+  const balNow = Math.round(exp - intake);   // 正=到现在为止的缺口，负=已超
   let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
+  if (d.date === S.today) {
+    sub += `<br>到现在${balNow >= 0 ? '缺口 ' + balNow : '盈余 ' + Math.abs(balNow)}`;
+  }
   // v9.68：今天圆环显示「还可以吃」（= 日目标 − 已吃）；历史日期显示那天的实际缺口/盈余。
   // 以前两处都写「热量缺口」，但今天那个数其实是目标余额，读起来像"已经缺了 2067"。
   if (d.date === S.today) {
@@ -3500,14 +3512,14 @@ function renderToday() {
     $('#heroLbl').textContent = '热量缺口';
     $('#heroNum').textContent = balFull;
   }
-  $('#heroSub').textContent = sub;
+  $('#heroSub').innerHTML = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
-  // v10.02：今天这一格显示「日目标口径」的消耗（和 还可以吃 用的是同一个数，三格能互相验算）。
-  // 「到现在」那个估算放在下面那行小字里，两个都给，不再让人猜哪个是哪个。
+  // v10.65：「消耗」这格今天改成「到现在」（会随走路涨）；「日目标」挪到下面小字，
+  // 「还可以吃」仍然按日目标算（不然早上一起来就显示已经超出）。
   const expLbl = $('#stExpLbl');
-  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（日目标）' : '消耗';
-  $('#stExp').innerHTML = (d.date === S.today ? expBase : exp) + ' <small>kcal</small>';
+  if (expLbl) expLbl.textContent = d.date === S.today ? '消耗（到现在）' : '消耗';
+  $('#stExp').innerHTML = exp + ' <small>kcal</small>';
   const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
   // 看今天、但数据已经超过 90 分钟没更新 → 标一句「偏旧」，不用等发现数字不对
@@ -3517,10 +3529,9 @@ function renderToday() {
     if (hm) { const t0 = parseISO(d.date); t0.setHours(+hm[1], +hm[2], 0, 0); stale = (Date.now() - t0.getTime()) > 90 * 60000; }
   }
   // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
-  // v10.02：这一行同时给出「到现在」的估算，省得只看到日目标数以为没在动
-  // v10.29：这行小字以前是一条长串（现在 718 · 08:50 · 数据偏旧），宽度算成 max-content 190%，
-  // 直接顶到左右两格的分隔线上。现在拆成两行："现在 xxx" 一行，时间和状态一行，宽度限制在格子里。
-  const line1 = (isToday && exp) ? `现在 ${exp}` : '';
+  // v10.02：这一行给「日目标」—— 大数字现在是「到现在」，日目标放这里才不会两个口径混着看
+  // v10.29：这行小字以前是一条长串，宽度算成 max-content 190%，直接顶到左右两格的分隔线上。现在拆成两行
+  const line1 = (isToday && expBase) ? `日目标 ${expBase}` : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
   atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
