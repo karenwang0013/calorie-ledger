@@ -141,8 +141,8 @@
   },
   {
     "file": "app.js",
-    "find": "const line1 = (isToday && expForecast) ? `预计全天 ${expForecast}` : '';",
-    "why": "首页小字显示「预计全天 xxx」（= 到现在 + 剩余时间按平时节奏），窄屏两行内不许顶到分隔线",
+    "find": "const line1 = isToday ? `${goalDef >= 0 ? '缺口' : '盈余'} ${Math.abs(goalDef)} → 消耗 ${intake + goalDef}` : '';",
+    "why": "首页「消耗」那格小字写「缺口 400 → 消耗 2581」（= 已吃 + 缺口），窄屏两行内不许顶到分隔线",
     "at": "2026-10-31"
   },
   {
