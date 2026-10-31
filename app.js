@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.74', d: '10-31', items: [
+    '改：「要烧到 2581」换成「需消耗 2581」（“烧”太口语）',
+  ] },
   { v: 'v10.73', d: '10-31', items: [
     '改：小字只留「要烧到 2581」—— 圆环里的「已经超出 601」已经写在那儿了，「再运动 601」是同一个数，重复写是多余的',
   ] },
@@ -3184,7 +3187,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.73';
+const APP_VERSION = 'v10.74';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3577,7 +3580,7 @@ function renderToday() {
   // v10.73：圆环里那个大数字就是「已经超出多少」，「再运动多少」跟它完全一样 →
   // 用户明确说不许重复写。这里只留一个总量：要烧到多少。
   const line1 = (isToday && needMove > 0)
-    ? `要烧到 ${Calc.targetBurn(intake, goalDef)}`
+    ? `需消耗 ${Calc.targetBurn(intake, goalDef)}`
     : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
