@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.66', d: '10-31', items: [
+    '改（首页）：多走路「还可以吃」会跟着涨了 —— 以前这个数按固定的日目标算，走一整天都不动，吃着超了就一直写着同一个超出数',
+    '现在的算法：预计全天消耗 = 到现在已经烧掉的 + 剩下的时间按你平时的节奏继续烧；可吃 = 预计全天 − 你的缺口。所以早上和以前几乎一样（不会一睁眼就显示吃超），越走额度越多，到晚上自动收敛成今天的真实值',
+    '小字改成「预计全天 xxxx」，圆环进度也跟这个数走（圈和里面的字不再算两套）',
+  ] },
   { v: 'v10.65', d: '10-31', items: [
     '改（首页）：走完路数字终于会动了 ——「消耗」这格改成「到现在」的真实消耗（基础代谢 × 当天进度 + 手表活动），走一段就往上走；原来的「日目标」挪到下面小字',
     '改（首页）：圆环下面加一行「到现在缺口」= 到现在消耗 − 已吃，走路、吃东西都会立刻变；上面那行「目标缺口 400」是你自己设的目标，本来就不该动',
@@ -3155,7 +3160,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.65';
+const APP_VERSION = 'v10.66';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3413,15 +3418,28 @@ function renderToday() {
   // 现在标签直接写「消耗（日目标）」，「到现在」那个数放在下面那行小字里，两个都在，不会误读。
   const expBase = Math.round(d.expenditure_base || expFull);
   let exp = expFull;
+  let dayFrac = 1;
   if (d.date === S.today) {
     const start = new Date(d.date + 'T00:00:00').getTime();
-    const frac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
+    dayFrac = Math.min(1, Math.max(0, (Date.now() - start) / 86400000));
     const det = d.expenditure_detail || {};
-    if (det.active && det.resting) exp = Math.round(det.resting * frac) + det.active;
-    else if (det.total) exp = Math.round(det.total * frac);
-    else exp = Math.round(expFull * frac);
+    if (det.active && det.resting) exp = Math.round(det.resting * dayFrac) + det.active;
+    else if (det.total) exp = Math.round(det.total * dayFrac);
+    else exp = Math.round(expFull * dayFrac);
   }
-  const left = t.kcal_budget - intake;
+  // v10.66 用户口径：「运动量上去了，中间那个大数字应该跟着变」——
+  // 以前「还可以吃」用的是钉死的全天日目标，走一整天都不动，超出 766 一直写着 766。
+  // 现在今天用「预计全天消耗」= 到现在 + 剩下的时间按平时的节奏继续烧：
+  //   08:00 ≈ 到现在 + 日目标×(1-进度)    → 和日目标几乎一样，早上不会一睁眼就"已超出"
+  //   23:00 → 进度≈1 → 就等于今天的实际消耗
+  // 所以多走一步就多一分额度，深夜自动收敛到真实值。
+  let budgetDisp = t.kcal_budget;
+  let expForecast = expBase;
+  if (d.date === S.today) {
+    expForecast = Math.round(exp + expBase * (1 - dayFrac));
+    budgetDisp = Math.round(expForecast - Math.round(t.deficit));
+  }
+  const left = budgetDisp - intake;
   const bal = left;
 
   // 首次使用提示
@@ -3435,7 +3453,8 @@ function renderToday() {
   }
 
   // 主环
-  const pct = t.kcal_budget > 0 ? intake / t.kcal_budget : 0;
+  // v10.66：圆环进度也跟「预计全天的可吃」走，不然圈和内圈的字会算两套
+  const pct = budgetDisp > 0 ? intake / budgetDisp : 0;
   const ring = $('#ring');
   const C = 527.8;
   const dash = String(C * (1 - Math.min(pct, 1)));
@@ -3531,7 +3550,7 @@ function renderToday() {
   // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
   // v10.02：这一行给「日目标」—— 大数字现在是「到现在」，日目标放这里才不会两个口径混着看
   // v10.29：这行小字以前是一条长串，宽度算成 max-content 190%，直接顶到左右两格的分隔线上。现在拆成两行
-  const line1 = (isToday && expBase) ? `日目标 ${expBase}` : '';
+  const line1 = (isToday && expForecast) ? `预计全天 ${expForecast}` : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
   atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');

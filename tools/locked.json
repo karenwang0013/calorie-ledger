@@ -141,8 +141,8 @@
   },
   {
     "file": "app.js",
-    "find": "const line1 = (isToday && expBase) ? `日目标 ${expBase}` : '';",
-    "why": "首页「消耗」用到现在口径（会随走路涨）、「日目标 xxx」放小字里（两行显示，宽度限制在格子内，不许顶到分隔线）",
+    "find": "const line1 = (isToday && expForecast) ? `预计全天 ${expForecast}` : '';",
+    "why": "首页小字显示「预计全天 xxx」（= 到现在 + 剩余时间按平时节奏），窄屏两行内不许顶到分隔线",
     "at": "2026-10-31"
   },
   {
