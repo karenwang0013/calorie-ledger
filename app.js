@@ -3164,7 +3164,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.67';
+const APP_VERSION = 'v10.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3552,11 +3552,13 @@ function renderToday() {
     if (hm) { const t0 = parseISO(d.date); t0.setHours(+hm[1], +hm[2], 0, 0); stale = (Date.now() - t0.getTime()) > 90 * 60000; }
   }
   // 有"数据偏旧"时整行（时间 + 数据偏旧）一起变橙；没有就保持原色
-  // v10.67：用户口径——「我不关心预计消耗多少，我只关心要达到 400 缺口该消耗多少」。
-  // 所以这行小字不再写预计全天，直接写「缺口 400 → 消耗 2581」= 已吃 + 缺口，
-  // 也就是今天要烧到这个数才算完成 400 缺口。
+  // v10.68：用户口径——「缺口多少我自己知道，不用写出来；只要写现在多少、要做到多少」。
+  // 减脂/维持：现在 1525 · 要烧到 2581（= 已吃 + 缺口）
+  // 增肌（盈余）：现在 1525 · 烧到 1931 就够（= 已吃 − 盈余），烧多了就没盈余了
   // v10.29：这行小字以前是一条长串，宽度算成 max-content 190%，直接顶到左右两格的分隔线上。现在拆成两行
-  const line1 = isToday ? `${goalDef >= 0 ? '缺口' : '盈余'} ${Math.abs(goalDef)} → 消耗 ${intake + goalDef}` : '';
+  const line1 = isToday ? (goalDef >= 0
+    ? `现在 ${exp} · 要烧到 ${intake + goalDef}`
+    : `现在 ${exp} · 烧到 ${intake + goalDef} 就够`) : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
   atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
