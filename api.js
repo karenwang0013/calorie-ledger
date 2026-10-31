@@ -382,6 +382,12 @@ function targetsOf(p, exp) {
   const hasDefOv = ov0.deficit !== undefined && ov0.deficit !== null && ov0.deficit !== '' && isFinite(Number(ov0.deficit));
   const wantAuto = want;              // 纯自动建议值（不含手动缺口），保存时用它判断「是否等于建议」
   if (hasDefOv) want = Number(ov0.deficit);
+  // v10.76：手动缺口/盈余也要有上限，否则历史里存过一个 5000 就会一直显示荒谬数。
+  // 上限 = 当天消耗的 40%（最少 300、最多 1500），和输入框的 max 一致。
+  {
+    const cap = Math.min(1500, Math.max(300, Math.round(Number(exp) * 0.4)));
+    if (isFinite(want)) want = Math.max(-cap, Math.min(cap, want));
+  }
 
   // —— 自动建议值 ——
   // v10.02：这里必须用「当前真正生效的缺口 want」（含手动设置），不能用纯自动的 wantAuto。
