@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.81', d: '10-31', items: [
+    '改：圆环里只留「目标缺口 400」；实际盈余/缺口挪到「还可以吃」下面那行小字，写法跟「消耗」下面的「需消耗」一致',
+    '改：名称不再叫「到现在盈余」，直接写「盈余 428 / 缺口 120」',
+  ] },
   { v: 'v10.80', d: '10-31', items: [
     '改：「消耗」下面那两行小字看不清 —— 字号 10→11、颜色从暗灰提到 78% 白；「需消耗 2581」加粗突出，时间是次要信息压暗一档',
   ] },
@@ -3207,7 +3211,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.80';
+const APP_VERSION = 'v10.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3550,11 +3554,10 @@ function renderToday() {
   // v10.65 用户口径：「走完路消耗应该往上涨、缺口跟着变」—— 以前这一格写「消耗（日目标）」，
   // 用的是钉死的 expenditure_base（实测/最近 7 天均值），走一天都不动，看着像没走路。
   // 现在大数字 = 到现在；日目标挪到小字；圆环下的「到现在缺口」= 到现在消耗 − 已吃，跟着动。
-  const balNow = Calc.gapNow(exp, intake);   // 正=到现在为止的缺口，负=已超
-  let sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
-  if (d.date === S.today) {
-    sub += `<br>到现在${balNow >= 0 ? '缺口 ' + balNow : '盈余 ' + Math.abs(balNow)}`;
-  }
+  const balNow = Calc.gapNow(exp, intake);   // 正=缺口，负=盈余
+  // v10.81：用户口径 —— 圆环里只留「目标缺口」；实际的盈余/缺口挪到「还可以吃」下面那行小字，
+  // 并且不再叫「到现在盈余」，直接写「盈余 / 缺口」。
+  const sub = goalDef > 0 ? `目标缺口 ${goalDef}` : (goalDef < 0 ? `目标盈余 ${-goalDef}` : '维持体重');
   // v9.68：今天圆环显示「还可以吃」（= 日目标 − 已吃）；历史日期显示那天的实际缺口/盈余。
   // 以前两处都写「热量缺口」，但今天那个数其实是目标余额，读起来像"已经缺了 2067"。
   if (d.date === S.today) {
@@ -3569,7 +3572,7 @@ function renderToday() {
     $('#heroLbl').textContent = '热量缺口';
     $('#heroNum').textContent = balFull;
   }
-  $('#heroSub').innerHTML = sub;
+  $('#heroSub').textContent = sub;
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
   // v10.65：「消耗」这格今天改成「到现在」（会随走路涨）；「日目标」挪到下面小字，
@@ -3618,6 +3621,12 @@ function renderToday() {
   if (leftLbl) leftLbl.textContent = isToday ? '还可以吃' : (balFull >= 0 ? '热量缺口' : '热量盈余');
   const leftShow = isToday ? left : Math.abs(balFull);
   leftEl.innerHTML = leftShow + ' <small>kcal</small>';
+  const leftAt = $('#stLeftAt');
+  if (leftAt) {
+    leftAt.innerHTML = (isToday && exp)
+      ? `<b class="tgt">${balNow >= 0 ? '缺口' : '盈余'} ${Math.abs(balNow)}</b>`
+      : '';
+  }
   leftEl.style.color = (isToday ? left : balFull) < 0 ? 'var(--orange)' : '';
 
   // 营养素
