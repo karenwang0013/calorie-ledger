@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.80', d: '10-31', items: [
+    '改：「消耗」下面那两行小字看不清 —— 字号 10→11、颜色从暗灰提到 78% 白；「需消耗 2581」加粗突出，时间是次要信息压暗一档',
+  ] },
   { v: 'v10.79', d: '10-31', items: [
     '改：圆环里的行距收紧（大数字行高 1.05→0.96、kcal 往上贴、小字去掉上边距），整组更紧凑',
     '改：中间的大数字加粗一档（300 → 500），比原来更实',
@@ -3204,7 +3207,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.79';
+const APP_VERSION = 'v10.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3602,7 +3605,12 @@ function renderToday() {
     : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   const atEl = $('#stExpAt');
-  atEl.innerHTML = [line1, line2].filter(Boolean).join('<br>');
+  // v10.80：这两行原来是同一个灰蓝色，看不清。「需消耗 xxx」是重点 → 加粗提亮；
+  // 时间是次要信息 → 保留但压暗一档（偏旧时整块仍会变橙）。
+  atEl.innerHTML = [
+    line1 ? `<b class="tgt">${line1}</b>` : '',
+    line2 ? `<span class="tm">${line2}</span>` : ''
+  ].filter(Boolean).join('<br>');
   atEl.style.color = stale ? 'var(--orange)' : '';
   // v10.02：历史日期这一格给的是「那天实际缺口/盈余」（= 当天消耗 − 摄入），不是"还可以吃"。
   // 以前标签写死「还可以吃」、数字用的却是全天预算 − 摄入，跟上面「消耗」和圆环里的缺口对不上。
