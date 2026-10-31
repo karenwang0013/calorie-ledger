@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.85', d: '11-01', items: [
+    '改：实际「缺口 / 盈余」从「还可以吃」下面那行小字，搬进圆环、写在「目标缺口 400」正下方 —— 上面是目标、下面是现在，一眼对上差多少',
+    '修：圆环里的内容改成和圆环同一个格子居中（以前是按内边距盒子居中，和圆环差 4px，内容看着偏下）',
+  ] },
   { v: 'v10.84', d: '10-31', items: [
     '改：圆环里的「目标缺口 400」加粗到 600、字号跟「消耗」下面那句「需消耗 2581」一致',
   ] },
@@ -3220,7 +3224,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.84';
+const APP_VERSION = 'v10.85';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3582,6 +3586,15 @@ function renderToday() {
     $('#heroNum').textContent = balFull;
   }
   $('#heroSub').textContent = sub;
+  // v10.85：用户口径 —— 实际缺口/盈余放进圆环，紧挨在「目标缺口 500」下面：
+  // 上面是目标、下面就是现在，一眼能对上差多少。三宫格里「还可以吃」下面那行不再重复。
+  const gapEl = $('#heroGap');
+  if (gapEl) {
+    const showGap = (d.date === S.today) && exp;
+    gapEl.textContent = showGap
+      ? `${balNow >= 0 ? '缺口' : '盈余'} ${Math.abs(Math.round(balNow))}`
+      : '';
+  }
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
   // v10.65：「消耗」这格今天改成「到现在」（会随走路涨）；「日目标」挪到下面小字，
@@ -3631,11 +3644,8 @@ function renderToday() {
   const leftShow = isToday ? left : Math.abs(balFull);
   leftEl.innerHTML = leftShow + ' <small>kcal</small>';
   const leftAt = $('#stLeftAt');
-  if (leftAt) {
-    leftAt.innerHTML = (isToday && exp)
-      ? `<b class="tgt">${balNow >= 0 ? '缺口' : '盈余'} ${Math.abs(balNow)}</b>`
-      : '';
-  }
+  // v10.85：实际缺口/盈余已经移进圆环（写在「目标缺口」下面），这里不再重复写一遍
+  if (leftAt) leftAt.innerHTML = '';
   leftEl.style.color = (isToday ? left : balFull) < 0 ? 'var(--orange)' : '';
 
   // 营养素

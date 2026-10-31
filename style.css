@@ -314,7 +314,7 @@ html.kb .sc-body {
 /* ---------- 主环 ---------- */
 /* v10.83：实测圆环上下间距不等（上 20 / 下 14，圆偏下 6px）→ 上边距减 3、下边距加 3，总高不变 */
 .hero { position: relative; display: grid; place-items: center; padding: 1px 0 9px; }
-.hero svg { width: 232px; height: 232px; transform: rotate(-90deg); }
+.hero svg { width: 232px; height: 232px; transform: rotate(-90deg); grid-area: 1 / 1; }
 .hero .track { stroke: #2b3a33; }
 #ringGrad stop { transition: stop-color .7s cubic-bezier(.2,.8,.2,1); }
 .hero .prog { filter: drop-shadow(0 0 7px rgba(var(--glow-rgb),.35));
@@ -322,8 +322,12 @@ html.kb .sc-body {
 .hero .center {
   /* v10.78：以前只有 position:absolute 没写 inset，盒子按"静态位置"落在圆心的左上角，
      内容整体往下坠 —— 看着就是"上面空一大块、下面挤"。现在撑满整个 hero 再垂直居中。 */
-  position: absolute;
-  inset: 0;
+  /* v10.85：改成和圆环同一个 grid 格（1/1），由 place-items:center 统一居中。
+     以前用 inset:0 是相对 padding box 居中，而圆环在 content box 里 —— 圆环有 1px/9px 上下内边距，
+     两者中心差 4px，内容会视觉上偏下。现在是同一个格子，圆环中心 = 内容中心，padding 怎么改都不会再错。 */
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -349,6 +353,9 @@ html.kb .sc-body {
    这样一眼能看出现在是缺口、维持还是盈余。上面三组之间的距离不动。 */
 /* v10.84：用户口径 —— 「目标缺口」的字重/字号跟「消耗」下面那句「需消耗 2581」保持一致 */
 .hero .sub { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.80); margin-top: 12px; max-width: 156px; line-height: 1.5; letter-spacing: .2px; }
+/* v10.85：实际缺口/盈余 —— 紧跟「目标缺口」下面，字号字重与它一致，颜色再压暗一档区分主次 */
+.hero .gapnow { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.56); margin-top: 4px; letter-spacing: .2px; line-height: 1.4; }
+.hero .gapnow:empty { display: none; }
 .hero.surplus .num { color: var(--hero-c, var(--orange)); }
 .hero.over .num { color: var(--hero-c, var(--red)); }
 
