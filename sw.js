@@ -1,11 +1,12 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v1052';
+const CACHE = 'ledger-v1054';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './foods.js',
   './api.js',
+  './calc.js',
   './app.js',
   './manifest.webmanifest',
   './icon-192.png',
