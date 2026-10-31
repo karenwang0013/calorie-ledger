@@ -141,8 +141,8 @@
   },
   {
     "file": "app.js",
-    "find": "const line1 = isToday ? `${goalDef >= 0 ? '缺口' : '盈余'} ${Math.abs(goalDef)} → 消耗 ${intake + goalDef}` : '';",
-    "why": "首页「消耗」那格小字写「缺口 400 → 消耗 2581」（= 已吃 + 缺口），窄屏两行内不许顶到分隔线",
+    "find": "const line1 = isToday ? (goalDef >= 0",
+    "why": "首页「消耗」那格小字：现在 xxx · 要烧到 yyy（减脂/维持）/ 烧到 yyy 就够（增肌），不写缺口数字；窄屏两行内不许顶到分隔线",
     "at": "2026-10-31"
   },
   {
