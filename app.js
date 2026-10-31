@@ -28,6 +28,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.76', d: '10-31', items: [
+    '修：饮食目标里的「缺口/盈余」以前能填任意大（填 5000 首页会显示「已经超出 5324」），现在按当天消耗的 40% 封顶（300~1500），填超了自动收到上限',
+    '修：身体数据翻页按钮的颜色引用了一个不存在的变量（靠继承兜底），改为正常取值',
+    '清理：「关于与更新」里删掉从未发布过的 v10.69（内容并进 v10.70）；补上两个只在 var() 里写过 fallback 的样式变量',
+    '修：刚过 0 点就同步时，活动能量 1~4 千卡会被误判成异常丢弃，现在不再误报',
+  ] },
   { v: 'v10.75', d: '10-31', items: [
     '改：「消耗（到现在）」改回「消耗」—— 下面那行已经写着更新时间，不用再强调“到现在”',
   ] },
@@ -46,9 +52,7 @@ const RELEASES = [
   ] },
   { v: 'v10.70', d: '10-31', items: [
     '改：首页那行小字只写「要烧到 2481」—— 现在多少上面大数字已经有了，不用重复写两遍；增肌模式写「烧到 1931 就够」',
-  ] },
-  { v: 'v10.69', d: '10-31', items: [
-    '改：首页那几个数字（到现在消耗 / 可吃 / 还可以吃 / 到现在的缺口 / 要烧到多少）的算式全部收进一个文件（calc.js），只留一套',
+    '改：首页那几个数字（到现在消耗 / 可吃 / 还可以吃 / 到现在的缺口 / 要烧到多少）的算式全部收进 calc.js，只留一套',
     '加：发版前自检会拿「减脂 / 维持 / 增肌」× 不同吃的量 × 不同时间点 × 不同活动量跑一遍，只要有一条算不通就不许发版',
   ] },
   { v: 'v10.68', d: '10-31', items: [
@@ -3190,7 +3194,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.75';
+const APP_VERSION = 'v10.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7220,7 +7224,7 @@ function renderMe() {
         <div class="hint" id="modeHint" style="margin:10px 0 16px">${modeHintHTML(setting('diet_mode', 'maintain'))}</div>
         <div class="field">
           <label>每天少吃 / 多吃（千卡）</label>
-          <input id="nDef" type="number" inputmode="numeric" min="0" step="50" value="${Math.abs(d.targets.deficit)}"${setting('diet_mode', 'maintain') === 'maintain' ? ' disabled' : ''}>
+          <input id="nDef" type="number" inputmode="numeric" min="0" step="50" max="${Math.min(1500, Math.max(300, Math.round((d.expenditure_base || d.expenditure || 2000) * 0.4)))}" value="${Math.abs(d.targets.deficit)}"${setting('diet_mode', 'maintain') === 'maintain' ? ' disabled' : ''}>
           <div class="hint" id="nDefHint">${defHintHTML(setting('diet_mode', 'maintain'))}</div>
           <div class="warnline" id="nDefWarn" hidden></div>
         </div>
@@ -7622,7 +7626,12 @@ function wireMe() {
         if (autoVal && Math.abs(v - autoVal) < 1) return undefined;
         return v;
       };
-      const numDef = Math.abs(Number(($('#nDef') || {}).value));
+      // v10.76：缺口/盈余以前可以填任意大（填 5000 会让首页出现「已经超出 5324」这种荒谬数）
+      // 现在按「当天消耗的 40%」封顶，最多 1500、最少 300；填超了自动收到上限
+      const expForCap = (S.day && (S.day.expenditure_base || S.day.expenditure)) || 2000;
+      const defCap = Math.min(1500, Math.max(300, Math.round(expForCap * 0.4)));
+      let numDef = Math.abs(Number(($('#nDef') || {}).value)) || 0;
+      if (isFinite(numDef) && numDef > defCap) { numDef = defCap; try { const el = $('#nDef'); if (el) el.value = defCap; } catch (e) {} }
       const mNow = setting('diet_mode', 'maintain');
       const defSigned = mNow === 'cut' ? numDef : (mNow === 'bulk' ? -numDef : 0);  // 正=缺口，负=盈余
       // v10.00：不再拿「是否等于建议值」来决定存不存 —— 那样会让手动填的数在某些时候被悄悄丢掉。
@@ -8590,7 +8599,7 @@ async function pullCloudData(forceFresh) {
     const nums = tail.match(/\d+(?:\.\d+)?/g) || [];
     const active = Math.round(nums.reduce((s, n) => s + Number(n), 0));
     if (!active || active <= 0) { logError('err-health', '热量数据读取失败', 'health.json 里没有有效的活动消耗'); return null; }
-    if (active < 5 || active > 5000) {
+    if (active < 1 || active > 5000) {
       logError('err-health', '热量数值异常', `E10 读到 ${active} 千卡，不合常理，已忽略`);
       return null;
     }
