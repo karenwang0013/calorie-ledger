@@ -319,11 +319,15 @@ html.kb .sc-body {
 .hero .prog { filter: drop-shadow(0 0 7px rgba(var(--glow-rgb),.35));
   transition: filter .6s linear; transition: stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
 .hero .center {
+  /* v10.78：以前只有 position:absolute 没写 inset，盒子按"静态位置"落在圆心的左上角，
+     内容整体往下坠 —— 看着就是"上面空一大块、下面挤"。现在撑满整个 hero 再垂直居中。 */
   position: absolute;
+  inset: 0;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
 }
 .hero .lbl {
