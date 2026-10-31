@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.78', d: '10-31', items: [
+    '修：圆环里的内容以前整体往下坠（上面空一大块、下面挤在一起）—— 原因是那层内容只写了绝对定位、没写撑满，盒子按「左上方」落位。现在撑满整个圆并垂直居中，上下留白一致',
+  ] },
   { v: 'v10.77', d: '10-31', items: [
     '改：圆圈大数字下面的「千卡」改成「kcal」—— 周围几处都写 kcal，只有它是中文',
   ] },
@@ -3197,7 +3200,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.77';
+const APP_VERSION = 'v10.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
