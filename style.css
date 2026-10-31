@@ -312,7 +312,8 @@ html.kb .sc-body {
 .setup-tip b { color: var(--lime); font-weight: 600; white-space: nowrap; font-size: 12px; }
 
 /* ---------- 主环 ---------- */
-.hero { position: relative; display: grid; place-items: center; padding: 4px 0 6px; }
+/* v10.83：实测圆环上下间距不等（上 20 / 下 14，圆偏下 6px）→ 上边距减 3、下边距加 3，总高不变 */
+.hero { position: relative; display: grid; place-items: center; padding: 1px 0 9px; }
 .hero svg { width: 232px; height: 232px; transform: rotate(-90deg); }
 .hero .track { stroke: #2b3a33; }
 #ringGrad stop { transition: stop-color .7s cubic-bezier(.2,.8,.2,1); }
@@ -2384,7 +2385,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .setup-tip { padding: 14px 16px; font-size: 13.5px; }
   .setup-tip b { font-size: 12.5px; }
 
-  .hero { padding: 6px 0 10px; }
+  .hero { padding: 3px 0 13px; }
   .hero svg { width: 340px; height: 340px; }
   .hero .lbl { font-size: 12px; letter-spacing: 2.8px; }
   .hero .num { font-size: 72px; letter-spacing: -2px; }
