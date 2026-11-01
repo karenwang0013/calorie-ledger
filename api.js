@@ -998,16 +998,32 @@ function cleanItems(obj, opt) {
   return { items, dish: obj.dish || '', note: obj.note || '' };
 }
 
+/* v10.85：模型偶尔返回的不是合法 JSON（截断 / 带解释 / 代码块没闭合）。
+   以前直接报「模型返回的不是有效 JSON，再试一次」让用户重点。现在自己再试一次，
+   并且第二次把话说死（只输出 JSON）。两次都不行才报错。 */
+async function callAndParse(content, tries = 2) {
+  let cur = content, last = null;
+  for (let i = 0; i < tries; i++) {
+    const txt = await callModel(cur);
+    try { return extractJson(txt); } catch (e) {
+      last = e;
+      cur = content.concat([{ type: 'text', text:
+        '只输出一个 JSON 对象，不要 markdown 代码块、不要任何解释文字。' }]);
+    }
+  }
+  throw last || new Error('模型返回的不是有效 JSON，再试一次');
+}
+
 async function analyzeFood(image, hint, image2, extra) {
   const content = [{ type: 'image_url', image_url: { url: image } }];
   if (image2) content.push({ type: 'image_url', image_url: { url: image2 } });
   content.push({ type: 'text', text: FOOD_PROMPT + (hint ? `\n\n补充说明：${hint}` : '') });
-  return cleanItems(extractJson(await callModel(content)), Object.assign({ hint }, extra || {}));
+  return cleanItems(await callAndParse(content), Object.assign({ hint }, extra || {}));
 }
 
 async function analyzeText(text) {
   const content = [{ type: 'text', text: TEXT_PROMPT + '\n\n用户说：' + text }];
-  return cleanItems(extractJson(await callModel(content)));
+  return cleanItems(await callAndParse(content));
 }
 
 /* ---------------- 按名字查营养（改名后联动用） ----------------
