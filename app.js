@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.87', d: '11-01', items: [
+    '修：识别时偶尔弹「模型返回的不是有效 JSON，再试一次」—— 现在 App 自己会再问一次，第二次明确要求「只输出 JSON」，不用你手动重点',
+  ] },
   { v: 'v10.86', d: '11-01', items: [
     '改：圆环里那行「缺口 / 盈余」的颜色跟着圆环走 —— 有余量是青绿、接近上限转橙、吃超变红',
   ] },
@@ -3227,7 +3230,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.86';
+const APP_VERSION = 'v10.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
