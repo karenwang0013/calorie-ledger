@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.88', d: '11-01', items: [
+    '改：圆环只留「还可以吃」和「目标缺口 400」；实际「缺口 / 盈余」挪到下面三格的最右边，三格变成「摄入 / 消耗 / 缺口」，一眼能验算：消耗 − 摄入 = 缺口',
+  ] },
   { v: 'v10.87', d: '11-01', items: [
     '修：识别时偶尔弹「模型返回的不是有效 JSON，再试一次」—— 现在 App 自己会再问一次，第二次明确要求「只输出 JSON」，不用你手动重点',
   ] },
@@ -3230,7 +3233,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.87';
+const APP_VERSION = 'v10.88';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3592,15 +3595,6 @@ function renderToday() {
     $('#heroNum').textContent = balFull;
   }
   $('#heroSub').textContent = sub;
-  // v10.85：用户口径 —— 实际缺口/盈余放进圆环，紧挨在「目标缺口 500」下面：
-  // 上面是目标、下面就是现在，一眼能对上差多少。三宫格里「还可以吃」下面那行不再重复。
-  const gapEl = $('#heroGap');
-  if (gapEl) {
-    const showGap = (d.date === S.today) && exp;
-    gapEl.textContent = showGap
-      ? `${balNow >= 0 ? '缺口' : '盈余'} ${Math.abs(Math.round(balNow))}`
-      : '';
-  }
 
   $('#stIntake').innerHTML = intake + ' <small>kcal</small>';
   // v10.65：「消耗」这格今天改成「到现在」（会随走路涨）；「日目标」挪到下面小字，
@@ -3645,14 +3639,22 @@ function renderToday() {
   atEl.style.color = stale ? 'var(--orange)' : '';
   // v10.02：历史日期这一格给的是「那天实际缺口/盈余」（= 当天消耗 − 摄入），不是"还可以吃"。
   // 以前标签写死「还可以吃」、数字用的却是全天预算 − 摄入，跟上面「消耗」和圆环里的缺口对不上。
+  // v10.88：用户口径 —— 第三格放「缺口 / 盈余」（它原来在圆环里，和「还可以吃」是两回事，挪下来更清楚）；
+  // 「活动消耗」和「消耗」重复，不做。
   const leftLbl = $('#stLeftLbl');
-  if (leftLbl) leftLbl.textContent = isToday ? '还可以吃' : (balFull >= 0 ? '热量缺口' : '热量盈余');
-  const leftShow = isToday ? left : Math.abs(balFull);
-  leftEl.innerHTML = leftShow + ' <small>kcal</small>';
   const leftAt = $('#stLeftAt');
-  // v10.85：实际缺口/盈余已经移进圆环（写在「目标缺口」下面），这里不再重复写一遍
-  if (leftAt) leftAt.innerHTML = '';
-  leftEl.style.color = (isToday ? left : balFull) < 0 ? 'var(--orange)' : '';
+  if (isToday) {
+    const gapV = Math.abs(Math.round(balNow));
+    if (leftLbl) leftLbl.textContent = balNow >= 0 ? '缺口' : '盈余';
+    leftEl.innerHTML = exp ? (gapV + ' <small>kcal</small>') : '—';
+    if (leftAt) leftAt.innerHTML = '';
+    leftEl.style.color = balNow < 0 ? 'var(--orange)' : '';
+  } else {
+    if (leftLbl) leftLbl.textContent = balFull >= 0 ? '热量缺口' : '热量盈余';
+    leftEl.innerHTML = Math.abs(Math.round(balFull)) + ' <small>kcal</small>';
+    if (leftAt) leftAt.innerHTML = '';
+    leftEl.style.color = '';
+  }
 
   // 营养素
   const pr = d.protein, cb = d.carb, ft = d.fat;
