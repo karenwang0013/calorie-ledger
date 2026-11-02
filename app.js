@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.89', d: '11-03', items: [
+    '修：首页的「消耗 / 缺口 / 还可以吃」以前不会随时间自己重算，手表数据不来就一直停在原数 —— 现在每分钟按当前时间重算一次（不重新拉数据）',
+  ] },
   { v: 'v10.88', d: '11-01', items: [
     '改：圆环只留「还可以吃」和「目标缺口 400」；实际「缺口 / 盈余」挪到下面三格的最右边，三格变成「摄入 / 消耗 / 缺口」，一眼能验算：消耗 − 摄入 = 缺口',
   ] },
@@ -3233,7 +3236,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.88';
+const APP_VERSION = 'v10.89';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9785,6 +9788,14 @@ function init() {
   };
   setTimeout(checkDay, 1500);
   setInterval(checkDay, 30000);
+  // v10.89：首页的「消耗 / 缺口 / 还可以吃」都跟当前时间有关（基础代谢按时间累加），
+  // 但以前只在"有新数据 / 切页 / 回前台"时重画 → 手表数据不来，数字就一直停着不动。
+  // 现在每分钟按当前时间重算一次（只重算显示，不重新拉数据）。
+  setInterval(() => {
+    if (document.hidden) return;
+    if (S.date !== S.today) return;
+    try { loadDay(); } catch (e) {}
+  }, 60000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') checkDay();
   });
