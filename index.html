@@ -12,6 +12,29 @@
 <!-- 换图标时必须改这里的 ?v=，否则 iOS 主屏图标会一直用缓存里的旧图 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=1037">
 <link rel="icon" href="icon-192.png?v=1037">
+<!-- v10.94：Dock 圆角在 index.html 里写死，不再依赖 style.css 是否被 CDN/SW 缓存住。
+     外框和选中块都是「高度一半」的胶囊，两者同一个弧，不会再出现一个方一个圆。 -->
+<style id="dock-lock">
+.dock { border-radius: 52px !important; }
+.dock-lens { border-radius: 41px !important; }
+.dock-lens .lens-body { border-radius: 41px !important; }
+</style>
+<script>
+window.addEventListener('load', () => setTimeout(() => {
+  try {
+    const dk = document.querySelector('.dock'), ln = document.querySelector('.dock-lens');
+    if (!dk) return;
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;top:72px;left:8px;right:8px;z-index:99999;background:#000;color:#0f0;font:11px/1.45 ui-monospace,Menlo,monospace;padding:7px 9px;border:1px solid #0f0;white-space:pre-wrap;border-radius:8px';
+    box.textContent = 'W=' + window.innerWidth + '  pad700=' + matchMedia('(min-width:700px)').matches
+      + '\ndockR=' + getComputedStyle(dk).borderTopLeftRadius
+      + '  lensR=' + (ln ? getComputedStyle(ln).borderTopLeftRadius : '-')
+      + '\nstored=' + (localStorage.getItem('dock_r') || 'none')
+      + '  h=' + getComputedStyle(document.documentElement).getPropertyValue('--dock-h');
+    document.body.appendChild(box);
+  } catch (e) {}
+}, 1200));
+</script>
 </head>
 <body>
 
@@ -476,7 +499,7 @@
 <script src="icons.js?v=1076"></script>
 <script src="api.js?v=1076"></script>
 <script src="calc.js?v=1076"></script>
-<script src="app.js?v=1077"></script>
+<script src="app.js?v=1078"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，

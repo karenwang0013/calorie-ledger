@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.94', d: '11-04', items: [
+    '修：Dock 外框和选中块圆角不一致（一个方一个圆）—— 圆角不再依赖 style.css 的缓存，直接写进 index.html：外框和选中块都是高度一半的胶囊，同一个弧',
+  ] },
   { v: 'v10.93', d: '11-04', items: [
     '修：360 宽的设备（安卓）查不到屏幕圆角，Dock 圆角被算成 14，外框和选中块看着是长方形 —— 改成按高度一半，恢复胶囊形，和按钮同一个弧',
   ] },
@@ -3242,7 +3245,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.93';
+const APP_VERSION = 'v10.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
