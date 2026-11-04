@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.99', d: '11-04', items: [
+    '修：点开食物卡片时那一下「咯噔」—— 以前是把卡片拼完才让背景变糊，拼卡片要卡主线程；现在先让背景糊上、下一帧再拼卡片，点下去就虚化，不再先卡一下',
+  ] },
   { v: 'v10.98', d: '11-04', items: [
     '修：点食物名字 / 营养成分时，背景要停一下才变虚 —— 遮罩的模糊过渡从 0.6 秒压到 0.12 秒，点下去几乎立刻虚化；关闭时仍然是慢淡开，不会闪',
   ] },
@@ -3257,7 +3260,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.98';
+const APP_VERSION = 'v10.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5085,6 +5088,15 @@ let nutLogId = null;        // 非空 = 正在编辑"已经记过的一条"
 function openNutEdit(i, fake) {
   const it = fake || S.items[i];
   if (!it) return;
+  // v10.99：先把遮罩点亮，再算卡片。原来是算完卡片（一堆输入框赋值 + 两次强制布局）才点亮，
+  // 主线程被堵住，用户看到的就是「咯噔一下，然后才糊」。先点亮 = 点下去当帧就虚化。
+  const _nm0 = $('#nutMask');
+  if (_nm0) _nm0.classList.add('on');
+  // 再等浏览器把「糊」这一帧画出来，然后才拼卡片 —— 拼卡片要强制布局，会卡主线程。
+  // 两层 rAF = 先画遮罩帧，再干活；卡片只晚 2 帧（约 33ms），肉眼看不出来。
+  requestAnimationFrame(() => requestAnimationFrame(() => openNutEditBody(i, fake, it)));
+}
+function openNutEditBody(i, fake, it) {
   nutEditIdx = fake ? -1 : i;
   if (!fake) nutLogId = null;
   // 四个数字都预填「每 100 克」（照抄包装上那一行），参考量 = 你实际吃了多少克
@@ -5672,6 +5684,13 @@ function openGroup(key) {
 /* logs：这一组（或这一条）记录；isGroup：多条才显示「N 项」和小计 */
 function openDetail(logs, isGroup, title) {
   if (!logs || !logs.length) return;
+  // v10.99：同 openNutEdit —— 先让遮罩当帧糊上，再拼卡片。否则拼完 innerHTML 才点亮，
+  // 中间那一下主线程阻塞就是用户说的「咯噔」。
+  const _gm0 = $('#grpMask');
+  if (_gm0) _gm0.classList.add('on');
+  requestAnimationFrame(() => requestAnimationFrame(() => openDetailBody(logs, isGroup, title)));
+}
+function openDetailBody(logs, isGroup, title) {
   const sum = k => Math.round(logs.reduce((a, b) => a + (b[k] || 0), 0));
   const kcal = Math.round(logs.reduce((a, b) => a + (b.kcal || 0), 0));
   const batchKey = logs[0].batch || '';
