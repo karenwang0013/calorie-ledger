@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.93', d: '11-04', items: [
+    '修：360 宽的设备（安卓）查不到屏幕圆角，Dock 圆角被算成 14，外框和选中块看着是长方形 —— 改成按高度一半，恢复胶囊形，和按钮同一个弧',
+  ] },
   { v: 'v10.92', d: '11-04', items: [
     '撤回 v10.90 / v10.91 对 Dock 的改动，全部恢复原样（用户没让动按钮）',
   ] },
@@ -3239,7 +3242,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.92';
+const APP_VERSION = 'v10.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9489,7 +9492,9 @@ function init() {
     } else {
       let sr = 0;
       for (const [ww, srr] of SCREEN_R) { if (w >= ww) sr = srr; }
-      r = Math.max(14, Math.min(sr - inset, h / 2));   // 手机：给到高度的一半，最贴近屏幕弧
+      // v10.93：屏幕圆角查不到（典型是 360 宽的安卓）时不能退化成 14 —— 圆角太小，
+      // Dock 外框和选中块看着就是长方形。直接用「高度一半」= 胶囊，和选中块按钮同一个弧。
+      r = sr ? Math.max(14, Math.min(sr - inset, h / 2)) : h / 2;
     }
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };

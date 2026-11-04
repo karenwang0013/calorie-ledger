@@ -58,6 +58,9 @@
 @media (min-width: 428px) { :root { --dock-r: 43px; } }  /* 53.3 − 10 */
 @media (min-width: 430px) { :root { --dock-r: 45px; } }  /* 55 − 10 */
 @media (min-width: 440px) { :root { --dock-r: 52px; } }  /* 62 − 10 */
+/* v10.93：375 以下的窄屏（360 安卓）不在上面那张表里，首帧别停在 29/14 —— 固定成「高度一半」的胶囊，
+   和选中块按钮同一个弧，避免启动瞬间看着像长方形。 */
+@media (max-width: 374px) { :root { --dock-r: 52px; } }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
