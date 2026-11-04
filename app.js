@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.96', d: '11-04', items: [
+    '修：Dock 外框圆角在真机上没吃到新样式 —— 把圆角锁进 index.html，并显示一行诊断数字用于定位',
+  ] },
   { v: 'v10.95', d: '11-04', items: [
     '修：iOS 26/27 把 Dock 外框的 squircle 超椭圆角生效了，选中块还是普通圆角，看着就是「一个方一个圆、形状不匹配」—— 关掉 squircle，外框和选中块都回到高度一半的胶囊',
   ] },
@@ -3248,7 +3251,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.95';
+const APP_VERSION = 'v10.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
