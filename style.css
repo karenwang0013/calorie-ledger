@@ -962,7 +962,6 @@ body.add-open .sheet-mask.on {
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: var(--dock-r);
   /* v10.05：屏幕的角是超椭圆（squircle），支持的话 Dock 也跟着用同一种曲线，圆角才真的"贴着屏幕的弧" */
-  corner-shape: squircle;
   /* v9.91：用户要求「阴影全去掉」，Dock 只留顶边那道细高光（原来这里还有一层外投影） */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
@@ -1353,7 +1352,6 @@ body.add-open .sheet-mask.on {
   background: var(--bg2);
   border-radius: var(--card-r);
   /* 手机屏幕的角是超椭圆（squircle），支持就跟着用，不支持自动忽略 */
-  corner-shape: squircle;
   border: 1px solid var(--line2);
   box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   transform: translateY(calc(100% + 24px)) scale(.98);
