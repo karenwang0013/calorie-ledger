@@ -42,9 +42,7 @@
      因为启动/buffer 的那一瞬间 JS 还没跑，圆角还停在这个默认值上，
      屏幕上看就是「圆角处的缝比左右那两条缝宽」= 不等距（用户 2026-10-28 的截图就是这个）。
      --dock-w 是 8，所以静态值 = 屏幕圆角 − 8。 */
-  /* v10.91：圆角 = 高度一半 —— 用户口径「之前是椭圆的」。这跟 v10.05 那版（49/98）一致，
-     两端是半圆。v10.90 改了固定 44 还是显得方，因为 44 < 104/2（选中块圆角只有 33）。 */
-  --dock-r: calc(var(--dock-h) / 2);
+  --dock-r: 29px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
@@ -1019,8 +1017,7 @@ body.add-open .sheet-mask.on {
      以前默认 opacity: 0 + 84×46 的占位尺寸 → 用户看到的就是「Dock 没有选中块、像变形了」。 */
   width: var(--lens-w, calc((100% - 24px) / 3 + 4px));
   height: var(--lens-h, calc(var(--dock-h) - 22px));
-  /* v10.91：用户要的是「形状 = 椭圆」，不是高度/圆角数值 —— 直接 50% 做成椭圆。 */
-  border-radius: 50%;
+  border-radius: var(--lens-r, calc(var(--dock-r) - 11px));
   z-index: 0; pointer-events: none; opacity: 1;
   transform: translate3d(var(--lens-x, 10px), var(--lens-y, 10px), 0);
   transition: transform .62s cubic-bezier(.33, 1.06, .32, 1), opacity .3s ease;
@@ -1043,7 +1040,7 @@ body.add-open .sheet-mask.on {
    —— 只动这一层（底），位置层不动，文字也不会被拉变形 */
 .dock-lens.press .lens-body {
   transform: scale(1.055, .925);
-  border-radius: 50%;   /* v10.91：保持椭圆，按压也不变方 */
+  border-radius: calc(var(--lens-r, 36px) + 1px);
 }
 
 /* 停稳（不再移动/按住）→ 实色层淡入盖住玻璃。

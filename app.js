@@ -28,11 +28,8 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
-  { v: 'v10.91', d: '11-04', items: [
-    '修：Dock 里选中那块的形状 —— 用户要的是椭圆，现在直接做成椭圆（50% 圆角），不再按屏幕宽度推算圆角',
-  ] },
-  { v: 'v10.90', d: '11-04', items: [
-    '修：底部 Dock 的选中块又变成长方形 —— 360 宽的设备不在屏幕圆角表里，圆角被算成 14，现在恢复成一直用的 44',
+  { v: 'v10.92', d: '11-04', items: [
+    '撤回 v10.90 / v10.91 对 Dock 的改动，全部恢复原样（用户没让动按钮）',
   ] },
   { v: 'v10.89', d: '11-03', items: [
     '修：首页的「消耗 / 缺口 / 还可以吃」以前不会随时间自己重算，手表数据不来就一直停在原数 —— 现在每分钟按当前时间重算一次（不重新拉数据）',
@@ -3242,7 +3239,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.91';
+const APP_VERSION = 'v10.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9492,10 +9489,7 @@ function init() {
     } else {
       let sr = 0;
       for (const [ww, srr] of SCREEN_R) { if (w >= ww) sr = srr; }
-      // v10.91：宽度不在表里（例如 360 的安卓，sr=0）时，直接用「高度的一半」= 胶囊/椭圆，
-      // 别退化成 14px 的方角（那就是用户看到的「Dock 变成长方形」）。
-      if (!sr) r = h / 2;
-      else r = Math.max(14, Math.min(sr - inset, h / 2));   // 手机：给到高度的一半，最贴近屏幕弧
+      r = Math.max(14, Math.min(sr - inset, h / 2));   // 手机：给到高度的一半，最贴近屏幕弧
     }
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };
