@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.03', d: '11-04', items: [
+    '改：首页只留「摄入 / 消耗」两格 —— 第三格的缺口/盈余整格删掉，因为圆环已经写着「还能吃多少 / 已经超出多少」，同一个数不重复显示',
+  ] },
   { v: 'v11.02', d: '11-04', items: [
     '改：首页第三格按用户要求改成「还能吃多少」—— 没超显示剩余额度，超了显示 0（多少超出由圆环说，不重复）',
   ] },
@@ -3270,7 +3273,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.02';
+const APP_VERSION = 'v11.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3640,7 +3643,6 @@ function renderToday() {
   const expLbl = $('#stExpLbl');
   if (expLbl) expLbl.textContent = '消耗';
   $('#stExp').innerHTML = exp + ' <small>kcal</small>';
-  const leftEl = $('#stLeft');
   const at = (d.watch && d.watch.source === 'cloud' && d.watch.cloudAt) ? String(d.watch.cloudAt).slice(11) : '';
   // 看今天、但数据已经超过 90 分钟没更新 → 标一句「偏旧」，不用等发现数字不对
   let stale = false;
@@ -3674,26 +3676,9 @@ function renderToday() {
     line2 ? `<span class="tm">${line2}</span>` : ''
   ].filter(Boolean).join('<br>');
   atEl.style.color = stale ? 'var(--orange)' : '';
-  // v10.02：历史日期这一格给的是「那天实际缺口/盈余」（= 当天消耗 − 摄入），不是"还可以吃"。
-  // 以前标签写死「还可以吃」、数字用的却是全天预算 − 摄入，跟上面「消耗」和圆环里的缺口对不上。
-  // v10.88：用户口径 —— 第三格放「缺口 / 盈余」（它原来在圆环里，和「还可以吃」是两回事，挪下来更清楚）；
-  // 「活动消耗」和「消耗」重复，不做。
-  const leftLbl = $('#stLeftLbl');
-  const leftAt = $('#stLeftAt');
-  if (isToday) {
-    // v11.02：用户口径 —— 这一格就写「还能吃多少」。
-    // 没超 = 剩余额度（正数）；超了 = 0（额度已经用完，多少超出由圆环说，这里不重复）。
-    if (leftLbl) leftLbl.textContent = '还能吃';
-    const canEat = Math.max(0, Math.round(left));
-    leftEl.innerHTML = exp ? (canEat + ' <small>kcal</small>') : '—';
-    if (leftAt) leftAt.innerHTML = '';
-    leftEl.style.color = '';
-  } else {
-    if (leftLbl) leftLbl.textContent = balFull >= 0 ? '热量缺口' : '热量盈余';
-    leftEl.innerHTML = Math.abs(Math.round(balFull)) + ' <small>kcal</small>';
-    if (leftAt) leftAt.innerHTML = '';
-    leftEl.style.color = '';
-  }
+  // v11.03：用户口径 —— 第三格（缺口/盈余/还能吃）整格删掉。圆环已经把「还能吃多少 / 已经超出多少」
+  // 放在最显眼的位置，下面再写一遍是同一个数出现两次。现在只留「摄入 / 消耗」两格。
+  // 历史日期同理：圆环里本来就有那天实际的缺口/盈余。
 
   // 营养素
   const pr = d.protein, cb = d.carb, ft = d.fat;

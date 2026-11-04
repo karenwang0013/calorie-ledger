@@ -366,7 +366,8 @@ html.kb .sc-body {
 /* ---------- 三宫格 ---------- */
 .stats {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  /* v11.03：第三格（缺口/盈余）删了 —— 圆环已经写着「还能吃多少 / 已经超出多少」，不重复 */
+  grid-template-columns: 1fr 1fr;
   margin: 8px var(--page-pad) 0;
   background: var(--card);
   border: 1px solid var(--line);
