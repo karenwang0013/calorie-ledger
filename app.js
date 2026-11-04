@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v10.97', d: '11-04', items: [
+    '修：Dock 外框和选中块形状不一致 —— 圆角改由脚本直接写死（外框 52 / 选中块 41，同一个胶囊弧），不再受 style.css 缓存影响；手机不再按屏幕圆角查表',
+  ] },
   { v: 'v10.96', d: '11-04', items: [
     '修：Dock 外框圆角在真机上没吃到新样式 —— 把圆角锁进 index.html，并显示一行诊断数字用于定位',
   ] },
@@ -3251,7 +3254,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.96';
+const APP_VERSION = 'v10.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8829,6 +8832,18 @@ function initDockLens() {
 function init() {
   if (window.__inited) return;      // 脚本被补加载时可能被调用两次，只跑一次
   window.__inited = true;
+  // v10.97：Dock 的形状不依赖 style.css / index.html 是否被缓存住（华为/国内网络下这两份常卡在旧版，
+  // 只剩 app.js 会更新，于是外框方、选中块圆）。这里直接由脚本写死内联样式，app.js 更新到就一定生效。
+  try {
+    const dk = document.querySelector('.tabbar .inner');
+    if (dk) {
+      dk.style.setProperty('border-radius', '52px', 'important');
+      dk.style.setProperty('corner-shape', 'round', 'important');
+      dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
+    }
+    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '41px', 'important'));
+    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '42px', 'important'));
+  } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
   try { initDockLens(); } catch (e) { console.warn('dock lens', e); }   // 液态滑块出问题也不许拖住整个 App
@@ -9499,11 +9514,9 @@ function init() {
       // iPad 的屏幕圆角比 iPhone 紧得多（约 34），Dock 不能照抄手机的「高度一半」
       r = Math.max(18, Math.min(34 - inset, h * 0.34));
     } else {
-      let sr = 0;
-      for (const [ww, srr] of SCREEN_R) { if (w >= ww) sr = srr; }
-      // v10.93：屏幕圆角查不到（典型是 360 宽的安卓）时不能退化成 14 —— 圆角太小，
-      // Dock 外框和选中块看着就是长方形。直接用「高度一半」= 胶囊，和选中块按钮同一个弧。
-      r = sr ? Math.max(14, Math.min(sr - inset, h / 2)) : h / 2;
+      // v10.97：手机一律「高度一半」= 胶囊。不再按屏宽查表、不再看屏幕圆角 ——
+      // 外框和选中块用同一个弧，任何设备、任何缓存状态下都不会出现「一个方一个圆」。
+      r = h / 2;
     }
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };

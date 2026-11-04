@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0b0c">
 <title>热量账本</title>
-<link rel="stylesheet" href="style.css?v=1080">
+<link rel="stylesheet" href="style.css?v=1081">
 <link rel="manifest" href="manifest.webmanifest">
 <!-- 换图标时必须改这里的 ?v=，否则 iOS 主屏图标会一直用缓存里的旧图 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=1037">
@@ -21,24 +21,6 @@
 .dock-lens .lens-body,
 .dock-lens.press .lens-body { border-radius: 42px !important; }
 </style>
-<script>
-window.addEventListener('load', () => setTimeout(() => {
-  try {
-    const dk = document.querySelector('.tabbar .inner'), ln = document.querySelector('.dock-lens');
-    if (!dk) return;
-    const cs = getComputedStyle(dk), ls = ln ? getComputedStyle(ln) : null;
-    const box = document.createElement('div');
-    box.style.cssText = 'position:fixed;top:70px;left:6px;right:6px;z-index:99999;background:#000;color:#0f0;font:10px/1.4 ui-monospace,Menlo,monospace;padding:6px 8px;border:1px solid #0f0;white-space:pre-wrap;border-radius:6px';
-    box.textContent = 'W=' + innerWidth + ' DPR=' + devicePixelRatio + ' pad700=' + matchMedia('(min-width:700px)').matches
-      + '\ndockR=' + cs.borderTopLeftRadius + ' shape=' + (cs.cornerShape || '-')
-      + '\nlensR=' + (ls ? ls.borderTopLeftRadius : '-')
-      + '\nstored=' + (localStorage.getItem('dock_r') || 'none')
-      + '\nstyleBlock=' + (document.getElementById('dock-lock') ? 'yes' : 'no')
-      + ' css=' + ((document.querySelector('link[href*="style.css"]') || {}).href || '-').split('style.css')[1];
-    document.body.appendChild(box);
-  } catch (e) {}
-}, 1500));
-</script>
 </head>
 <body>
 
@@ -503,7 +485,7 @@ window.addEventListener('load', () => setTimeout(() => {
 <script src="icons.js?v=1076"></script>
 <script src="api.js?v=1076"></script>
 <script src="calc.js?v=1076"></script>
-<script src="app.js?v=1080"></script>
+<script src="app.js?v=1081"></script>
 <script>
 /* 兜底：万一这次加载没完整（脚本没下来 / 执行出错），不要停在"全是破折号"的死界面。
    顺序：① 自己把没加载成功的脚本用 ?r=时间戳 再补一遍；② 还不行为一条可点重试的提示条，
