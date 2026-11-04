@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.02', d: '11-04', items: [
+    '改：首页第三格按用户要求改成「还能吃多少」—— 没超显示剩余额度，超了显示 0（多少超出由圆环说，不重复）',
+  ] },
   { v: 'v11.01', d: '11-04', items: [
     '改：首页第三格不再重复圆环的「已经超出」—— 改成「今天可吃」（全天上限），和圆环互相验算：今天可吃 − 摄入 = 超出/剩余',
   ] },
@@ -3267,7 +3270,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.01';
+const APP_VERSION = 'v11.02';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3678,11 +3681,11 @@ function renderToday() {
   const leftLbl = $('#stLeftLbl');
   const leftAt = $('#stLeftAt');
   if (isToday) {
-    // v11.01：用户口径 —— 圆环里已经写着「已经超出 305」，第三格再写同一个数是重复的。
-    // 这一格改成给「今天可吃多少」（全天上限 = 消耗预计 − 缺口），和圆环能互相验算：
-    // 今天可吃 1831 − 摄入 2136 = −305（就是圆环那个超出），超没超都能一眼对上。
-    if (leftLbl) leftLbl.textContent = '今天可吃';
-    leftEl.innerHTML = exp ? (Math.round(budgetDisp) + ' <small>kcal</small>') : '—';
+    // v11.02：用户口径 —— 这一格就写「还能吃多少」。
+    // 没超 = 剩余额度（正数）；超了 = 0（额度已经用完，多少超出由圆环说，这里不重复）。
+    if (leftLbl) leftLbl.textContent = '还能吃';
+    const canEat = Math.max(0, Math.round(left));
+    leftEl.innerHTML = exp ? (canEat + ' <small>kcal</small>') : '—';
     if (leftAt) leftAt.innerHTML = '';
     leftEl.style.color = '';
   } else {
