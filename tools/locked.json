@@ -1,163 +1,163 @@
 [
-  {
-    "file": "style.css",
-    "find": "padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */",
-    "why": "卡片上下等距（用户要求的留白规矩）"
-  },
-  {
-    "file": "style.css",
-    "find": "width: 66px; height: 4px; margin: 0; z-index: 3;",
-    "why": "弹层横杠：浮层不占位（去掉横杠下面的切边）"
-  },
-  {
-    "file": "app.js",
-    "find": "const PAD = 10;",
-    "why": "Dock 滑块四周留白（圆角同心的前提）"
-  },
-  {
-    "file": "app.js",
-    "find": "dockR - PAD - bT",
-    "why": "Dock 滑块圆角同心公式"
-  },
-  {
-    "file": "style.css",
-    "find": "width: 22px; height: 24px; margin: 0; padding: 0;",
-    "why": "所有「⋯」统一成 22×24、图标 20×20、离字 2px（2026-10-26 用户要求把间距收窄：原来 26×24 / 离字 5px）"
-  },
-  {
-    "file": "style.css",
-    "find": "padding: 8px 16px 30px;",
-    "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
-  },
-  {
-    "file": "style.css",
-    "find": "background-color: rgba(0, 0, 0, 0.20);",
-    "why": "虚化遮罩的压暗值（20% 黑）：三处虚化共用（现在淡的是这个背景色，不是整体 opacity）"
-  },
-  {
-    "file": "style.css",
-    "find": "backdrop-filter: blur(5px) saturate(115%);",
-    "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
-  },
-  {
-    "file": "style.css",
-    "find": "backdrop-filter: blur(5px) saturate(115%);",
-    "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
-  },
-  {
-    "file": "style.css",
-    "find": "#nutMask.on,\n#grpMask.on,\n#rnMask.on {",
-    "why": "所有虚化场景必须共用这一份（基准 = 营养编辑卡后面那层）；不许某个场景单独另写一套"
-  },
-  {
-    "file": "style.css",
-    "find": "background: #0d0f0e;",
-    "why": "顶栏底色锁死 #0D0F0E（13,15,14）：用户明确要求任何情况下都不许变"
-  },
-  {
-    "file": "style.css",
-    "find": "  z-index: 70;",
-    "why": "顶栏必须在虚化层之上（≥70）：否则虚化会把它压暗成 #0A0C0B"
-  },
-  {
-    "file": "style.css",
-    "find": "background-color .6s cubic-bezier(.22,.8,.3,1),",
-    "why": "虚化的进出速度（0.6s 缓出）：所有遮罩共用，淡的是背景色+模糊强度"
-  },
-  {
-    "file": "style.css",
-    "find": "--glass-fill-top: rgba(13, 15, 14, 0.46);",
-    "why": "玻璃底色母版（Dock / 卡牌 / 弹层共用）"
-  },
-  {
-    "file": "style.css",
-    "find": "--glass-blur-2: blur(10px) saturate(150%);",
-    "why": "玻璃模糊母版（2026-10-23 用户同意 20px→10px：打开就发烫，降模糊半径减 GPU 负担）"
-  },
-  {
-    "file": "style.css",
-    "find": "--glass-shadow-2: none;",
-    "why": "外投影母版 = none（2026-10-26 用户要求「阴影全去掉」，含 Dock 栏）：以后要加回来必须先问用户，别在各处单独写 0 4 12"
-  },
-  {
-    "file": "style.css",
-    "find": "--btn-solid: rgba(255, 255, 255, 0.085);",
-    "why": "按钮/滑块停稳实色母版（Dock 那颗为准）"
-  },
-  {
-    "file": "style.css",
-    "find": "#addSheet.no-items #pane-photo { padding-bottom: 20px; }",
-    "why": "记录卡底部留白 20（+1 边框 = 21），和设置卡底边距一致 —— v9.57 用户确认（v9.54 的 31 作废）"
-  },
-  {
-    "file": "style.css",
-    "find": "padding-top: var(--pill-nudge, 1.3px);",
-    "why": "v9.79 按钮中文视觉居中：字体度量居中会让字偏上 0.63px，这里补 1.3px（内容中心下移 0.65px）"
-  },
-  {
-    "file": "style.css",
-    "find": "#nlogFoot .setrow.ver .ttl { transform: translateY(var(--pill-nudge-half, .65px)); }",
-    "why": "v9.79 底部「共 N 条」同款补偿（只作用于这一行）"
-  },
-  {
-    "file": "style.css",
-    "find": "#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px 16px; }",
-    "why": "v9.80 提醒记录内容区底部留 16px：滚到底时最后一行文字不再贴着底部栏消失（改前 12px → 改后 28px）"
-  },
-  {
-    "file": "app.js",
-    "find": "const TOAST_CARD_GAP = 12;",
-    "why": "提示条离卡牌顶边 12px（2026-10-26 用户定：不管卡片大小、不管几行提示，距离定死；没有卡牌才回 Dock 上方）"
-  },
-  {
-    "file": "style.css",
-    "find": ".toast[data-at=\"card\"] {",
-    "why": "提示条跟卡牌走的定位规则（用 bottom 定位，跟提示条高度无关）——删掉就退回死贴顶栏"
-  },
-  {
-    "file": "style.css",
-    "find": "bottom: calc(var(--dock-bottom) + var(--dock-h) + 12px + var(--safe-b));",
-    "why": "无卡牌时提示条离 Dock 12px（2026-10-26 用户定：和贴卡牌用同一个数 12px）"
-  },
-  {
-    "file": "style.css",
-    "find": ".meal .hd .kc { margin-left: auto; font-size: 13.5px; color: var(--text);",
-    "why": "每餐右上角千卡的字号/颜色必须跟餐名一致（2026-10-26 用户定：不许改回 12px 灰字）"
-  },
-  {
-    "file": "app.js",
-    "find": "function resetAddInputs() {",
-    "why": "记录卡三个输入框（食材/克数/补充说明）每轮结束都清空，上一轮的信息不许带到下一轮"
-  },
-  {
-    "file": "app.js",
-    "find": "<label>每天少吃 / 多吃（千卡）</label>",
-    "why": "缺口输入框只填正数、方向由「目标模式」决定（减脂=缺口/增肌=盈余/维持=0）；不许再塞回「负数=缺口」那种要打负号的写法"
-  },
-  {
-    "file": "style.css",
-    "find": "--dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));",
-    "why": "iPad 上 Dock 离底 = 卡牌左右离屏的间隙（用户口径：卡牌两边是多少、底下就多少），不许改回固定值"
-  },
-  {
-    "file": "app.js",
-    "find": "const line1 = (isToday && needMove > 0)",
-    "why": "首页「消耗」那格小字：吃超时只写「需消耗 2581」，不重复圆环里的超出数，也不用口语「烧」",
-    "at": "2026-10-31"
-  },
-  {
-    "file": "style.css",
-    "find": "--dock-bottom: 10px;",
-    "why": "Dock 四边 10（用户「缩短一点点」），圆角=62-10=52、高度 104"
-  },
-  {
-    "file": "style.css",
-    "find": "--dock-w: 10px;",
-    "why": "Dock 左右必须=底部（10）"
-  },
-  {
-    "file": "style.css",
-    "find": "margin: 0 var(--page-pad) 12px;",
-    "why": "主页卡牌左右用 --page-pad(18)，比 Dock/弹层的 13 窄 → Dock 比主页卡每边宽 5；写成 --dock-inset 会变成同宽"
-  }
+ {
+  "file": "style.css",
+  "find": "padding: 14px 16px;   /* 上下必须等距（标题不再往上收） */",
+  "why": "卡片上下等距（用户要求的留白规矩）"
+ },
+ {
+  "file": "style.css",
+  "find": "width: 66px; height: 4px; margin: 0; z-index: 3;",
+  "why": "弹层横杠：浮层不占位（去掉横杠下面的切边）"
+ },
+ {
+  "file": "app.js",
+  "find": "const PAD = 10;",
+  "why": "Dock 滑块四周留白（圆角同心的前提）"
+ },
+ {
+  "file": "app.js",
+  "find": "dockR - PAD - bT",
+  "why": "Dock 滑块圆角同心公式"
+ },
+ {
+  "file": "style.css",
+  "find": "width: 22px; height: 24px; margin: 0; padding: 0;",
+  "why": "所有「⋯」统一成 22×24、图标 20×20、离字 2px（2026-10-26 用户要求把间距收窄：原来 26×24 / 离字 5px）"
+ },
+ {
+  "file": "style.css",
+  "find": "padding: 8px 16px 30px;",
+  "why": "底部按钮到卡片底边的距离（记录卡与营养编辑卡必须一致：31px）"
+ },
+ {
+  "file": "style.css",
+  "find": "background-color: rgba(0, 0, 0, 0.20);",
+  "why": "虚化遮罩的压暗值（20% 黑）：三处虚化共用（现在淡的是这个背景色，不是整体 opacity）"
+ },
+ {
+  "file": "style.css",
+  "find": "backdrop-filter: blur(5px) saturate(115%);",
+  "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
+ },
+ {
+  "file": "style.css",
+  "find": "backdrop-filter: blur(5px) saturate(115%);",
+  "why": "虚化强度 blur 5px：只许由遮罩这一层做（不能给 #scroller/.tabbar 加 filter，会把卡片和 Dock 的玻璃弄透明）"
+ },
+ {
+  "file": "style.css",
+  "find": "#nutMask.on,\n#grpMask.on,\n#rnMask.on {",
+  "why": "所有虚化场景必须共用这一份（基准 = 营养编辑卡后面那层）；不许某个场景单独另写一套"
+ },
+ {
+  "file": "style.css",
+  "find": "background: #0d0f0e;",
+  "why": "顶栏底色锁死 #0D0F0E（13,15,14）：用户明确要求任何情况下都不许变"
+ },
+ {
+  "file": "style.css",
+  "find": "  z-index: 70;",
+  "why": "顶栏必须在虚化层之上（≥70）：否则虚化会把它压暗成 #0A0C0B"
+ },
+ {
+  "file": "style.css",
+  "find": "background-color .6s cubic-bezier(.22,.8,.3,1),",
+  "why": "虚化的进出速度（0.6s 缓出）：所有遮罩共用，淡的是背景色+模糊强度"
+ },
+ {
+  "file": "style.css",
+  "find": "--glass-fill-top: rgba(13, 15, 14, 0.46);",
+  "why": "玻璃底色母版（Dock / 卡牌 / 弹层共用）"
+ },
+ {
+  "file": "style.css",
+  "find": "--glass-blur-2: blur(10px) saturate(150%);",
+  "why": "玻璃模糊母版（2026-10-23 用户同意 20px→10px：打开就发烫，降模糊半径减 GPU 负担）"
+ },
+ {
+  "file": "style.css",
+  "find": "--glass-shadow-2: none;",
+  "why": "外投影母版 = none（2026-10-26 用户要求「阴影全去掉」，含 Dock 栏）：以后要加回来必须先问用户，别在各处单独写 0 4 12"
+ },
+ {
+  "file": "style.css",
+  "find": "--btn-solid: rgba(255, 255, 255, 0.085);",
+  "why": "按钮/滑块停稳实色母版（Dock 那颗为准）"
+ },
+ {
+  "file": "style.css",
+  "find": "#addSheet.no-items #pane-photo { padding-bottom: 20px; }",
+  "why": "记录卡底部留白 20（+1 边框 = 21），和设置卡底边距一致 —— v9.57 用户确认（v9.54 的 31 作废）"
+ },
+ {
+  "file": "style.css",
+  "find": "padding-top: var(--pill-nudge, 1.3px);",
+  "why": "v9.79 按钮中文视觉居中：字体度量居中会让字偏上 0.63px，这里补 1.3px（内容中心下移 0.65px）"
+ },
+ {
+  "file": "style.css",
+  "find": "#nlogFoot .setrow.ver .ttl { transform: translateY(var(--pill-nudge-half, .65px)); }",
+  "why": "v9.79 底部「共 N 条」同款补偿（只作用于这一行）"
+ },
+ {
+  "file": "style.css",
+  "find": "#nlogList { display: flex; flex-direction: column; overflow: hidden; padding: 0 17px 16px; }",
+  "why": "v9.80 提醒记录内容区底部留 16px：滚到底时最后一行文字不再贴着底部栏消失（改前 12px → 改后 28px）"
+ },
+ {
+  "file": "app.js",
+  "find": "const TOAST_CARD_GAP = 12;",
+  "why": "提示条离卡牌顶边 12px（2026-10-26 用户定：不管卡片大小、不管几行提示，距离定死；没有卡牌才回 Dock 上方）"
+ },
+ {
+  "file": "style.css",
+  "find": ".toast[data-at=\"card\"] {",
+  "why": "提示条跟卡牌走的定位规则（用 bottom 定位，跟提示条高度无关）——删掉就退回死贴顶栏"
+ },
+ {
+  "file": "style.css",
+  "find": "bottom: calc(var(--dock-bottom) + var(--dock-h) + 12px + var(--safe-b));",
+  "why": "无卡牌时提示条离 Dock 12px（2026-10-26 用户定：和贴卡牌用同一个数 12px）"
+ },
+ {
+  "file": "style.css",
+  "find": ".meal .hd .kc { margin-left: auto; font-size: 13.5px; color: var(--text);",
+  "why": "每餐右上角千卡的字号/颜色必须跟餐名一致（2026-10-26 用户定：不许改回 12px 灰字）"
+ },
+ {
+  "file": "app.js",
+  "find": "function resetAddInputs() {",
+  "why": "记录卡三个输入框（食材/克数/补充说明）每轮结束都清空，上一轮的信息不许带到下一轮"
+ },
+ {
+  "file": "app.js",
+  "find": "<label>每天少吃 / 多吃（千卡）</label>",
+  "why": "缺口输入框只填正数、方向由「目标模式」决定（减脂=缺口/增肌=盈余/维持=0）；不许再塞回「负数=缺口」那种要打负号的写法"
+ },
+ {
+  "file": "style.css",
+  "find": "--dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));",
+  "why": "iPad 上 Dock 离底 = 卡牌左右离屏的间隙（用户口径：卡牌两边是多少、底下就多少），不许改回固定值"
+ },
+ {
+  "file": "app.js",
+  "find": "const needBurn = Calc.targetBurn(intake, goalDef);",
+  "why": "首页第三格「需消耗」：只写总量（已吃 + 缺口），不重复圆环里的超出数，也不用口语「烧」",
+  "at": "2026-10-31"
+ },
+ {
+  "file": "style.css",
+  "find": "--dock-bottom: 10px;",
+  "why": "Dock 四边 10（用户「缩短一点点」），圆角=62-10=52、高度 104"
+ },
+ {
+  "file": "style.css",
+  "find": "--dock-w: 10px;",
+  "why": "Dock 左右必须=底部（10）"
+ },
+ {
+  "file": "style.css",
+  "find": "margin: 0 var(--page-pad) 12px;",
+  "why": "主页卡牌左右用 --page-pad(18)，比 Dock/弹层的 13 窄 → Dock 比主页卡每边宽 5；写成 --dock-inset 会变成同宽"
+ }
 ]

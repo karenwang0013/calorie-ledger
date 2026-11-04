@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.04', d: '11-04', items: [
+    '改：把「消耗」下面的两行小字（需消耗多少、更新时间）挪到第三格 —— 消耗格只留大数字，第三格大字是「需消耗」、小字是更新时间。以后这两行都在第三格',
+  ] },
   { v: 'v11.03', d: '11-04', items: [
     '改：首页只留「摄入 / 消耗」两格 —— 第三格的缺口/盈余整格删掉，因为圆环已经写着「还能吃多少 / 已经超出多少」，同一个数不重复显示',
   ] },
@@ -3273,7 +3276,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.03';
+const APP_VERSION = 'v11.04';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3662,24 +3665,17 @@ function renderToday() {
   // v10.72 用户口径：只有「吃超了」才需要提示要再消耗多少；没吃超就什么都不用写
   //（蛋白质/碳水/脂肪三条进度条已经能看到还差多少，不用再用一句话重复）
   const needMove = Math.max(0, -left);
-  // v10.73：圆环里那个大数字就是「已经超出多少」，「再运动多少」跟它完全一样 →
-  // 用户明确说不许重复写。这里只留一个总量：要烧到多少。
-  const line1 = (isToday && needMove > 0)
-    ? `需消耗 ${Calc.targetBurn(intake, goalDef)}`
-    : '';
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
-  const atEl = $('#stExpAt');
-  // v10.80：这两行原来是同一个灰蓝色，看不清。「需消耗 xxx」是重点 → 加粗提亮；
-  // 时间是次要信息 → 保留但压暗一档（偏旧时整块仍会变橙）。
-  atEl.innerHTML = [
-    line1 ? `<b class="tgt">${line1}</b>` : '',
-    line2 ? `<span class="tm">${line2}</span>` : ''
-  ].filter(Boolean).join('<br>');
-  atEl.style.color = stale ? 'var(--orange)' : '';
-  // v11.03：用户口径 —— 第三格（缺口/盈余/还能吃）整格删掉。圆环已经把「还能吃多少 / 已经超出多少」
-  // 放在最显眼的位置，下面再写一遍是同一个数出现两次。现在只留「摄入 / 消耗」两格。
-  // 历史日期同理：圆环里本来就有那天实际的缺口/盈余。
-
+  // v11.04：用户口径 —— 「需消耗 xxx」和「更新时间」这两行小字从「消耗」格挪到第三格，
+  // 消耗格只留大数字。第三格：大字 = 需消耗（= 已吃 + 缺口），小字 = 数据更新时间。
+  const needBurn = Calc.targetBurn(intake, goalDef);
+  const needEl = $('#stNeed');
+  if (needEl) needEl.innerHTML = isToday ? (needBurn + ' <small>kcal</small>') : '—';
+  const atEl = $('#stLeftAt');
+  if (atEl) {
+    atEl.innerHTML = line2 ? `<span class="tm">${line2}</span>` : '';
+    atEl.style.color = stale ? 'var(--orange)' : '';
+  }
   // 营养素
   const pr = d.protein, cb = d.carb, ft = d.fat;
   $('#pNow').textContent = Math.round(pr);
