@@ -1341,7 +1341,16 @@ body.add-open .sheet-mask.on {
     -webkit-backdrop-filter .6s cubic-bezier(.22,.8,.3,1),
     backdrop-filter .6s cubic-bezier(.22,.8,.3,1);
 }
-.sheet-mask.on { background-color: rgba(0,0,0,.66); pointer-events: auto; }
+.sheet-mask.on {
+  background-color: rgba(0,0,0,.66); pointer-events: auto;
+  /* v10.98：用户反馈「点下去卡住几秒才虚化」—— 根因是这一层模糊原本要走 0.6s 过渡，
+     再加 iOS 生成 backdrop-filter 的延迟，体感就是先停一下。进入时压到 0.12s（几乎即时）；
+     退出仍用基类那 0.6s，慢慢淡开，不会「啪」地一下变清（那是用户反复报的闪）。 */
+  transition:
+    background-color .12s ease-out,
+    -webkit-backdrop-filter .12s ease-out,
+    backdrop-filter .12s ease-out;
+}
 
 /* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
