@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.00', d: '11-04', items: [
+    '改：首页第三格不再写「缺口 / 盈余」—— 和圆环同一套，还能吃就是「还可以吃」、吃超了就是「已经超出」，数字也是同一个，不再一屏两个数打架',
+    '修：点开卡片的停顿感 —— 背景模糊不再逐帧过渡（每帧重算全屏模糊就是掉帧来源），改成瞬间到位 + 暗度渐显，提前建好合成层',
+  ] },
   { v: 'v10.99', d: '11-04', items: [
     '修：点开食物卡片时那一下「咯噔」—— 以前是把卡片拼完才让背景变糊，拼卡片要卡主线程；现在先让背景糊上、下一帧再拼卡片，点下去就虚化，不再先卡一下',
   ] },
@@ -3260,7 +3264,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v10.99';
+const APP_VERSION = 'v11.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3671,11 +3675,14 @@ function renderToday() {
   const leftLbl = $('#stLeftLbl');
   const leftAt = $('#stLeftAt');
   if (isToday) {
-    const gapV = Math.abs(Math.round(balNow));
-    if (leftLbl) leftLbl.textContent = balNow >= 0 ? '缺口' : '盈余';
-    leftEl.innerHTML = exp ? (gapV + ' <small>kcal</small>') : '—';
+    // v11.00：用户口径 —— 第三格别再写「缺口 / 盈余」（一屏上「已经超出 298」和「盈余 735」
+    // 两个说法打架，而且「盈余」在维持体重模式下是反的）。改成和圆环同一套：还能吃就是「还可以吃」，
+    // 吃超了就是「已经超出」，数字也用圆环那个 left（= 全天预算 − 已吃），一眼能验算。
+    const leftV = Math.round(left);
+    if (leftLbl) leftLbl.textContent = leftV >= 0 ? '还可以吃' : '已经超出';
+    leftEl.innerHTML = exp ? (Math.abs(leftV) + ' <small>kcal</small>') : '—';
     if (leftAt) leftAt.innerHTML = '';
-    leftEl.style.color = balNow < 0 ? 'var(--orange)' : '';
+    leftEl.style.color = leftV < 0 ? 'var(--orange)' : '';
   } else {
     if (leftLbl) leftLbl.textContent = balFull >= 0 ? '热量缺口' : '热量盈余';
     leftEl.innerHTML = Math.abs(Math.round(balFull)) + ' <small>kcal</small>';
