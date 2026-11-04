@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.07', d: '11-04', items: [
+    '改：三格顺序定为「摄入 / 消耗 / 需消耗」；时间和「数据偏旧」永远显示在中间「消耗」那一格下面',
+  ] },
   { v: 'v11.06', d: '11-04', items: [
     '改：三格顺序固定为「摄入 / 需消耗 / 消耗」；时间和「数据偏旧」这类提醒挪到「消耗」下面',
   ] },
@@ -3282,7 +3285,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.06';
+const APP_VERSION = 'v11.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
