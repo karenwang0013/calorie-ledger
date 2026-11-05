@@ -715,6 +715,31 @@ function addLog(date, meal, it, source, batch, batchName) {
 
 const DASHSCOPE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 
+/* v11.08：识别「连不上」不再一碰就放弃。
+   以前 fetch 没有超时、失败也不重试，网络抖一下、或者页面刚切回前台那一下，
+   就直接弹「连不上通义千问，检查一下网络」，用户只能干瞪眼重来。
+   现在：单次最多等 60 秒；网络类失败自动再试一次；429（太频繁）等 1.5 秒再试一次；
+   真失败时按「没联网 / 太慢 / 连不上」分开说，用户知道下一步该干什么。 */
+const AI_TIMEOUT_MS = 60000;
+const AI_NET_RETRY = 1;
+const AI_429_WAIT = 1500;
+
+function aiSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function aiPost(body, key) {
+  const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const t = ctl ? setTimeout(() => ctl.abort(), AI_TIMEOUT_MS) : null;
+  try {
+    const opt = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify(body),
+    };
+    if (ctl) opt.signal = ctl.signal;
+    return await fetch(DASHSCOPE_URL, opt);
+  } finally { if (t) clearTimeout(t); }
+}
+
 const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片的热量。
 
 请仔细辨认图中所有可食用内容，然后：
@@ -801,23 +826,37 @@ async function callModel(content) {
 
   let last = null;
   for (const model of models) {
-    let resp;
-    try {
-      resp = await fetch(DASHSCOPE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content }],
-          temperature: 0.1,
-          max_tokens: 1600,
-        }),
-      });
-    } catch (e) {
-      throw new Error('连不上通义千问，检查一下网络');
+    const body = { model, messages: [{ role: 'user', content }], temperature: 0.1, max_tokens: 1600 };
+    // ① 网络层：最多等 60 秒，失败了自动再试一次（手机明确没网就不白等）
+    let resp = null, netErr = null;
+    for (let attempt = 0; attempt <= AI_NET_RETRY; attempt++) {
+      try {
+        resp = await aiPost(body, key);
+        netErr = null;
+        break;
+      } catch (e) {
+        netErr = e;
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) break;
+        if (attempt < AI_NET_RETRY) await aiSleep(700);
+      }
+    }
+    if (!resp) {
+      const off = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const slow = !!netErr && netErr.name === 'AbortError';
+      throw new Error(off ? '手机现在没联网 —— 连上 Wi-Fi 或流量后再点一次识别'
+        : slow ? '通义千问这次太慢，没有回应 —— 再点一次识别就好'
+        : '连不上通义千问，检查一下网络');
     }
     let data = {};
     try { data = await resp.json(); } catch (e) { data = {}; }
+    // ② 太频繁（429）：等一会儿自动再试一次，用户不用自己掐点重点
+    if (resp.status === 429 && !data.choices) {
+      await aiSleep(AI_429_WAIT);
+      try {
+        resp = await aiPost(body, key);
+        try { data = await resp.json(); } catch (e) { data = {}; }
+      } catch (e) { /* 还是不行就走下面的报错 */ }
+    }
 
     if (data.error) {
       const msg = data.error.message || '接口出错';
@@ -831,7 +870,7 @@ async function callModel(content) {
       const modelIssue = /model/i.test(msg) || /不存在/.test(msg);
       if ((resp.status === 400 || resp.status === 404) && modelIssue) continue;
       if (resp.status === 401) throw new Error('API Key 不对，去「我的」重新填一下');
-      if (resp.status === 429) throw new Error('调用太频繁或额度用完了，等会儿再试');
+      if (resp.status === 429) throw new Error('通义千问这会儿太忙，或免费额度用完了 —— 歇一分钟再点识别');
       throw new Error(msg);
     }
     if (!data.choices || !data.choices.length) {

@@ -28,6 +28,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.08', d: '11-05', items: [
+    '修（崩溃）：识别结果里改克数时，会弹「启动出错了 · TypeError」并挡住整页 —— 列表被重画后输入框对不上号就崩。现在对不上直接忽略，不再崩',
+    '修（识别不出来）：以前网络抖一下就只有一句「连不上通义千问」。现在会自己再试一次；真失败时分开说「没联网 / 太慢没回应 / 连不上」；请求太频繁也会等一会儿自动重试',
+    '改：AI 补克数改成一次画完，结果区不再逐条闪；你正在改克数时不会被打断',
+    '修：照片读不出来时预览会退回空态（以前显示着照片，点识别却说「先拍一张照片」）',
+    '改：启动完成后再出错只弹提示条，不再用一张卡挡住整个 App',
+  ] },
   { v: 'v11.07', d: '11-04', items: [
     '改：三格顺序定为「摄入 / 消耗 / 需消耗」；时间和「数据偏旧」永远显示在中间「消耗」那一格下面',
   ] },
@@ -3285,7 +3292,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.07';
+const APP_VERSION = 'v11.08';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4327,7 +4334,17 @@ async function handlePhoto(file) {
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
-    toast('图片读取失败');
+    /* v11.08：读不出来就把预览退回去。以前预览已经显示出来了、S.photoData 却是空的，
+       接着点「识别热量」只会说「先拍一张照片」—— 看起来就像"识别不出来"。 */
+    try {
+      if (S.photoURL) { URL.revokeObjectURL(S.photoURL); S.photoURL = null; }
+      S.photoData = null;
+      const pv = $('#photoPreview'); if (pv) { pv.removeAttribute('src'); pv.hidden = true; }
+      const del = $('#photoDel'); if (del) del.hidden = true;
+      const ea = $('#emptyA'); if (ea) ea.hidden = false;
+      const pa = $('#photoActions'); if (pa) pa.hidden = !(S.photoData || S.photo2Data);
+    } catch (e2) {}
+    toast('这张图读不出来（格式不支持），换一张试试', 3200);
   }
 }
 
@@ -4353,7 +4370,15 @@ async function handlePhoto2(file) {
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
   } catch (e) {
-    toast('图片读取失败');
+    try {
+      if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
+      S.photo2Data = null;
+      const pv = $('#pv2'); if (pv) { pv.removeAttribute('src'); pv.hidden = true; }
+      const del = $('#del2'); if (del) del.hidden = true;
+      const eb = $('#emptyB'); if (eb) eb.hidden = false;
+      const pa = $('#photoActions'); if (pa) pa.hidden = !(S.photoData || S.photo2Data);
+    } catch (e2) {}
+    toast('这张图读不出来（格式不支持），换一张试试', 3200);
   }
 }
 
@@ -4560,8 +4585,9 @@ async function runPhoto() {
 
 /* 结果里有"没有克数"的条目：逐条用食物名问 AI 一份多少克，补上 */
 async function fillMissingGrams() {
-  const idxs = (S.items || []).map((it, i) => (Number(it.grams) > 0 ? -1 : i)).filter(i => i >= 0);
+  const idxs = (S.items || []).map((it, i) => (it && Number(it.grams) > 0 ? -1 : i)).filter(i => i >= 0);
   if (!idxs.length) return;
+  let filled = 0;
   for (const i of idxs) {
     const it = S.items[i];
     const name = String(it && it.name || '').trim();
@@ -4571,10 +4597,30 @@ async function fillMissingGrams() {
       const g = Number(r && r.items && r.items[0] && r.items[0].grams) || 0;
       if (g > 0 && S.items[i] === it) {
         it.grams = Math.round(g);
-        renderResult();
+        filled++;
       }
     } catch (e) { /* 估不出来就留着让用户点「AI 估克数」 */ }
   }
+  if (!filled) return;
+  /* v11.08：以前每补一条就整页重画一次 —— 好几项的时候界面连闪、正在打的克数会被清掉，
+     而且重画的那一瞬间旧输入框还在收事件（就是「启动出错了」的一个来源）。
+     现在攒完一次再画；用户正在改克数时只把数字补进去，不打断它。 */
+  const ae = document.activeElement;
+  const typing = !!(ae && ae.matches && ae.matches('#resultItems input[data-g]'));
+  if (typing) {
+    (S.items || []).forEach((it, i) => {
+      const row = document.querySelector(`#resultItems .ritem[data-row="${i}"]`);
+      if (!row || !it) return;
+      const gi = row.querySelector('input[data-g]');
+      if (gi && document.activeElement !== gi) gi.value = it.grams || '';
+      const kc = row.querySelector('.kc');
+      if (kc) kc.textContent = it.grams ? Math.round(it.kcal_per_100g * it.grams / 100) : '—';
+    });
+    const tot = document.querySelector('#resultTotal');
+    if (tot) tot.textContent = Math.round(S.items.reduce((a, b) => a + (b ? b.kcal_per_100g * (Number(b.grams) || 0) / 100 : 0), 0));
+    return;
+  }
+  renderResult();
 }
 
 /* 存一张小图（约 10~20KB），之后点开这一组还能看到当时拍的 */
@@ -5013,7 +5059,8 @@ function renderResult() {
       </div>`;
   }).join('');
 
-  const total = S.items.reduce((a, b) => a + b.kcal_per_100g * (Number(b.grams) || 0) / 100, 0);
+  // 合计：列表里万一有空项也不许把整页算崩（同类下标记取问题一起兜住）
+  const total = S.items.reduce((a, b) => a + (b ? b.kcal_per_100g * (Number(b.grams) || 0) / 100 : 0), 0);
   $('#resultTotal').textContent = Math.round(total);
   $('#addFoot').hidden = S.items.length === 0;
   $('#resultArea').hidden = S.items.length === 0;
@@ -5066,17 +5113,25 @@ function renderResult() {
     }
   });
   $$('[data-u]', box).forEach(b => b.onclick = () => {
-    S.items[Number(b.dataset.u)].grams = Number(b.dataset.g);
+    const it = S.items[Number(b.dataset.u)];
+    if (!it) return;                        // 这一项已经被删掉 / 列表被重画过，忽略这一次点击
+    it.grams = Number(b.dataset.g);
     renderResult();
   });
   $$('input[data-g]', box).forEach(inp => {
     inp.oninput = () => {
-      S.items[Number(inp.dataset.g)].grams = Number(inp.value) || 0;
-      rememberGrams(S.items[Number(inp.dataset.g)].name, inp.value);
+      /* v11.08 崩溃修复：这里原来直接 `S.items[Number(inp.dataset.g)].grams = ...`。
+         结果列表在输入过程中被重画、或某一项被删掉时，下标就对不上了，
+         取到 undefined → 整个 App 弹「启动出错了」并挡住整页。
+         现在取不到就忽略这次输入（旧输入框的残留事件），不崩。 */
       const kc = S.items[Number(inp.dataset.g)];
-      const el = inp.closest('.ritem').querySelector('.kc');
-      el.textContent = Math.round(kc.kcal_per_100g * kc.grams / 100);
-      const total = S.items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0);
+      if (!kc) return;
+      kc.grams = Number(inp.value) || 0;
+      rememberGrams(kc.name, inp.value);
+      const row = inp.closest('.ritem');
+      const el = row && row.querySelector('.kc');
+      if (el) el.textContent = Math.round(kc.kcal_per_100g * kc.grams / 100);
+      const total = S.items.reduce((a, b) => a + (b ? b.kcal_per_100g * (Number(b.grams) || 0) / 100 : 0), 0);
       $('#resultTotal').textContent = Math.round(total);
     };
   });
@@ -8729,12 +8784,27 @@ async function pullCloudData(forceFresh) {
 }
 
 /* ---------------- 启动兜底：出错不白屏 ---------------- */
+/* v11.08：启动那几秒出错 = 白屏，必须让人看见（弹卡）；
+   启动完成之后出错 = 页面上还有内容，弹张卡挡整页反而更糟 —— 降级成提示条，
+   同一句话 4 秒内不重复弹（避免连续报错刷屏）。 */
+let bootDone = false;
+let _bootErrAt = 0, _bootErrMsg = '';
 function showBootError(msg) {
+  const m = String(msg || '未知错误');
+  const now = Date.now();
+  if (bootDone) {
+    if (m === _bootErrMsg && now - _bootErrAt < 4000) return;
+    _bootErrMsg = m; _bootErrAt = now;
+    try {
+      if (typeof toast === 'function') { toast('刚才有一步没成功：' + m.slice(0, 90), 5000); return; }
+    } catch (e) {}
+    return;
+  }
   try {
     const el = document.getElementById('bootErr');
     if (!el) return;
     el.style.display = 'block';
-    el.querySelector('.be-msg').textContent = String(msg || '未知错误').slice(0, 200);
+    el.querySelector('.be-msg').textContent = m.slice(0, 200);
   } catch (e) {}
 }
 window.addEventListener('error', (e) => showBootError(e.message));
@@ -9931,6 +10001,9 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') setTimeout(fillPhotos, 3000);
   });
+
+  // v11.08：启动完成才把运行时错误降级成提示条（见 showBootError）
+  setTimeout(() => { bootDone = true; }, 4000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
