@@ -144,9 +144,10 @@ const checks = [
   // v10.18 用户口径（2026-10-28）：「Dock 如果变宽或者变低，圆角间隙、底部间隙要跟着调整，包括里面的图标。」
   // 图标和文字必须用 calc 跟 --dock-h 联动，写死 px 就会"Dock 缩了、图标不缩"（v10.16 就是这样被用户抓到的）。
   ['Dock 图标/文字必须跟 Dock 高度联动（calc(--dock-h × 系数)，不许写死 px）',
-    /\.tab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.335\)/.test(css)
-    && /\.fab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.335\)/.test(css)
-    && (css.match(/font-size: calc\(var\(--dock-h\) \* 0\.125\)/g) || []).length >= 2],
+    // 只要求「用 calc 跟 --dock-h 联动」，具体系数允许调（v11.09 用户要求按钮大一点：0.335→0.365 / 0.125→0.135）
+    /\.tab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.\d+\)/.test(css)
+    && /\.fab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.\d+\)/.test(css)
+    && (css.match(/font-size: calc\(var\(--dock-h\) \* 0\.\d+\)/g) || []).length >= 2],
   ['Dock 与屏幕的等距/同心规则 + 卡牌层级（Dock=弹层=底部，主页卡更窄）', (() => {
     const num = k => { const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px')); return m ? parseFloat(m[1]) : null; };
     const inset = num('dock-inset');     // 弹层卡（记录/设置/提醒）左右
