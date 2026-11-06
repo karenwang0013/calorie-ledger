@@ -973,8 +973,8 @@ body.add-open .sheet-mask.on {
   /* v10.17：图标/文字尺寸改成跟 Dock 高度联动（calc），改 --dock-h 时不用再单独调文字：
      图标 = 高度 × 0.335（94→31.5、104→34.8、108→36.2，和历史手调值一致）
      文字 = 高度 × 0.125（94→11.75、104→13、108→13.5） */
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.1346); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 2px 16px; border-radius: 16px;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.125); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  padding: 6px 16px; border-radius: 16px;
   transition: background .24s ease, color .3s ease;
 }
 
@@ -991,8 +991,8 @@ body.add-open .sheet-mask.on {
   justify-self: center;
   /* 和左右两个一样：上面图标、下面文字 */
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.1346); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 2px 16px; border-radius: 16px;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.125); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  padding: 6px 16px; border-radius: 16px;
   background: transparent;        /* 不套色块框 */
   box-shadow: none;
   transition: color .3s ease;

@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.14', d: '11-06', items: [
+    '改：Dock 里的文字和内边距回退到 v11.07（13px / 6px），只保留图标放大到 55',
+  ] },
   { v: 'v11.13', d: '11-06', items: [
     '改：Dock 栏恢复 v11.07 的大小（高 104、圆角 52、左右底 10 不动），只把里面的图标放大到 55、文字 14',
   ] },
@@ -3307,7 +3310,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.13';
+const APP_VERSION = 'v11.14';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
