@@ -11,7 +11,7 @@
  },
  {
   "file": "app.js",
-  "find": "const PAD = 14;",
+  "find": "const PAD = 7;",
   "why": "Dock 选中块四周留白（v11.18 用户要求胶囊变大：10→8；圆角同心的前提）"
  },
  {
