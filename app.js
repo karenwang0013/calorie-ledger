@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.21', d: '11-06', items: [
+    '改：Dock 选中块四周留白改成 14（和记录卡「拍照按钮→照片格」那道缝同一个数），胶囊随之收小、圆角 37',
+  ] },
   { v: 'v11.20', d: '11-06', items: [
     '改：选中块胶囊再大一点（留白 8→6，胶囊高 86→90、圆角 45）',
   ] },
@@ -3328,7 +3331,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.20';
+const APP_VERSION = 'v11.21';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8872,7 +8875,7 @@ function initDockLens() {
     const cellW = cols[idx] || r.width;
     // 滑块到 Dock 边的留白：上下左右必须是**同一个数**，
     // 这样"圆角同心"才能成立（内圆半径 = Dock 圆角 − 这个留白，弧线才是平行的）
-    const PAD = 6;
+    const PAD = 14;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
     const w = Math.max(70, Math.round(cellW + 2 * (padL - PAD)));
@@ -8971,8 +8974,8 @@ function init() {
       dk.style.setProperty('corner-shape', 'round', 'important');
       dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
     }
-    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '45px', 'important'));
-    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '46px', 'important'));
+    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '37px', 'important'));
+    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '38px', 'important'));
   } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
