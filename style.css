@@ -36,7 +36,7 @@
   --dock-w: 10px;          /* Dock 左右（= --dock-bottom = --dock-inset） */
   /* Dock 高度（固定，圆角上限要看它）—— v10.05 94 → 98：同心圆角要 62−13=49，49 必须 ≤ 高度一半（49），
      否则又会被"不能超过一半"卡住、圆角变小就不呼应了 */
-  --dock-h: 116px;
+  --dock-h: 104px;
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR）。
      ⚠️ v10.15：这里必须同时用媒体查询写一份静态值（紧随 :root 之后）——
      因为启动/buffer 的那一瞬间 JS 还没跑，圆角还停在这个默认值上，
@@ -973,12 +973,12 @@ body.add-open .sheet-mask.on {
   /* v10.17：图标/文字尺寸改成跟 Dock 高度联动（calc），改 --dock-h 时不用再单独调文字：
      图标 = 高度 × 0.335（94→31.5、104→34.8、108→36.2，和历史手调值一致）
      文字 = 高度 × 0.125（94→11.75、104→13、108→13.5） */
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.138); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 4px 16px; border-radius: 16px;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.1346); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  padding: 2px 16px; border-radius: 16px;
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { display: block; width: calc(var(--dock-h) * 0.474); height: calc(var(--dock-h) * 0.474); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { display: block; width: calc(var(--dock-h) * 0.529); height: calc(var(--dock-h) * 0.529); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
@@ -991,8 +991,8 @@ body.add-open .sheet-mask.on {
   justify-self: center;
   /* 和左右两个一样：上面图标、下面文字 */
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.138); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 4px 16px; border-radius: 16px;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.1346); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  padding: 2px 16px; border-radius: 16px;
   background: transparent;        /* 不套色块框 */
   box-shadow: none;
   transition: color .3s ease;
@@ -1000,7 +1000,7 @@ body.add-open .sheet-mask.on {
 .fab:active { color: var(--lime); }
 .fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号也用矢量画：和左右两个图标同一尺寸（30px）、同样的视觉粗细 */
-.fab svg { width: calc(var(--dock-h) * 0.474); height: calc(var(--dock-h) * 0.474); display: block; }
+.fab svg { width: calc(var(--dock-h) * 0.529); height: calc(var(--dock-h) * 0.529); display: block; }
 
 /* ==================================================================
    液态滑块（Dock 里的玻璃药丸）
