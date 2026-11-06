@@ -28,6 +28,12 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.18', d: '11-06', items: [
+    '改：Dock 选中时高亮的那块胶囊变大（四周留白 10→8，胶囊高 82→86、宽 +4，圆角同步 41→43）；图标和文字保持 v11.07 原样',
+  ] },
+  { v: 'v11.17', d: '11-06', items: [
+    '改：Dock 里的文字（今日/记录/趋势）放大到 18，图标和 Dock 栏都回到 v11.07 原样',
+  ] },
   { v: 'v11.16', d: '11-06', items: [
     '改：只把 Dock 图标放大到 55（高度×0.529），文字、内边距、Dock 高度/圆角一律不动',
   ] },
@@ -3316,7 +3322,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.16';
+const APP_VERSION = 'v11.18';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8860,7 +8866,7 @@ function initDockLens() {
     const cellW = cols[idx] || r.width;
     // 滑块到 Dock 边的留白：上下左右必须是**同一个数**，
     // 这样"圆角同心"才能成立（内圆半径 = Dock 圆角 − 这个留白，弧线才是平行的）
-    const PAD = 10;
+    const PAD = 8;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
     const w = Math.max(70, Math.round(cellW + 2 * (padL - PAD)));
