@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.10', d: '11-06', items: [
+    '改：Dock 按钮再放大一档（图标 38→41、文字 14→15）',
+  ] },
   { v: 'v11.09', d: '11-05', items: [
     '改：Dock 三个按钮的图标和文字放大一档（图标 34.8→38、文字 13→14），Dock 高度和圆角不变',
   ] },
@@ -3295,7 +3298,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.09';
+const APP_VERSION = 'v11.10';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

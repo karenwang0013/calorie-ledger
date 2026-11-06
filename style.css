@@ -973,12 +973,12 @@ body.add-open .sheet-mask.on {
   /* v10.17：图标/文字尺寸改成跟 Dock 高度联动（calc），改 --dock-h 时不用再单独调文字：
      图标 = 高度 × 0.335（94→31.5、104→34.8、108→36.2，和历史手调值一致）
      文字 = 高度 × 0.125（94→11.75、104→13、108→13.5） */
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.135); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.145); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
   padding: 6px 16px; border-radius: 16px;
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { display: block; width: calc(var(--dock-h) * 0.365); height: calc(var(--dock-h) * 0.365); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { display: block; width: calc(var(--dock-h) * 0.395); height: calc(var(--dock-h) * 0.395); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
@@ -991,7 +991,7 @@ body.add-open .sheet-mask.on {
   justify-self: center;
   /* 和左右两个一样：上面图标、下面文字 */
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.135); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
+  color: var(--muted2); font-size: calc(var(--dock-h) * 0.145); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
   padding: 6px 16px; border-radius: 16px;
   background: transparent;        /* 不套色块框 */
   box-shadow: none;
@@ -1000,7 +1000,7 @@ body.add-open .sheet-mask.on {
 .fab:active { color: var(--lime); }
 .fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号也用矢量画：和左右两个图标同一尺寸（30px）、同样的视觉粗细 */
-.fab svg { width: calc(var(--dock-h) * 0.365); height: calc(var(--dock-h) * 0.365); display: block; }
+.fab svg { width: calc(var(--dock-h) * 0.395); height: calc(var(--dock-h) * 0.395); display: block; }
 
 /* ==================================================================
    液态滑块（Dock 里的玻璃药丸）
