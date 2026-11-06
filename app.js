@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.12', d: '11-06', items: [
+    '改：Dock 高度 104→116、图标放大到 55、圆角同步 52→58（选中块 47），整体大一圈',
+  ] },
   { v: 'v11.11', d: '11-06', items: [
     '改：Dock 按钮再放大（图标 41→44、文字 15→16），上下内边距 6→4 保证不被胶囊切到',
   ] },
@@ -3301,7 +3304,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.11';
+const APP_VERSION = 'v11.12';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8940,12 +8943,12 @@ function init() {
   try {
     const dk = document.querySelector('.tabbar .inner');
     if (dk) {
-      dk.style.setProperty('border-radius', '52px', 'important');
+      dk.style.setProperty('border-radius', '58px', 'important');
       dk.style.setProperty('corner-shape', 'round', 'important');
       dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
     }
-    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '41px', 'important'));
-    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '42px', 'important'));
+    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '47px', 'important'));
+    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '48px', 'important'));
   } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
