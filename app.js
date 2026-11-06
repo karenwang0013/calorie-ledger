@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.19', d: '11-06', items: [
+    '修：胶囊变大后圆角没跟上（41→43），补上，选中的弧和 Dock 仍然是同心的',
+  ] },
   { v: 'v11.18', d: '11-06', items: [
     '改：Dock 选中时高亮的那块胶囊变大（四周留白 10→8，胶囊高 82→86、宽 +4，圆角同步 41→43）；图标和文字保持 v11.07 原样',
   ] },
@@ -3322,7 +3325,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.18';
+const APP_VERSION = 'v11.19';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -8965,8 +8968,8 @@ function init() {
       dk.style.setProperty('corner-shape', 'round', 'important');
       dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
     }
-    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '41px', 'important'));
-    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '42px', 'important'));
+    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '43px', 'important'));
+    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '44px', 'important'));
   } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
