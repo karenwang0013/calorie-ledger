@@ -978,7 +978,7 @@ body.add-open .sheet-mask.on {
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { display: block; width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab svg { display: block; width: calc(var(--dock-h) * 0.529); height: calc(var(--dock-h) * 0.529); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab.on { color: var(--lime); }
 .tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
@@ -1000,7 +1000,7 @@ body.add-open .sheet-mask.on {
 .fab:active { color: var(--lime); }
 .fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号也用矢量画：和左右两个图标同一尺寸（30px）、同样的视觉粗细 */
-.fab svg { width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); display: block; }
+.fab svg { width: calc(var(--dock-h) * 0.529); height: calc(var(--dock-h) * 0.529); display: block; }
 
 /* ==================================================================
    液态滑块（Dock 里的玻璃药丸）

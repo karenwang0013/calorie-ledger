@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.16', d: '11-06', items: [
+    '改：只把 Dock 图标放大到 55（高度×0.529），文字、内边距、Dock 高度/圆角一律不动',
+  ] },
   { v: 'v11.15', d: '11-06', items: [
     '改：Dock 图标和文字全部恢复 v11.07 原样（图标高度×0.335、文字高度×0.125、内边距 6）',
   ] },
@@ -3313,7 +3316,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.15';
+const APP_VERSION = 'v11.16';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
