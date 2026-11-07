@@ -3535,20 +3535,22 @@ html.kb #setSheet {
 .seg-lens .hl { display: none; }
 
 /* ==================================================================
-   v11.28：顶栏 4 个按钮（数据同步 / 强制更新 / 提醒记录 / 设置）
-   材质对齐 Dock 栏那一套（2026-11-07 用户口径：尺寸没问题，是风格没统一）
-   原来：透明填充 + edge-gloss 描边 + inset 白 10% 高光，没有底、没有模糊
-   现在：和 Dock 同一组 —— 黑 46%→58% 玻璃渐变 + edge-gloss + blur(10px) saturate(1.5) + 无阴影
-   只改材质；圆角、内边距、字号、图标尺寸一律不动。
-   ⚠️ 只写 .topbtn，不碰共用那条规则里的 .btn / .chip / .pgbtn / .pickbtn。
+   v11.29：顶栏 4 个按钮的材质改成「训练账本」右上角那颗的样子
+   用户 2026-11-07 口径：两边右上角按钮材质不一样，以训练账本（练账）为准。
+   训练账本实测（#openSet / #reloadTop）：
+     background-image: linear-gradient(transparent, transparent), var(--edge-gloss)
+     backdrop-filter: none;  box-shadow: none;  border 1px transparent;  clip padding-box, border-box
+   即：透底 + 只留一圈光泽描边，没有玻璃填充、没有模糊。
+   （v11.28 曾做成 Dock 那套玻璃，这里按用户要求退回训练账本的效果）
+   只写 .topbtn；圆角 / 内边距 / 字号 / 图标尺寸不动。
    ================================================================== */
 .topbtn {
   background-color: transparent;
-  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
   box-shadow: none;
-  -webkit-backdrop-filter: var(--glass-blur-2);
-  backdrop-filter: var(--glass-blur-2);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

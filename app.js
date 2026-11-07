@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.29', d: '11-07', items: [
+    '改：顶栏 4 个按钮改成「训练账本」右上角那颗的样子 —— 透底 + 只留一圈光泽描边（上一版那层玻璃底和模糊去掉了）',
+  ] },
   { v: 'v11.28', d: '11-07', items: [
     '改：顶栏那 4 个按钮（数据同步 / 强制更新 / 提醒记录 / 设置）材质对齐 Dock —— 同样黑 46%→58% 玻璃渐变 + 光泽描边 + blur(10px)，尺寸圆角没动',
   ] },
@@ -3352,7 +3355,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.28';
+const APP_VERSION = 'v11.29';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
