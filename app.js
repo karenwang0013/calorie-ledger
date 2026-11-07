@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.24', d: '11-07', items: [
+    '改：Dock 和选中块的颜色改成「练账」那一套 —— 选中块平时是一块干净的白 8.5%（去掉内阴影、边缘彩虹光、按压光点），Dock 顶部那道细高光也去掉',
+  ] },
   { v: 'v11.23', d: '11-07', items: [
     '改：只传一张照片时，识别出它是营养成分表就自动挪到「营养成分表」那一格（不再显示在「食物照片」格里）',
   ] },
@@ -3337,7 +3340,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.23';
+const APP_VERSION = 'v11.24';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
