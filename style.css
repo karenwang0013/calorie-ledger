@@ -1105,14 +1105,9 @@ body.add-open .sheet-mask.on {
 .dock-lens .hl { display: none; }
 
 /* v11.25：药丸不再有「按下瞬间露一下渐变白」—— 用户 2026-11-07 要求把这类渐变全部删掉，
-   药丸任何时候都是同一块实色（只保留按下时的压扁形变）。 */
-#addTabs .seg-lens .lens-body,
-#addTabs .seg-lens.settled .lens-body,
-#addTabs .seg-lens.press .lens-body {
-  background: var(--lens-solid, var(--btn-solid));
-  box-shadow: none;
-}
-#addTabs .seg-lens .lens-body::after { display: none; }
+   药丸任何时候都是同一块实色（只保留按下时的压扁形变）。
+   v11.27：覆盖范围从「记录卡三格」扩到**所有**会移动的药丸滑块（.seg-lens）——
+   趋势 7/30/90、饮食目标 减脂/维持/增肌 一起改；规则挪到文件末尾，避免被后面的 .seg-lens 基础规则盖回去。 */
 
 /* 其它可点的东西：按下时轻微"软一下"，不是死板的透明度变化 */
 .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch, .topbtn, .arrow, .x, .pg {
@@ -3518,3 +3513,23 @@ html.kb #setSheet {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
 }
+
+/* ==================================================================
+   v11.27：所有「会移动的药丸」滑块统一成 Dock 药丸那一套材质
+   2026-11-07 用户口径：凡是药丸按钮可点击移动时的渐变白，全部删除。
+   覆盖 4 处：Dock 药丸 / 记录卡三类（#addTabs）/ 趋势 7-30-90（#trendSeg）/
+             饮食目标 减脂-维持-增肌（#dietModes）
+   材质：同一块实色白 8.5%（= --btn-solid）+ 无内阴影 + 无彩虹描边 + 无停稳淡入
+        + 无按压光点 + 无径向渐变；只保留按下时的压扁形变（.24s）
+   ⚠️ 必须写在本文件最后：.seg-lens 的基础规则在 1900 行以后，
+      同优先级下后写的才赢，不然会被盖回去（v11.25 放在前面时只对 #addTabs 生效）
+   ================================================================== */
+.seg-lens .lens-body,
+.seg-lens.settled .lens-body,
+.seg-lens.press .lens-body {
+  background: var(--lens-solid, var(--btn-solid));
+  box-shadow: none;
+}
+.seg-lens .lens-body::before,
+.seg-lens .lens-body::after { display: none; }
+.seg-lens .hl { display: none; }
