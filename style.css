@@ -3488,3 +3488,33 @@ html.kb #setSheet {
   border: 1px solid transparent;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
 }
+
+/* ==================================================================
+   v11.26：以「首页卡牌」为唯一基准，统一记录卡 / 设置卡里的内层容器
+   2026-11-07 用户口径：首页卡牌的描边和模糊没问题，进入「记录」「设置」后
+   里面的按钮和卡牌没统一 —— 以首页卡牌为准统一掉。
+
+   基准实测（.card / .stats / .macros / .meal）：
+     background-image: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bot)), var(--edge-gloss)
+     background-clip: padding-box, border-box;  border: 1px solid transparent;
+     backdrop-filter: var(--glass-blur-2);      box-shadow: none
+
+   只改材质（底色/描边/模糊/光影），尺寸、圆角、间距、文案一律不动。
+   ⚠️ 这些内层容器本来就都带 1px transparent 边框，所以这里不会产生位移。
+   ================================================================== */
+#addTabs,
+#photoActions,
+#textInput,
+#pane-photo .pslot-empty,
+#setBody .card,
+#setBody .setrows,
+#nlogFoot .setrows {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+}
