@@ -3533,3 +3533,22 @@ html.kb #setSheet {
 .seg-lens .lens-body::before,
 .seg-lens .lens-body::after { display: none; }
 .seg-lens .hl { display: none; }
+
+/* ==================================================================
+   v11.28：顶栏 4 个按钮（数据同步 / 强制更新 / 提醒记录 / 设置）
+   材质对齐 Dock 栏那一套（2026-11-07 用户口径：尺寸没问题，是风格没统一）
+   原来：透明填充 + edge-gloss 描边 + inset 白 10% 高光，没有底、没有模糊
+   现在：和 Dock 同一组 —— 黑 46%→58% 玻璃渐变 + edge-gloss + blur(10px) saturate(1.5) + 无阴影
+   只改材质；圆角、内边距、字号、图标尺寸一律不动。
+   ⚠️ 只写 .topbtn，不碰共用那条规则里的 .btn / .chip / .pgbtn / .pickbtn。
+   ================================================================== */
+.topbtn {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: var(--glass-blur-2);
+  backdrop-filter: var(--glass-blur-2);
+}
