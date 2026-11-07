@@ -793,8 +793,9 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
 
 {"items":[{"name":"食物中文名","grams":180,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8,
  "label":{"basis_grams":12.5,"unit":"kJ","energy":266,"protein":1.0,"carb":6.6,"fat":3.7},
- "label_rows":[{"name":"蛋白质","value":1.0,"unit":"g","nrv":2}]}],"dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
-（label / label_rows 只在图里真的有营养成分表时才给；没有就都省略）`;
+ "label_rows":[{"name":"蛋白质","value":1.0,"unit":"g","nrv":2}]}],"photo_kind":"food","dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
+（label / label_rows 只在图里真的有营养成分表时才给；没有就都省略）
+（photo_kind：主图是实际吃的食物就填 "food"，是包装上的营养成分表就填 "label"；只有一张图时必须给）`;
 
 const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃了什么，请估算热量。
 

@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.23', d: '11-07', items: [
+    '改：只传一张照片时，识别出它是营养成分表就自动挪到「营养成分表」那一格（不再显示在「食物照片」格里）',
+  ] },
   { v: 'v11.22', d: '11-06', items: [
     '修：Dock 选中块留白按「记录卡里拍照胶囊离外层 7px」这个基准来（上一版错用了 14），胶囊圆角 44',
   ] },
@@ -3334,7 +3337,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.22';
+const APP_VERSION = 'v11.23';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4424,6 +4427,22 @@ async function handlePhoto2(file) {
   }
 }
 
+/* 把两格照片（数据 + 预览）对调：识别出是营养表、却落在「食物照片」格时用它归位 */
+function swapPhotoSlots() {
+  const t1 = S.photoData; S.photoData = S.photo2Data; S.photo2Data = t1;
+  const t2 = S.photoURL;  S.photoURL  = S.photo2URL;  S.photo2URL  = t2;
+  const pv = $('#photoPreview'), pv2 = $('#pv2');
+  const ea = $('#emptyA'), eb = $('#emptyB');
+  const d1 = $('#photoDel'), d2 = $('#del2');
+  if (pv)  { pv.src = S.photoURL || '';  pv.hidden = !S.photoURL; }
+  if (pv2) { pv2.src = S.photo2URL || ''; pv2.hidden = !S.photo2URL; }
+  if (ea) ea.hidden = !!S.photoData;
+  if (eb) eb.hidden = !!S.photo2Data;
+  if (d1) d1.hidden = !S.photoData;
+  if (d2) d2.hidden = !S.photo2Data;
+  saveDraft();
+}
+
 /* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */
 const DRAFT_KEY = 'calorie-ledger-draft';
 function readDraft() {
@@ -4575,6 +4594,13 @@ async function runPhoto() {
     /* v9.21 用户口径：既拍照、又从搜索加了食物时，两边都要留下、一起统计。
        以前这里直接 `S.items = 识别结果`，会把搜索里已经加进来的全冲掉。
        现在：搜索加的（_src !== 'photo'）原样保留，识别出来的接在后面。 */
+    /* v11.23 用户口径：识别出这张是营养成分表、却因为它先进了「食物照片」格 ——
+       识别完就把它挪到「营养成分表」那一格，看到的和它的身份对得上。只有一张图时才挪。 */
+    try {
+      const kind = r.photo_kind
+        || ((r.items || []).length === 1 && (r.items[0].label || r.items[0].label_rows) ? 'label' : 'food');
+      if (kind === 'label' && S.photoData && !S.photo2Data) swapPhotoSlots();
+    } catch (e) {}
     const fromPhoto = r.items.map(x => applyKnownFood({ ...x, _src: 'photo' }));
     /* v10.44：这段话之前要是已经单独按文字算过（items 上留着 _text），
        这次「图文合并」的结果就是同一顿饭的最终答案 → 把那一份换掉，不许算两遍。
