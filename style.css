@@ -1092,7 +1092,7 @@ body.add-open .sheet-mask.on {
    2. 去掉两层 inset 阴影（练账 box-shadow: none）；
    3. 去掉那圈 conic 彩虹描边 ::before；
    4. 去掉按压光点 .hl；
-   5. 只有按下时才露出那条径向渐变，数值与练账 .pill.press .pillbody 同一组。
+   5. （v11.25 起）按下时那条径向渐变也删了 —— 药丸任何时候都是同一块实色。
    作用域只写 .dock-lens，分段滑块 .seg-lens 的材质不受影响。
    ================================================================== */
 .dock-lens .lens-body,
@@ -1100,12 +1100,19 @@ body.add-open .sheet-mask.on {
   background: var(--btn-solid);
   box-shadow: none;
 }
-.dock-lens.press .lens-body {
-  background: radial-gradient(120% 150% at 50% -25%, rgba(255,255,255,.26), rgba(255,255,255,.086) 55%, rgba(255,255,255,.03) 100%);
-}
 .dock-lens .lens-body::before,
 .dock-lens .lens-body::after { display: none; }
 .dock-lens .hl { display: none; }
+
+/* v11.25：药丸不再有「按下瞬间露一下渐变白」—— 用户 2026-11-07 要求把这类渐变全部删掉，
+   药丸任何时候都是同一块实色（只保留按下时的压扁形变）。 */
+#addTabs .seg-lens .lens-body,
+#addTabs .seg-lens.settled .lens-body,
+#addTabs .seg-lens.press .lens-body {
+  background: var(--lens-solid, var(--btn-solid));
+  box-shadow: none;
+}
+#addTabs .seg-lens .lens-body::after { display: none; }
 
 /* 其它可点的东西：按下时轻微"软一下"，不是死板的透明度变化 */
 .btn, .seg button, .chip, .srow, .modes button, .pgbtn, .swatch, .topbtn, .arrow, .x, .pg {

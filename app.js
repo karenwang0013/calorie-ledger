@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.25', d: '11-07', items: [
+    '改：药丸滑块的渐变白效果全部删掉 —— Dock 选中块、记录卡里「拍照 / 搜索」三格，任何时候都是同一块实色，只保留按下时的压扁',
+  ] },
   { v: 'v11.24', d: '11-07', items: [
     '改：Dock 和选中块的颜色改成「练账」那一套 —— 选中块平时是一块干净的白 8.5%（去掉内阴影、边缘彩虹光、按压光点），Dock 顶部那道细高光也去掉',
   ] },
@@ -3340,7 +3343,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.24';
+const APP_VERSION = 'v11.25';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
