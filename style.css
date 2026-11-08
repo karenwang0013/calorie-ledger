@@ -3722,3 +3722,8 @@ html.kb #setSheet {
   color: #f2f4f2 !important;
 }
 #addSheet .chip{background:#131514 !important}
+#addSheet .chip{
+  box-shadow: none !important;
+  background-image: none !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+}
