@@ -2326,7 +2326,7 @@ body.add-open .sheet-mask.on {
 .srow em { margin-left: auto; font-style: normal; color: var(--muted2); font-size: 12px; }
 .srow i { color: var(--muted2); font-style: normal; font-size: 15px; margin-left: 4px; }
 .seclabel { padding: 0 26px 8px; font-size: 11px; color: var(--muted2); letter-spacing: .6px; }
-.mehead { display: flex; align-items: center; gap: 4px; padding: 0 10px 10px; }
+.mehead { display: flex; align-items: center; gap: 4px; padding: 0 18px 10px; }  /* 跟卡片左右 18 对齐 */
 .mehead-back {
   width: 44px; height: 44px; display: grid; place-items: center;
   background: none; border: 0; color: var(--text);
@@ -3553,3 +3553,17 @@ html.kb #setSheet {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* ---------- 设置：整页（跟「训练账本」同一套：盖住 Dock/顶栏、无动画、标题对齐卡牌） ---------- */
+#setSheet.page{
+  position:fixed;left:0;right:0;top:0;bottom:0;
+  width:100%;max-width:none;max-height:none;height:100% !important;margin:0;
+  border-radius:0;border:0;background:#0d0f0e;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  transform:none;opacity:1;transition:none;
+  padding:calc(var(--safe-t,0px) + 14px) 0 calc(var(--safe-b,0px) + 24px);
+  z-index:999;overflow:hidden;display:flex;flex-direction:column;
+}
+#setSheet.page .sh-hd{padding:0 18px;margin:0 0 8px}
+#setSheet.page .sh-body{flex:1 1 auto;min-height:0;overflow-y:auto}
+#setSheet.page .grab{display:none}

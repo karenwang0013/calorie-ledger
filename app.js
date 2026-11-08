@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.32', d: '11-09', items: [
+    '设置改成整页：盖住顶栏和 Dock、无动画，标题栏跟卡牌左右对齐；子页也是整页',
+    '设置里加「左边缘右滑返回」手势：跟手右拖，松手滑出；子页回设置，设置回原页面',
+    '关闭设置不再播「从上面落下」的位移'
+  ] },
   { v: 'v11.31', d: '11-08', items: [
     'iPad 适配回调：Dock 圆角跟设备屏幕走（iPad 18 / 手机不变），去掉 v10.95 那三行无条件写死的 52/44',
     'Dock 离屏幕底在 iPad 横屏也跟竖屏一致（8），不再跳到 40 悬在半空',
@@ -3363,7 +3368,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.31';
+const APP_VERSION = 'v11.32';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7256,6 +7261,8 @@ function openSetCard() {
   refreshSetBody();
   document.body.classList.add('set-open');
   raiseSheet(sheet);
+  sheet.classList.add('page');     // 整页显示（跟训练账本一致）
+  sheet.style.zIndex = '999';      // 盖住顶栏和 Dock（raiseSheet 会给一个 61 的内联值）
   if (mask) mask.classList.add('on');
   sheet.classList.add('on');
 }
@@ -7267,10 +7274,17 @@ function closeSetCard() {
   sheet.style.height = '';       // 清掉子页锁的高度
   document.body.classList.remove('set-open');
   if (mask) mask.classList.remove('on');
-  sheet.classList.remove('on');
-  sheet.classList.remove('dragging');
-  sheet.style.transform = '';
-  sheet.style.opacity = '';
+  if (sheet.classList.contains('page')){
+    /* 整页关闭：瞬间消失，不要落下动画 */
+    sheet.style.display = 'none';
+    sheet.classList.remove('on'); sheet.classList.remove('page');
+    setTimeout(function(){ sheet.style.display = ''; sheet.style.zIndex = ''; }, 80);
+  } else {
+    sheet.classList.remove('on');
+    sheet.classList.remove('dragging');
+    sheet.style.transform = '';
+    sheet.style.opacity = '';
+  }
 }
 
 /* 子页返回：回到设置卡（并且回到打开卡时所在的那个页面） */
@@ -10104,3 +10118,75 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* 设置子页：从屏幕左边缘往右滑 = 返回（跟「训练账本」同一套手感） */
+(function(){
+  var sx = 0, sy = 0, active = false, dx = 0;
+  function backBtn(){ return document.getElementById('meBack'); }
+  document.addEventListener('touchstart', function(e){
+    if (!backBtn()) return;
+    var t = e.touches[0];
+    if (!t || t.clientX > 26) return;
+    active = true; sx = t.clientX; sy = t.clientY; dx = 0;
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e){
+    if (!active) return;
+    var t = e.touches[0]; if (!t) return;
+    if (Math.abs(t.clientY - sy) > 70) { active = false; return; }
+    dx = Math.max(0, t.clientX - sx);
+  }, { passive: true });
+  document.addEventListener('touchend', function(){
+    if (!active) return;
+    active = false;
+    if (dx > 72){
+      var b = backBtn();
+      if (b) b.click();
+    }
+    dx = 0;
+  }, { passive: true });
+  document.addEventListener('touchcancel', function(){ active = false; dx = 0; }, { passive: true });
+})();
+
+/* 设置整页：左边缘右滑跟手返回（子页回设置，设置页关闭） */
+(function(){
+  var sx = 0, sy = 0, active = false, dx = 0, el = null;
+  function pageSheet(){
+    var s = document.getElementById('setSheet');
+    return (s && s.classList.contains('page') && s.classList.contains('on')) ? s : null;
+  }
+  document.addEventListener('touchstart', function(e){
+    el = pageSheet(); if (!el) return;
+    var t = e.touches[0]; if (!t || t.clientX > 26) return;
+    active = true; sx = t.clientX; sy = t.clientY; dx = 0;
+    el.style.transition = 'none';
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e){
+    if (!active || !el) return;
+    var t = e.touches[0]; if (!t) return;
+    if (Math.abs(t.clientY - sy) > 70) { active = false; el.style.transition = ''; el.style.transform = ''; return; }
+    dx = Math.max(0, t.clientX - sx);
+    el.style.transform = 'translateX(' + dx + 'px)';
+  }, { passive: true });
+  document.addEventListener('touchend', function(){
+    if (!active || !el) return;
+    active = false;
+    var target = el; el = null;
+    if (dx > 72){
+      target.style.transition = 'transform .2s ease-out';
+      target.style.transform = 'translateX(100%)';
+      setTimeout(function(){
+        target.style.transition = ''; target.style.transform = '';
+        if (mePage) backToSetCard(); else closeSetCard();
+      }, 210);
+    } else {
+      target.style.transition = 'transform .18s ease-out';
+      target.style.transform = 'translateX(0)';
+      setTimeout(function(){ target.style.transition = ''; target.style.transform = ''; }, 200);
+    }
+    dx = 0;
+  }, { passive: true });
+  document.addEventListener('touchcancel', function(){
+    if (el){ el.style.transition = ''; el.style.transform = ''; }
+    active = false; el = null; dx = 0;
+  }, { passive: true });
+})();
