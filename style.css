@@ -3696,3 +3696,17 @@ html.kb #setSheet {
   backdrop-filter: none !important;
   color: #f2f4f2 !important;
 }
+/* 搜索快捷词：照顶栏按钮的「玻璃渐变 + 光泽描边 + 顶部高光」（不是实色） */
+#addSheet .chip{
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%),
+    var(--edge-gloss) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #f2f4f2 !important;
+}
