@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.30', d: '11-08', items: [
+    '日期左右两个箭头：材质/颜色/质感改成和卡片同一套玻璃（原来的实色 --card2 #1B1F23 比卡片亮 12 级、偏蓝 20 级，看着不是一块材料）',
+  ] },
   { v: 'v11.29', d: '11-07', items: [
     '改：顶栏 4 个按钮改成「训练账本」右上角那颗的样子 —— 透底 + 只留一圈光泽描边（上一版那层玻璃底和模糊去掉了）',
   ] },
@@ -3355,7 +3358,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.29';
+const APP_VERSION = 'v11.30';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

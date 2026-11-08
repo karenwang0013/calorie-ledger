@@ -289,14 +289,12 @@ html.kb .sc-body {
 .arrow {
   width: 40px; height: 40px;
   border-radius: 12px;
-  background: var(--card2);
-  border: 1px solid var(--line2);
   color: var(--text);
   display: flex; align-items: center; justify-content: center;
   padding: 0;
 }
 .arrow svg { width: 24px; height: 24px; display: block; }
-.arrow:active { background: var(--card); transform: scale(.94); }
+.arrow:active { transform: scale(.94); filter: brightness(1.14); }
 .arrow:disabled { opacity: 0.45; }
 
 .setup-tip {
@@ -2592,7 +2590,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    ⚠️ 质感锁死：所有卡片的玻璃质感只能由下面这一处定义（--glass-card + --edge-gloss + --glass-blur），
       新做卡片请直接复用 .card 类，不要另写 background / backdrop-filter，guard-check 会拦住。 */
 /* 卡片 = Dock 同一块玻璃（尺寸/圆角/内边距一律不动，只同步材质）。改材质只改 :root 那 5 个变量 */
-.card, .stats, .macros, .meal, .seg, .setgroup {
+.card, .stats, .macros, .meal, .seg, .setgroup, .arrow {
   border: 1px solid transparent;
   background-color: transparent;
   background-image: linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
@@ -2641,7 +2639,7 @@ select {
 }
 
 /* 按钮 / 小方块：仍用柔和的那套 */
-.topbtn, .arrow, .btn, .pickbtn, .urlbox, .swatch, .kbd {
+.topbtn, .btn, .pickbtn, .urlbox, .swatch, .kbd {
   border: 1px solid transparent;
   background-image: linear-gradient(var(--card2), var(--card2)), var(--edge-gloss);
   background-origin: border-box;
