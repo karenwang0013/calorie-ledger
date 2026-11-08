@@ -9635,9 +9635,12 @@ function init() {
     const t = e.touches[0];
     if (t.clientX > 30) { sw = null; return; }
     const el = document.querySelector('.sheet.on') || document.querySelector('.modal.on');
+    /* 设置子页：拖的是内容区（背景整页不动），这样滑走时露出的是设置主页而不是 App 首页 */
+    const isSub = !!(el && el.id === 'setSheet' && el.querySelector('.mehead'));
+    const dragEl = isSub ? document.getElementById('setBody') : el;
     sw = el
-      ? { el, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
-      : { el: null, x0: t.clientX, y0: t.clientY, dx: 0, active: false };
+      ? { el, dragEl, isSub, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
+      : { el: null, dragEl: null, isSub: false, x0: t.clientX, y0: t.clientY, dx: 0, active: false };
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
@@ -9652,33 +9655,55 @@ function init() {
       if (sw.el) sw.el.classList.add('dragging');
     }
     sw.dx = Math.max(0, dx);
-    if (sw.el) {
-      sw.el.style.transform = 'translateX(' + sw.dx + 'px)';
-      sw.el.style.opacity = String(Math.max(0.55, 1 - sw.dx / 700));
+    const dm = sw.dragEl || sw.el;
+    if (dm) {
+      dm.style.transform = 'translateX(' + sw.dx + 'px)';
+      dm.style.opacity = String(Math.max(0.55, 1 - sw.dx / 700));
     }
   }, { passive: true });
 
   document.addEventListener('touchend', () => {
     if (!sw) return;
-    const { el, dx, active } = sw;
+    const { el, dragEl, isSub, dx, active } = sw;
     sw = null;
     if (!active) return;
     if (el) el.classList.remove('dragging');
+    const dm = dragEl || el;
     if (dx > 100) {
-      if (el) {
-        el.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out';
-        el.style.transform = 'translateX(102%)';
-        el.style.opacity = '0';
+      if (isSub && dm) {
+        /* 子页：内容滑走 → 立刻换成设置主页 → 从右侧滑回来（不会闪到 App 首页） */
+        dm.style.transition = 'transform .22s cubic-bezier(.32,.72,0,1), opacity .22s ease-out';
+        dm.style.transform = 'translateX(102%)';
+        dm.style.opacity = '0';
+        setTimeout(() => {
+          mePage = null; renderMe();
+          const b = document.getElementById('setBody'); if (b) b.scrollTop = 0;
+          dm.style.transition = 'none';
+          dm.style.transform = 'translateX(60px)';
+          dm.style.opacity = '0';
+          requestAnimationFrame(() => {
+            dm.style.transition = 'transform .26s cubic-bezier(.32,.72,0,1), opacity .26s ease-out';
+            dm.style.transform = '';
+            dm.style.opacity = '';
+            setTimeout(() => { dm.style.transition = ''; }, 300);
+          });
+        }, 230);
+      } else {
+        if (dm) {
+          dm.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out';
+          dm.style.transform = 'translateX(102%)';
+          dm.style.opacity = '0';
+        }
+        setTimeout(() => {
+          if (dm) { dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; }
+          goBack();
+        }, 270);
       }
-      setTimeout(() => {
-        if (el) { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; }
-        goBack();
-      }, 270);
-    } else if (el) {
-      el.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out';
-      el.style.transform = '';
-      el.style.opacity = '';
-      setTimeout(() => { el.style.transition = ''; }, 400);
+    } else if (dm) {
+      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out';
+      dm.style.transform = '';
+      dm.style.opacity = '';
+      setTimeout(() => { dm.style.transition = ''; }, 400);
     } else {
       goBack();
     }
