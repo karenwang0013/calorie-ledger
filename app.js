@@ -7268,6 +7268,8 @@ function openSetCard() {
   const sheet = $('#setSheet'), mask = $('#setMask');
   if (!sheet) return;
   closeOtherCards('set');           // 原则：三张卡同时只允许开一张
+  var _sf0 = document.getElementById('subFoot');
+  if (_sf0) _sf0.classList.remove('on');   // 回到设置主页时底部按钮必须收起来
   if (!setCardOn()) setFromView = (S.view && S.view !== 'me') ? S.view : (setFromView || 'today');
   refreshSetBody();
   document.body.classList.add('set-open');
