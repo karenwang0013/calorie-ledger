@@ -3605,4 +3605,32 @@ html.kb #setSheet {
   padding:calc(var(--safe-t,0px) + 14px) 0 calc(var(--safe-b,0px) + 24px);
 }
 #setSheet .subpage.on{display:block}
-#setSheet.page.subopen > .sh-hd{display:none}
+/* 主页标题栏保持可见，被子页层自然遮住，滑出时不会闪 */
+
+/* ---------- 设置二级页：去框 + 重新排版（分组标题 / 内容分组留白 / 行间细线） ---------- */
+#subPage .card{
+  background:none !important;background-image:none !important;border:0 !important;
+  border-radius:0 !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  margin:0 0 26px !important;padding:0 18px !important;
+}
+#subPage .card > h3,
+#subPage .card .cardhd h3{
+  font-size:12.5px !important;font-weight:600 !important;letter-spacing:.08em;
+  color:var(--muted2) !important;margin:0 0 12px !important;padding:0 !important;
+}
+#subPage .card .hint{margin:0 0 12px !important;padding:0 !important;font-size:12.5px;line-height:1.7}
+#subPage .card .field{margin:0 0 16px !important}
+#subPage .card .field label{margin-bottom:8px}
+#subPage .card .btnrow{gap:10px;margin-top:4px}
+#subPage .card .btnrow .btn{flex:1}
+#subPage .card .rel-date{margin:16px 0 6px;font-size:12.5px;color:var(--muted)}
+#subPage .card .rel-list{margin:6px 0 0;padding-left:18px}
+#subPage .card .rel-list li{margin:0 0 7px;line-height:1.6;font-size:12.5px}
+#subPage .card .rel-list li:last-child{margin-bottom:0}
+#subPage .card .cardhd{margin-bottom:10px}
+#subPage .card .hlist .hrow{padding:11px 0;border-top:1px solid var(--line)}
+#subPage .card .hlist .hrow:first-child{border-top:0}
+#subPage .card .btnrow{display:grid !important;grid-template-columns:1fr 1fr;gap:10px}
+#subPage .card .btnrow .btn{width:100%;margin:0}
+#subPage .card .btnrow .btn .brk{display:none}
