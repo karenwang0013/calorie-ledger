@@ -7286,7 +7286,16 @@ function closeSetCard() {
   mePage = null;                 // 下次打开从首页开始
   sheet.style.height = '';       // 清掉子页锁的高度
   document.body.classList.remove('set-open');
-  if (mask) mask.classList.remove('on');
+  if (mask){
+    /* 整页关闭不要那层遮罩淡出（会黑一下） */
+    if (sheet.classList.contains('page')){
+      mask.style.transition = 'none';
+      mask.classList.remove('on');
+      setTimeout(function(){ mask.style.transition = ''; }, 120);
+    } else {
+      mask.classList.remove('on');
+    }
+  }
   if (sheet.classList.contains('page')){
     /* 整页关闭：瞬间消失，不要落下动画 */
     sheet.style.display = 'none';
