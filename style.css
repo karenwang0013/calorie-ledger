@@ -3634,3 +3634,6 @@ html.kb #setSheet {
 #subPage .card .btnrow{display:grid !important;grid-template-columns:1fr 1fr;gap:10px}
 #subPage .card .btnrow .btn{width:100%;margin:0}
 #subPage .card .btnrow .btn .brk{display:none}
+/* 二级页里的横向图标条：右侧延伸到屏幕边缘（滑到最后一个也在屏幕边消失，不在卡片内边消失） */
+#subPage .card .icrow{margin-right:-18px}
+#subPage .card .icopts{padding-right:18px}
