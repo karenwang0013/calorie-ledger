@@ -3677,3 +3677,4 @@ html.kb #setSheet {
 #addSheet #pane-photo .drop.photobox,#addSheet #pane-search .slist{margin:0 !important}
 #addSheet #pane-photo,#addSheet #pane-search{width:100% !important;box-sizing:border-box !important;padding:0 !important;margin:0 !important}
 #addSheet .sh-body{padding:0 20px !important}
+#addSheet .sh-body{margin:0 !important;padding:0 20px !important;width:100% !important;box-sizing:border-box !important}
