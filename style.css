@@ -3710,3 +3710,14 @@ html.kb #setSheet {
   backdrop-filter: none !important;
   color: #f2f4f2 !important;
 }
+/* 按用户截图：顶栏按钮是实色深灰、几乎无描边；快捷词照这个来 */
+#addSheet .chip{
+  background: #1b1f23 !important;
+  background-image: none !important;
+  border: 1px solid rgba(255,255,255,.05) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-radius: 11px !important;
+  color: #f2f4f2 !important;
+}
