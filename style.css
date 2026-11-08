@@ -3649,3 +3649,4 @@ html.kb #setSheet {
 #setSheet .subfoot .btn{width:100%;margin:0}
 /* 个性化页：卡片里那个「恢复全部默认」隐藏（底部固定那个才是唯一入口） */
 #subPage #icReset{display:none !important}
+#setSheet .subfoot .btn{border-radius:26px}
