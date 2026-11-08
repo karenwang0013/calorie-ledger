@@ -7276,7 +7276,8 @@ function openSetCard() {
   raiseSheet(sheet);
   sheet.classList.add('page');     // 整页显示（跟训练账本一致）
   sheet.style.zIndex = '999';      // 盖住顶栏和 Dock（raiseSheet 会给一个 61 的内联值）
-  if (mask) mask.classList.add('on');
+  /* 整页模式不需要遮罩：它那 0.6s 的背景色过渡就是关闭时「黑一下」的来源 */
+  if (mask) mask.classList.remove('on');
   sheet.classList.add('on');
 }
 
@@ -7723,8 +7724,11 @@ function renderMe() {
 
   var _sb = $('#setBody'), _sp = document.getElementById('subPage'), _shd = document.getElementById('setSheet');
   var _sf = document.getElementById('subFoot');
-  if (_sf) _sf.classList.toggle('on', mePage === 'theme');   // 个性化页底部固定两个按钮
-  if (_sp) _sp.style.paddingBottom = (mePage === 'theme') ? 'calc(var(--safe-b,0px) + 96px)' : '';
+  if (_sf) _sf.classList.toggle('on', mePage === 'theme');   // 个性化页底部固定按钮
+  if (_sp) {
+    /* 留白 = 底部按钮区真实高度 + 8，不能再固定写死（写死就是一大块空） */
+    _sp.style.paddingBottom = (mePage === 'theme' && _sf) ? (_sf.offsetHeight + 8) + 'px' : '';
+  }
   if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
     if (_shd) _shd.classList.add('subopen');
