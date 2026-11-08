@@ -3624,7 +3624,7 @@ html.kb #setSheet {
 #subPage .card .field label{margin-bottom:8px}
 #subPage .card .btnrow{gap:10px;margin-top:4px}
 #subPage .card .btnrow .btn{flex:1}
-#subPage .card .rel-date{margin:16px 0 6px;font-size:12.5px;color:var(--muted)}
+#subPage .card .rel-date{margin:16px 0 6px}
 #subPage .card .rel-list{margin:6px 0 0;padding-left:18px}
 #subPage .card .rel-list li{margin:0 0 7px;line-height:1.6;font-size:12.5px}
 #subPage .card .rel-list li:last-child{margin-bottom:0}

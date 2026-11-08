@@ -7203,6 +7203,14 @@ function setCardHeader() {
   const hd = $('#setSheet .sh-hd');
   if (!hd) return;
   const t = hd.querySelector('h2'), v = $('#setVer'), back = $('#setBack');
+  /* 整页模式：主页标题栏永远显示「设置 + 版本号」，子页有自己的标题层，不去改它 */
+  const _sheet = document.getElementById('setSheet');
+  if (_sheet && _sheet.classList.contains('page')) {
+    if (t) t.textContent = '设置';
+    if (v) { v.hidden = false; v.textContent = APP_VERSION; }
+    if (back) back.hidden = false;
+    return;
+  }
   if (mePage) {
     if (t) t.textContent = SET_SUB_TITLE[mePage] || '设置';
     if (v) v.hidden = true;
