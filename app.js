@@ -7724,7 +7724,7 @@ function renderMe() {
   var _sb = $('#setBody'), _sp = document.getElementById('subPage'), _shd = document.getElementById('setSheet');
   var _sf = document.getElementById('subFoot');
   if (_sf) _sf.classList.toggle('on', mePage === 'theme');   // 个性化页底部固定两个按钮
-  if (_sp) _sp.style.paddingBottom = (mePage === 'theme') ? 'calc(var(--safe-b,0px) + 150px)' : '';
+  if (_sp) _sp.style.paddingBottom = (mePage === 'theme') ? 'calc(var(--safe-b,0px) + 96px)' : '';
   if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
     if (_shd) _shd.classList.add('subopen');
