@@ -3659,8 +3659,21 @@ html.kb #setSheet {
   left:0 !important;right:0 !important;
   bottom:0 !important;
   max-width:none !important;
-  border-radius:0 !important;
+  border-radius:var(--dock-r) var(--dock-r) 0 0 !important;   /* 顶部仍保留圆角，左右/底部贴边 */
   padding-bottom:calc(var(--safe-b,0px) + 8px) !important;
 }
 #addSheet .sh-body{padding-left:20px;padding-right:20px}
 #addSheet .sh-foot{padding-bottom:calc(var(--safe-b,0px) + 12px)}
+/* 贴边后内部跟着放宽：内容用满卡片宽度（原来还套着一层 20 的缩进） */
+#addSheet .pane,
+#addSheet #pane-photo,
+#addSheet #pane-search,
+#addSheet #addContent,
+#addSheet #descBlock{padding-left:0;padding-right:0}
+#addSheet .sh-body{padding-left:20px;padding-right:20px}
+#addSheet .drop.photobox{padding:0}
+#addSheet .pane{margin-left:0 !important;margin-right:0 !important;width:auto !important;max-width:none !important}
+#addSheet #pane-photo,#addSheet #pane-search{margin:0 !important;padding:0 !important;width:auto !important;max-width:none !important}
+#addSheet #pane-photo .drop.photobox,#addSheet #pane-search .slist{margin:0 !important}
+#addSheet #pane-photo,#addSheet #pane-search{width:100% !important;box-sizing:border-box !important;padding:0 !important;margin:0 !important}
+#addSheet .sh-body{padding:0 20px !important}
