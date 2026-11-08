@@ -7249,6 +7249,9 @@ function measureRootH() {
 /* 子页 → 回卡首页 */
 function setBackToRoot() {
   mePage = null;
+  const sp = document.getElementById('subPage'), shd = document.getElementById('setSheet');
+  if (sp) { sp.classList.remove('on'); sp.innerHTML = ''; }
+  if (shd) shd.classList.remove('subopen');
   refreshSetBody();          // 松绑 → 回列表 → 重新量高
   const b = $('#setBody'); if (b) b.scrollTop = 0;
 }
@@ -7699,10 +7702,15 @@ function renderMe() {
       </div>`;
   }
 
-  var _sb = $('#setBody');
-  if (_sb) _sb.classList.toggle('sub', !!mePage);   // 子页去掉卡牌外壳
-  if (mePage) $('#setBody').innerHTML = h;   // 子页就在卡里换内容
-  else $('#meBody').innerHTML = h;
+  var _sb = $('#setBody'), _sp = document.getElementById('subPage'), _shd = document.getElementById('setSheet');
+  if (mePage) {
+    if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
+    if (_shd) _shd.classList.add('subopen');
+  } else {
+    if (_sp) { _sp.classList.remove('on'); _sp.innerHTML = ''; }
+    if (_shd) _shd.classList.remove('subopen');
+    $('#meBody').innerHTML = h;
+  }
   if (S.view === 'me') fitAboutFill();
   if (S.view === 'me') fitMeScroll();
   wireMe();
@@ -7728,6 +7736,14 @@ function fitMeScroll() {
 
 function fitAboutFill() {
   const doc = document.documentElement;
+  /* 整页模式下这一页交给外层滚动，不再给内层写死高度 */
+  const _ss = document.getElementById('setSheet');
+  if (_ss && _ss.classList.contains('page')) {
+    const _f = document.querySelector('.about-fill');
+    if (_f) { _f.style.height = ''; _f.style.overflow = ''; }
+    doc.classList.remove('noscroll');
+    return;
+  }
   const fill = document.querySelector('.about-fill');
   if (!fill) { doc.classList.remove('noscroll'); return; }
   const tab = document.querySelector('.tabbar');
@@ -9636,8 +9652,9 @@ function init() {
     if (t.clientX > 30) { sw = null; return; }
     const el = document.querySelector('.sheet.on') || document.querySelector('.modal.on');
     /* 设置子页：拖的是内容区（背景整页不动），这样滑走时露出的是设置主页而不是 App 首页 */
-    const isSub = !!(el && el.id === 'setSheet' && el.querySelector('.mehead'));
-    const dragEl = isSub ? document.getElementById('setBody') : el;
+    const _sp = document.querySelector('#setSheet .subpage.on');
+    const isSub = !!_sp;
+    const dragEl = isSub ? _sp : el;
     sw = el
       ? { el, dragEl, isSub, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
       : { el: null, dragEl: null, isSub: false, x0: t.clientX, y0: t.clientY, dx: 0, active: false };
@@ -9676,17 +9693,8 @@ function init() {
         dm.style.transform = 'translateX(102%)';
         dm.style.opacity = '0';
         setTimeout(() => {
-          mePage = null; renderMe();
-          const b = document.getElementById('setBody'); if (b) b.scrollTop = 0;
-          dm.style.transition = 'none';
-          dm.style.transform = 'translateX(60px)';
-          dm.style.opacity = '0';
-          requestAnimationFrame(() => {
-            dm.style.transition = 'transform .26s cubic-bezier(.32,.72,0,1), opacity .26s ease-out';
-            dm.style.transform = '';
-            dm.style.opacity = '';
-            setTimeout(() => { dm.style.transition = ''; }, 300);
-          });
+          dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = '';
+          setBackToRoot();          // 收掉子页层 → 下面的设置主页直接露出来
         }, 230);
       } else {
         if (dm) {

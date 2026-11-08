@@ -3573,3 +3573,36 @@ html.kb #setSheet {
 #setSheet.page .sh-hd h2{margin-left:auto;font-size:24px;letter-spacing:.02em}
 #setSheet.page .sh-hd .vtag{flex:none}
 #setSheet.page .sh-hd .backbtn{margin-left:-2px}
+
+/* ---------- 设置子页：去卡牌 + 重新排版（分组标题 + 内容平铺，滚动到底就是屏幕底） ---------- */
+#setSheet.page #setBody .about-fill{display:block !important;height:auto !important;overflow:visible !important}
+#setSheet.page #setBody .about-fill > .card:first-child{
+  flex:none !important;min-height:auto !important;max-height:none !important;overflow:visible !important;
+}
+#setSheet.page #setBody .card{
+  background:none;background-image:none;border:0;border-radius:0;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  margin:0 0 18px;padding:0 18px;
+}
+#setSheet.page #setBody .card.tight{padding:0 18px}
+#setSheet.page #setBody .card > h3,
+#setSheet.page #setBody .card .cardhd h3{
+  font-size:12px;font-weight:600;color:var(--muted2);letter-spacing:.08em;
+  margin:0 0 10px;padding:0;
+}
+#setSheet.page #setBody .card .hint{margin:0 0 10px;padding:0;font-size:12px;line-height:1.65}
+#setSheet.page #setBody .card .field{margin:0 0 14px}
+#setSheet.page #setBody .card .rel-list{margin:6px 0 0;padding-left:18px}
+#setSheet.page #setBody .card .rel-list li{margin:0 0 8px;line-height:1.6}
+#setSheet.page #setBody .card .rel-date{margin:14px 0 4px}
+#setSheet.page #setBody .about-fill > .card{height:auto !important}
+
+/* ---------- 设置子页：独立一层（像一个新的整页），滑出时露出下面的设置主页 ---------- */
+#setSheet .subpage{
+  position:absolute;left:0;right:0;top:0;bottom:0;
+  background:#0d0f0e;z-index:2;display:none;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(var(--safe-t,0px) + 14px) 0 calc(var(--safe-b,0px) + 24px);
+}
+#setSheet .subpage.on{display:block}
+#setSheet.page.subopen > .sh-hd{display:none}
