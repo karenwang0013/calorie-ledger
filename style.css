@@ -3652,3 +3652,18 @@ html.kb #setSheet {
 /* 个性化页：卡片里那个「恢复全部默认」隐藏（底部固定那个才是唯一入口） */
 #subPage #icReset{display:none !important}
 #setSheet .subfoot .btn{border-radius:26px}
+
+/* ---------- 记录卡：贴屏幕边（左右贴边、底部贴底），不再悬浮镂空 ---------- */
+#addSheet{
+  left:0 !important;right:0 !important;
+  bottom:0 !important;
+  max-width:none !important;
+  border-radius:0 !important;
+  border:0 !important;
+  background-image:none !important;
+  background-color:#0d0f0e !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  padding-bottom:calc(var(--safe-b,0px) + 8px) !important;
+}
+#addSheet .sh-body{padding-left:20px;padding-right:20px}
+#addSheet .sh-foot{padding-bottom:calc(var(--safe-b,0px) + 12px)}
