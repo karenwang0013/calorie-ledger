@@ -3661,3 +3661,15 @@ html.kb #setSheet {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
 }
 #addSheet .chip.on{color:var(--lime)}
+/* 搜索快捷词：跟顶栏「数据同步」按钮同一套材质（--card2 + --line 描边 + 圆角 11） */
+#addSheet .chip{
+  background: var(--card2) !important;
+  background-image: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 11px !important;
+  padding: 7px 11px !important;
+  font-size: 12.5px !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+#addSheet .chip.on{ color: var(--lime) !important; }
