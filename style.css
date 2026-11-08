@@ -3655,14 +3655,11 @@ html.kb #setSheet {
 
 /* ---------- 记录卡：贴屏幕边（左右贴边、底部贴底），不再悬浮镂空 ---------- */
 #addSheet{
+  /* 只改尺寸：贴边；材质沿用原来的玻璃 + 光泽描边，一点没动 */
   left:0 !important;right:0 !important;
   bottom:0 !important;
   max-width:none !important;
   border-radius:0 !important;
-  border:0 !important;
-  background-image:none !important;
-  background-color:#0d0f0e !important;
-  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
   padding-bottom:calc(var(--safe-b,0px) + 8px) !important;
 }
 #addSheet .sh-body{padding-left:20px;padding-right:20px}
