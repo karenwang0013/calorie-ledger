@@ -3685,3 +3685,14 @@ html.kb #setSheet {
   backdrop-filter: none !important;
   color: var(--text) !important;
 }
+/* 搜索快捷词：直接照顶栏按钮的实底 + 描边写死，避免被卡片玻璃层影响 */
+#addSheet .chip{
+  background: #1b1f23 !important;
+  background-image: none !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #f2f4f2 !important;
+}
