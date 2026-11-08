@@ -7699,6 +7699,8 @@ function renderMe() {
       </div>`;
   }
 
+  var _sb = $('#setBody');
+  if (_sb) _sb.classList.toggle('sub', !!mePage);   // 子页去掉卡牌外壳
   if (mePage) $('#setBody').innerHTML = h;   // 子页就在卡里换内容
   else $('#meBody').innerHTML = h;
   if (S.view === 'me') fitAboutFill();
@@ -10119,74 +10121,6 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
-/* 设置子页：从屏幕左边缘往右滑 = 返回（跟「训练账本」同一套手感） */
-(function(){
-  var sx = 0, sy = 0, active = false, dx = 0;
-  function backBtn(){ return document.getElementById('meBack'); }
-  document.addEventListener('touchstart', function(e){
-    if (!backBtn()) return;
-    var t = e.touches[0];
-    if (!t || t.clientX > 26) return;
-    active = true; sx = t.clientX; sy = t.clientY; dx = 0;
-  }, { passive: true });
-  document.addEventListener('touchmove', function(e){
-    if (!active) return;
-    var t = e.touches[0]; if (!t) return;
-    if (Math.abs(t.clientY - sy) > 70) { active = false; return; }
-    dx = Math.max(0, t.clientX - sx);
-  }, { passive: true });
-  document.addEventListener('touchend', function(){
-    if (!active) return;
-    active = false;
-    if (dx > 72){
-      var b = backBtn();
-      if (b) b.click();
-    }
-    dx = 0;
-  }, { passive: true });
-  document.addEventListener('touchcancel', function(){ active = false; dx = 0; }, { passive: true });
-})();
 
-/* 设置整页：左边缘右滑跟手返回（子页回设置，设置页关闭） */
-(function(){
-  var sx = 0, sy = 0, active = false, dx = 0, el = null;
-  function pageSheet(){
-    var s = document.getElementById('setSheet');
-    return (s && s.classList.contains('page') && s.classList.contains('on')) ? s : null;
-  }
-  document.addEventListener('touchstart', function(e){
-    el = pageSheet(); if (!el) return;
-    var t = e.touches[0]; if (!t || t.clientX > 26) return;
-    active = true; sx = t.clientX; sy = t.clientY; dx = 0;
-    el.style.transition = 'none';
-  }, { passive: true });
-  document.addEventListener('touchmove', function(e){
-    if (!active || !el) return;
-    var t = e.touches[0]; if (!t) return;
-    if (Math.abs(t.clientY - sy) > 70) { active = false; el.style.transition = ''; el.style.transform = ''; return; }
-    dx = Math.max(0, t.clientX - sx);
-    el.style.transform = 'translateX(' + dx + 'px)';
-  }, { passive: true });
-  document.addEventListener('touchend', function(){
-    if (!active || !el) return;
-    active = false;
-    var target = el; el = null;
-    if (dx > 72){
-      target.style.transition = 'transform .2s ease-out';
-      target.style.transform = 'translateX(100%)';
-      setTimeout(function(){
-        target.style.transition = ''; target.style.transform = '';
-        if (mePage) backToSetCard(); else closeSetCard();
-      }, 210);
-    } else {
-      target.style.transition = 'transform .18s ease-out';
-      target.style.transform = 'translateX(0)';
-      setTimeout(function(){ target.style.transition = ''; target.style.transform = ''; }, 200);
-    }
-    dx = 0;
-  }, { passive: true });
-  document.addEventListener('touchcancel', function(){
-    if (el){ el.style.transition = ''; el.style.transform = ''; }
-    active = false; el = null; dx = 0;
-  }, { passive: true });
-})();
+
+
