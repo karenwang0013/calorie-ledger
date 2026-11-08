@@ -16,10 +16,18 @@
      选中块还是普通圆角 → 看起来一个方一个圆、不再是之前的形状。这里把 squircle 关掉，
      外框和选中块统一成「高度一半」的正圆角胶囊，两者同一个弧。 -->
 <style id="dock-lock">
-.tabbar .inner { corner-shape: round !important; -webkit-corner-shape: round !important; border-radius: 52px !important; }
-.dock-lens { border-radius: 44px !important; }
-.dock-lens .lens-body,
-.dock-lens.press .lens-body { border-radius: 45px !important; }
+/* 手机：外框和选中块统一成「高度一半」的正圆角胶囊（iPhone 屏幕圆角大，Dock 跟着圆） */
+@media (max-width: 520px) {
+  .tabbar .inner { corner-shape: round !important; -webkit-corner-shape: round !important; border-radius: 52px !important; }
+  .dock-lens { border-radius: 44px !important; }
+  .dock-lens .lens-body,
+  .dock-lens.press .lens-body { border-radius: 45px !important; }
+}
+/* iPad / 平板：只关掉 squircle，圆角走 style.css 的 --dock-r（跟这台设备屏幕的圆角匹配），
+   不再写死 52/44 —— 否则 iPad 会被画成手机那种药丸（2026-11-08 用户指出） */
+@media (min-width: 521px) {
+  .tabbar .inner { corner-shape: round !important; -webkit-corner-shape: round !important; }
+}
 </style>
 </head>
 <body>

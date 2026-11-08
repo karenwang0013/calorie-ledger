@@ -2400,7 +2400,8 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
        iPad 上卡宽受 --dock-max 限制并居中，左右间隙 = (100vw - 卡宽) / 2；屏宽放不下 780 时左右就是 --dock-inset（8）。
        上限 40：12.9 英寸那种大屏算出来会是 122，Dock 会悬到屏幕中间去（实测过截图），
        封在 40 才不至于离谱 —— 大屏上四边略有差别，小屏（mini / Air / Pro 11）是完全相等的。 */
-    --dock-bottom: min(40px, max(var(--dock-inset), calc((100vw - var(--dock-max)) / 2)));
+    /* Dock 离底跟竖屏一致（8），不再横屏跳到 40 —— 40 在 744 高的横屏上显得悬在半空 */
+    --dock-bottom: 8px;
     --dock-h: 104px;
     --dock-r: 26px;   /* v10.15：和 JS 最终算出来的一致，首帧就别再是 16 了 */
   }
@@ -2506,7 +2507,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .sc-body { padding-bottom: calc(var(--dock-bottom) + var(--dock-h) + 4px + var(--safe-b)); }
 
   /* 弹层：同一套结构，整体加大 */
-  .sheet { max-width: 560px; }
+  .sheet { max-width: 780px; }   /* 跟 Dock 同宽（iPad 上 560 太窄） */
   .sheet .sh-hd h2 { font-size: 18px; }
   .sheet .sh-hd { padding: 14px 20px 6px; }
   .sheet .sh-body { padding: 6px 20px 20px; }
@@ -2515,13 +2516,13 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
   .toast { font-size: 14px; padding: 12px 20px; }
 }
 
-/* iPad / 手机横屏：还是单列，只是整列更宽、字号再大一号 */
+/* iPad / 手机横屏：内容铺满屏幕宽度（不再居中成一条窄列、两边留大片空白） */
 @media (min-width: 700px) and (orientation: landscape) {
   .topbar {
-    padding-left: max(24px, calc((100vw - 900px) / 2 + 18px));
-    padding-right: max(24px, calc((100vw - 900px) / 2 + 18px));
+    padding-left: 24px;
+    padding-right: 24px;
   }
-  #view-today, #view-trends, #view-me { max-width: 900px; }
+  #view-today, #view-trends, #view-me { max-width: none; }
   .hero svg { width: 360px; height: 360px; }
   .hero .num { font-size: 78px; }
   .hero .sub { font-size: 13px; max-width: 220px; }

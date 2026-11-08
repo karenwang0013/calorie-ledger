@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.31', d: '11-08', items: [
+    'iPad 适配回调：Dock 圆角跟设备屏幕走（iPad 18 / 手机不变），去掉 v10.95 那三行无条件写死的 52/44',
+    'Dock 离屏幕底在 iPad 横屏也跟竖屏一致（8），不再跳到 40 悬在半空',
+    'iPad 横屏内容铺满屏宽：顶栏和内容左右各 24，不再居中成一条窄列、两边留白'
+  ] },
   { v: 'v11.30', d: '11-08', items: [
     '日期左右两个箭头：材质/颜色/质感改成和卡片同一套玻璃（原来的实色 --card2 #1B1F23 比卡片亮 12 级、偏蓝 20 级，看着不是一块材料）',
   ] },
@@ -3358,7 +3363,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.30';
+const APP_VERSION = 'v11.31';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9019,13 +9024,16 @@ function init() {
   // 只剩 app.js 会更新，于是外框方、选中块圆）。这里直接由脚本写死内联样式，app.js 更新到就一定生效。
   try {
     const dk = document.querySelector('.tabbar .inner');
-    if (dk) {
+    // 2026-11-08：这里原来无条件硬写 52/44，iPad 上把按屏宽算出来的 --dock-r(26) 也盖成了药丸。
+    // Dock 的圆角必须跟着设备屏幕走 → 只在手机宽度（≤520）兜底，iPad / 平板一律走 CSS 的 --dock-r。
+    const phoneW = window.matchMedia('(max-width: 520px)').matches;
+    if (dk && phoneW) {
       dk.style.setProperty('border-radius', '52px', 'important');
       dk.style.setProperty('corner-shape', 'round', 'important');
       dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
+      document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '44px', 'important'));
+      document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '45px', 'important'));
     }
-    document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '44px', 'important'));
-    document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '45px', 'important'));
   } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热
   const synced = consumeHealthLink();
@@ -9694,8 +9702,8 @@ function init() {
     const h = parseFloat(cs.getPropertyValue('--dock-h')) || (pad ? 96 : 88);
     let r;
     if (pad) {
-      // iPad 的屏幕圆角比 iPhone 紧得多（约 34），Dock 不能照抄手机的「高度一半」
-      r = Math.max(18, Math.min(34 - inset, h * 0.34));
+      // iPad 的屏幕圆角比 iPhone 紧得多（mini 实测 18），Dock 圆角跟屏幕走 —— 不再是 24（2026-11-08 用户要求）
+      r = Math.max(14, Math.min(18, h * 0.34));
     } else {
       // v10.97：手机一律「高度一半」= 胶囊。不再按屏宽查表、不再看屏幕圆角 ——
       // 外框和选中块用同一个弧，任何设备、任何缓存状态下都不会出现「一个方一个圆」。
