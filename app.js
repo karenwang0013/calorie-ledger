@@ -7711,6 +7711,9 @@ function renderMe() {
   }
 
   var _sb = $('#setBody'), _sp = document.getElementById('subPage'), _shd = document.getElementById('setSheet');
+  var _sf = document.getElementById('subFoot');
+  if (_sf) _sf.classList.toggle('on', mePage === 'theme');   // 个性化页底部固定两个按钮
+  if (_sp) _sp.style.paddingBottom = (mePage === 'theme') ? 'calc(var(--safe-b,0px) + 150px)' : '';
   if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
     if (_shd) _shd.classList.add('subopen');
@@ -9953,6 +9956,9 @@ function init() {
   wireNutDrag();
   wireHelpDrag();
   // 设置卡：完成 / 点遮罩 / 返回 / 拖顶部横杠 都能关
+  const _sfReset = document.getElementById('sfReset'), _sfDone = document.getElementById('sfDone');
+  if (_sfReset) _sfReset.onclick = () => { const r = document.getElementById('icReset'); if (r) r.click(); };
+  if (_sfDone) _sfDone.onclick = () => setBackToRoot();
   const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask'), setBackBtn = $('#setBack');
   if (setDoneBtn) setDoneBtn.onclick = () => closeSetCard();
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();

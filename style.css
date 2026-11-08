@@ -3637,3 +3637,15 @@ html.kb #setSheet {
 /* 二级页里的横向图标条：右侧延伸到屏幕边缘（滑到最后一个也在屏幕边消失，不在卡片内边消失） */
 #subPage .card .icrow{margin-right:-18px}
 #subPage .card .icopts{padding-right:18px}
+
+/* ---------- 二级页底部固定按钮（恢复全部默认 / 完成）——跟「训练账本」同一套摆放 ---------- */
+#setSheet .subfoot{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  display:none;flex-direction:column;gap:10px;
+  padding:10px 18px calc(var(--safe-b,0px) + 14px);
+  background:linear-gradient(180deg, rgba(13,15,14,0) 0%, #0d0f0e 38%, #0d0f0e 100%);
+}
+#setSheet .subfoot.on{display:flex}
+#setSheet .subfoot .btn{width:100%;margin:0}
+/* 个性化页：卡片里那个「恢复全部默认」隐藏（底部固定那个才是唯一入口） */
+#subPage #icReset{display:none !important}
