@@ -7210,7 +7210,7 @@ function setCardHeader() {
   } else {
     if (t) t.textContent = '设置';
     if (v) { v.hidden = false; v.textContent = APP_VERSION; }
-    if (back) back.hidden = true;
+    if (back) back.hidden = false;   /* 主页也显示返回（点它退出设置） */
   }
 }
 
@@ -7751,7 +7751,7 @@ function wireMe() {
       + `\n历史 ${histN} 条 · 记账 ${logN} 条 · 已删 ${delN} 条${delList ? '（' + delList + '…）' : ''}`;
   }
   const back = $('#meBack');
-  if (back) back.onclick = () => setBackToRoot();
+  if (back) back.onclick = () => { if (mePage) setBackToRoot(); else closeSetCard(); };
   $$('.srow').forEach(b => b.onclick = () => {
     mePage = b.dataset.page;
     if (mePage === 'bodydata') { bodySelDate = null; bodyTrendPage = 0; }   // 每次进来从「最近一次」看起
@@ -9915,7 +9915,7 @@ function init() {
   const setDoneBtn = $('#setDone'), setMaskEl = $('#setMask'), setBackBtn = $('#setBack');
   if (setDoneBtn) setDoneBtn.onclick = () => closeSetCard();
   if (setMaskEl) setMaskEl.onclick = () => closeSetCard();
-  if (setBackBtn) setBackBtn.onclick = () => setBackToRoot();
+  if (setBackBtn) setBackBtn.onclick = () => { if (mePage) setBackToRoot(); else closeSetCard(); };
   try { applyStaticIcons(); } catch (e) {}
   if (!window.ICON_LIB || !window.ICON_DEFAULT) {
     console.warn('[icons] icons.js 没加载，已回退到内置图标，正在自动重试一次');

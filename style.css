@@ -3564,7 +3564,7 @@ html.kb #setSheet {
   padding:calc(var(--safe-t,0px) + 14px) 0 calc(var(--safe-b,0px) + 24px);
   z-index:999;overflow:hidden;display:flex;flex-direction:column;
 }
-#setSheet.page .sh-hd{padding:0 18px;margin:0 0 8px}
+#setSheet.page .sh-hd{padding:0 18px !important;margin:0 0 8px}
 #setSheet.page .sh-body{flex:1 1 auto;min-height:0;overflow-y:auto}
 #setSheet.page .grab{display:none}
 /* 设置子页：去掉卡牌外壳，内容直接铺在整页上（内容本身不变） */
@@ -3575,3 +3575,8 @@ html.kb #setSheet {
 }
 #setBody.sub .card h3{padding-top:2px}
 #setBody.sub .card .hint{margin-left:0;margin-right:0}
+/* 设置页标题栏照「训练账本」：左边返回，右边「设置」+ 版本号 */
+#setSheet.page .sh-hd{align-items:center}
+#setSheet.page .sh-hd h2{margin-left:auto;font-size:24px;letter-spacing:.02em}
+#setSheet.page .sh-hd .vtag{flex:none}
+#setSheet.page .sh-hd .backbtn{margin-left:-2px}
