@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.62', d: '11-09', items: [
+    '修：只传一张「营养成分表」照片时它还是落在「实物照片」格 —— 之前要等识别结果里的判断（模型经常没给，或给了 food），现在**图片一选进来就先单独判断一次**：是营养成分表就当场放进右边那格，不用等识别。判断失败（断网 / Key 没设）就照旧，识别完那条还会再试一次。',
+  ]},
   { v: 'v11.61', d: '11-09', items: [
     '修：识别完营养成分表的照片还是留在「实物照片」格 —— 模型其实读到了标签上的数字，但它把「这是营养表」那一句照抄成了示例里的 food。现在只要读数来自标签，就一律认成营养表、自动归到「营养成分表」格。',
   ]},
@@ -3479,7 +3482,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.61';
+const APP_VERSION = 'v11.62';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4520,6 +4523,7 @@ async function handlePhoto(file) {
     $('#photoActions').hidden = false;
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
+    classifyThenSwap();      // v11.62：是营养成分表就当场挪到右格（不等识别结果）
   } catch (e) {
     /* v11.08：读不出来就把预览退回去。以前预览已经显示出来了、S.photoData 却是空的，
        接着点「识别热量」只会说「先拍一张照片」—— 看起来就像"识别不出来"。 */
@@ -4585,8 +4589,24 @@ function swapPhotoSlots() {
   saveDraft();
 }
 
-/* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */
-const DRAFT_KEY = 'calorie-ledger-draft';
+/* v11.62：传图那一刻先问一句「这张图是营养成分表还是实物食物」。
+   是营养成分表就当场挪到右格，不再等识别结果 ——
+   识别那条请求要同时拆条目/估克数/抄表格，经常顾不上回答 photo_kind，
+   图就一直留在「实物照片」格（v11.59/v11.61 都指望它，结果时灵时不灵）。 */
+async function classifyThenSwap() {
+  const img = S.photoData;
+  if (!img) return;
+  let kind = '';
+  try {
+    const r = await api('/api/ai/photo-kind', { image: img });
+    kind = r && r.photo_kind || '';
+  } catch (e) { return; }                       // 分类失败就保持原样，识别完那条还会再试一次
+  if (kind !== 'label') return;
+  if (S.photoData !== img || S.photo2Data) return;   // 中途换了图 / 右格已被占，就别动
+  swapPhotoSlots();
+}
+
+/* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */const DRAFT_KEY = 'calorie-ledger-draft';
 function readDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);

@@ -1086,6 +1086,27 @@ async function analyzeText(text) {
   return cleanItems(await callAndParse(content));
 }
 
+/* v11.62：只判断「这张图是营养成分表，还是实物食物」，不估任何数字。
+   为什么单独问一次：识别那条请求里模型要干很多活（拆条目、估克数、抄表格），
+   经常顾不上回答 photo_kind，抄了示例里的 food —— 图就一直留在「实物照片」格。
+   这一问只有一个二选一，模型能稳定答对；App 在传图那一刻就调用它。 */
+const PHOTO_KIND_PROMPT = `只回答一件事：这张图是什么？
+
+- 图的主体是包装 / 商品上印的**营养成分表**（表格、NRV%、能量/蛋白质/碳水/脂肪那几行）→ "label"
+- 图的主体是**实际的食物、餐桌、饮料、食物本体**（就算包装上顺带印了表格）→ "food"
+
+只输出一个 JSON 对象，不要任何解释文字：{"photo_kind":"label"}`;
+
+async function classifyPhotoKind(image) {
+  if (!image) return { photo_kind: 'food' };
+  const content = [
+    { type: 'image_url', image_url: { url: image } },
+    { type: 'text', text: PHOTO_KIND_PROMPT },
+  ];
+  const obj = await callAndParse(content);
+  return { photo_kind: obj && obj.photo_kind === 'label' ? 'label' : 'food' };
+}
+
 /* ---------------- 按名字查营养（改名后联动用） ----------------
    取值顺序，越靠前越可信：
      1) 食物历史里**不是 AI 来的**那份（你手改的 / 以前真实记过的 / 食物库落过的）
@@ -1347,6 +1368,10 @@ async function api(path, body, method) {
   }
   if (pathname === '/api/ai/text' && m === 'POST') {
     return Object.assign({ ok: true }, await analyzeText(body.text || ''));
+  }
+  // v11.62：传图那一刻先分类（这张图是营养成分表 / 实物食物），App 据此把图放进对应那一格
+  if (pathname === '/api/ai/photo-kind' && m === 'POST') {
+    return Object.assign({ ok: true }, await classifyPhotoKind(body.image || ''));
   }
   // 按名字查"每 100 克"（改名 / 营养面板用；不写任何记录）
   if (pathname === '/api/food/nutrition' && m === 'POST') {
