@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.47', date: '2026-11-09', notes: [
+    'Dock 选中胶囊四边留白一律 3.5：宽 = 格宽 − 5（原来格宽 + 10，第一格/最后一格会顶到条边、左右不均）',
+    '只动胶囊宽度与横向位置，条、格子、图标、字一律不动'
+  ]},
   { v: 'v11.46', date: '2026-11-09', notes: [
     '修：Dock 改成「高度一半」圆角后，记录卡「拍照 / 搜索」那条被带着变方（40/33 → 19/12）',
     '把它和提醒记录标题/× 的定位改回按 v11.43 之前的 --dock-r-legacy（52）算，外观回到改动前'
@@ -3427,7 +3431,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.46';
+const APP_VERSION = 'v11.47';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9067,7 +9071,8 @@ function initDockLens() {
     const PAD = 7;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
-    const w = Math.max(70, Math.round(cellW + 10));   // v11.43：App Store 胶囊 = 格宽 + 10
+    // v11.47：胶囊四边留白必须相等 —— 宽 = 格宽 − 5（左右各内缩 2.5，加 1px 边框 = 视觉 3.5，和上下一样）
+    const w = Math.max(70, Math.round(cellW - 5));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
@@ -9079,9 +9084,9 @@ function initDockLens() {
     const bL = parseFloat(cs.borderLeftWidth) || 0;
     const bR = parseFloat(cs.borderRightWidth) || 0;
     // v11.44：最左/最右那一格的胶囊要跟条外沿齐平（App Store 也是齐平的），允许压过那 1px 边框
-    const rawX = cellLeft + (cellW - w) / 2;
-    const maxX = Math.max(-bL, ir.width - bL - w);   // 与条外沿齐平（含右侧 1px 边框）
-    lens.style.setProperty('--lens-x', Math.round(Math.min(Math.max(-bL, rawX), maxX)) + 'px');
+    const rawX = cellLeft + (cellW - w) / 2;   /* = cellLeft + 2.5 */
+    const maxX = Math.max(0, ir.width - bL - bR - w);   /* 不超过条内沿 */
+    lens.style.setProperty('--lens-x', Math.max(0, Math.min(rawX, maxX)).toFixed(1) + 'px');
     // v11.44：上下间隙必须均等（条 61 / 边框 1 / 胶囊 54 → 2.5），四舍五入会差 1px
     lens.style.setProperty('--lens-y', ((visH - h) / 2).toFixed(1) + 'px');
     // 圆角同心：内圆 = Dock 圆角 − 留白（不是"按比例缩"，那样弧线对不上）
