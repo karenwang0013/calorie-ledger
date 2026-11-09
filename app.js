@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.55', d: '11-09', items: [
+    'iPad：Dock 不再收成 780 居中 —— 竖屏、横屏都铺到「屏宽 − 16」，横屏时也贴着 iPad 屏幕两边的圆角（和练账同一套）',
+    'iPad：选中滑块不再做成药丸 —— 改成整格大小、圆角 10（= Dock 圆角 18 − 内缩 8，内圈和 Dock 同心），把按钮完整包住',
+    '手机端一处没动（滑块仍 51 高、药丸半径 25.5）'] },
   { v: 'v11.54', d: '11-09', items: ['修：iPad 上 Dock 的选中胶囊和条尺寸不匹配 —— 之前胶囊高度硬卡 51，iPad 条高 104 时胶囊浮在上半截。现在高度 = 条内高 − 8（手机仍是 51，数值不变）'] },
   { v: 'v11.53', d: '11-09', items: [
     '修：设置 →「关于与更新」点不开 ——「最近更新」里 v11.36–v11.49 那 14 条的字段名和渲染用的不一致（写成 date/notes，渲染读的是 d/items），一 map 就抛错，整页白;已把这 14 条改成同一套字段',
@@ -3454,7 +3458,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.54';
+const APP_VERSION = 'v11.55';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9095,13 +9099,17 @@ function initDockLens() {
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
     // v11.48：四边留白 5（内缩 4 + 1px 边框）—— 用户口径「App Store 的间隙没这么小」
-    const w = Math.max(70, Math.round(cellW - 8));
+    /* v11.55：iPad 上滑块 = 整格（宽 = 格子宽、左 = 格子左），把按钮完整包住；
+       手机仍留 4 的边（宽 = 格宽 − 8，配合 1px 边框 = 视觉 5）。 */
+    const big = window.matchMedia('(min-width: 700px)').matches;
+    const w = big ? Math.round(cellW) : Math.max(70, Math.round(cellW - 8));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
     /* v11.54：胶囊高度 = 条内高 − 8（四边各留 5）。之前硬卡 51，iPad 上条高 104 时
        胶囊还是 51，浮在条上半截、跟格子对不上。手机 61 高 → 仍是 51，数值不变。 */
-    const h = Math.max(40, Math.round(visH - 8));
+    /* v11.55：iPad 上下各留 8（条 104 → 滑块 88），手机仍是 8（条 61 → 51，数值不变） */
+    const h = Math.max(40, Math.round(visH - (big ? 14 : 8)));
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
@@ -9109,7 +9117,7 @@ function initDockLens() {
     const bL = parseFloat(cs.borderLeftWidth) || 0;
     const bR = parseFloat(cs.borderRightWidth) || 0;
     // v11.44：最左/最右那一格的胶囊要跟条外沿齐平（App Store 也是齐平的），允许压过那 1px 边框
-    const rawX = cellLeft + (cellW - w) / 2;   /* = cellLeft + 4 */
+    const rawX = big ? cellLeft : cellLeft + (cellW - w) / 2;   /* 手机 = cellLeft + 4 */
     const maxX = Math.max(0, ir.width - bL - bR - w);   /* 不超过条内沿 */
     lens.style.setProperty('--lens-x', Math.max(0, Math.min(rawX, maxX)).toFixed(1) + 'px');
     // v11.44：上下间隙必须均等（条 61 / 边框 1 / 胶囊 54 → 2.5），四舍五入会差 1px
@@ -9117,7 +9125,9 @@ function initDockLens() {
     // 圆角同心：内圆 = Dock 圆角 − 留白（不是"按比例缩"，那样弧线对不上）
     // Dock 圆角是画在边框外沿的，所以先减掉那 1px 边框，再减留白 —— 这样两条弧线才是严格平行
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
-    lens.style.setProperty('--lens-r', Math.max(12, Math.round(h / 2)) + 'px');   // v11.43：正胶囊
+    /* v11.55：iPad 不再做药丸 —— 圆角与 Dock 内同心：Dock 圆角 18 − 内缩 8 = 10；手机仍是正胶囊 */
+    lens.style.setProperty('--lens-r', big ? Math.max(8, Math.round(dockR - 8)) + 'px'
+                                          : Math.max(12, Math.round(h / 2)) + 'px');
     if (opt.press) {
       const hx = (evX - r.left) / Math.max(1, r.width) * 100;
       const hy = (evY - r.top) / Math.max(1, r.height) * 100;
