@@ -3852,3 +3852,17 @@ html.kb #setSheet {
   backdrop-filter: none !important;
 }
 #addSheet .chip.on{ color: var(--lime) !important; }
+
+/* v11.51：记录卡里「食材 / 克数 / 补充说明」这三格外面那个长方形大框去掉。
+   原因：素材块（#addTabs/#photoActions/#textInput…）被统一刷成玻璃底 + 模糊，
+   而 #photoActions 圆角是 0 → 画出来就是个直角矩形。这里只清容器，三个输入框自己的材质不动。 */
+#addSheet #photoActions{
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+}
