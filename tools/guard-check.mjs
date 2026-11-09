@@ -173,7 +173,7 @@ const checks = [
     return true;
   })()],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
-  ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],
+  ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\)(?: and \(min-height: 700px\))? \{\n  \/\*[\s\S]*?--dock-inset: \d+px;/.test(css)],
   ['组详情标题边上的铅笔（改名字）还在', /id="grpRename"/.test(html) && /\$\('#grpNameTxt'\)\.textContent/.test(app)],
   ['底部提示条永远在 Dock 上方（不许压住）', /\.toast \{[\s\S]*?bottom: calc\(var\(--dock-bottom\) \+ var\(--dock-h\) \+ \d+px/.test(css)],
   ['玻璃材质只有一套母版（Dock / 卡牌 / 按钮共用同一组变量）', /--glass-fill-top:/.test(css) && /--btn-solid:/.test(css) && (css.match(/linear-gradient\(180deg, var\(--glass-fill-top\)/g) || []).length >= 3 && /\.card, \.stats[^{]*\{[\s\S]{0,600}var\(--glass-blur-2\)/.test(css)],

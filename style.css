@@ -2401,7 +2401,10 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    多设备适配：iPad mini / Air / Pro 的竖屏与横屏
    原则：和手机完全同一套单列布局，从上到下顺序不变，只整体放大并居中
    ================================================================== */
-@media (min-width: 700px) {
+@media (min-width: 700px) and (min-height: 700px) {
+  /* v11.56：加 min-height: 700px —— 之前只按宽度，iPhone 横屏（956×440）也吃到 iPad 的
+     Dock 数值（104 高 / 圆角 18 / 边距 8 / 滑块 88 圆角 10），手机横屏被当成 iPad。
+     iPad 竖屏 744×1133、横屏 1133×744 都 ≥700 高，仍走这一档。 */
   /* iPad：Dock 用自己的一档边距（离边更远、整体更宽），手机和 iPad 各自看着都合适 */
   :root {
     --dock-inset: 8px;

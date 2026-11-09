@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.56', d: '11-09', items: [
+    'iPad 专属的 Dock 数值（104 高 / 圆角 18 / 边距 8 / 滑块 88 圆角 10）加了「屏幕高度 ≥700」条件：iPad 横竖屏不变，iPhone 横屏回到手机那套（61 高 / 左右 25 / 上下 5 / 滑块 51 药丸），不再被当成 iPad。',
+    'CSS 媒体查询与 place()、syncDockR() 的判断同口径（都是 min-width 700 + min-height 700）。',
+  ]},
   { v: 'v11.55', d: '11-09', items: [
     'iPad：Dock 不再收成 780 居中 —— 竖屏、横屏都铺到「屏宽 − 16」，横屏时也贴着 iPad 屏幕两边的圆角（和练账同一套）',
     'iPad：选中滑块不再做成药丸 —— 改成整格大小、圆角 10（= Dock 圆角 18 − 内缩 8，内圈和 Dock 同心），把按钮完整包住',
@@ -3458,7 +3462,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.55';
+const APP_VERSION = 'v11.56';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9101,7 +9105,7 @@ function initDockLens() {
     // v11.48：四边留白 5（内缩 4 + 1px 边框）—— 用户口径「App Store 的间隙没这么小」
     /* v11.55：iPad 上滑块 = 整格（宽 = 格子宽、左 = 格子左），把按钮完整包住；
        手机仍留 4 的边（宽 = 格宽 − 8，配合 1px 边框 = 视觉 5）。 */
-    const big = window.matchMedia('(min-width: 700px)').matches;
+    const big = window.matchMedia('(min-width: 700px) and (min-height: 700px)').matches;   /* v11.56：与 CSS 同口径 */
     const w = big ? Math.round(cellW) : Math.max(70, Math.round(cellW - 8));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
@@ -9913,7 +9917,7 @@ function init() {
       return;
     }
     const w = Math.round(window.innerWidth);
-    const pad = window.matchMedia('(min-width: 700px)').matches;
+    const pad = window.matchMedia('(min-width: 700px) and (min-height: 700px)').matches;   /* v11.56：与 CSS 同口径 */
     // 两边的边距、高度都以 CSS 里那份为准，避免脚本和样式各写一个值
     const cs = getComputedStyle(document.documentElement);
     // v10.07：Dock 的左右边距是 --dock-w（比卡牌的 --dock-inset 窄 → Dock 比卡牌宽），
