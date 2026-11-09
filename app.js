@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.58', d: '11-09', items: [
+    '左缘右滑退出设置 / 退出设置子页：改成 iOS 原生（CC Park 同款）的两页联动 —— 当前页 1:1 跟手右移，上一页（App 首页 / 设置主页）同时从左边滑进来，起始位 −30% 屏宽、速度是当前页的 0.3×，松手两页用同一条 260ms 曲线一起收尾。',
+    '实测 CC Park 录屏：视差 0.299、收尾 0.24~0.25s、上一页不变暗也没有阴影；所以拖动时不再给卡片加半透明 + 模糊（背后露出的就是上一页本身，要清晰）。',
+  ]},
   { v: 'v11.57', d: '11-09', items: [
     'iPad 上 Dock 的左右内边距从 18 改成 0、滑块宽 = 格宽 − 14、x = 格左 + 7：滑块在 Dock 里的上下左右留白现在都是 8（之前上下 8、左边 18）。',
     'Dock 离屏幕底 8、左右各 8，与训练账本完全一致；手机端（61 高、左右 25、滑块 51）不变。',
@@ -3466,7 +3470,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.57';
+const APP_VERSION = 'v11.58';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9804,8 +9808,32 @@ function init() {
     });
   };
 
-  // 左边缘拖动返回：卡片跟手滑动，松手决定回退还是弹回
+  // 左边缘拖动返回（v11.58）：改成 CC Park / iOS 原生 interactive pop 的两页联动。
+  // 实测（CC Park 660 宽录屏 + 帧拟合）：当前页 translateX(dx) 1:1 跟手；
+  // 上一页从 -0.3 屏宽起步、以 0.3× 速度滑入（s = 0.3*(dx-W)）；松手 ~0.25s 一起收尾；
+  // 上一页不变暗、无阴影、两页都不透明（所以不能再留 v11.41 那层 alpha+blur）。
   let sw = null;
+  const SW_PAR = 0.3;                 // 上一页视差比（实测 0.299）
+  const SW_MS = 260;                  // 收尾时长（实测回弹 0.24~0.25s）
+  const SW_EASE = 'cubic-bezier(.32,.72,0,1)';
+  const swW = () => window.innerWidth || document.documentElement.clientWidth || 375;
+  /* 当前页下面那一层（「上一页」）：
+     设置子页 → 卡里的 .sh-hd + #setBody（设置主页）；
+     设置主页（整页）→ .app（App 首页整体；sheet 在 .app 外面，不会跟着动）；
+     其它小卡片 → 没有联动层，保持单页跟手。 */
+  const swPrev = (el, isSub) => {
+    if (isSub) {
+      const card = document.getElementById('setSheet');
+      if (!card) return [];
+      return [card.querySelector('.sh-hd'), document.getElementById('setBody')].filter(Boolean);
+    }
+    if (el && el.id === 'setSheet' && el.classList.contains('page')) {
+      const app = document.querySelector('.app');
+      return app ? [app] : [];
+    }
+    return [];
+  };
+  const swPut = (els, p) => els.forEach(p2 => { p2.style.transition = 'none'; p2.style.transform = 'translateX(' + p + 'px)'; });
   document.addEventListener('touchstart', e => {
     const t = e.touches[0];
     if (t.clientX > 30) { sw = null; return; }
@@ -9814,9 +9842,12 @@ function init() {
     const _sp = document.querySelector('#setSheet .subpage.on');
     const isSub = !!_sp;
     const dragEl = isSub ? _sp : el;
+    /* 个性化子页底部那条「恢复全部默认」是 #subPage 外面的 #subFoot，它属于当前页，得跟着一起滑 */
+    const _sf = document.getElementById('subFoot');
+    const extra = (isSub && _sf && _sf.classList.contains('on')) ? [_sf] : [];
     sw = el
-      ? { el, dragEl, isSub, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
-      : { el: null, dragEl: null, isSub: false, x0: t.clientX, y0: t.clientY, dx: 0, active: false };
+      ? { el, dragEl, isSub, prev: [], extra, x0: t.clientX, y0: t.clientY, dx: 0, active: false }
+      : { el: null, dragEl: null, isSub: false, prev: [], extra: [], x0: t.clientX, y0: t.clientY, dx: 0, active: false };
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
@@ -9829,71 +9860,66 @@ function init() {
       if (dy > Math.abs(dx)) { sw = null; return; }   // 竖着滑，交给页面滚动
       sw.active = true;
       if (sw.el) sw.el.classList.add('dragging');
+      /* 一开始拖就把「上一页」摆到 -0.3 屏宽（被当前页整张盖住，所以看不到跳变），
+         之后它按 0.3× 速度跟着滑进来 —— 与 CC Park 实测一致。 */
+      sw.prev = swPrev(sw.el, sw.isSub);
+      swPut(sw.prev, -(swW() * SW_PAR));
     }
     sw.dx = Math.max(0, dx);
     const dm = sw.dragEl || sw.el;
     if (dm) {
       dm.style.transform = 'translateX(' + sw.dx + 'px)';
-      /* v11.41 用户口径：不要「整张卡片发灰/发虚」，也不要能看清背后的字。
-         要的是：卡片本身保持不透明观感，糊掉的是卡片背后的那一层；
-         已经滑出去、露出来的部分保持清晰。做法 = 卡片自己加 backdrop-filter，
-         iOS 上这层会把背后内容做高斯模糊，卡片只是稍微让出一点底色。 */
-      if (dm.classList.contains('page') || dm.classList.contains('subpage')) {
-        dm.style.backgroundColor = 'rgba(13,15,14,' + Math.max(0.68, 1 - sw.dx / 420).toFixed(3) + ')';
-      }
-      dm.style.webkitBackdropFilter = 'blur(16px)';
-      dm.style.backdropFilter = 'blur(16px)';
+      /* 两页都保持不透明：上一页现在就露在左边，不能再让卡片褪色/模糊（CC Park 也没有变暗层） */
+      dm.style.backgroundColor = '';
+      dm.style.webkitBackdropFilter = '';
+      dm.style.backdropFilter = '';
       dm.style.opacity = '';
       dm.style.filter = '';
+      swPut(sw.prev, (sw.dx - swW()) * SW_PAR);
+      sw.extra.forEach(p2 => { p2.style.transition = 'none'; p2.style.transform = 'translateX(' + sw.dx + 'px)'; });
     }
   }, { passive: true });
 
   document.addEventListener('touchend', () => {
     if (!sw) return;
-    const { el, dragEl, isSub, dx, active } = sw;
+    const { el, dragEl, isSub, dx, active, prev, extra } = sw;
     sw = null;
-    if (!active) return;
+    const drop = () => {
+      prev.forEach(p => { p.style.transition = ''; p.style.transform = ''; });
+      extra.forEach(p => { p.style.transition = ''; p.style.transform = ''; });
+    };
+    if (!active) { drop(); return; }
     if (el) el.classList.remove('dragging');
     const dm = dragEl || el;
+    const W = swW();
+    const ease = 'transform ' + SW_MS + 'ms ' + SW_EASE;
     if (dx > 100) {
-      if (isSub && dm) {
-        /* 子页：内容滑走 → 立刻换成设置主页 → 从右侧滑回来（不会闪到 App 首页） */
-        dm.style.transition = 'transform .22s cubic-bezier(.32,.72,0,1), opacity .22s ease-out, filter .22s ease-out';
-        dm.style.transform = 'translateX(102%)';
-        dm.style.opacity = '0';
-        setTimeout(() => {
-          dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = '';
-          dm.style.backgroundColor = ''; dm.style.backdropFilter = ''; dm.style.webkitBackdropFilter = '';
-          setBackToRoot();          // 收掉子页层 → 下面的设置主页直接露出来
-        }, 230);
-      } else {
-        if (dm) {
-          dm.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out, filter .3s ease-out';
-          dm.style.transform = 'translateX(102%)';
-          dm.style.opacity = '0';
-        }
-        setTimeout(() => {
-          /* v11.53：先让 goBack() 把这一层收掉（display:none / 回设置主页），再清内联样式。
-             原来的顺序是「先清 transform 再 goBack」—— 清掉的那一帧页面已经从 102% 跳回 0%，
-             看上去就是往右滑退出时又弹回来一下。 */
-          goBack();
+      /* 完成：当前页滑出到 100%，上一页同时归位到 0（同一条曲线、同一时长，与 CC Park 一致） */
+      if (dm) { dm.style.transition = ease; dm.style.transform = 'translateX(' + W + 'px)'; }
+      prev.forEach(p => { p.style.transition = ease; p.style.transform = 'translateX(0px)'; });
+      extra.forEach(p => { p.style.transition = ease; p.style.transform = 'translateX(' + W + 'px)'; });
+      setTimeout(() => {
+        if (isSub) {
+          if (dm) { dm.style.transition = ''; dm.style.transform = ''; }
+          drop();
+          setBackToRoot();          // 收掉子页层 → 下面的设置主页（已经停在 0）直接接上
+        } else {
+          goBack();                 // v11.53：先让 goBack() 把这一层收掉，再清内联样式
           requestAnimationFrame(() => {
-            if (!dm) return;
-            dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = '';
-            dm.style.backgroundColor = ''; dm.style.backdropFilter = ''; dm.style.webkitBackdropFilter = '';
+            if (dm) { dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = ''; }
+            drop();
           });
-        }, 320);
-      }
+        }
+      }, SW_MS);
     } else if (dm) {
-      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out, filter .38s ease-out, background-color .38s ease-out, backdrop-filter .38s ease-out';
+      /* 取消：当前页回 0，上一页退回 -0.3 屏宽，同一条曲线一起收 */
+      dm.style.transition = ease;
       dm.style.transform = '';
-      dm.style.opacity = '';
-      dm.style.filter = '';
-      dm.style.backgroundColor = '';
-      dm.style.backdropFilter = '';
-      dm.style.webkitBackdropFilter = '';
-      setTimeout(() => { dm.style.transition = ''; }, 400);
+      prev.forEach(p => { p.style.transition = ease; p.style.transform = 'translateX(' + (-W * SW_PAR) + 'px)'; });
+      extra.forEach(p => { p.style.transition = ease; p.style.transform = ''; });
+      setTimeout(() => { dm.style.transition = ''; drop(); }, SW_MS + 20);
     } else {
+      drop();
       goBack();
     }
   }, { passive: true });
