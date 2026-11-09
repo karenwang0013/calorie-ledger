@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.34', d: '11-09', items: [
+    '「提醒记录」（右上角铃铛）不再是小卡片：点开就是整页，左上返回、标题在右，底部「共 N 条 / 清空记录」贴住屏幕底 —— 和「设置」同一套',
+    '记录卡（点底部「记录」弹出的那张）不再悬浮：左右和底部贴到屏幕边缘，只保留上面两个圆角；里面的照片格、营养成分表格、拍照/从相册选、识别热量都跟着屏幕宽度重排，底部让开 Home 条'
+  ] },
   { v: 'v11.33', d: '11-09', items: [
     '设置改整页（盖顶栏/Dock、无动画、标题对齐卡牌）＋左边缘右滑返回（逐级、跟手）',
     '二级页去卡牌、重新排版；图标条延伸到屏幕边；底部只留「恢复全部默认」',
@@ -3373,7 +3377,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.33';
+const APP_VERSION = 'v11.34';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6853,17 +6857,33 @@ function openNotifyLog() {
     sheet.classList.toggle('hide-title', !NLOG_UI.showTitle);
   }
   document.body.classList.add('nlog-open');
-  if (sheet && nlogH) sheet.style.height = nlogH + 'px';
+  /* 整页显示（跟「设置」同一套）：盖住顶栏和 Dock、去掉遮罩、标题栏左上返回 */
+  if (sheet) {
+    sheet.classList.add('page');
+    const back = $('#nlogBack'); if (back) back.hidden = false;
+  }
   raiseSheet(sheet);                         // 最后打开的放在最上面
-  // 位置：恢复原来的底部位置（居中会和 Dock 栏重叠）
-  if (sheet) { sheet.style.top = ''; sheet.style.bottom = ''; }
-  if (mask) mask.classList.add('on');
+  if (sheet) { sheet.style.height = ''; sheet.style.zIndex = '999'; sheet.style.top = ''; sheet.style.bottom = ''; }
+  if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.add('on');
 }
 function closeNotifyLog() {
   document.body.classList.remove('nlog-open');
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
+  const isPage = !!(sheet && sheet.classList.contains('page'));
   if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; sheet.style.height = ''; }
+  if (isPage) {
+    /* 整页关闭：瞬间消失，不要落下动画，也不要遮罩淡出（会黑一下） */
+    if (mask) {
+      mask.style.transition = 'none';
+      mask.classList.remove('on');
+      setTimeout(() => { mask.style.transition = ''; }, 120);
+    }
+    sheet.style.display = 'none';
+    sheet.classList.remove('on'); sheet.classList.remove('page');
+    setTimeout(() => { sheet.style.display = ''; sheet.style.zIndex = ''; sheet.style.top = ''; sheet.style.bottom = ''; }, 80);
+    return;
+  }
   if (mask) mask.classList.remove('on');
   if (sheet) sheet.classList.remove('on');
   // 临时定位（top/bottom）也要清掉，否则下次的"关闭位置"会落在屏幕里
@@ -9949,6 +9969,8 @@ function init() {
 
   const bell = $('#notifyBell');
   if (bell) bell.onclick = () => openNotifyLog();
+  const nlogBack = $('#nlogBack');
+  if (nlogBack) nlogBack.onclick = () => closeNotifyLog();
   const nlogClose = $('#nlogClose'), nlogMask = $('#nlogMask'), nlogClear = $('#nlogClear');
   if (nlogClose) nlogClose.onclick = () => closeNotifyLog();
   if (nlogMask) nlogMask.onclick = () => closeNotifyLog();

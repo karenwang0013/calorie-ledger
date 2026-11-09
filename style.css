@@ -3574,6 +3574,53 @@ html.kb #setSheet {
 #setSheet.page .sh-hd .vtag{flex:none}
 #setSheet.page .sh-hd .backbtn{margin-left:-2px}
 
+/* ---------- 提醒记录：整页（跟「设置」同一套：盖住顶栏/Dock、无动画、左上返回、底部贴底） ---------- */
+#nlogSheet.page{
+  position:fixed;left:0;right:0;top:0;bottom:0;
+  width:100%;max-width:none;max-height:none;height:100% !important;margin:0;
+  border-radius:0;border:0;background:#0d0f0e;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  transform:none;opacity:1;transition:none;
+  padding:calc(var(--safe-t,0px) + 14px) 0 0;
+  z-index:999;overflow:hidden;display:flex;flex-direction:column;
+}
+#nlogSheet.page .grab{display:none}
+#nlogSheet.page .sh-hd{
+  position:static;padding:0 18px !important;margin:0 0 8px;
+  align-items:center;min-height:0;
+}
+#nlogSheet.page .sh-hd h2{margin-left:auto;font-size:24px;letter-spacing:.02em}
+#nlogSheet.page .sh-hd .backbtn{margin-left:-2px}
+#nlogSheet.page .sh-body{
+  flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px 8px;
+}
+#nlogSheet.page #nlogList{max-height:none;overflow:visible;padding:0 0 4px}
+#nlogSheet.page .sh-foot{
+  flex:0 0 auto;background:#0d0f0e;border-top:1px solid var(--line);
+  padding:12px 18px calc(14px + var(--safe-b,0px));
+}
+#nlogSheet .sh-hd .backbtn{
+  width:30px;height:30px;margin:0 0 0 -8px;flex:0 0 auto;
+  display:grid;place-items:center;color:var(--text);
+}
+#nlogSheet .sh-hd .backbtn svg{width:24px;height:24px}
+#nlogSheet .sh-hd .backbtn:active{opacity:.6}
+
+/* ---------- 记录弹层：贴到屏幕三边（整块，不再悬浮），只保留上面两个圆角 ---------- */
+#addSheet{
+  left:0;right:0;bottom:0;
+  max-width:none;margin:0;
+  border-radius:var(--dock-r,26px) var(--dock-r,26px) 0 0;
+  border:0;border-top:1px solid var(--line2);
+  --card-gap:18px;
+}
+/* 内容跟着屏幕边距走：左右 18（和设置页一致），底部让开 Home 条 */
+#addSheet .sh-body{margin:0 18px}
+#addSheet .sh-foot{padding:7px 18px calc(20px + var(--safe-b,0px))}
+/* 贴到底以后，最后一块内容要自己让开 Home 条（没内容时底栏是隐藏的） */
+#addSheet.no-items #pane-photo{padding-bottom:calc(20px + var(--safe-b,0px))}
+
 /* ---------- 设置子页：去卡牌 + 重新排版（分组标题 + 内容平铺，滚动到底就是屏幕底） ---------- */
 #setSheet.page #setBody .about-fill{display:block !important;height:auto !important;overflow:visible !important}
 #setSheet.page #setBody .about-fill > .card:first-child{
