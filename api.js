@@ -816,9 +816,12 @@ const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃�
 {"items":[{"name":"食物中文名","grams":150,"kcal_per_100g":116,"protein_per_100g":2.6,"carb_per_100g":25.9,"fat_per_100g":0.3,"confidence":0.8}],"dish":"一句话描述","note":"不确定之处，没有就填空字符串"}`;
 
 
-async function callModel(content) {
+async function callModel(content, opt) {
   const key = (setting('dashscope_key', '') || '').trim();
   if (!key) throw new Error('还没有设置 DashScope API Key，去「我的」页面填一下。');
+  // v11.59：要 JSON 的调用让模型**只能**输出 JSON（服务端约束，不是靠提示词祈祷）。
+  // 识别/搜索都走这一条；「测试连接」「按名字查营养」不要 JSON，保持原样。
+  const wantJson = !!(opt && opt.json);
 
   const pinned = setting('ai_model', '');
   const models = [];
@@ -967,8 +970,10 @@ function rowsToPer100(rows, basis) {
 
 function cleanItems(obj, opt) {
   const items = [];
+  let anyLabel = false;                     // v11.59：这一条是从营养成分表读出来的吗
   const hint = String((opt && opt.hint) || '');
   (obj.items || []).slice(0, 15).forEach(it => {
+    if (it.label || it.label_rows || it.labelRows || it.net_grams) anyLabel = true;
     const name = String(it.name || '').trim();
     let grams = num(it.grams, 0);
     if (!name) return;
@@ -1035,7 +1040,13 @@ function cleanItems(obj, opt) {
     });
   });
   if (!items.length) throw new Error('没认出图里的食物，换个角度或拍近一点再试。');
-  return { items, dish: obj.dish || '', note: obj.note || '' };
+  /* v11.59 用户口径（m00001）：传一张营养成分表的照片，它应该自己归到「营养成分表」那一格。
+     v11.23 只在 prompt 里要了 photo_kind，但这里 return 时把它丢了，app.js 拿不到 → 永远当 food，
+     所以照片一直停在「实物照片」格。现在把 photo_kind 带出去；模型没给就用「有没有 label 行」兜底。 */
+  const kind = (obj.photo_kind === 'label' || obj.photo_kind === 'food')
+    ? obj.photo_kind
+    : (anyLabel ? 'label' : 'food');
+  return { items, dish: obj.dish || '', note: obj.note || '', photo_kind: kind };
 }
 
 /* v10.85：模型偶尔返回的不是合法 JSON（截断 / 带解释 / 代码块没闭合）。
