@@ -3516,6 +3516,20 @@ html.kb #setSheet {
 }
 
 /* ==================================================================
+   v11.37 用户口径：记录卡里的「拍照 / 从相册选 / 识别热量」三颗按钮，
+   形状和高度统一成「提醒记录」底部那颗「清空记录」（圆角 26、高 50）。
+   只改圆角/高度/内边距，字号与材质一律沿用原来的。
+   ================================================================== */
+#addSheet .prow-pick .pickbtn,
+#addSheet .prow-pick .pickbtn.on,
+#addSheet .prow-pick .pickbtn.ghost{
+  flex:1 1 auto;padding:0 16px;min-height:0;height:50px;border-radius:26px;
+}
+#addSheet #descBlock #textGo{
+  padding:0 16px;min-height:0;height:50px;border-radius:26px;
+}
+
+/* ==================================================================
    v11.27：所有「会移动的药丸」滑块统一成 Dock 药丸那一套材质
    2026-11-07 用户口径：凡是药丸按钮可点击移动时的渐变白，全部删除。
    覆盖 4 处：Dock 药丸 / 记录卡三类（#addTabs）/ 趋势 7-30-90（#trendSeg）/
@@ -3595,7 +3609,7 @@ html.kb #setSheet {
 #nlogSheet.page .sh-hd .backbtn{margin-left:-2px}
 #nlogSheet.page .sh-body{
   flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 18px 44px;
+  padding:0 18px 0;
 }
 #nlogSheet.page #nlogList{max-height:none;overflow:visible;padding:0 0 4px}
 /* v11.36 用户口径：底部「清空记录」不再是小胶囊 —— 做成图标设置页「恢复全部默认」那样：

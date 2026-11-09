@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.37', date: '2026-11-09', notes: [
+    '修：提醒记录「左边缘右滑返回」没反应、只会弹回来 —— 退出手势补上了提醒记录这一页',
+    '修：提醒记录滚到底，最后一行和底部按钮之间那一大块空白没了；内容现在一直滚到 44px 渐变里淡出',
+    '改：记录卡里「拍照 / 从相册选 / 识别热量」三颗按钮，形状和高度统一成「清空记录」那颗（圆角 26、高 50）'
+  ] },
   { v: 'v11.36', date: '2026-11-09', notes: [
     '改：「提醒记录」底部的「清空记录」不再是一颗小胶囊 —— 换成图标设置页「恢复全部默认」那颗全宽按钮（玻璃底、圆角 26、高 50），底栏和内容之间不画分隔线',
     '加：内容区滚到底时压一层 44px 渐变淡出（和练账图标页同一套），最后一行不再硬碰按钮顶边',
@@ -3387,7 +3392,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.36';
+const APP_VERSION = 'v11.37';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6493,6 +6498,7 @@ function goBack() {
   const on = id => { const el = $(id); return el && el.classList.contains('on'); };
   if (setCardOn()) { if (mePage) setBackToRoot(); else closeSetCard(); return; }   // 设置卡：先回首页，再关卡
   if (on('#grpSheet')) return closeGroup();
+  if (on('#nlogSheet')) return closeNotifyLog();   // v11.37：提醒记录也走左边缘右滑返回
   if (on('#addSheet')) return closeAdd();
   if (on('#helpSheet')) return closeHelp();
   if (on('#weightSheet')) return closeWeight();
