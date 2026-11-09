@@ -795,7 +795,8 @@ const FOOD_PROMPT = `你是专业营养师，任务是估算一张食物照片�
  "label":{"basis_grams":12.5,"unit":"kJ","energy":266,"protein":1.0,"carb":6.6,"fat":3.7},
  "label_rows":[{"name":"蛋白质","value":1.0,"unit":"g","nrv":2}]}],"photo_kind":"food","dish":"这一餐的一句话描述","note":"不确定之处，20字以内，没有就填空字符串"}
 （label / label_rows 只在图里真的有营养成分表时才给；没有就都省略）
-（photo_kind：主图是实际吃的食物就填 "food"，是包装上的营养成分表就填 "label"；只有一张图时必须给）`;
+（photo_kind：主图是实际吃的食物就填 "food"，是包装上的营养成分表就填 "label"；只有一张图时必须给）
+（示例里 photo_kind 写的 "food" 只是占位：必须按图片真实内容填，不许照抄示例；图里读到了营养成分表就必须填 "label"）`;
 
 const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃了什么，请估算热量。
 
@@ -1050,9 +1051,10 @@ function cleanItems(obj, opt) {
   /* v11.59 用户口径（m00001）：传一张营养成分表的照片，它应该自己归到「营养成分表」那一格。
      v11.23 只在 prompt 里要了 photo_kind，但这里 return 时把它丢了，app.js 拿不到 → 永远当 food，
      所以照片一直停在「实物照片」格。现在把 photo_kind 带出去；模型没给就用「有没有 label 行」兜底。 */
-  const kind = (obj.photo_kind === 'label' || obj.photo_kind === 'food')
-    ? obj.photo_kind
-    : (anyLabel ? 'label' : 'food');
+  /* v11.61 用户实拍（今天第二次反馈）：模型明明读到了 label_rows，photo_kind 却照抄了
+     prompt 示例里的 "food" —— 于是照片一直停在「实物照片」格。
+     现在反过来：只要读到任何 label 信号，就认定这张图是营养表，不信模型那个字段。 */
+  const kind = (anyLabel || obj.photo_kind === 'label') ? 'label' : 'food';
   return { items, dish: obj.dish || '', note: obj.note || '', photo_kind: kind };
 }
 
