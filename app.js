@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.41', date: '2026-11-09', notes: [
+    '右滑返回改成「糊背后」：拖走时卡片保持实底，透过卡片看到的那一层被虚化，已经露出来的部分保持清晰（原来是把卡片自己整片变透明+发虚）'
+  ]},
   { v: 'v11.40', date: '2026-11-09', notes: [
     '改：记录卡「拍照 / 搜索」栏上下两条缝修成等宽（上 11 / 下 14 → 都 11），不再头重脚轻',
     '改：两个照片框（食物照片 / 营养成分表）加高 —— 宽高比 1.36 → 1.43（196×267 → 196×280），把省下的缝收给框'
@@ -3404,7 +3407,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.40';
+const APP_VERSION = 'v11.41';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9754,10 +9757,17 @@ function init() {
     const dm = sw.dragEl || sw.el;
     if (dm) {
       dm.style.transform = 'translateX(' + sw.dx + 'px)';
-      /* v11.38 用户口径：纯透明看着突兀 → 改成「退到后面去」：不明显变透明，改用逐渐加深的虚化。
-         透明度最低只到 0.9（几乎看不出来），模糊 0 → 8px 跟手加深，滑得越远越虚。 */
-      dm.style.opacity = String(Math.max(0.9, 1 - sw.dx / 1400));
-      dm.style.filter = 'blur(' + Math.min(8, sw.dx / 40).toFixed(1) + 'px)';
+      /* v11.41 用户口径：不要「整张卡片发灰/发虚」，也不要能看清背后的字。
+         要的是：卡片本身保持不透明观感，糊掉的是卡片背后的那一层；
+         已经滑出去、露出来的部分保持清晰。做法 = 卡片自己加 backdrop-filter，
+         iOS 上这层会把背后内容做高斯模糊，卡片只是稍微让出一点底色。 */
+      if (dm.classList.contains('page') || dm.classList.contains('subpage')) {
+        dm.style.backgroundColor = 'rgba(13,15,14,' + Math.max(0.68, 1 - sw.dx / 420).toFixed(3) + ')';
+      }
+      dm.style.webkitBackdropFilter = 'blur(16px)';
+      dm.style.backdropFilter = 'blur(16px)';
+      dm.style.opacity = '';
+      dm.style.filter = '';
     }
   }, { passive: true });
 
@@ -9776,6 +9786,7 @@ function init() {
         dm.style.opacity = '0';
         setTimeout(() => {
           dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = '';
+          dm.style.backgroundColor = ''; dm.style.backdropFilter = ''; dm.style.webkitBackdropFilter = '';
           setBackToRoot();          // 收掉子页层 → 下面的设置主页直接露出来
         }, 230);
       } else {
@@ -9785,15 +9796,21 @@ function init() {
           dm.style.opacity = '0';
         }
         setTimeout(() => {
-          if (dm) { dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = ''; }
+          if (dm) {
+            dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = '';
+            dm.style.backgroundColor = ''; dm.style.backdropFilter = ''; dm.style.webkitBackdropFilter = '';
+          }
           goBack();
         }, 270);
       }
     } else if (dm) {
-      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out, filter .38s ease-out';
+      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out, filter .38s ease-out, background-color .38s ease-out, backdrop-filter .38s ease-out';
       dm.style.transform = '';
       dm.style.opacity = '';
       dm.style.filter = '';
+      dm.style.backgroundColor = '';
+      dm.style.backdropFilter = '';
+      dm.style.webkitBackdropFilter = '';
       setTimeout(() => { dm.style.transition = ''; }, 400);
     } else {
       goBack();
