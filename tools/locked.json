@@ -136,8 +136,8 @@
   },
   {
     "file": "style.css",
-    "find": ".tabbar .inner { padding: 0 18px; max-width: var(--dock-max); }",
-    "why": "iPad 上 Dock 用单独一套内边距和最大宽度（不跟着手机那套 25/0 走）"
+    "find": ".tabbar .inner { padding: 0 18px; max-width: none; }",
+    "why": "iPad 上 Dock 铺满「屏宽 − 16」（v11.55），内边距 18 不动；卡牌仍各自限宽 780"
   },
   {
     "file": "app.js",
