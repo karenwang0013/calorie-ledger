@@ -126,7 +126,7 @@ const checks = [
   // 「四边留白相等 / 圆角与 Dock 同心」那套是旧口径（屏幕圆角−边距），App Store 那条本身就不等距，作废。
   ['Dock 滑块照 App Store：胶囊宽 = 格宽 + 10、高 54（不再是四边等距）', /cellW \+ 10/.test(app) && /Math\.min\(54,/.test(app)],
   ['Dock 滑块是正胶囊：圆角 = 高度一半', /Math\.round\(h \/ 2\)/.test(app)],
-  ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', Math\.round\(\(visH - h\) \/ 2\)/.test(app)],
+  ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', \(\(visH - h\) \/ 2\)\.toFixed\(1\)/.test(app)],
   ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein\s+\.lens-body::after/.test(css) && /\.seg-lens \.lens-body::after \{[\s\S]{0,240}?transition: none;/.test(css)],
   ['分段滑块和 Dock 是同一套两层结构：外层只走位置（.62s 过冲），内层 .lens-body 管压扁（.24s）', /\.seg-lens \{[\s\S]{0,700}?transform \.62s cubic-bezier\(\.33, 1\.06, \.32, 1\)/.test(css) && /\.seg-lens \.lens-body \{[\s\S]{0,900}?transform \.24s cubic-bezier\(\.32,\.9,\.28,1\)/.test(css) && /\.seg-lens\.press \.lens-body \{[\s\S]{0,140}?scale\(1\.055, \.925\)/.test(css)],
   ['分段滑块停稳时阴影必须渐变（.5s），否则那一帧硬切 = "颜色突然变成实色的"', /\.seg-lens \.lens-body \{[\s\S]{0,900}?box-shadow \.5s ease/.test(css)],

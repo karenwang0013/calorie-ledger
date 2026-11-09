@@ -967,11 +967,11 @@ body.add-open .sheet-mask.on {
 }
 
 .tab svg { display: block; width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
-.tab.on { color: #0A84FF; }   /* v11.43：选中色照 App Store/系统蓝（用户口径 2b） */
-.tab.on svg { stroke: #0A84FF; }
+.tab.on { color: var(--lime); }   /* v11.44：用户口径 2 改成「按各 App 主题色」，热量账本 = 绿 */
+.tab.on svg { stroke: var(--lime); }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
-.tab.lit { color: #0A84FF; }
-.tab.lit svg { stroke: #0A84FF; }
+.tab.lit { color: var(--lime); }
+.tab.lit svg { stroke: var(--lime); }
 .tab.on:not(.lit) { color: var(--muted2); }
 .tab.on:not(.lit) svg { stroke: var(--muted2); }
 .fab {
@@ -1098,11 +1098,11 @@ body.add-open .sheet-mask.on {
    ================================================================== */
 .dock-lens { --lens-h: 54px; --lens-r: 27px; }
 .dock-lens .lens-body,
-.dock-lens.settled .lens-body { background: rgba(0, 0, 0, 0.42); }
+.dock-lens.settled .lens-body { background: rgba(var(--glow-rgb), 0.14); }   /* v11.44：静止 = 主题色淡底 */
 .dock-lens.fadeout .lens-body,
 .dock-lens.fadeout.settled .lens-body,
 .dock-lens.press .lens-body,
-.dock-lens.press.settled .lens-body { background: rgba(142, 142, 147, 0.32); }
+.dock-lens.press.settled .lens-body { background: rgba(var(--glow-rgb), 0.32); }   /* v11.44：移动 = 主题色深一档 */
 
 /* v11.25：药丸不再有「按下瞬间露一下渐变白」—— 用户 2026-11-07 要求把这类渐变全部删掉，
    药丸任何时候都是同一块实色（只保留按下时的压扁形变）。

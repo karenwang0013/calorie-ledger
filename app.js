@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.44', date: '2026-11-09', notes: [
+    'Dock 配色改用本 App 主题色：选中图标/文字 = 绿，选中胶囊静止淡绿、按住/滑动更深一档',
+    '选中胶囊上下左右间隙对齐：上下各 3.5、左右跟条外沿齐平（原来上多下少、左边多 1px）'
+  ]},
   { v: 'v11.43', date: '2026-11-09', notes: [
     'Dock 照 App Store 重做：条 61 高、左右各离屏 25、离底 22、图标 28、字 10；选中胶囊 54 高（圆角=半高）',
     '颜色：胶囊停在原地是深色，按住/滑动时变浅；选中的图标和文字用系统蓝 #0A84FF'
@@ -3414,7 +3418,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.43';
+const APP_VERSION = 'v11.44';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9065,10 +9069,12 @@ function initDockLens() {
     // v11.43：最左/最右那一格的胶囊要贴着 Dock 边（App Store 的选中胶囊也是贴边的），否则会伸出条外面
     const bL = parseFloat(cs.borderLeftWidth) || 0;
     const bR = parseFloat(cs.borderRightWidth) || 0;
+    // v11.44：最左/最右那一格的胶囊要跟条外沿齐平（App Store 也是齐平的），允许压过那 1px 边框
     const rawX = cellLeft + (cellW - w) / 2;
-    const maxX = Math.max(0, ir.width - bL - bR - w);
-    lens.style.setProperty('--lens-x', Math.round(Math.min(Math.max(0, rawX), maxX)) + 'px');
-    lens.style.setProperty('--lens-y', Math.round((visH - h) / 2) + 'px');
+    const maxX = Math.max(-bL, ir.width - bL - w);   // 与条外沿齐平（含右侧 1px 边框）
+    lens.style.setProperty('--lens-x', Math.round(Math.min(Math.max(-bL, rawX), maxX)) + 'px');
+    // v11.44：上下间隙必须均等（条 61 / 边框 1 / 胶囊 54 → 2.5），四舍五入会差 1px
+    lens.style.setProperty('--lens-y', ((visH - h) / 2).toFixed(1) + 'px');
     // 圆角同心：内圆 = Dock 圆角 − 留白（不是"按比例缩"，那样弧线对不上）
     // Dock 圆角是画在边框外沿的，所以先减掉那 1px 边框，再减留白 —— 这样两条弧线才是严格平行
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
