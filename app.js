@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.54', d: '11-09', items: ['修：iPad 上 Dock 的选中胶囊和条尺寸不匹配 —— 之前胶囊高度硬卡 51，iPad 条高 104 时胶囊浮在上半截。现在高度 = 条内高 − 8（手机仍是 51，数值不变）'] },
   { v: 'v11.53', d: '11-09', items: [
     '修：设置 →「关于与更新」点不开 ——「最近更新」里 v11.36–v11.49 那 14 条的字段名和渲染用的不一致（写成 date/notes，渲染读的是 d/items），一 map 就抛错，整页白;已把这 14 条改成同一套字段',
     '修：整页（设置 / 提醒记录）往右滑退出时，会先弹回原位再消失 —— 关闭时先收掉这一层，下一帧再清内联样式'
@@ -3453,7 +3454,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.53';
+const APP_VERSION = 'v11.54';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9098,7 +9099,9 @@ function initDockLens() {
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
-    const h = Math.max(40, Math.min(51, Math.round(visH - 8)));   // v11.48：胶囊 51 高（条 61，四边各留 5）
+    /* v11.54：胶囊高度 = 条内高 − 8（四边各留 5）。之前硬卡 51，iPad 上条高 104 时
+       胶囊还是 51，浮在条上半截、跟格子对不上。手机 61 高 → 仍是 51，数值不变。 */
+    const h = Math.max(40, Math.round(visH - 8));
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
