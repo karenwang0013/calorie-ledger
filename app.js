@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.38', date: '2026-11-09', notes: [
+    '改：左边缘右滑返回的跟手感 —— 不再「整页变透明」（会和背后的今日页叠在一起，看着发灰），改成几乎不变透明 + 越滑越虚（0 → 8px 模糊）',
+    '细节：透明度最低只到 0.9（原来 0.55），模糊按滑动距离线性加深，松手关闭/回弹都会把模糊一起清掉'
+  ] },
   { v: 'v11.37', date: '2026-11-09', notes: [
     '修：提醒记录「左边缘右滑返回」没反应、只会弹回来 —— 退出手势补上了提醒记录这一页',
     '修：提醒记录滚到底，最后一行和底部按钮之间那一大块空白没了；内容现在一直滚到 44px 渐变里淡出',
@@ -3392,7 +3396,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.37';
+const APP_VERSION = 'v11.38';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6887,7 +6891,7 @@ function closeNotifyLog() {
   document.body.classList.remove('nlog-open');
   const mask = $('#nlogMask'), sheet = $('#nlogSheet');
   const isPage = !!(sheet && sheet.classList.contains('page'));
-  if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; sheet.style.height = ''; }
+  if (sheet) { sheet.classList.remove('dragging'); sheet.style.transform = ''; sheet.style.opacity = ''; sheet.style.filter = ''; sheet.style.height = ''; }
   if (isPage) {
     /* 整页关闭：瞬间消失，不要落下动画，也不要遮罩淡出（会黑一下） */
     if (mask) {
@@ -9742,7 +9746,10 @@ function init() {
     const dm = sw.dragEl || sw.el;
     if (dm) {
       dm.style.transform = 'translateX(' + sw.dx + 'px)';
-      dm.style.opacity = String(Math.max(0.55, 1 - sw.dx / 700));
+      /* v11.38 用户口径：纯透明看着突兀 → 改成「退到后面去」：不明显变透明，改用逐渐加深的虚化。
+         透明度最低只到 0.9（几乎看不出来），模糊 0 → 8px 跟手加深，滑得越远越虚。 */
+      dm.style.opacity = String(Math.max(0.9, 1 - sw.dx / 1400));
+      dm.style.filter = 'blur(' + Math.min(8, sw.dx / 40).toFixed(1) + 'px)';
     }
   }, { passive: true });
 
@@ -9756,28 +9763,29 @@ function init() {
     if (dx > 100) {
       if (isSub && dm) {
         /* 子页：内容滑走 → 立刻换成设置主页 → 从右侧滑回来（不会闪到 App 首页） */
-        dm.style.transition = 'transform .22s cubic-bezier(.32,.72,0,1), opacity .22s ease-out';
+        dm.style.transition = 'transform .22s cubic-bezier(.32,.72,0,1), opacity .22s ease-out, filter .22s ease-out';
         dm.style.transform = 'translateX(102%)';
         dm.style.opacity = '0';
         setTimeout(() => {
-          dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = '';
+          dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = '';
           setBackToRoot();          // 收掉子页层 → 下面的设置主页直接露出来
         }, 230);
       } else {
         if (dm) {
-          dm.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out';
+          dm.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1), opacity .3s ease-out, filter .3s ease-out';
           dm.style.transform = 'translateX(102%)';
           dm.style.opacity = '0';
         }
         setTimeout(() => {
-          if (dm) { dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; }
+          if (dm) { dm.style.transition = ''; dm.style.transform = ''; dm.style.opacity = ''; dm.style.filter = ''; }
           goBack();
         }, 270);
       }
     } else if (dm) {
-      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out';
+      dm.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .32s ease-out, filter .38s ease-out';
       dm.style.transform = '';
       dm.style.opacity = '';
+      dm.style.filter = '';
       setTimeout(() => { dm.style.transition = ''; }, 400);
     } else {
       goBack();
