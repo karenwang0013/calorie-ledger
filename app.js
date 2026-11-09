@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.57', d: '11-09', items: [
+    'iPad 上 Dock 的左右内边距从 18 改成 0、滑块宽 = 格宽 − 14、x = 格左 + 7：滑块在 Dock 里的上下左右留白现在都是 8（之前上下 8、左边 18）。',
+    'Dock 离屏幕底 8、左右各 8，与训练账本完全一致；手机端（61 高、左右 25、滑块 51）不变。',
+  ]},
   { v: 'v11.56', d: '11-09', items: [
     'iPad 专属的 Dock 数值（104 高 / 圆角 18 / 边距 8 / 滑块 88 圆角 10）加了「屏幕高度 ≥700」条件：iPad 横竖屏不变，iPhone 横屏回到手机那套（61 高 / 左右 25 / 上下 5 / 滑块 51 药丸），不再被当成 iPad。',
     'CSS 媒体查询与 place()、syncDockR() 的判断同口径（都是 min-width 700 + min-height 700）。',
@@ -3462,7 +3466,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.56';
+const APP_VERSION = 'v11.57';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9106,7 +9110,9 @@ function initDockLens() {
     /* v11.55：iPad 上滑块 = 整格（宽 = 格子宽、左 = 格子左），把按钮完整包住；
        手机仍留 4 的边（宽 = 格宽 − 8，配合 1px 边框 = 视觉 5）。 */
     const big = window.matchMedia('(min-width: 700px) and (min-height: 700px)').matches;   /* v11.56：与 CSS 同口径 */
-    const w = big ? Math.round(cellW) : Math.max(70, Math.round(cellW - 8));
+    /* v11.57：四边间隙相等 —— iPad 滑块上下留 8（104 − 8×2 = 88），左右也留 8：
+       宽 = 格宽 − 14（两侧各 7 + 1px 边框 = 视觉 8），x = 格左 + 7。 */
+    const w = big ? Math.round(cellW - 14) : Math.max(70, Math.round(cellW - 8));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
@@ -9121,7 +9127,7 @@ function initDockLens() {
     const bL = parseFloat(cs.borderLeftWidth) || 0;
     const bR = parseFloat(cs.borderRightWidth) || 0;
     // v11.44：最左/最右那一格的胶囊要跟条外沿齐平（App Store 也是齐平的），允许压过那 1px 边框
-    const rawX = big ? cellLeft : cellLeft + (cellW - w) / 2;   /* 手机 = cellLeft + 4 */
+    const rawX = big ? cellLeft + 7 : cellLeft + (cellW - w) / 2;   /* 手机 = cellLeft + 4 */
     const maxX = Math.max(0, ir.width - bL - bR - w);   /* 不超过条内沿 */
     lens.style.setProperty('--lens-x', Math.max(0, Math.min(rawX, maxX)).toFixed(1) + 'px');
     // v11.44：上下间隙必须均等（条 61 / 边框 1 / 胶囊 54 → 2.5），四舍五入会差 1px

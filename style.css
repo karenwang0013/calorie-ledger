@@ -2515,7 +2515,9 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
      宽度收到和内容列差不多，不做成横贯整块大屏的长条 */
   /* v11.55：Dock 跟着屏幕走 —— 竖屏、横屏都是「屏宽 − 16」，不再收成 780 居中，
      横屏时也贴到 iPad 屏幕两边的圆角上（和练账同一套）。 */
-  .tabbar .inner { padding: 0 18px; max-width: none; }
+  /* v11.57：iPad 上 Dock 左右 padding 归 0 —— 之前 18，格子被往里推，
+     滑块变成「上下 8、左边 18」。归 0 后滑块四边都留 8（见 app.js place()）。 */
+  .tabbar .inner { padding: 0; max-width: none; }
   .tab svg { width: 38px; height: 38px; }
   .tab { font-size: 14px; }
   .fab { font-size: 14px; }

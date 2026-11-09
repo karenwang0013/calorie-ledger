@@ -136,8 +136,8 @@
   },
   {
     "file": "style.css",
-    "find": ".tabbar .inner { padding: 0 18px; max-width: none; }",
-    "why": "iPad 上 Dock 铺满「屏宽 − 16」（v11.55），内边距 18 不动；卡牌仍各自限宽 780"
+    "find": ".tabbar .inner { padding: 0; max-width: none; }",
+    "why": "iPad 上 Dock 铺满「屏宽 − 16」（v11.55）；v11.57 起内边距归 0，滑块四边留白才相等（卡牌仍各自限宽 780）"
   },
   {
     "file": "app.js",

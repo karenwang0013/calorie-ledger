@@ -125,7 +125,7 @@ const checks = [
   // v11.43 用户口径（2026-11-09）：Dock 照 App Store 底部条 —— 胶囊 = 格宽 + 10、高 54、正胶囊（圆角 = 半高）。
   // 「四边留白相等 / 圆角与 Dock 同心」那套是旧口径（屏幕圆角−边距），App Store 那条本身就不等距，作废。
   // v11.55（2026-11-09）：iPad 上滑块改成「整格」+ 圆角内同心；手机仍是「格宽 − 8 / 条内高 − 8 / 正胶囊」。
-  ['Dock 滑块：手机 = 格宽 − 8、条内高 − 8；iPad = 整格宽、条内高 − 14、圆角 = Dock 圆角 − 8', /cellW - 8\)/.test(app) && /big \? Math\.round\(cellW\)/.test(app) && /Math\.round\(visH - \(big \? 14 : 8\)\)/.test(app) && /dockR - 8\)/.test(app)],
+  ['Dock 滑块：手机 = 格宽 − 8、条内高 − 8；iPad = 整格宽、条内高 − 14、圆角 = Dock 圆角 − 8', /cellW - 8\)/.test(app) && /big \? Math\.round\(cellW - 14\)/.test(app) && /Math\.round\(visH - \(big \? 14 : 8\)\)/.test(app) && /dockR - 8\)/.test(app)],
   ['Dock 滑块是正胶囊：圆角 = 高度一半', /Math\.round\(h \/ 2\)/.test(app)],
   ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', \(\(visH - h\) \/ 2\)\.toFixed\(1\)/.test(app)],
   ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein\s+\.lens-body::after/.test(css) && /\.seg-lens \.lens-body::after \{[\s\S]{0,240}?transition: none;/.test(css)],
