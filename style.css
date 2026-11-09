@@ -2214,8 +2214,9 @@ body.add-open .sheet-mask.on {
 
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip {
-  padding: 7px 12px; border-radius: 20px; font-size: 12px;
-  background: var(--card); color: var(--muted); border: 1px solid var(--line);
+  /* v11.50：常用词按钮对齐顶栏那颗「数据同步」（圆角 11 / 内边距 7 11 / 12.5px / card2 玻璃） */
+  padding: 7px 11px; border-radius: 11px; font-size: 12.5px;
+  background: var(--card); color: var(--text); border: 1px solid var(--line);
 }
 .chip.on { background: rgba(var(--glow-rgb),.12); color: var(--lime); border-color: rgba(var(--glow-rgb),.25); }
 
@@ -2619,7 +2620,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
    所以 .shotrow 也从这条共享规则里拿出去，自己写成 .ritem 那几个值。 */
 .chip {
   border: 1px solid transparent;
-  background-image: linear-gradient(var(--card), var(--card)), var(--edge-gloss);
+  background-image: linear-gradient(var(--card2), var(--card2)), var(--edge-gloss);
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
@@ -3832,3 +3833,22 @@ html.kb #setSheet {
   background-image: none !important;
   border: 1px solid rgba(255,255,255,.06) !important;
 }
+
+/* v11.50：常用词按钮 = 顶栏「数据同步」那颗（透底 + edge-gloss 光泽描边 / 圆角 11 / 7 11 / 12.5px）。
+   之前十几次堆叠的 #addSheet .chip 覆盖在这里统一作废，别再逐条加。 */
+#addSheet .chip,
+#addSheet .chip.on{
+  background-color: transparent !important;
+  background-image: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)), var(--edge-gloss) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  border-radius: 11px !important;
+  padding: 7px 11px !important;
+  font-size: 12.5px !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+#addSheet .chip.on{ color: var(--lime) !important; }
