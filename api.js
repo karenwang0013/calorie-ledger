@@ -819,7 +819,7 @@ const TEXT_PROMPT = `你是专业营养师。用户会用日常口语描述吃�
 async function callModel(content, opt) {
   const key = (setting('dashscope_key', '') || '').trim();
   if (!key) throw new Error('还没有设置 DashScope API Key，去「我的」页面填一下。');
-  // v11.59：要 JSON 的调用让模型**只能**输出 JSON（服务端约束，不是靠提示词祈祷）。
+  // v11.60：要 JSON 的调用让模型**只能**输出 JSON（服务端约束，不是靠提示词祈祷）。
   // 识别/搜索都走这一条；「测试连接」「按名字查营养」不要 JSON，保持原样。
   const wantJson = !!(opt && opt.json);
 
@@ -830,7 +830,9 @@ async function callModel(content, opt) {
 
   let last = null;
   for (const model of models) {
-    const body = { model, messages: [{ role: 'user', content }], temperature: 0.1, max_tokens: 1600 };
+    const body = { model, messages: [{ role: 'user', content }], temperature: 0.1, max_tokens: 2600 };
+    // v11.60：要 JSON 就加服务端约束（输出额度也加大到 2600，长营养表不会被截断）
+    if (wantJson) body.response_format = { type: 'json_object' };
     // ① 网络层：最多等 60 秒，失败了自动再试一次（手机明确没网就不白等）
     let resp = null, netErr = null;
     for (let attempt = 0; attempt <= AI_NET_RETRY; attempt++) {
@@ -853,6 +855,11 @@ async function callModel(content, opt) {
     }
     let data = {};
     try { data = await resp.json(); } catch (e) { data = {}; }
+    // ①.5 v11.60：个别模型不认 response_format（返回 400）→ 去掉这个参数重发一次，别让兜底链断在这里
+    if (wantJson && resp.status === 400 && data.error && /response_format|json_object/i.test(JSON.stringify(data.error))) {
+      delete body.response_format;
+      try { resp = await aiPost(body, key); data = await resp.json(); } catch (e) { data = {}; }
+    }
     // ② 太频繁（429）：等一会儿自动再试一次，用户不用自己掐点重点
     if (resp.status === 429 && !data.choices) {
       await aiSleep(AI_429_WAIT);
@@ -1055,7 +1062,7 @@ function cleanItems(obj, opt) {
 async function callAndParse(content, tries = 2) {
   let cur = content, last = null;
   for (let i = 0; i < tries; i++) {
-    const txt = await callModel(cur);
+    const txt = await callModel(cur, { json: true });   // v11.60：服务端强制只输出 JSON
     try { return extractJson(txt); } catch (e) {
       last = e;
       cur = content.concat([{ type: 'text', text:
