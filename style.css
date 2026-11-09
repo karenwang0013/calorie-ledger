@@ -3370,7 +3370,9 @@ html.kb #setSheet {
    首行内容再由 .sh-body 的 7px 内边距补到缝底，视觉上缝 2 仍 = 14。 */
 /* v11.35 用户口径：拍照/搜索那一栏再贴近卡顶一点，横杠必须落在这道缝的正中。
    缝 13 → 10，横杠 4 高、top 3 → 圆心 5 = 缝的一半。 */
-#addSheet #addTabs { margin: 10px var(--card-gap) 7px; }
+#addSheet #addTabs { margin: 10px var(--card-gap) 4px; }
+/* v11.40 用户口径：上面（卡顶→拍照/搜索栏）10+横杠，下面到照片框的缝 14，看着不对等 →
+   下边留白 7 → 4，两条缝都 ≈11；省下的 3px 给了照片框（见 app.js syncSlotH 的比例 1.36 → 1.43） */
 /* 记录卡顶部仍是「拍照 / 搜索」两格；描述不占格，是拍照页下面单独一块（#descBlock） */
 #addTabs { grid-template-columns: 1fr 1fr; }
 /* v10.42 用户口径：描述这一块**不再套大框** —— 只留「一个框 + 一个按钮」，

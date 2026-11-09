@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.40', date: '2026-11-09', notes: [
+    '改：记录卡「拍照 / 搜索」栏上下两条缝修成等宽（上 11 / 下 14 → 都 11），不再头重脚轻',
+    '改：两个照片框（食物照片 / 营养成分表）加高 —— 宽高比 1.36 → 1.43（196×267 → 196×280），把省下的缝收给框'
+  ] },
   { v: 'v11.39', date: '2026-11-09', notes: [
     '改：提醒记录「清空记录」与记录卡「拍照 / 从相册选 / 识别热量」的底部留白 30 → 22，和左右留白（22 / 18）基本一致',
     '细节：三处统一 —— 提醒记录底栏、记录卡底栏、记录卡空态照片区底padding，按钮整体下移 8pt，四角离屏幕底弧的间隙不再忽大忽小'
@@ -3400,7 +3404,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.39';
+const APP_VERSION = 'v11.40';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4271,7 +4275,7 @@ function syncSlotH() {
      现在再加一条「不超过可视高度 40%」的上限。 */
   const inner = w - 12;            // 两列之间的间距 12
   const cap = Math.round(window.innerHeight * 0.40);
-  const slotH = Math.min(Math.round((inner / 2) * 1.36), cap);
+  const slotH = Math.min(Math.round((inner / 2) * 1.43), cap);   // v11.40：1.36 → 1.43（用户要照片框再大一点，空隙收给框）
   if (slotH > 40) {
     __slotBase = slotH;
     document.documentElement.style.setProperty('--slot-h', slotH + 'px');
