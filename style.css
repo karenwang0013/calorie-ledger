@@ -1098,11 +1098,11 @@ body.add-open .sheet-mask.on {
    ================================================================== */
 .dock-lens { --lens-h: 54px; --lens-r: 27px; }
 .dock-lens .lens-body,
-.dock-lens.settled .lens-body { background: rgba(var(--glow-rgb), 0.14); }   /* v11.44：静止 = 主题色淡底 */
+.dock-lens.settled .lens-body { background: var(--btn-solid); }   /* v11.45：材质回到 v11.42 之前那颗（白玻璃 .085），不再上主题色 */
 .dock-lens.fadeout .lens-body,
 .dock-lens.fadeout.settled .lens-body,
 .dock-lens.press .lens-body,
-.dock-lens.press.settled .lens-body { background: rgba(var(--glow-rgb), 0.32); }   /* v11.44：移动 = 主题色深一档 */
+.dock-lens.press.settled .lens-body { background: rgba(255, 255, 255, 0.18); }   /* v11.45：移动 = 同一块白玻璃亮一档（唯一变化） */
 
 /* v11.25：药丸不再有「按下瞬间露一下渐变白」—— 用户 2026-11-07 要求把这类渐变全部删掉，
    药丸任何时候都是同一块实色（只保留按下时的压扁形变）。
