@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.49', date: '2026-11-09', notes: [
+    '底部卡牌不再悬浮：体重 / 帮助等弹层贴左右边 + 贴底，只留上圆角 46（跟记录卡一致）',
+    '卡片内的横杠、标题、内容边距不变'
+  ]},
   { v: 'v11.48', date: '2026-11-09', notes: [
     'Dock 选中胶囊与 Dock 条之间的缝隙 3.5 → 5（胶囊 51 高、宽 = 格宽 − 8，四边相等）',
     '只动胶囊尺寸与位置，条、格子、图标、字一律不动'
@@ -3435,7 +3439,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.48';
+const APP_VERSION = 'v11.49';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

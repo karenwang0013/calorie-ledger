@@ -1387,14 +1387,15 @@ body.add-open .sheet-mask.on {
 
 /* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
-  position: fixed; left: 8px; right: 8px; z-index: 61;
-  bottom: 16px;
-  max-width: 500px; margin: 0 auto;
+  /* v11.49：用户口径「不要悬浮卡牌」—— 底部卡牌一律贴左右边 + 贴底，只留上圆角 */
+  position: fixed; left: 0; right: 0; z-index: 61;
+  bottom: 0;
+  max-width: none; margin: 0;
   min-height: 56dvh; max-height: 72dvh;
   background: var(--bg2);
-  border-radius: var(--card-r);
+  border-radius: 46px 46px 0 0;
   /* 手机屏幕的角是超椭圆（squircle），支持就跟着用，不支持自动忽略 */
-  border: 1px solid var(--line2);
+  border: 0; border-top: 1px solid var(--line2);
   box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   transform: translateY(calc(100% + 24px)) scale(.98);
   opacity: 0;
