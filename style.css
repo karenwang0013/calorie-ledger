@@ -1099,7 +1099,7 @@ body.add-open .sheet-mask.on {
    - 停在原地：深色 rgab(0,0,0,.42)（App Store 的选中胶囊比玻璃条深）
    - 按住/滑动中（.fadeout / .press）：变浅 rgba(142,142,147,.32)，一眼能看出在移动
    ================================================================== */
-.dock-lens { --lens-h: 54px; --lens-r: 27px; }
+.dock-lens { --lens-h: 51px; --lens-r: 25.5px; }
 .dock-lens .lens-body,
 .dock-lens.settled .lens-body { background: var(--btn-solid); }   /* v11.45：材质回到 v11.42 之前那颗（白玻璃 .085），不再上主题色 */
 .dock-lens.fadeout .lens-body,

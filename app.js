@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.48', date: '2026-11-09', notes: [
+    'Dock 选中胶囊与 Dock 条之间的缝隙 3.5 → 5（胶囊 51 高、宽 = 格宽 − 8，四边相等）',
+    '只动胶囊尺寸与位置，条、格子、图标、字一律不动'
+  ]},
   { v: 'v11.47', date: '2026-11-09', notes: [
     'Dock 选中胶囊四边留白一律 3.5：宽 = 格宽 − 5（原来格宽 + 10，第一格/最后一格会顶到条边、左右不均）',
     '只动胶囊宽度与横向位置，条、格子、图标、字一律不动'
@@ -3431,7 +3435,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.47';
+const APP_VERSION = 'v11.48';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9071,12 +9075,12 @@ function initDockLens() {
     const PAD = 7;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
-    // v11.47：胶囊四边留白必须相等 —— 宽 = 格宽 − 5（左右各内缩 2.5，加 1px 边框 = 视觉 3.5，和上下一样）
-    const w = Math.max(70, Math.round(cellW - 5));
+    // v11.48：四边留白 5（内缩 4 + 1px 边框）—— 用户口径「App Store 的间隙没这么小」
+    const w = Math.max(70, Math.round(cellW - 8));
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
-    const h = Math.max(40, Math.min(54, Math.round(visH - 5)));   // v11.43：App Store 胶囊 54 高（条 61，上下各留 3.5）
+    const h = Math.max(40, Math.min(51, Math.round(visH - 8)));   // v11.48：胶囊 51 高（条 61，四边各留 5）
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
@@ -9084,7 +9088,7 @@ function initDockLens() {
     const bL = parseFloat(cs.borderLeftWidth) || 0;
     const bR = parseFloat(cs.borderRightWidth) || 0;
     // v11.44：最左/最右那一格的胶囊要跟条外沿齐平（App Store 也是齐平的），允许压过那 1px 边框
-    const rawX = cellLeft + (cellW - w) / 2;   /* = cellLeft + 2.5 */
+    const rawX = cellLeft + (cellW - w) / 2;   /* = cellLeft + 4 */
     const maxX = Math.max(0, ir.width - bL - bR - w);   /* 不超过条内沿 */
     lens.style.setProperty('--lens-x', Math.max(0, Math.min(rawX, maxX)).toFixed(1) + 'px');
     // v11.44：上下间隙必须均等（条 61 / 边框 1 / 胶囊 54 → 2.5），四舍五入会差 1px
