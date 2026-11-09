@@ -3616,7 +3616,9 @@ html.kb #setSheet {
    内容区滚到底在 44px 渐变里淡出，按钮全宽 + 圆角 26；底栏与内容之间不画分隔线 */
 #nlogSheet.page .sh-foot{
   flex:0 0 auto;position:relative;z-index:2;background:#0d0f0e;border-top:0;
-  padding:10px 22px calc(30px + var(--safe-b,0px));
+  /* v11.39 用户口径：按钮离屏幕底弧的间隙要和左右一致 —— 底 30 → 22（= 左右 22）。
+     440 宽屏角 R≈62：22 时按钮左下角的「径向间隙」16pt，仍完整落在弧内，不会被裁。 */
+  padding:10px 22px calc(22px + var(--safe-b,0px));
 }
 #nlogSheet.page .sh-foot::before{
   content:'';position:absolute;left:0;right:0;top:-44px;height:44px;
@@ -3659,10 +3661,10 @@ html.kb #setSheet {
 }
 /* 内容跟着屏幕边距走：左右 18（和设置页一致），底部让开 Home 条 */
 #addSheet .sh-body{margin:0 18px}
-#addSheet .sh-foot{padding:7px 18px calc(30px + var(--safe-b,0px))}
+#addSheet .sh-foot{padding:7px 18px calc(22px + var(--safe-b,0px))}   /* v11.39：底 30 → 22，和左右 18 贴近 */
 /* 贴到底以后，最后一块内容要自己让开屏幕下方那道大圆弧（本机屏角约 55pt，20 时按钮左下角离弧只剩 4pt）：
    抬到 30，按钮四角都在弧里面，不再和屏幕圆角抢弧度。 */
-#addSheet.no-items #pane-photo{padding-bottom:calc(30px + var(--safe-b,0px))}
+#addSheet.no-items #pane-photo{padding-bottom:calc(22px + var(--safe-b,0px))}   /* v11.39：底 30 → 22 */
 
 /* ---------- 设置子页：去卡牌 + 重新排版（分组标题 + 内容平铺，滚动到底就是屏幕底） ---------- */
 #setSheet.page #setBody .about-fill{display:block !important;height:auto !important;overflow:visible !important}
