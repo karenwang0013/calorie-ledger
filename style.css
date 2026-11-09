@@ -3325,7 +3325,8 @@ html.kb #setSheet {
 }
 #pane-search #searchInput {
   position: absolute;     /* v8.99 起相对 #pane-search（position:relative）定位 */
-  left: 12px; right: 12px; width: auto;
+  /* v11.52 用户口径：搜索框和上面「拍照 / 搜索」导航条一样宽（面板宽度就是那条的宽度 → 归零） */
+  left: 0; right: 0; width: auto;
   /* v9.24：不再上提 —— 顶上那道缝就是面板顶部到三格条的距离 = 14px（和缝 1 相等） */
   top: 0;
   z-index: 5;
@@ -3834,12 +3835,14 @@ html.kb #setSheet {
   border: 1px solid rgba(255,255,255,.06) !important;
 }
 
-/* v11.50：常用词按钮 = 顶栏「数据同步」那颗（透底 + edge-gloss 光泽描边 / 圆角 11 / 7 11 / 12.5px）。
+/* v11.50 / v11.52：常用词按钮形状照顶栏「数据同步」那颗（圆角 11 / 7 11 / 12.5px / 光泽描边），
+   v11.52 起底色是黑的（用户说太透看不清），不再全透。
    之前十几次堆叠的 #addSheet .chip 覆盖在这里统一作废，别再逐条加。 */
 #addSheet .chip,
 #addSheet .chip.on{
   background-color: transparent !important;
-  background-image: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0)), var(--edge-gloss) !important;
+  /* v11.52 用户口径：常用词太透（分不清是卡里的字还是背后页面）→ 加一层黑底，保留光泽描边 */
+  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss) !important;
   background-origin: border-box !important;
   background-clip: padding-box, border-box !important;
   border: 1px solid transparent !important;
