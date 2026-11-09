@@ -1624,7 +1624,7 @@ body.add-open .sheet-mask.on {
    滚动内容到那里就被切掉，看着像有一层东西盖住（横杠下沿就是切边）。
    现在横杠不占位，内容可以一直滚到弹层顶边，横杠浮在最上面 */
 #addSheet .grab {
-  position: absolute; top: 3.5px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
   width: 66px; height: 4px; margin: 0; z-index: 3;
 }
 /* 有照片 / 有已选食材时卡片自然按内容变高（height:auto 已覆盖），这里只留一个标记位 */
@@ -3368,7 +3368,9 @@ html.kb #setSheet {
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
    v9.25：下边距 6 → 7 —— 滚动裁切线要落在第 2 道缝的中心线（三格条下方 7px），
    首行内容再由 .sh-body 的 7px 内边距补到缝底，视觉上缝 2 仍 = 14。 */
-#addSheet #addTabs { margin: 13px var(--card-gap) 7px; }
+/* v11.35 用户口径：拍照/搜索那一栏再贴近卡顶一点，横杠必须落在这道缝的正中。
+   缝 13 → 10，横杠 4 高、top 3 → 圆心 5 = 缝的一半。 */
+#addSheet #addTabs { margin: 10px var(--card-gap) 7px; }
 /* 记录卡顶部仍是「拍照 / 搜索」两格；描述不占格，是拍照页下面单独一块（#descBlock） */
 #addTabs { grid-template-columns: 1fr 1fr; }
 /* v10.42 用户口径：描述这一块**不再套大框** —— 只留「一个框 + 一个按钮」，
@@ -3611,15 +3613,18 @@ html.kb #setSheet {
 #addSheet{
   left:0;right:0;bottom:0;
   max-width:none;margin:0;
-  border-radius:var(--dock-r,26px) var(--dock-r,26px) 0 0;
+  /* 贴满屏宽后，顶角不能再用 Dock 的 52（440 宽下弧太深，像一颗药丸）：
+     40 是「卡顶→按钮」那几道 10px 缝还能完整落在弧内的最大档（角点 18/10 在弧内要 ≤46.9） */
+  border-radius:40px 40px 0 0;
   border:0;border-top:1px solid var(--line2);
   --card-gap:18px;
 }
 /* 内容跟着屏幕边距走：左右 18（和设置页一致），底部让开 Home 条 */
 #addSheet .sh-body{margin:0 18px}
-#addSheet .sh-foot{padding:7px 18px calc(20px + var(--safe-b,0px))}
-/* 贴到底以后，最后一块内容要自己让开 Home 条（没内容时底栏是隐藏的） */
-#addSheet.no-items #pane-photo{padding-bottom:calc(20px + var(--safe-b,0px))}
+#addSheet .sh-foot{padding:7px 18px calc(30px + var(--safe-b,0px))}
+/* 贴到底以后，最后一块内容要自己让开屏幕下方那道大圆弧（本机屏角约 55pt，20 时按钮左下角离弧只剩 4pt）：
+   抬到 30，按钮四角都在弧里面，不再和屏幕圆角抢弧度。 */
+#addSheet.no-items #pane-photo{padding-bottom:calc(30px + var(--safe-b,0px))}
 
 /* ---------- 设置子页：去卡牌 + 重新排版（分组标题 + 内容平铺，滚动到底就是屏幕底） ---------- */
 #setSheet.page #setBody .about-fill{display:block !important;height:auto !important;overflow:visible !important}
