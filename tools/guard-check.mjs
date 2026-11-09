@@ -122,8 +122,10 @@ const checks = [
   ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],
   ['锁死的颜色/尺寸一个都不许改（tools/locked.json）', lockedBad.length === 0],
   ['卡片上下内边距必须相等（.card 不许 12/16 这种不等距）', padSymmetric('.card')],
-  ['Dock 滑块四周留白必须同一个值（不然圆角没法同心）', /const PAD = \d+;/.test(app) && /cellW \+ 2 \* \(padL - PAD\)/.test(app) && /visH - PAD \* 2/.test(app)],
-  ['Dock 滑块圆角与 Dock 同心：内圆 = Dock 圆角 − 留白 − 边框', /dockR - PAD - bT/.test(app)],
+  // v11.43 用户口径（2026-11-09）：Dock 照 App Store 底部条 —— 胶囊 = 格宽 + 10、高 54、正胶囊（圆角 = 半高）。
+  // 「四边留白相等 / 圆角与 Dock 同心」那套是旧口径（屏幕圆角−边距），App Store 那条本身就不等距，作废。
+  ['Dock 滑块照 App Store：胶囊宽 = 格宽 + 10、高 54（不再是四边等距）', /cellW \+ 10/.test(app) && /Math\.min\(54,/.test(app)],
+  ['Dock 滑块是正胶囊：圆角 = 高度一半', /Math\.round\(h \/ 2\)/.test(app)],
   ['Dock 滑块上下等距：高度按"边框里面"那块算（visH），不许用整框高度', /const visH = ir\.height - bT - bB;/.test(app) && /--lens-y', Math\.round\(\(visH - h\) \/ 2\)/.test(app)],
   ['滑块"没操作过就不许自己淡"：默认 transition: none，只由 fadein/fadeout 驱动', /\n\.seg-lens\.fadein\s+\.lens-body::after/.test(css) && /\.seg-lens \.lens-body::after \{[\s\S]{0,240}?transition: none;/.test(css)],
   ['分段滑块和 Dock 是同一套两层结构：外层只走位置（.62s 过冲），内层 .lens-body 管压扁（.24s）', /\.seg-lens \{[\s\S]{0,700}?transform \.62s cubic-bezier\(\.33, 1\.06, \.32, 1\)/.test(css) && /\.seg-lens \.lens-body \{[\s\S]{0,900}?transform \.24s cubic-bezier\(\.32,\.9,\.28,1\)/.test(css) && /\.seg-lens\.press \.lens-body \{[\s\S]{0,140}?scale\(1\.055, \.925\)/.test(css)],
@@ -143,25 +145,31 @@ const checks = [
   // 改任何一个参数都要按这三条一起重算，不许单独调一个。
   // v10.18 用户口径（2026-10-28）：「Dock 如果变宽或者变低，圆角间隙、底部间隙要跟着调整，包括里面的图标。」
   // 图标和文字必须用 calc 跟 --dock-h 联动，写死 px 就会"Dock 缩了、图标不缩"（v10.16 就是这样被用户抓到的）。
-  ['Dock 图标/文字必须跟 Dock 高度联动（calc(--dock-h × 系数)，不许写死 px）',
-    // 只要求「用 calc 跟 --dock-h 联动」，具体系数允许调（v11.09 用户要求按钮大一点：0.335→0.365 / 0.125→0.135）
-    /\.tab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.\d+\)/.test(css)
-    && /\.fab svg \{[^}]*calc\(var\(--dock-h\) \* 0\.\d+\)/.test(css)
-    && (css.match(/font-size: calc\(var\(--dock-h\) \* 0\.\d+\)/g) || []).length >= 2],
-  ['Dock 与屏幕的等距/同心规则 + 卡牌层级（Dock=弹层=底部，主页卡更窄）', (() => {
-    const num = k => { const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px')); return m ? parseFloat(m[1]) : null; };
-    const inset = num('dock-inset');     // 弹层卡（记录/设置/提醒）左右
-    const bottom = num('dock-bottom');   // Dock 底部（贴 home 横条顶边 13）
-    const dockW = num('dock-w');         // Dock 左右
-    const pagePad = num('page-pad');     // 主页卡牌左右
+  // v11.43：口径改了 —— App Store 的图标 28、字 10 是固定值（条高 61 也不随屏宽变），
+  // 所以这里从「必须 calc 联动」改成「必须是 App Store 的 28 / 10」，防止有人又改回按比例缩。
+  ['Dock 图标 28 / 文字 10（v11.43 照 App Store 定死，不再跟高度联动）',
+    /\.tab svg \{[^}]*width: 28px/.test(css)
+    && /\.fab svg \{[^}]*width: 28px/.test(css)
+    && (css.match(/font-size: 10px/g) || []).length >= 2],
+  // v11.43：Dock 照 App Store 底部条 —— 左右各 25、离底 22、高 61、圆角 = 高度一半（胶囊）。
+  // 旧的「左右=底部=弹层卡宽、圆角=屏角−边距」作废：App Store 那条是窄条，弹层卡仍按 --dock-inset 保持整屏宽。
+  ['Dock 照 App Store：左右 25 / 离底 22 / 高 61 / 圆角 = 高度一半', (() => {
+    const num = k => {
+      const m = css.match(new RegExp('--' + k + ':\\s*([\\d.]+)px'));
+      return m ? parseFloat(m[1]) : null;
+    };
+    const bottom = num('dock-bottom');
+    const dockW = num('dock-w');
     const h = num('dock-h');
-    if ([inset, bottom, dockW, pagePad, h].some(v => v == null)) return false;
-    if (bottom < 8 || bottom > 13) return false;               // ① 底边必须贴住白杠顶边（8+5=13，容差 1pt 让它再宽一点）
-    if (Math.abs(dockW - bottom) > 0.01) return false;           // ② Dock 左右=底部，圆角缝=底缝
-    if (Math.abs(inset - dockW) > 0.01) return false;            // ③ 点出来的卡必须和 Dock 同宽
-    if (pagePad <= inset + 0.01) return false;                   // ④ 主页卡必须比 Dock 窄（Dock 比主页卡宽）
-    const wantR = 62 - dockW;                                    // ⑤ 圆角按 Dock 左右同心
-    return h >= 2 * wantR - 0.01;                                // ⑥ 高度至少 2×圆角
+    const pagePad = num('page-pad');
+    if ([bottom, dockW, h, pagePad].some(v => v == null)) return false;
+    if (Math.abs(dockW - 25) > 0.01) return false;          // ① App Store 条左右各离屏 25
+    if (Math.abs(bottom - 22) > 0.01) return false;         // ② 条底离屏 22
+    if (Math.abs(h - 61) > 0.01) return false;              // ③ 条高 61
+    const rLine = css.match(/--dock-r:\s*([^;]+);/);
+    if (!rLine || !/calc\(var\(--dock-h\)\s*\/\s*2\)/.test(rLine[1])) return false;   // ④ 胶囊圆角 = 高度一半
+    if (!(pagePad > 0)) return false;                       // ⑤ 主页卡左右必须有值
+    return true;
   })()],
   ['Dock 圆角跟着这台设备的屏幕圆角走（脚本按屏宽算，不写死）', /syncDockR/.test(app) && /border-radius: var\(--dock-r\)/.test(css)],
   ['Dock 边距按设备分开（手机 / iPad 各一套）', /@media \(min-width: 700px\) \{\n  \/\* iPad[\s\S]*?--dock-inset: \d+px;/.test(css)],

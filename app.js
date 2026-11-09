@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.43', date: '2026-11-09', notes: [
+    'Dock 照 App Store 重做：条 61 高、左右各离屏 25、离底 22、图标 28、字 10；选中胶囊 54 高（圆角=半高）',
+    '颜色：胶囊停在原地是深色，按住/滑动时变浅；选中的图标和文字用系统蓝 #0A84FF'
+  ]},
   { v: 'v11.42', date: '2026-11-09', notes: [
     '记录卡顶角 40 → 46：跟「拍照 / 搜索」那一栏（圆角 40）相呼应，两个弧的视觉重量拉近（46 是内容不被弧切到的上限）'
   ]},
@@ -3410,7 +3414,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.42';
+const APP_VERSION = 'v11.43';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -9050,20 +9054,25 @@ function initDockLens() {
     const PAD = 7;
     // 注意：Dock 外框有 1px 边框，高度要按**边框里面**那块算，
     // 否则会变成"上面 8px、下面 6px"（之前就是这样，看着上面宽一点）
-    const w = Math.max(70, Math.round(cellW + 2 * (padL - PAD)));
+    const w = Math.max(70, Math.round(cellW + 10));   // v11.43：App Store 胶囊 = 格宽 + 10
     const bT = parseFloat(cs.borderTopWidth) || 0;
     const bB = parseFloat(cs.borderBottomWidth) || 0;
     const visH = ir.height - bT - bB;
-    const h = Math.max(40, Math.round(visH - PAD * 2));
+    const h = Math.max(40, Math.min(54, Math.round(visH - 5)));   // v11.43：App Store 胶囊 54 高（条 61，上下各留 3.5）
     const cellLeft = padL + before;
     lens.style.setProperty('--lens-w', w + 'px');
     lens.style.setProperty('--lens-h', h + 'px');
-    lens.style.setProperty('--lens-x', Math.round(cellLeft + (cellW - w) / 2) + 'px');
+    // v11.43：最左/最右那一格的胶囊要贴着 Dock 边（App Store 的选中胶囊也是贴边的），否则会伸出条外面
+    const bL = parseFloat(cs.borderLeftWidth) || 0;
+    const bR = parseFloat(cs.borderRightWidth) || 0;
+    const rawX = cellLeft + (cellW - w) / 2;
+    const maxX = Math.max(0, ir.width - bL - bR - w);
+    lens.style.setProperty('--lens-x', Math.round(Math.min(Math.max(0, rawX), maxX)) + 'px');
     lens.style.setProperty('--lens-y', Math.round((visH - h) / 2) + 'px');
     // 圆角同心：内圆 = Dock 圆角 − 留白（不是"按比例缩"，那样弧线对不上）
     // Dock 圆角是画在边框外沿的，所以先减掉那 1px 边框，再减留白 —— 这样两条弧线才是严格平行
     const dockR = parseFloat(cs.borderTopLeftRadius) || 26;
-    lens.style.setProperty('--lens-r', Math.max(12, Math.round(dockR - PAD - bT)) + 'px');
+    lens.style.setProperty('--lens-r', Math.max(12, Math.round(h / 2)) + 'px');   // v11.43：正胶囊
     if (opt.press) {
       const hx = (evX - r.left) / Math.max(1, r.width) * 100;
       const hy = (evY - r.top) / Math.max(1, r.height) * 100;
@@ -9145,11 +9154,11 @@ function init() {
     // Dock 的圆角必须跟着设备屏幕走 → 只在手机宽度（≤520）兜底，iPad / 平板一律走 CSS 的 --dock-r。
     const phoneW = window.matchMedia('(max-width: 520px)').matches;
     if (dk && phoneW) {
-      dk.style.setProperty('border-radius', '52px', 'important');
+      dk.style.setProperty('border-radius', '30.5px', 'important');
       dk.style.setProperty('corner-shape', 'round', 'important');
       dk.style.setProperty('-webkit-corner-shape', 'round', 'important');
-      document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '44px', 'important'));
-      document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '45px', 'important'));
+      document.querySelectorAll('.dock-lens').forEach(l => l.style.setProperty('border-radius', '27px', 'important'));
+      document.querySelectorAll('.dock-lens .lens-body').forEach(l => l.style.setProperty('border-radius', '27px', 'important'));
     }
   } catch (e) {}
   photosReady();                    // 先把照片搬进 IndexedDB（首次升级时），顺便预热

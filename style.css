@@ -29,38 +29,26 @@
   --page-pad: 18px;        /* 主页卡牌/标题左右（比 Dock 的 13 多 5 → Dock 每边宽 5） */
   /* 层级：Dock = 弹层卡（13）> 主页卡（18）。用户口径：Dock 比主页卡宽一点，但点出来的卡跟 Dock 一样宽。 */
   --dock-max: 100%;        /* Dock 最大宽度；和 Dock 重叠的卡牌也用这个值 */
-  --dock-bottom: 10px;     /* 下边离屏幕底（= home 横条顶边所在的 13pt） */
+  --dock-bottom: 22px;     /* v11.43：照 App Store 底部条实测（条底离屏 21.7 ≈ 22） */
   /* v10.08：Dock 左右 = 底部 = 卡牌左右，全部 13 —— 圆角处那道缝和底缝一样宽（用户：之前 8 vs 13 对不上）。
      卡牌宽度 = Dock 宽度（都 414@440 屏），这是「底部贴白杠 13 + 四边等距」下的最大值：
      Dock 宽 = 屏宽 − 2×13，想让 Dock 更宽就必须动底部那条（会和白杠重叠），所以先锁在这里。 */
-  --dock-w: 10px;          /* Dock 左右（= --dock-bottom = --dock-inset） */
+  --dock-w: 25px;          /* v11.43：照 App Store（左右各离屏 25） */
   /* Dock 高度（固定，圆角上限要看它）—— v10.05 94 → 98：同心圆角要 62−13=49，49 必须 ≤ 高度一半（49），
      否则又会被"不能超过一半"卡住、圆角变小就不呼应了 */
-  --dock-h: 104px;
+  --dock-h: 61px;   /* v11.43：照 App Store 底部条（61 高 / 图标 28 / 字 10） */
   /* 圆角由脚本按「这台设备的屏幕圆角 − 离边距离」算出来（见 app.js 的 syncDockR）。
      ⚠️ v10.15：这里必须同时用媒体查询写一份静态值（紧随 :root 之后）——
      因为启动/buffer 的那一瞬间 JS 还没跑，圆角还停在这个默认值上，
      屏幕上看就是「圆角处的缝比左右那两条缝宽」= 不等距（用户 2026-10-28 的截图就是这个）。
      --dock-w 是 8，所以静态值 = 屏幕圆角 − 8。 */
-  --dock-r: 29px;
+  --dock-r: calc(var(--dock-h) / 2);   /* v11.43：Dock 是胶囊，圆角 = 高度一半 */
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
 
-/* Dock 圆角：按屏宽查「屏幕圆角表」，纯 CSS 先算一份（和 app.js 的 SCREEN_R 同一张表）。
-   作用是首帧就正确，不必等 JS 的 syncDockR —— buffer / 启动瞬间圆角不再和左右缝隙对不上。 */
-@media (min-width: 375px) { :root { --dock-r: 29px; } }  /* 39 − 10 */
-@media (min-width: 390px) { :root { --dock-r: 37px; } }  /* 47.3 − 10 */
-@media (min-width: 393px) { :root { --dock-r: 45px; } }  /* 55 − 10 */
-@media (min-width: 402px) { :root { --dock-r: 52px; } }  /* 62 − 10 */
-@media (min-width: 414px) { :root { --dock-r: 32px; } }  /* 41.5 − 10 */
-@media (min-width: 420px) { :root { --dock-r: 52px; } }  /* 62 − 10 */
-@media (min-width: 428px) { :root { --dock-r: 43px; } }  /* 53.3 − 10 */
-@media (min-width: 430px) { :root { --dock-r: 45px; } }  /* 55 − 10 */
-@media (min-width: 440px) { :root { --dock-r: 52px; } }  /* 62 − 10 */
-/* v10.93：375 以下的窄屏（360 安卓）不在上面那张表里，首帧别停在 29/14 —— 固定成「高度一半」的胶囊，
-   和选中块按钮同一个弧，避免启动瞬间看着像长方形。 */
-@media (max-width: 374px) { :root { --dock-r: 52px; } }
+/* v11.43：Dock 改成 App Store 那种胶囊，圆角固定 = 高度一半 —— 按屏宽查表那套（屏幕圆角−离边）不再适用；
+   syncDockR 在手机上写的也是 h/2，两边同一个值，首帧不会跳。 */
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -955,7 +943,7 @@ body.add-open .sheet-mask.on {
   align-items: center;    /* 三个按钮都在 Dock 的上下正中 */
   height: var(--dock-h);
   max-width: var(--dock-max);
-  padding: 0 12px;
+  padding: 0;   /* v11.43：App Store 的按钮贴着条边排（左右无内边距） */
   pointer-events: auto;
   background: linear-gradient(180deg, #111518 0%, #090c0e 100%);
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -969,30 +957,30 @@ body.add-open .sheet-mask.on {
 .tab {
   position: relative; z-index: 1;   /* 图标永远在液态滑块上面 */
   justify-self: center;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   /* v10.17：图标/文字尺寸改成跟 Dock 高度联动（calc），改 --dock-h 时不用再单独调文字：
      图标 = 高度 × 0.335（94→31.5、104→34.8、108→36.2，和历史手调值一致）
      文字 = 高度 × 0.125（94→11.75、104→13、108→13.5） */
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.125); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 6px 16px; border-radius: 16px;
+  color: var(--muted2); font-size: 10px; font-weight: 500; letter-spacing: 0.1px; line-height: 1.2;
+  padding: 0 10px; border-radius: 16px;
   transition: background .24s ease, color .3s ease;
 }
 
-.tab svg { display: block; width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
-.tab.on { color: var(--lime); }
-.tab.on svg { stroke: var(--lime); }
+.tab svg { display: block; width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: #0A84FF; }   /* v11.43：选中色照 App Store/系统蓝（用户口径 2b） */
+.tab.on svg { stroke: #0A84FF; }
 /* 亮不亮只跟「滑块停在哪」有关（.lit 由脚本加）：滑块在加号上时，两个 Tab 都不亮 */
-.tab.lit { color: var(--lime); }
-.tab.lit svg { stroke: var(--lime); }
+.tab.lit { color: #0A84FF; }
+.tab.lit svg { stroke: #0A84FF; }
 .tab.on:not(.lit) { color: var(--muted2); }
 .tab.on:not(.lit) svg { stroke: var(--muted2); }
 .fab {
   position: relative; z-index: 1;   /* 加号也要在液态滑块上面 */
   justify-self: center;
   /* 和左右两个一样：上面图标、下面文字 */
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--muted2); font-size: calc(var(--dock-h) * 0.125); font-weight: 600; letter-spacing: 0.2px; line-height: 1.25;
-  padding: 6px 16px; border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  color: var(--muted2); font-size: 10px; font-weight: 500; letter-spacing: 0.1px; line-height: 1.2;
+  padding: 0 10px; border-radius: 16px;
   background: transparent;        /* 不套色块框 */
   box-shadow: none;
   transition: color .3s ease;
@@ -1000,7 +988,7 @@ body.add-open .sheet-mask.on {
 .fab:active { color: var(--lime); }
 .fab.pressed, .fab.lit { color: var(--lime); }
 /* 加号也用矢量画：和左右两个图标同一尺寸（30px）、同样的视觉粗细 */
-.fab svg { width: calc(var(--dock-h) * 0.335); height: calc(var(--dock-h) * 0.335); display: block; }
+.fab svg { width: 28px; height: 28px; display: block; }
 
 /* ==================================================================
    液态滑块（Dock 里的玻璃药丸）
@@ -1101,6 +1089,20 @@ body.add-open .sheet-mask.on {
 .dock-lens .lens-body::before,
 .dock-lens .lens-body::after { display: none; }
 .dock-lens .hl { display: none; }
+
+/* ==================================================================
+   v11.43：Dock 照 App Store 底部条（用户口径 2a「固定位置一个颜色，移动时另一个颜色」）
+   - 胶囊 54 高、圆角 = 高度一半（真空胶囊，和 App Store 那颗同形）
+   - 停在原地：深色 rgab(0,0,0,.42)（App Store 的选中胶囊比玻璃条深）
+   - 按住/滑动中（.fadeout / .press）：变浅 rgba(142,142,147,.32)，一眼能看出在移动
+   ================================================================== */
+.dock-lens { --lens-h: 54px; --lens-r: 27px; }
+.dock-lens .lens-body,
+.dock-lens.settled .lens-body { background: rgba(0, 0, 0, 0.42); }
+.dock-lens.fadeout .lens-body,
+.dock-lens.fadeout.settled .lens-body,
+.dock-lens.press .lens-body,
+.dock-lens.press.settled .lens-body { background: rgba(142, 142, 147, 0.32); }
 
 /* v11.25：药丸不再有「按下瞬间露一下渐变白」—— 用户 2026-11-07 要求把这类渐变全部删掉，
    药丸任何时候都是同一块实色（只保留按下时的压扁形变）。
@@ -1933,7 +1935,7 @@ body.add-open .sheet-mask.on {
 /* Dock 三格：图标在上、文字在下。
    v10.19：原来这里 padding-top 只有 1px（老 Dock 94 高时上提 1px 刚好），Dock 加到 104、图标变大后
    墨迹实测偏上 2.5pt（上 25 / 下 30），就把上内边距补回和下面一样的 6px，让整组在按钮里真正居中。 */
-.tabbar .tab, .tabbar .fab { padding-top: 6px; }
+.tabbar .tab, .tabbar .fab { padding-top: 0; }
 
 /* 玻璃滑块（记录卡片的三格、趋势页的三格共用）：和 Dock 那颗**完全同一套**。
    外层只负责"位置"（transform 一条 .62s 过冲曲线），压扁/回弹交给里面的 .lens-body（.24s）。
