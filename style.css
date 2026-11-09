@@ -43,6 +43,9 @@
      屏幕上看就是「圆角处的缝比左右那两条缝宽」= 不等距（用户 2026-10-28 的截图就是这个）。
      --dock-w 是 8，所以静态值 = 屏幕圆角 − 8。 */
   --dock-r: calc(var(--dock-h) / 2);   /* v11.43：Dock 是胶囊，圆角 = 高度一半 */
+  /* v11.46：v11.43 之前 --dock-r 的值（440 宽屏 = 屏角 62 − 离边 10）。提醒记录标题/×、记录卡三格条
+     这些老布局都是按它算的，Dock 圆角改成「高度一半」后它们跟着错位/变方，这里单独留一份。 */
+  --dock-r-legacy: 52px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
 }
@@ -471,13 +474,13 @@ body.add-open .sheet-mask.on {
   position: relative;
   display: flex; align-items: center;
   /* 标题中心对到 × 的中心（0.91 个圆角半径处） */
-  padding: calc(var(--dock-r, 28px) * 0.52 - 11px) 12px 2px calc(var(--dock-r, 28px) * 0.62);
+  padding: calc(var(--dock-r-legacy) * 0.52 - 11px) 12px 2px calc(var(--dock-r-legacy) * 0.62);
   min-height: 42px;
 }
 #nlogSheet .sh-hd .x {
   position: absolute;
-  top: calc(var(--dock-r, 28px) * 0.52 - 21px);
-  right: calc(var(--dock-r, 28px) * 0.91 - 21px);
+  top: calc(var(--dock-r-legacy) * 0.52 - 21px);
+  right: calc(var(--dock-r-legacy) * 0.91 - 21px);
   width: 42px; height: 42px; margin: 0; padding: 0;
   display: grid; place-items: center;
   font-size: 28px; line-height: 1; color: var(--muted);
@@ -1913,12 +1916,15 @@ body.add-open .sheet-mask.on {
   padding: 6px; flex: 0 0 auto;
   /* 圆角同心：这一条 27（= dock-r − 12），按钮离这条边 6 padding + 1 border = 7，
      所以按钮圆角 = 27 − 7 = 20 = dock-r − 19（之前写 18 差 1px，弧线对不齐） */
-  --seg-btn-r: calc(var(--dock-r, 26px) - 19px);
+  /* v11.46：三格条的圆角基准单独一个变量。v11.43 把 --dock-r 改成「Dock 高度的一半」(30.5) 后，
+     这条跟着缩成 19/12，用户看到的是「拍照/搜索栏变方了」。这里固定回原来的 52（= 改之前 440 宽屏的 dock-r）。 */
+  --seg-r: var(--dock-r-legacy);
+  --seg-btn-r: calc(var(--seg-r) - 19px);
   margin: 4px 0 12px;                                     /* 不再外扩：和下面虚线框用同一个左右基准 */
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.06);
   /* 和卡片的圆角同心：卡片圆角 − 这一条到卡片边的距离（12px），再往里 6px 是按钮 */
-  border-radius: calc(var(--dock-r, 26px) - 12px);
+  border-radius: calc(var(--seg-r) - 12px);
 }
 .tabs3 button {
   position: relative; z-index: 1;

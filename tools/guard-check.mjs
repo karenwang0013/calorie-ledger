@@ -182,7 +182,7 @@ const checks = [
   ['图标/加号必须在液态滑块上面（z-index 1）', /\.tab \{\n  position: relative; z-index: 1;/.test(css) && /\.fab \{\n  position: relative; z-index: 1;/.test(css)],
   ['按下的水光跟着手指（--hx / --hy）', /--hx/.test(app) && /--hy/.test(app)],
   ['和 Dock 重叠的卡牌宽度取自 --dock-max（不许写死）', /max-width: var\(--dock-max\)/.test(css) && !/max-width: 470px/.test(css)],
-  ['记录卡片选项框的圆角由 --dock-r 推算（与卡片同心）', /\.tabs3 \{[\s\S]*?border-radius: calc\(var\(--dock-r/.test(css)],
+  ['记录卡片选项框的圆角由 --seg-r 推算（与卡片同心）', /\.tabs3 \{[\s\S]*?--seg-r: var\(--dock-r-legacy\)[\s\S]*?border-radius: calc\(var\(--seg-r\)/.test(css)],
   // v9.49 用户口径：下面那个大框（照片大框 / 识别热量那张卡）不许再压到卡片底边上 ——
   //   卡片高度是「大框底 + .sh-body 的下内边距」量出来的，下内边距必须是 --blk-gap（12），
   //   这样大框离卡片边 左13 / 右13 / 下13 等距（以前这里是 0 → 框底正好被卡片的圆角切掉）。
