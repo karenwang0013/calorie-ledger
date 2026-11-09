@@ -3595,12 +3595,36 @@ html.kb #setSheet {
 #nlogSheet.page .sh-hd .backbtn{margin-left:-2px}
 #nlogSheet.page .sh-body{
   flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 18px 8px;
+  padding:0 18px 44px;
 }
 #nlogSheet.page #nlogList{max-height:none;overflow:visible;padding:0 0 4px}
+/* v11.36 用户口径：底部「清空记录」不再是小胶囊 —— 做成图标设置页「恢复全部默认」那样：
+   内容区滚到底在 44px 渐变里淡出，按钮全宽 + 圆角 26；底栏与内容之间不画分隔线 */
 #nlogSheet.page .sh-foot{
-  flex:0 0 auto;background:#0d0f0e;border-top:1px solid var(--line);
-  padding:12px 18px calc(14px + var(--safe-b,0px));
+  flex:0 0 auto;position:relative;z-index:2;background:#0d0f0e;border-top:0;
+  padding:10px 22px calc(30px + var(--safe-b,0px));
+}
+#nlogSheet.page .sh-foot::before{
+  content:'';position:absolute;left:0;right:0;top:-44px;height:44px;
+  background:linear-gradient(180deg, rgba(13,15,14,0) 0%, #0d0f0e 100%);
+  pointer-events:none;
+}
+#nlogSheet.page .sh-foot .setrows{
+  background:none;background-image:none;border:0;box-shadow:none;border-radius:0;
+  padding:0;margin:0;
+}
+#nlogSheet.page #nlogFoot .setrow.ver{
+  display:flex;flex-direction:column;align-items:stretch;gap:8px;
+  min-height:0;padding:0;background:none;
+}
+#nlogSheet.page #nlogFoot .setrow.ver .ttl{font-size:12.5px;font-weight:400;color:var(--muted);letter-spacing:0}
+#nlogSheet.page #nlogFoot .setpill{
+  width:100%;height:auto;margin:0;padding:14px;border-radius:26px;
+  font-size:14px;font-weight:550;line-height:20px;color:var(--text);
+  background-color:transparent;
+  background-image:linear-gradient(180deg, var(--glass-fill-top) 0%, var(--glass-fill-bot) 100%), var(--edge-gloss);
+  background-origin:border-box;background-clip:padding-box,border-box;
+  border:1px solid transparent;
 }
 #nlogSheet .sh-hd .backbtn{
   width:30px;height:30px;margin:0 0 0 -8px;flex:0 0 auto;
