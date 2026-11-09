@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.65', d: '11-09', items: [
+    '改：选完照片等判断结果的那一秒，左格不再冒一个「判断中…」—— 那个字样只在「实物照片」那边出现，看着别扭。现在两格保持原来的空态，判断完直接把图放进对的那一格。',
+  ]},
   { v: 'v11.64', d: '11-09', items: [
     '修：刚打开 App 那一瞬间，Dock 里的选中胶囊先偏右约 6px、偏下约 6px，过一下才跳回正确位置 —— 内联样式里那份「脚本还没跑时先用」的兜底数值还是老设计（x=10、宽=(100%−24)/3+4），跟现在的算法（左右留 4、宽 = 格宽 − 8）差 5.8px。已把兜底值改成和脚本同一套算法，启动首帧就是对的。',
   ]},
@@ -3488,7 +3491,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.64';
+const APP_VERSION = 'v11.65';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4516,12 +4519,10 @@ async function compress(file, max = 1280, q = 0.82) {
 }
 
 /* v11.63：先问清这张图是「实物食物」还是「营养成分表」，再把它放进对应那一格。
-   以前是先放进左格、识别后再挪 —— 用户看得见那一下跳跃。现在等判断结果再放，
-   判断期间左格显示「判断中…」；判断失败 / 超时就当实物，直接进左格。 */
+   以前是先放进左格、识别后再挪 —— 用户看得见那一下跳跃。现在等判断结果再放。
+   v11.65：判断期间不再往左格写「判断中…」（用户口径：这字样别扭、还只出现在实物照片那边），
+   等结果期间两格都保持原来的空态；判断失败 / 超时就当实物，直接进左格。 */
 async function isNutritionTablePhoto(img) {
-  const ea = $('#emptyA');
-  const old = ea ? ea.textContent : '';
-  if (ea && old) { ea.textContent = '判断中…'; ea.hidden = false; }
   try {
     const r = await Promise.race([
       api('/api/ai/photo-kind', { image: img }),
@@ -4530,8 +4531,6 @@ async function isNutritionTablePhoto(img) {
     return !!(r && r.photo_kind === 'label');
   } catch (e) {
     return false;
-  } finally {
-    if (ea && old) ea.textContent = old;
   }
 }
 
