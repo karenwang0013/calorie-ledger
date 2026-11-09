@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.63', d: '11-09', items: [
+    '改：选好照片后不再「先进实物照片格、再跳到营养成分表格」—— 现在先判断、再把图放进对的那一格。判断时左格会显示「判断中…」（最多等 6 秒），超时或判断失败就照旧当实物照片放左格。',
+  ]},
   { v: 'v11.62', d: '11-09', items: [
     '修：只传一张「营养成分表」照片时它还是落在「实物照片」格 —— 之前要等识别结果里的判断（模型经常没给，或给了 food），现在**图片一选进来就先单独判断一次**：是营养成分表就当场放进右边那格，不用等识别。判断失败（断网 / Key 没设）就照旧，识别完那条还会再试一次。',
   ]},
@@ -3482,7 +3485,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.62';
+const APP_VERSION = 'v11.63';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4509,30 +4512,61 @@ async function compress(file, max = 1280, q = 0.82) {
   return c.toDataURL('image/jpeg', q);
 }
 
+/* v11.63：先问清这张图是「实物食物」还是「营养成分表」，再把它放进对应那一格。
+   以前是先放进左格、识别后再挪 —— 用户看得见那一下跳跃。现在等判断结果再放，
+   判断期间左格显示「判断中…」；判断失败 / 超时就当实物，直接进左格。 */
+async function isNutritionTablePhoto(img) {
+  const ea = $('#emptyA');
+  const old = ea ? ea.textContent : '';
+  if (ea && old) { ea.textContent = '判断中…'; ea.hidden = false; }
+  try {
+    const r = await Promise.race([
+      api('/api/ai/photo-kind', { image: img }),
+      new Promise(res => setTimeout(() => res(null), 6000)),
+    ]);
+    return !!(r && r.photo_kind === 'label');
+  } catch (e) {
+    return false;
+  } finally {
+    if (ea && old) ea.textContent = old;
+  }
+}
+
 async function handlePhoto(file) {
   if (!file) return;
   try {
-    if (S.photoURL) URL.revokeObjectURL(S.photoURL);
-    S.photoURL = URL.createObjectURL(file);
-    $('#photoPreview').src = S.photoURL;
-    $('#photoPreview').hidden = false;
-    $('#photoDel').hidden = false;
-    $('#emptyA').hidden = true;
-    S.photoData = await compress(file);
-    S.photoAt = Date.now();
+    const data = await compress(file);
+    // 只有「左格空着 + 右格也空着」这一种情况才需要判断：图可能是营养成分表
+    const mayBeLabel = !S.photoData && !S.photo2Data && !S.items.length;
+    const asLabel = mayBeLabel ? await isNutritionTablePhoto(data) : false;
+    const url = URL.createObjectURL(file);
+    if (asLabel) {
+      if (S.photo2URL) URL.revokeObjectURL(S.photo2URL);
+      S.photo2URL = url; S.photo2Data = data;
+      $('#pv2').src = url; $('#pv2').hidden = false;
+      $('#del2').hidden = false; $('#emptyB').hidden = true;
+    } else {
+      if (S.photoURL) URL.revokeObjectURL(S.photoURL);
+      S.photoURL = url; S.photoData = data; S.photoAt = Date.now();
+      $('#photoPreview').src = url; $('#photoPreview').hidden = false;
+      $('#photoDel').hidden = false; $('#emptyA').hidden = true;
+    }
     $('#photoActions').hidden = false;
     try { syncAddSheetFit(); } catch (e) {}
     saveDraft();
-    classifyThenSwap();      // v11.62：是营养成分表就当场挪到右格（不等识别结果）
   } catch (e) {
     /* v11.08：读不出来就把预览退回去。以前预览已经显示出来了、S.photoData 却是空的，
        接着点「识别热量」只会说「先拍一张照片」—— 看起来就像"识别不出来"。 */
     try {
       if (S.photoURL) { URL.revokeObjectURL(S.photoURL); S.photoURL = null; }
-      S.photoData = null;
+      if (S.photo2URL) { URL.revokeObjectURL(S.photo2URL); S.photo2URL = null; }
+      S.photoData = null; S.photo2Data = null;
       const pv = $('#photoPreview'); if (pv) { pv.removeAttribute('src'); pv.hidden = true; }
       const del = $('#photoDel'); if (del) del.hidden = true;
       const ea = $('#emptyA'); if (ea) ea.hidden = false;
+      const pv2 = $('#pv2'); if (pv2) { pv2.removeAttribute('src'); pv2.hidden = true; }
+      const d2 = $('#del2'); if (d2) d2.hidden = true;
+      const eb = $('#emptyB'); if (eb) eb.hidden = false;
       const pa = $('#photoActions'); if (pa) pa.hidden = !(S.photoData || S.photo2Data);
     } catch (e2) {}
     toast('这张图读不出来（格式不支持），换一张试试', 3200);
@@ -4589,24 +4623,8 @@ function swapPhotoSlots() {
   saveDraft();
 }
 
-/* v11.62：传图那一刻先问一句「这张图是营养成分表还是实物食物」。
-   是营养成分表就当场挪到右格，不再等识别结果 ——
-   识别那条请求要同时拆条目/估克数/抄表格，经常顾不上回答 photo_kind，
-   图就一直留在「实物照片」格（v11.59/v11.61 都指望它，结果时灵时不灵）。 */
-async function classifyThenSwap() {
-  const img = S.photoData;
-  if (!img) return;
-  let kind = '';
-  try {
-    const r = await api('/api/ai/photo-kind', { image: img });
-    kind = r && r.photo_kind || '';
-  } catch (e) { return; }                       // 分类失败就保持原样，识别完那条还会再试一次
-  if (kind !== 'label') return;
-  if (S.photoData !== img || S.photo2Data) return;   // 中途换了图 / 右格已被占，就别动
-  swapPhotoSlots();
-}
-
-/* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */const DRAFT_KEY = 'calorie-ledger-draft';
+/* ---------------- 拍照草稿：关掉卡片 / 退出 App 也不丢 ---------------- */
+const DRAFT_KEY = 'calorie-ledger-draft';
 function readDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
