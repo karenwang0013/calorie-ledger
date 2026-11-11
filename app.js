@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.77', d: '11-12', items: [
+    '修：体重趋势点最后一个点时，那个高亮圆右边被切掉一块（图左右各留 7，原来只留 4，圆半径 5.5 + 描边溢出画布被裁）。趋势页和设置 → 身体数据两处的图一起好了，点第一个点时同理。',
+  ]},
   { v: 'v11.76', d: '11-12', items: [
     '改：趋势页那六格统计小卡（目标缺口 / 相对误差 / 平均摄入 / 平均消耗 / 记录天数 / 体重变化）也换成食品按钮那套材质 —— 它们是全站最后一处还在用「从相册选」原来那套（白 8.6% 实底 + 顶部高光）的地方。',
   ]},
@@ -3522,7 +3525,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.76';
+const APP_VERSION = 'v11.77';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6530,7 +6533,8 @@ function renderTrends() {
 
 function lineChart(points, start, end, selDate, opts = {}) {
   const showRange = opts.range !== false;   // 趋势页把「最高/最低」放到卡片标题右边，就不在图上重复画
-  const W = 320, H = 130, pl = 4, pr = 4, pt = 12, pb = 22;
+  // 左右各留 7：选中点的半径 5.5 + 描边 1.5/2 ≈ 6.3，留 4 会被 SVG 和 .chartwrap(overflow:hidden) 切掉一块
+  const W = 320, H = 130, pl = 7, pr = 7, pt = 12, pb = 22;
   const xs = points.map(p => +parseISO(p.date));
   const ys = points.map(p => p.kg);
   let min = Math.min(...ys), max = Math.max(...ys);
