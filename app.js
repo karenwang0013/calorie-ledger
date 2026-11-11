@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.66', d: '11-11', items: [
+    '新：饮食目标页的「模式建议」卡底部多两行练账数据 ——「练账 · 近 7 天 N 次 / M 组 · 今天 X 组」和「按练账：训练日/休息日 蛋白 P g、碳水 C g（参考，不改下面目标）」。数据直接读练账的云端同步文件，缓存在本机，断网用上次的；只做参考，不动你设的目标和缺口。',
+  ]},
   { v: 'v11.65', d: '11-09', items: [
     '改：选完照片等判断结果的那一秒，左格不再冒一个「判断中…」—— 那个字样只在「实物照片」那边出现，看着别扭。现在两格保持原来的空态，判断完直接把图放进对的那一格。',
   ]},
@@ -3491,7 +3494,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.65';
+const APP_VERSION = 'v11.66';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7647,6 +7650,12 @@ function renderMe() {
     const dir = bal == null ? null : (bal < -150 ? 'deficit' : (bal > 150 ? 'surplus' : 'balance'));
     const conflict = !!(dir && rec && ((rec.mode === 'bulk' && dir === 'deficit') || (rec.mode === 'cut' && dir === 'surplus')));
     const kgW = bal ? Math.abs(bal) * 7 / 7700 : 0;
+    // 训练账本：训练日 / 休息日的蛋白·碳水建议（只显示，不动下面的目标值）
+    const ta = (typeof trainAdvice === 'function') ? trainAdvice(rec ? rec.w : (d.profile.weight_kg || 0)) : null;
+    const taTxt = !ta ? '' :
+      `<div class="rec-train">练账 · 近 7 天 ${ta.days} 次 / ${ta.sets} 组${ta.todaySets ? ` · 今天 ${ta.todaySets} 组` : ' · 今天还没练'}<br>按练账：${ta.on
+        ? `训练日蛋白 ${ta.p} g、碳水 ${ta.c} g`
+        : `休息日蛋白 ${ta.p} g、碳水 ${ta.c} g`}（参考，不改下面目标）</div>`;
     h = meBackBar('饮食目标') + `
       ${rec ? `
       <div class="rec-card">
@@ -7661,11 +7670,12 @@ function renderMe() {
           <span>体脂 ${rec.bf ? rec.bf + '%' : '—'}</span>
           <span class="rec-date">${rec.date.slice(5)}</span>
         </div>
+        ${taTxt}
         <div class="rec-note">${realT
           ? `实测每天烧 ${realT.tdee} 千卡（用你 ${realT.span_days} 天的数据，${realT.coverage}% 的天数有饮食记录）；同一段时间按「基础代谢 + 手表/公式」估算是 ${realT.est_avg || d.expenditure} 千卡`
           : '还没有足够的实测数据 —— 下面的方向是按公式估的'}</div>
         ${conflict ? `<div class="rec-warn">⚠️ 你现在实际是每天 ${Math.abs(bal)} 千卡${dir === 'deficit' ? '缺口' : '盈余'}（约 ${kgW.toFixed(2)} kg/周），和上面「${recName}」的方向相反。先定一个方向，别两头对着干</div>` : ''}
-      </div>` : ''}
+      </div>` : taTxt}
       <div class="card">
         <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:8px">目标模式</label>
         <div class="modes" id="dietModes">
@@ -10168,6 +10178,13 @@ function init() {
     });
   }
 
+  // 训练账本：练了什么都不用她管，读一次就能在「饮食目标」里给训练日建议
+  if (typeof pullTrainBridge === 'function') {
+    pullTrainBridge().then(ok => {
+      if (ok && S.view === 'me' && mePage === 'nutri') { try { renderMe(); } catch (e) {} }
+    }).catch(() => {});
+  }
+
   refreshPushState().then(() => {
     if (mePage === 'notify') { try { renderMe(); } catch (e) {} }
   }).catch(() => {});
@@ -10371,6 +10388,7 @@ function init() {
       loadDay();
       if (S.view === 'me') renderMe();
       if (S.view === 'trends') loadTrends();
+      if (typeof pullTrainBridge === 'function') pullTrainBridge().then(ok => { if (ok && S.view === 'me' && mePage === 'nutri') { try { renderMe(); } catch (e) {} } }).catch(() => {});
       try { runNotifyChecks(); } catch (e) {}
     }).catch(() => {});
   };

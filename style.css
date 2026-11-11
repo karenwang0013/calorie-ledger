@@ -552,6 +552,11 @@ body.add-open .sheet-mask.on {
 .rec-pill.rec-maintain { background: #9fe3ff; color: #06131a; }
 .rec-pill.rec-bulk { background: #ffcf6b; color: #1a1206; }
 .rec-note { font-size: 11px; color: var(--muted2); margin-top: 9px; line-height: 1.6; }
+/* 练账那条训练日建议：在「模式建议」卡里当末行（上方一条分隔线）；没有模式建议时退化成一行说明 */
+.rec-train { margin: 0 var(--page-pad) 12px; font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+.rec-train br + * { color: var(--text); }
+.rec-card .rec-train { margin: 9px 0 0; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.07); }
+.rec-card .rec-train + .rec-note { margin-top: 8px; }
 .rec-warn {
   font-size: 11.5px; color: var(--orange); line-height: 1.6;
   background: rgba(255,138,76,.10); border: 1px solid rgba(255,138,76,.28);

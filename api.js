@@ -1498,6 +1498,73 @@ function cloudReadUrl() {
   return `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/${CLOUD.path}?t=${Date.now()}` + (tk ? `&access_token=${tk}` : '');
 }
 
+/* ---------------- 训练账本 → 热量账本（训练日建议） ----------------
+   练账把整份数据写在同一个 Gitee 仓库的 training.json 里。这里只取
+   「近 7 天练了几次 / 几组 / 今天几组」，缓存在本机；读不到就用上次那份。 */
+const TRAIN_KEY = 'train_bridge_v1';
+let TRAIN = null;
+try { TRAIN = JSON.parse(localStorage.getItem(TRAIN_KEY) || 'null'); } catch (e) { TRAIN = null; }
+
+function _trainISO(dt) {
+  const p = n => (n < 10 ? '0' + n : '' + n);
+  return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
+}
+
+/* 把 training.json 折成一个小摘要：不存原始日志，省空间也不碰对方的字段 */
+function trainSummarize(payload) {
+  const d = (payload && payload.data) || {};
+  const logs = Array.isArray(d.logs) ? d.logs : [];
+  const now = new Date();
+  const today = _trainISO(now);
+  const fromD = new Date(now); fromD.setDate(fromD.getDate() - 6);
+  const from = _trainISO(fromD);
+  const days = {}, mus = {};
+  let sets = 0, todaySets = 0;
+  logs.forEach(l => {
+    const dt = String((l && l.d) || '');
+    if (!dt || dt < from || dt > today) return;
+    sets++;
+    days[dt] = 1;
+    const m = l.m || '';
+    mus[m] = (mus[m] || 0) + 1;
+    if (dt === today) todaySets++;
+  });
+  return { at: Date.now(), days: Object.keys(days).length, sets, todaySets, mus };
+}
+
+async function pullTrainBridge() {
+  const url = `https://gitee.com/api/v5/repos/${CLOUD.owner}/${CLOUD.repo}/contents/training.json?ref=${CLOUD.branch}&t=${Date.now()}`;
+  try {
+    const r = await fetchT(url, { cache: 'no-store', headers: { Accept: 'application/json' } }, 8000);
+    if (!r || !r.ok) return false;
+    const j = await r.json();
+    const s = trainSummarize(JSON.parse(b64decode(j.content || '')));
+    if (!s.sets && !TRAIN) return false;          // 对方一条记录都没有，别把空摘要写进去
+    TRAIN = s;
+    try { localStorage.setItem(TRAIN_KEY, JSON.stringify(s)); } catch (e) {}
+    return true;
+  } catch (e) { return false; }
+}
+
+/* 训练日 / 休息日的蛋白·碳水建议（只给数，不动目标） */
+function trainAdvice(weightKg) {
+  if (!TRAIN) return null;
+  const w = Number(weightKg) || 0;
+  if (!w) return null;
+  const r5 = v => Math.round(v / 5) * 5;
+  const on = TRAIN.todaySets > 0;
+  return {
+    on,
+    p: r5(w * (on ? 2.0 : 1.8)),
+    c: r5(w * (on ? 3.2 : 2.4)),
+    pRest: r5(w * 1.8),
+    cRest: r5(w * 2.4),
+    days: TRAIN.days,
+    sets: TRAIN.sets,
+    todaySets: TRAIN.todaySets,
+  };
+}
+
 /* 云端负载上限（数据 + 照片缩略图整份上传）：默认 2MB（约 80 张照片）。
    10-20 曾因查 409（sha 冲突，跟大小无关）顺手把上限降到 400KB，结果只能存十几张照片。
    Gitee 的请求体上限没有公开数值 → 传失败（400/413）会自动折半重试一次，
