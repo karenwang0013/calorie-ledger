@@ -3926,3 +3926,23 @@ html.kb #setSheet {
 #cpMealPick .chip:active{
   background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss) !important;
 }
+
+/* v11.73 用户口径：凡与「回到最新」原来同一套材质的按钮，全部换成常用词（食品）那套 ——
+   黑 55%→66% 渐变 + var(--edge-gloss) 光泽描边、去掉顶部 10% 内高光。
+   v11.72 只换了 4 个 id，这里补齐剩下的三类：普通次级按钮 / 顶栏圆钮（返回箭头）/ 营养卡建议按钮。
+   故意不加 !important：记录卡内 #addSheet .btn 有自己更具体的填充（--setrow-fill），必须保持原样。 */
+.btn:not(.primary),
+.topbtn,
+#nutSheet .nutsug button {
+  background-color: transparent;
+  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.btn:not(.primary):active,
+.topbtn:active,
+#nutSheet .nutsug button:active {
+  background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss);
+}
