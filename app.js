@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.68', d: '11-11', items: [
+    '改：Dock 换成 今日 / 记录 / 饮食 / 趋势 —— 记录（加号）挪到第二个，饮食挪到第三个。',
+  ]},
   { v: 'v11.67', d: '11-11', items: [
     '改：把「饮食目标」从设置里搬到 Dock —— Dock 现在四个格子：今日 / 饮食 / 记录 / 趋势，点「饮食」直接进，不用再进设置翻。设置里原来那一行已去掉，不重复。',
   ]},
@@ -3497,7 +3500,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.67';
+const APP_VERSION = 'v11.68';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
