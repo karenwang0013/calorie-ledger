@@ -30,6 +30,7 @@ function nameLine(name, attr) {
 const RELEASES = [
   { v: 'v11.74', d: '11-12', items: [
     '改：「从相册选」按钮也换成食品按钮那套材质（黑 55%→66% 渐变 + 光泽描边、去掉顶部高光），尺寸和圆角不动 —— 之前它是有实底 + 顶部高光的那一版。',
+    '修：v11.74 那条被记录卡里更具体的 `#addSheet .pickbtn:not(.on)` 盖住了，实际没生效；这次加 !important 按食物按钮那套写死。实测两者 computed 完全一致：background-image、box-shadow(none)、background-color(透明) 三项等同。',
   ]},
   { v: 'v11.73', d: '11-12', items: [
     '补：v11.72 只换了 4 个按钮，这次把同材质的剩下三类补齐 —— 普通次级按钮（取消/立即同步/导出 CSV…）、顶栏圆钮（返回箭头/刷新/齿轮）、营养卡里的建议按钮，统一成食品按钮那套黑 55%→66% 渐变 + 光泽描边。',
@@ -3518,7 +3519,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.74';
+const APP_VERSION = 'v11.75';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

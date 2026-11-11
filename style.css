@@ -3950,9 +3950,9 @@ html.kb #setSheet {
 /* v11.74 用户口径：「从相册选」也换成食品按钮那套（黑 55%→66% 渐变 + edge-gloss，无顶部高光），
    之前它用的是 --btn-solid 实底 + 10% 顶部高光。尺寸 / 圆角不动。 */
 .pickbtn.ghost {
-  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss);
-  box-shadow: none;
+  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss) !important;
+  box-shadow: none !important;
 }
 .pickbtn.ghost:active {
-  background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss);
+  background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss) !important;
 }
