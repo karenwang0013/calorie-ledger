@@ -3773,10 +3773,10 @@ html.kb #setSheet {
   content:'';position:absolute;left:18px;right:18px;top:0;height:1px;background:var(--line);
 }
 /* 卡片内相邻的两个板块：已有输入框/按钮自己带框的，不重复加线 */
-#subPage .card > :is(.field,.btnrow,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child){
+#subPage .card > :is(.field,.btnrow,.btn,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child){
   margin-top:20px !important;position:relative;
 }
-#subPage .card > :is(.field,.btnrow,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child)::before{
+#subPage .card > :is(.field,.btnrow,.btn,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child)::before{
   content:'';position:absolute;left:0;right:0;top:-10px;height:1px;background:var(--line);
 }
 
