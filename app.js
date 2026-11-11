@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.67', d: '11-11', items: [
+    '改：把「饮食目标」从设置里搬到 Dock —— Dock 现在四个格子：今日 / 饮食 / 记录 / 趋势，点「饮食」直接进，不用再进设置翻。设置里原来那一行已去掉，不重复。',
+  ]},
   { v: 'v11.66', d: '11-11', items: [
     '新：饮食目标页的「模式建议」卡底部多两行练账数据 ——「练账 · 近 7 天 N 次 / M 组 · 今天 X 组」和「按练账：训练日/休息日 蛋白 P g、碳水 C g（参考，不改下面目标）」。数据直接读练账的云端同步文件，缓存在本机，断网用上次的；只做参考，不动你设的目标和缺口。',
   ]},
@@ -3494,7 +3497,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.66';
+const APP_VERSION = 'v11.67';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7333,7 +7336,6 @@ function renderSetCard() {
     <div class="setlabel">功能</div>
     <div class="setrows">
       ${setRowHTML('body', 'personOpen', '身体与目标', `${p.height_cm || 165}cm · ${p.weight_kg || 60}kg`, 'set.body')}
-      ${setRowHTML('nutri', 'goal', '饮食目标', `${d.targets.kcal_budget} 千卡 / 天`, 'set.goal')}
       ${setRowHTML('bodydata', 'insights', '身体数据', bodyTxt, 'set.weight')}
       ${setRowHTML('ai', 'ai', 'AI 识别', d.has_key ? '已配置' : '未配置', 'set.ai')}
       ${setRowHTML('theme', 'brush', '个性化', THEME_NAMES[d.theme] || '荧光绿', 'set.theme')}
@@ -7907,7 +7909,13 @@ function renderMe() {
     /* 留白 = 底部按钮区真实高度 + 8，不能再固定写死（写死就是一大块空） */
     _sp.style.paddingBottom = (mePage === 'theme' && _sf) ? (_sf.offsetHeight + 8) + 'px' : '';
   }
-  if (mePage) {
+  if (mePage === 'nutri' && S.view === 'nutri') {
+    /* 底栏「饮食」：同一份内容写进独立视图片，设置卡保持关闭 */
+    var _nb = $('#nutriBody');
+    if (_nb) _nb.innerHTML = h;
+    if (_sp) { _sp.classList.remove('on'); _sp.innerHTML = ''; }
+    if (_shd) _shd.classList.remove('subopen');
+  } else if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
     if (_shd) _shd.classList.add('subopen');
   } else {
@@ -8605,6 +8613,7 @@ function switchView(v) {
   document.body.classList.toggle('view-trends', v === 'trends');
   if (window.scTop) window.scTop();
   if (v === 'trends') { renderTrends(); loadTrends(); initTrendSegLens(); const sg = $('#trendSeg'); if (sg && sg.__lensSync) setTimeout(sg.__lensSync, 30); }
+  if (v === 'nutri') { mePage = 'nutri'; renderMe(); }   /* 底栏「饮食」= 原来的设置→饮食目标，直接渲染成一页 */
   if (v === 'me') {
     mePage = null; renderMe();
     // v8.24：打开「设置」也顺手拉一次身体数据，列表行上的体重/体脂跟着更新
@@ -10181,7 +10190,7 @@ function init() {
   // 训练账本：练了什么都不用她管，读一次就能在「饮食目标」里给训练日建议
   if (typeof pullTrainBridge === 'function') {
     pullTrainBridge().then(ok => {
-      if (ok && S.view === 'me' && mePage === 'nutri') { try { renderMe(); } catch (e) {} }
+      if (ok && (S.view === 'me' || S.view === 'nutri') && mePage === 'nutri') { try { renderMe(); } catch (e) {} }
     }).catch(() => {});
   }
 
@@ -10388,7 +10397,7 @@ function init() {
       loadDay();
       if (S.view === 'me') renderMe();
       if (S.view === 'trends') loadTrends();
-      if (typeof pullTrainBridge === 'function') pullTrainBridge().then(ok => { if (ok && S.view === 'me' && mePage === 'nutri') { try { renderMe(); } catch (e) {} } }).catch(() => {});
+      if (typeof pullTrainBridge === 'function') pullTrainBridge().then(ok => { if (ok && (S.view === 'me' || S.view === 'nutri') && mePage === 'nutri') { try { renderMe(); } catch (e) {} } }).catch(() => {});
       try { runNotifyChecks(); } catch (e) {}
     }).catch(() => {});
   };

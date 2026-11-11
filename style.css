@@ -946,8 +946,8 @@ body.add-open .sheet-mask.on {
   width: 100%;
   position: relative;   /* 液态滑块用绝对定位挂在这一层里 */
   display: grid;
-  /* 1fr | 加号 | 1fr：两侧等宽 → 加号永远落在正中，左右两个按钮各自落在左右半区的正中 */
-  grid-template-columns: 1fr 1fr 1fr;
+  /* 底栏 4 个选项（今日 / 饮食 / 记录 / 趋势）：四格等宽 */
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   align-items: center;    /* 三个按钮都在 Dock 的上下正中 */
   height: var(--dock-h);
   max-width: var(--dock-max);
@@ -2444,6 +2444,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
     margin-left: auto;
     margin-right: auto;
   }
+  #view-nutri { max-width: 720px; margin-left: auto; margin-right: auto; }
 
   .daterow { padding: 8px 18px 18px; }
   .daterow .d b { font-size: 20px; }
@@ -2548,6 +2549,7 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
     padding-right: 24px;
   }
   #view-today, #view-trends, #view-me { max-width: none; }
+  #view-nutri { max-width: none; }
   .hero svg { width: 360px; height: 360px; }
   .hero .num { font-size: 78px; }
   .hero .sub { font-size: 13px; max-width: 220px; }
@@ -2893,6 +2895,8 @@ select:focus {
    真机上标题上方的空白比桌面预览小得多，负 margin 会直接把标题推进固定顶栏下面（v8.01 就翻车了）。 */
 #view-me .pagetitle { margin-top: 0; padding-top: 10px; padding-bottom: 16px; }
 #view-me .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
+#view-nutri .mehead { margin-top: 0; padding-top: 6px; padding-bottom: 14px; }
+#view-nutri .mehead-back { display: none; }
 
 /* ===== 按钮只有两种：绿（主操作）+ 全透（其余全部）=====
    只改「填充层」：白 3.5% → 完全透明；描边 edge-gloss、顶边高光、按下反馈、尺寸全部不动。
