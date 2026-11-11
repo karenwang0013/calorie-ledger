@@ -3956,3 +3956,11 @@ html.kb #setSheet {
 .pickbtn.ghost:active {
   background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss) !important;
 }
+
+/* v11.76 用户口径：把「从相册选」原来那套材质（白 8.6% 实底 + edge-gloss + 8% 顶部高光）
+   的最后一处也换成食品按钮那套 —— 趋势页那六格统计小卡（目标缺口 / 相对误差 / 平均摄入 /
+   平均消耗 / 记录天数 / 体重变化）用的是 .mini。改完全站只剩 Dock 滑块还在用 --btn-solid。 */
+.mini {
+  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss);
+  box-shadow: none;
+}

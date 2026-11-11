@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.76', d: '11-12', items: [
+    '改：趋势页那六格统计小卡（目标缺口 / 相对误差 / 平均摄入 / 平均消耗 / 记录天数 / 体重变化）也换成食品按钮那套材质 —— 它们是全站最后一处还在用「从相册选」原来那套（白 8.6% 实底 + 顶部高光）的地方。',
+  ]},
   { v: 'v11.74', d: '11-12', items: [
     '改：「从相册选」按钮也换成食品按钮那套材质（黑 55%→66% 渐变 + 光泽描边、去掉顶部高光），尺寸和圆角不动 —— 之前它是有实底 + 顶部高光的那一版。',
     '修：v11.74 那条被记录卡里更具体的 `#addSheet .pickbtn:not(.on)` 盖住了，实际没生效；这次加 !important 按食物按钮那套写死。实测两者 computed 完全一致：background-image、box-shadow(none)、background-color(透明) 三项等同。',
@@ -3519,7 +3522,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.75';
+const APP_VERSION = 'v11.76';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
