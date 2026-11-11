@@ -3904,3 +3904,25 @@ html.kb #setSheet {
   backdrop-filter: none !important;
   padding: 0 !important;
 }
+
+/* v11.72 用户口径：把身体数据页「回到最新」的材质换成记录卡搜索页「常用词」按钮的材质
+   （黑 55%→66% 渐变 + edge-gloss 光泽描边 + 无内高光）；
+   凡原材质与它相同的按钮一并换：身体数据页「恢复建议」、记到另一餐弹层那五颗餐次、图标页底部「恢复全部默认」。
+   尺寸 / 圆角 / 字号一律不动。 */
+.pgbtn,
+#resetNutri,
+#sfReset,
+#cpMealPick .chip{
+  background-color: transparent !important;
+  background-image: linear-gradient(rgba(20,24,22,.55), rgba(14,18,16,.66)), var(--edge-gloss) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+.pgbtn:active,
+#resetNutri:active,
+#sfReset:active,
+#cpMealPick .chip:active{
+  background-image: linear-gradient(rgba(20,24,22,.70), rgba(14,18,16,.80)), var(--edge-gloss) !important;
+}
