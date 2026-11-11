@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.69', d: '11-11', items: [
+    '改：蛋白目标改成一套数 —— 练账今天练了按 2.0 g/kg、没练按 1.8 g/kg，直接算进下面的目标（碳水仍是扣掉蛋白脂肪后的余量）。「按练账」那行不再摆第二套克数，只解释一句「今天练了/没练 → 蛋白按 X g/kg 算，已算进下面的目标」。没连上练账时回到你原来设的系数。',
+  ]},
   { v: 'v11.68', d: '11-11', items: [
     '改：Dock 换成 今日 / 记录 / 饮食 / 趋势 —— 记录（加号）挪到第二个，饮食挪到第三个。',
   ]},
@@ -3500,7 +3503,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.68';
+const APP_VERSION = 'v11.69';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6568,6 +6571,12 @@ const DIET_MODES = {
 };
 const THEMES = { lime: '#d6ff4b', blue: '#6ea8ff', orange: '#ff9f45' };
 
+// 练账在驱动蛋白系数时，文案就报「训练日 / 休息日」两个系数；没练账数据才报模式自己的系数
+function proteinRuleTxt(mm) {
+  const ta = (typeof trainAdvice === 'function') ? trainAdvice(Number((Store.load().profile || {}).weight_kg) || 60) : null;
+  return ta ? '训练日 2.0 / 休息日 1.8 g/kg' : mm.p.toFixed(1) + ' g/kg';
+}
+
 // 目标模式下面那行「建议」：只写具体数值，不重复模式名（上面的卡牌已经说清了）
 function modeHintHTML(k) {
   const mm = DIET_MODES[k] || DIET_MODES.maintain;
@@ -6577,7 +6586,7 @@ function modeHintHTML(k) {
              : '建议<b>不设缺口</b>（收支平衡）';
   const tail = d > 0 ? '，即比消耗少吃 ' + d + ' 千卡'
              : d < 0 ? '，即比消耗多吃 ' + (-d) + ' 千卡' : '';
-  return head + tail + '；蛋白 <b>' + mm.p.toFixed(1) + ' g/kg</b>、脂肪约 <b>' + Math.round(mm.fat * 100) + '%</b> 热量';
+  return head + tail + '；蛋白 <b>' + proteinRuleTxt(mm) + '</b>、脂肪约 <b>' + Math.round(mm.fat * 100) + '%</b> 热量';
 }
 
 // 「每天少吃 / 多吃」那栏的说明：方向由上面的模式决定，这里只填正数
@@ -7655,12 +7664,12 @@ function renderMe() {
     const dir = bal == null ? null : (bal < -150 ? 'deficit' : (bal > 150 ? 'surplus' : 'balance'));
     const conflict = !!(dir && rec && ((rec.mode === 'bulk' && dir === 'deficit') || (rec.mode === 'cut' && dir === 'surplus')));
     const kgW = bal ? Math.abs(bal) * 7 / 7700 : 0;
-    // 训练账本：训练日 / 休息日的蛋白·碳水建议（只显示，不动下面的目标值）
+    // 训练账本：训练日 / 休息日的蛋白系数已经算进下面的目标（只解释一句，不再摆第二套数字）
     const ta = (typeof trainAdvice === 'function') ? trainAdvice(rec ? rec.w : (d.profile.weight_kg || 0)) : null;
     const taTxt = !ta ? '' :
-      `<div class="rec-train">练账 · 近 7 天 ${ta.days} 次 / ${ta.sets} 组${ta.todaySets ? ` · 今天 ${ta.todaySets} 组` : ' · 今天还没练'}<br>按练账：${ta.on
-        ? `训练日蛋白 ${ta.p} g、碳水 ${ta.c} g`
-        : `休息日蛋白 ${ta.p} g、碳水 ${ta.c} g`}（参考，不改下面目标）</div>`;
+      `<div class="rec-train">练账 · 近 7 天 ${ta.days} 次 / ${ta.sets} 组${ta.todaySets ? ` · 今天练了 ${ta.todaySets} 组` : ' · 今天还没练'}<br>${ta.on
+        ? '今天练了 → 蛋白按训练日 2.0 g/kg 算，已算进下面的目标'
+        : '今天没练 → 蛋白按休息日 1.8 g/kg 算，已算进下面的目标'}</div>`;
     h = meBackBar('饮食目标') + `
       ${rec ? `
       <div class="rec-card">
@@ -8079,7 +8088,7 @@ function wireMe() {
     await api('/api/settings', { diet_mode: k, fat_ratio: m.fat, target_override: ov });
     await api('/api/profile', { protein_per_kg: m.p });
     const dir = ov.deficit > 0 ? `缺口 ${ov.deficit}` : (ov.deficit < 0 ? `盈余 ${-ov.deficit}` : '不缺口不盈余');
-    toast(`已切到「${m.n}」：${dir}，蛋白质 ${m.p} g/kg`, 3200);
+    toast(`已切到「${m.n}」：${dir}，蛋白质 ${proteinRuleTxt(m)}`, 3200);
     // 只切这一排的选中状态 + 刷新数字，绝不整页重绘（整页重绘会把滑块一起重建 → 跳）
     $$('#dietModes button').forEach(x => x.classList.toggle('on', x.dataset.mode === k));
     const mh = $('#modeHint'); if (mh) mh.innerHTML = modeHintHTML(k);

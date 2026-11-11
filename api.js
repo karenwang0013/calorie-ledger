@@ -393,7 +393,11 @@ function targetsOf(p, exp) {
   // v10.02：这里必须用「当前真正生效的缺口 want」（含手动设置），不能用纯自动的 wantAuto。
   // 用 wantAuto 会得到另一套前提下的数字：面板上「脂肪 建议 49」而实际生效 58，
   // 用户拿建议去核对永远是错的。auto.deficit 那一项才保留纯自动建议（给"模式建议"看）。
-  const proteinAuto = Math.round(Number(p.weight_kg || 60) * Number(p.protein_per_kg || 1.6));
+  // v11.69：蛋白系数跟着练账走（训练日 2.0 / 休息日 1.8 g/kg），全 App 只留一套数。
+  // 练账没数据（没连上/没记录）才退回模式或手设的系数；下面的碳水仍是「扣掉蛋白和脂肪的余量」。
+  const trA = (typeof trainAdvice === 'function') ? trainAdvice(Number(p.weight_kg || 60)) : null;
+  const pCoef = trA ? (trA.on ? 2.0 : 1.8) : Number(p.protein_per_kg || 1.6);
+  const proteinAuto = Math.round(Number(p.weight_kg || 60) * pCoef);
   const budgetAuto = Math.max(1000, exp - want);
   const fatRatio = Math.min(0.4, Math.max(0.15, Number(setting('fat_ratio', 0.28)) || 0.28));
   const fatAuto = Math.round(Math.max(40, budgetAuto * fatRatio / 9));
