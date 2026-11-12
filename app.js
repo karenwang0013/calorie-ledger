@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.79', d: '11-12', items: [
+    '修：细横线改成按「字真正画出来的边」居中 —— 之前用的是行盒，字上下的行距空档和开关/按钮的外框都算进墨迹里，所以看着会偏。实测通知卡片分界：改前离上一条字 32pt、离下一条字 24pt，改后两边都是 28pt。',
+  ]},
   { v: 'v11.78', d: '11-12', items: [
     '修：设置子页那几条细横线原来按「盒子」居中，看着偏上或偏下（卡片之间差 26/18、按钮上方 13/26、通知开关行 8/12）。现在按文字/按钮的「墨迹」算中点，8 个设置子页实测上下差 ≤0.1px。',
   ]},
@@ -3528,7 +3531,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.78';
+const APP_VERSION = 'v11.79';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7975,36 +7978,39 @@ function renderMe() {
 /* v11.78 设置子页横线的位置：按「看得见的墨迹」上下等距。
    盒子的等比不等于看得见的等比 —— 文字有行距半行空、按钮/输入框自己带外框，
    所以统一在渲染后用一次测量把线放到两块内容真实墨迹的正中（--ly）。 */
+/* 墨迹 = 字真正画出来的上下边（不含行距空档、不含开关/按钮的外框）。
+   Range 的矩形是整个行高，含上下留白，所以再用 canvas 的字形度量把留白扣掉。 */
+var _inkCv = null;
 function _inkBox(el) {
   var t = Infinity, b = -Infinity;
-  var rs = getComputedStyle(el), rk = el.getBoundingClientRect();
-  /* 自己本身就是一块看得见的底（按钮/输入框/开关）时，墨迹从自己的边开始 */
-  if ((rs.backgroundColor !== 'rgba(0, 0, 0, 0)' && rs.backgroundColor !== 'transparent') ||
-      parseFloat(rs.borderTopWidth) > 0 || rs.backgroundImage !== 'none') {
-    t = rk.top; b = rk.bottom;
-  }
+  if (!_inkCv) _inkCv = document.createElement('canvas').getContext('2d');
   var tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n;
   while ((n = tw.nextNode())) {
-    if (!n.nodeValue || !n.nodeValue.trim()) continue;
+    var txt = n.nodeValue;
+    if (!txt || !txt.trim()) continue;
+    var pe = n.parentElement; if (!pe || !pe.getClientRects().length) continue;
+    var s = getComputedStyle(pe), fs = parseFloat(s.fontSize) || 16;
+    _inkCv.font = (s.fontStyle || 'normal') + ' ' + (s.fontWeight || '400') + ' ' + fs + 'px ' + (s.fontFamily || 'sans-serif');
+    var m = _inkCv.measureText(txt.trim());
+    var fa = m.fontBoundingBoxAscent, fd = m.fontBoundingBoxDescent;
+    if (!isFinite(fa) || !isFinite(fd)) { fa = fs * 0.8; fd = fs * 0.2; }
+    var aa = isFinite(m.actualBoundingBoxAscent) ? m.actualBoundingBoxAscent : fa;
+    var ad = isFinite(m.actualBoundingBoxDescent) ? m.actualBoundingBoxDescent : fd;
     var r = document.createRange(); r.selectNodeContents(n);
-    var qs = r.getClientRects();
+    var qs = r.getClientRects(), first = null, last = null;
     for (var i = 0; i < qs.length; i++) {
       var q = qs[i]; if (q.height < 1) continue;
-      if (q.top < t) t = q.top;
-      if (q.bottom > b) b = q.bottom;
+      if (!first || q.top < first.top) first = q;
+      if (!last || q.bottom > last.bottom) last = q;
     }
+    if (!first) continue;
+    /* 字形框（fontBoundingBox）是垂直居中在行盒里的 */
+    var top2 = first.top + (first.height - (fa + fd)) / 2 + (fa - aa);
+    var bot2 = last.bottom - (last.height - (fa + fd)) / 2 - (fd - ad);
+    if (top2 < t) t = top2;
+    if (bot2 > b) b = bot2;
   }
-  var kids = el.querySelectorAll('*');
-  for (var j = 0; j < kids.length; j++) {
-    var k = kids[j], s = getComputedStyle(k);
-    var filled = (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent') ||
-                 parseFloat(s.borderTopWidth) > 0 ||
-                 k.tagName === 'INPUT' || k.tagName === 'IMG' || k.tagName === 'svg' || k.tagName === 'SVG';
-    if (!filled) continue;
-    var q2 = k.getBoundingClientRect(); if (q2.height < 1) continue;
-    if (q2.top < t) t = q2.top;
-    if (q2.bottom > b) b = q2.bottom;
-  }
+  /* 没有文字的元素（输入框、开关、图）还是按自己的框算 */
   if (!isFinite(t)) { var q3 = el.getBoundingClientRect(); t = q3.top; b = q3.bottom; }
   return { t: t, b: b };
 }
