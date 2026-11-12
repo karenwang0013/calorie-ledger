@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.80', d: '11-12', items: [
+    '修：设置子页的细横线回到纯 CSS 对称留白（块间 20px 留白、线在正中；卡片间 26px、线在正中），删掉 v11.78/79 那套「渲染后量像素写 --ly」——量一次就过期，字体/异步内容一变线就贴到元素顶上（实测有 -43.7px、-2.9px 这种乱值）。',
+    '修：更新日志页 885 条版本记录被逐条套上「20px 间距 + 一条横线」（选择器里带了 .rel-date），整页被拉稀；已从选择器移除。',
+    '实测 8 个设置子页共 42 条线，上下差 0（按内容边框量）。',
+  ]},
   { v: 'v11.79', d: '11-12', items: [
     '修：细横线改成按「字真正画出来的边」居中 —— 之前用的是行盒，字上下的行距空档和开关/按钮的外框都算进墨迹里，所以看着会偏。实测通知卡片分界：改前离上一条字 32pt、离下一条字 24pt，改后两边都是 28pt。',
   ]},
@@ -3531,7 +3536,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.79';
+const APP_VERSION = 'v11.80';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7785,7 +7790,7 @@ function renderMe() {
           <div class="stitle">App 内提醒</div>
           <label class="sw"><input type="checkbox" id="swInApp" ${setting('notify_inapp', true) === false ? '' : 'checked'}><i></i></label>
         </div>
-        <div class="switchrow" style="margin-top:16px">
+        <div class="switchrow" style="margin-top:20px">
           <div class="stitle">锁屏通知</div>
           <label class="sw"><input type="checkbox" id="swPush" ${pushWanted() ? 'checked' : ''} ${pushSupported() ? '' : 'disabled'}><i></i></label>
         </div>
@@ -7793,7 +7798,7 @@ function renderMe() {
       <div class="card">
         <h3>通知我当…</h3>
         ${Object.entries(NOTIFY_ITEMS).map(([k, v], i) => `
-          <div class="switchrow" style="margin-top:${i === 0 ? 6 : 16}px">
+          <div class="switchrow" style="margin-top:${i === 0 ? 6 : 20}px">
             <div class="stitle">${v.t}</div>
             ${swOne(k)}
           </div>`).join('')}
@@ -7958,8 +7963,6 @@ function renderMe() {
     if (_shd) _shd.classList.remove('subopen');
   } else if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
-    centerSubLines();
-    requestAnimationFrame(centerSubLines);   // 字体/换行落定后再校一次
     if (_shd) _shd.classList.add('subopen');
   } else {
     if (_sp) { _sp.classList.remove('on'); _sp.innerHTML = ''; }
@@ -7975,66 +7978,6 @@ function renderMe() {
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
 /* 设置首页：内容装得下就不要上下滑动（手机屏幕也一样） */
-/* v11.78 设置子页横线的位置：按「看得见的墨迹」上下等距。
-   盒子的等比不等于看得见的等比 —— 文字有行距半行空、按钮/输入框自己带外框，
-   所以统一在渲染后用一次测量把线放到两块内容真实墨迹的正中（--ly）。 */
-/* 墨迹 = 字真正画出来的上下边（不含行距空档、不含开关/按钮的外框）。
-   Range 的矩形是整个行高，含上下留白，所以再用 canvas 的字形度量把留白扣掉。 */
-var _inkCv = null;
-function _inkBox(el) {
-  var t = Infinity, b = -Infinity;
-  if (!_inkCv) _inkCv = document.createElement('canvas').getContext('2d');
-  var tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n;
-  while ((n = tw.nextNode())) {
-    var txt = n.nodeValue;
-    if (!txt || !txt.trim()) continue;
-    var pe = n.parentElement; if (!pe || !pe.getClientRects().length) continue;
-    var s = getComputedStyle(pe), fs = parseFloat(s.fontSize) || 16;
-    _inkCv.font = (s.fontStyle || 'normal') + ' ' + (s.fontWeight || '400') + ' ' + fs + 'px ' + (s.fontFamily || 'sans-serif');
-    var m = _inkCv.measureText(txt.trim());
-    var fa = m.fontBoundingBoxAscent, fd = m.fontBoundingBoxDescent;
-    if (!isFinite(fa) || !isFinite(fd)) { fa = fs * 0.8; fd = fs * 0.2; }
-    var aa = isFinite(m.actualBoundingBoxAscent) ? m.actualBoundingBoxAscent : fa;
-    var ad = isFinite(m.actualBoundingBoxDescent) ? m.actualBoundingBoxDescent : fd;
-    var r = document.createRange(); r.selectNodeContents(n);
-    var qs = r.getClientRects(), first = null, last = null;
-    for (var i = 0; i < qs.length; i++) {
-      var q = qs[i]; if (q.height < 1) continue;
-      if (!first || q.top < first.top) first = q;
-      if (!last || q.bottom > last.bottom) last = q;
-    }
-    if (!first) continue;
-    /* 字形框（fontBoundingBox）是垂直居中在行盒里的 */
-    var top2 = first.top + (first.height - (fa + fd)) / 2 + (fa - aa);
-    var bot2 = last.bottom - (last.height - (fa + fd)) / 2 - (fd - ad);
-    if (top2 < t) t = top2;
-    if (bot2 > b) b = bot2;
-  }
-  /* 没有文字的元素（输入框、开关、图）还是按自己的框算 */
-  if (!isFinite(t)) { var q3 = el.getBoundingClientRect(); t = q3.top; b = q3.bottom; }
-  return { t: t, b: b };
-}
-function centerSubLines() {
-  const sp = document.getElementById('subPage');
-  if (!sp || !sp.classList.contains('on')) return;
-  const put = (el, prev, cardLine) => {
-    if (!el.getBoundingClientRect().height) return;
-    while (prev && !prev.getBoundingClientRect().height) prev = prev.previousElementSibling;   // 跳过隐藏的 input
-    if (!prev) return;
-    const prevInk = _inkBox(prev), ownInk = _inkBox(el);
-    const gap = ownInk.t - prevInk.b;
-    if (!(gap > 0) || gap > 120) return;          // 有隐藏元素/重叠时别乱移，保持默认位置
-    const y = (prevInk.b + ownInk.t) / 2 - el.getBoundingClientRect().top;
-    el.style.setProperty(cardLine ? '--lyc' : '--ly', (Math.round(y * 10) / 10) + 'px');
-  };
-  [...sp.querySelectorAll('.card')].forEach(c => {
-    if (getComputedStyle(c, '::before').content !== 'none') put(c, c.previousElementSibling, true);
-    [...c.children].forEach(el => {
-      if (getComputedStyle(el, '::before').content !== 'none') put(el, el.previousElementSibling, false);
-    });
-  });
-}
-
 function fitMeScroll() {
   const sc = $('#scroller'), body = $('#meBody');
   if (!sc || !body) return;
