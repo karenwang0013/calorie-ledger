@@ -2815,7 +2815,7 @@ input, textarea, select {
 /* ④ 通知页的每一行之间加横线（和设置外层一致） */
 .switchrow { position: relative; }
 .switchrow + .switchrow::before {
-  content: ''; position: absolute; left: 0; right: 0; top: -9px; height: 1px;
+  content: ''; position: absolute; left: 0; right: 0; top: var(--ly, -9px); height: 1px;
   background: var(--line);
 }
 
@@ -3770,14 +3770,14 @@ html.kb #setSheet {
 /* 卡片之间（最近一次 / 体重趋势 / 历史记录 这种大块） */
 #subPage .card + .card{padding-top:18px !important}
 #subPage .card + .card::before{
-  content:'';position:absolute;left:18px;right:18px;top:0;height:1px;background:var(--line);
+  content:'';position:absolute;left:18px;right:18px;top:var(--lyc,0px);height:1px;background:var(--line);
 }
 /* 卡片内相邻的两个板块：已有输入框/按钮自己带框的，不重复加线 */
 #subPage .card > :is(.field,.btnrow,.btn,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child){
   margin-top:20px !important;position:relative;
 }
 #subPage .card > :is(.field,.btnrow,.btn,.hint,.hlist,.tsumrow,.bstats,.rel-date):not(:first-child)::before{
-  content:'';position:absolute;left:0;right:0;top:-10px;height:1px;background:var(--line);
+  content:'';position:absolute;left:0;right:0;top:var(--ly,-10px);height:1px;background:var(--line);
 }
 
 /* ---------- 二级页底部固定按钮（恢复全部默认 / 完成）——跟「训练账本」同一套摆放 ---------- */

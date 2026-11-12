@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.78', d: '11-12', items: [
+    '修：设置子页那几条细横线原来按「盒子」居中，看着偏上或偏下（卡片之间差 26/18、按钮上方 13/26、通知开关行 8/12）。现在按文字/按钮的「墨迹」算中点，8 个设置子页实测上下差 ≤0.1px。',
+  ]},
   { v: 'v11.77', d: '11-12', items: [
     '修：体重趋势点最后一个点时，那个高亮圆右边被切掉一块（图左右各留 7，原来只留 4，圆半径 5.5 + 描边溢出画布被裁）。趋势页和设置 → 身体数据两处的图一起好了，点第一个点时同理。',
   ]},
@@ -3525,7 +3528,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.77';
+const APP_VERSION = 'v11.78';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7952,6 +7955,8 @@ function renderMe() {
     if (_shd) _shd.classList.remove('subopen');
   } else if (mePage) {
     if (_sp) { _sp.innerHTML = h; _sp.classList.add('on'); _sp.scrollTop = 0; }
+    centerSubLines();
+    requestAnimationFrame(centerSubLines);   // 字体/换行落定后再校一次
     if (_shd) _shd.classList.add('subopen');
   } else {
     if (_sp) { _sp.classList.remove('on'); _sp.innerHTML = ''; }
@@ -7967,6 +7972,63 @@ function renderMe() {
 
 /* 关于页：让两张卡正好铺满，页面本身不滚，只有上面那张卡内部滚 */
 /* 设置首页：内容装得下就不要上下滑动（手机屏幕也一样） */
+/* v11.78 设置子页横线的位置：按「看得见的墨迹」上下等距。
+   盒子的等比不等于看得见的等比 —— 文字有行距半行空、按钮/输入框自己带外框，
+   所以统一在渲染后用一次测量把线放到两块内容真实墨迹的正中（--ly）。 */
+function _inkBox(el) {
+  var t = Infinity, b = -Infinity;
+  var rs = getComputedStyle(el), rk = el.getBoundingClientRect();
+  /* 自己本身就是一块看得见的底（按钮/输入框/开关）时，墨迹从自己的边开始 */
+  if ((rs.backgroundColor !== 'rgba(0, 0, 0, 0)' && rs.backgroundColor !== 'transparent') ||
+      parseFloat(rs.borderTopWidth) > 0 || rs.backgroundImage !== 'none') {
+    t = rk.top; b = rk.bottom;
+  }
+  var tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n;
+  while ((n = tw.nextNode())) {
+    if (!n.nodeValue || !n.nodeValue.trim()) continue;
+    var r = document.createRange(); r.selectNodeContents(n);
+    var qs = r.getClientRects();
+    for (var i = 0; i < qs.length; i++) {
+      var q = qs[i]; if (q.height < 1) continue;
+      if (q.top < t) t = q.top;
+      if (q.bottom > b) b = q.bottom;
+    }
+  }
+  var kids = el.querySelectorAll('*');
+  for (var j = 0; j < kids.length; j++) {
+    var k = kids[j], s = getComputedStyle(k);
+    var filled = (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent') ||
+                 parseFloat(s.borderTopWidth) > 0 ||
+                 k.tagName === 'INPUT' || k.tagName === 'IMG' || k.tagName === 'svg' || k.tagName === 'SVG';
+    if (!filled) continue;
+    var q2 = k.getBoundingClientRect(); if (q2.height < 1) continue;
+    if (q2.top < t) t = q2.top;
+    if (q2.bottom > b) b = q2.bottom;
+  }
+  if (!isFinite(t)) { var q3 = el.getBoundingClientRect(); t = q3.top; b = q3.bottom; }
+  return { t: t, b: b };
+}
+function centerSubLines() {
+  const sp = document.getElementById('subPage');
+  if (!sp || !sp.classList.contains('on')) return;
+  const put = (el, prev, cardLine) => {
+    if (!el.getBoundingClientRect().height) return;
+    while (prev && !prev.getBoundingClientRect().height) prev = prev.previousElementSibling;   // 跳过隐藏的 input
+    if (!prev) return;
+    const prevInk = _inkBox(prev), ownInk = _inkBox(el);
+    const gap = ownInk.t - prevInk.b;
+    if (!(gap > 0) || gap > 120) return;          // 有隐藏元素/重叠时别乱移，保持默认位置
+    const y = (prevInk.b + ownInk.t) / 2 - el.getBoundingClientRect().top;
+    el.style.setProperty(cardLine ? '--lyc' : '--ly', (Math.round(y * 10) / 10) + 'px');
+  };
+  [...sp.querySelectorAll('.card')].forEach(c => {
+    if (getComputedStyle(c, '::before').content !== 'none') put(c, c.previousElementSibling, true);
+    [...c.children].forEach(el => {
+      if (getComputedStyle(el, '::before').content !== 'none') put(el, el.previousElementSibling, false);
+    });
+  });
+}
+
 function fitMeScroll() {
   const sc = $('#scroller'), body = $('#meBody');
   if (!sc || !body) return;
