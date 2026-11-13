@@ -27,6 +27,15 @@ jobs:
         with:
           node-version: '20'
       - run: npm i web-push@3 --no-save
+      - name: 从 Gitee 取最新订阅与开关
+        run: |
+          for f in push-subs.json push-config.json; do
+            if curl -fsSL --max-time 20 "https://gitee.com/karen228/calorie-ledger-data/raw/master/$f" -o "$f.new" && [ -s "$f.new" ]; then
+              mv "$f.new" "$f"; echo "ok $f"
+            else
+              rm -f "$f.new"; echo "skip $f"
+            fi
+          done
       - name: 发推送
         run: node push/send.mjs
         env:

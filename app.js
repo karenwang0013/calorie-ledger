@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.81', d: '11-13', items: [
+    '修：锁屏通知从不生效 —— 订阅和开关一直在往 api.github.com 写，但 App 里的令牌只有 Gitee 的（cloudToken 只返回 gitee_token），GitHub 一律 401。所以从 2026-10-21 起 push-subs.json 一条都没更新过、push-config.json 从来不存在，服务端一直在发给两台旧设备的订阅（其中一台已被 Apple 判失效 410）。现在改成写 Gitee 数据仓库的 push-subs.json / push-config.json，发推送前由 Actions 从 Gitee 拉最新那份。',
+    '加：订阅没变化就不再提交一次（以前每次打开 App 都可能多一条空提交）。',
+  ]},
   { v: 'v11.80', d: '11-12', items: [
     '修：设置子页的细横线回到纯 CSS 对称留白（块间 20px 留白、线在正中；卡片间 26px、线在正中），删掉 v11.78/79 那套「渲染后量像素写 --ly」——量一次就过期，字体/异步内容一变线就贴到元素顶上（实测有 -43.7px、-2.9px 这种乱值）。',
     '修：更新日志页 885 条版本记录被逐条套上「20px 间距 + 一条横线」（选择器里带了 .rel-date），整页被拉稀；已从选择器移除。',
@@ -3536,7 +3540,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.80';
+const APP_VERSION = 'v11.81';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6734,31 +6738,55 @@ const b64uToBytes = (b64) => {
   return Uint8Array.from(raw, c => c.charCodeAt(0));
 };
 
-/* 订阅存进仓库的 push-subs.json（用自动同步那个 Token） */
-async function saveSubToRepo(sub, remove) {
+/* 订阅 / 开关存进 Gitee 数据仓库。
+   以前写的是 api.github.com，但 cloudToken() 只返回 Gitee 令牌（api.js:1457）——
+   GitHub 不认 → 每次 401 → 订阅从 2026-10-21 起一条都没登记上（v11.81 修）。 */
+const PUSH_CLOUD = 'https://gitee.com/api/v5/repos/karen228/calorie-ledger-data/contents/';
+function pushCloudUrl(path) {
+  const tk = encodeURIComponent((typeof cloudToken === 'function' && cloudToken()) || '');
+  return PUSH_CLOUD + path + '?t=' + Date.now() + (tk ? '&access_token=' + tk : '');
+}
+async function readPushCloud(path) {
+  try {
+    const r = await fetch(pushCloudUrl(path), { cache: 'no-store', headers: { Accept: 'application/json' } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return { sha: j.sha, data: JSON.parse(decodeURIComponent(escape(atob(String(j.content || '').replace(/\n/g, ''))))) };
+  } catch (e) { return null; }
+}
+async function writePushCloud(path, obj, message) {
   const token = (typeof cloudToken === 'function' && cloudToken()) || '';
   if (!token) throw new Error('先在「数据备份 → 自动同步」里填好 Token');
-  const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint };
-  const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + PUSH_SUBS_PATH;
-  const h = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
-  let list = [], sha = null;
-  const r = await fetch(api, { headers: h, cache: 'no-store' });
-  if (r.ok) {
-    const j = await r.json();
-    sha = j.sha;
-    try { list = JSON.parse(decodeURIComponent(escape(atob((j.content || '').replace(/\n/g, ''))))) || []; } catch (e) { list = []; }
-  } else if (r.status !== 404) {
-    throw new Error('读不到订阅文件（HTTP ' + r.status + '）');
-  }
-  list = (Array.isArray(list) ? list : []).filter(x => x && x.endpoint && x.endpoint !== payload.endpoint);
-  if (!remove) list.push(payload);
+  const cur = await readPushCloud(path);
   const body = {
-    message: remove ? '推送：移除一台设备' : '推送：登记一台设备',
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2)))),
+    access_token: token,
+    message,
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(obj, null, 2)))),
+    branch: 'master',
   };
-  if (sha) body.sha = sha;
-  const w = await fetch(api, { method: 'PUT', headers: Object.assign({}, h, { 'content-type': 'application/json' }), body: JSON.stringify(body) });
-  if (!w.ok) throw new Error('订阅没存上（HTTP ' + w.status + '）');
+  if (cur && cur.sha) body.sha = cur.sha;
+  const w = await fetch(PUSH_CLOUD + path, {
+    method: (cur && cur.sha) ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!w.ok) {
+    let d = '';
+    try { d = (await w.text()).slice(0, 80); } catch (e) {}
+    throw new Error('没存上（HTTP ' + w.status + (d ? ' ' + d : '') + '）');
+  }
+}
+
+async function saveSubToRepo(sub, remove) {
+  const payload = sub.toJSON ? sub.toJSON() : { endpoint: sub.endpoint };
+  const cur = await readPushCloud(PUSH_SUBS_PATH);
+  let list = (cur && Array.isArray(cur.data)) ? cur.data : [];
+  const key = l => (l && l.endpoint) || '';
+  const before = list.map(key).sort().join('|');
+  list = list.filter(x => x && x.endpoint && x.endpoint !== payload.endpoint);
+  if (!remove) list.push(payload);
+  if (list.map(key).sort().join('|') === before) return;   // 没变化就不再多提交一次
+  await writePushCloud(PUSH_SUBS_PATH, list, remove ? '推送：移除一台设备' : '推送：登记一台设备');
 }
 
 async function refreshPushState() {
@@ -6780,26 +6808,14 @@ async function refreshPushState() {
   }
 }
 
-/* 把六个开关的状态写进仓库的 push-config.json，推送时按它决定发不发 */
+/* 把六个开关的状态写进 Gitee 的 push-config.json，推送时按它决定发不发 */
 async function syncPushConfig() {
-  const token = (typeof cloudToken === 'function' && cloudToken()) || '';
-  if (!token) return;
-  const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/push-config.json';
-  const h = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
+  if (!(typeof cloudToken === 'function' && cloudToken())) return;
   try {
-    let sha = null;
-    const r = await fetch(api, { headers: h, cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); sha = j.sha; }
-    const body = {
-      message: '推送：更新通知开关',
-      content: btoa(unescape(encodeURIComponent(JSON.stringify({
-        flags: notifyCfg(),
-        inapp: setting('notify_inapp', true) !== false,
-        updatedAt: new Date().toISOString(),
-      }, null, 2)))),
-    };
-    if (sha) body.sha = sha;
-    await fetch(api, { method: 'PUT', headers: Object.assign({}, h, { 'content-type': 'application/json' }), body: JSON.stringify(body) });
+    const cfg = { flags: notifyCfg(), inapp: setting('notify_inapp', true) !== false, updatedAt: new Date().toISOString() };
+    const cur = await readPushCloud('push-config.json');
+    if (cur && cur.data && JSON.stringify(cur.data.flags) === JSON.stringify(cfg.flags) && cur.data.inapp === cfg.inapp) return;
+    await writePushCloud('push-config.json', cfg, '推送：更新通知开关');
   } catch (e) {}
 }
 
