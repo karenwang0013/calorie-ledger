@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.83', d: '11-14', items: [
+    '修：iPad 上打开 App 的那一瞬间，Dock 药丸还是手机那颗矮的（51 高），下面空一大截，脚本跑起来才变成正常的样子。现在 iPad 上一开始就是正确的大小和圆角。',
+  ]},
   { v: 'v11.82', d: '11-14', items: [
     '修：打开 App 的那一瞬间（脚本还没跑起来），Dock 上那颗药丸会先被拉长、跳一下再变成正常宽度。原因是最初的占位宽度还按老的三格算，而 Dock 现在是四格 —— 现在一打开就是正确宽度。',
   ]},
@@ -3543,7 +3546,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.82';
+const APP_VERSION = 'v11.83';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

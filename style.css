@@ -2427,6 +2427,15 @@ html.kb .tabbar, html.kb .fab { display: none !important; }
     --dock-h: 104px;
     --dock-r: 18px;   /* v11.55：iPad 屏幕圆角 18，Dock 跟它一致（与练账同一值） */
   }
+  /* v11.82：iPad 首帧（脚本还没跑）的药丸也要和正常态一模一样 ——
+     之前这里挂的是手机那套（51 高 / 25.5 圆角 / 留 4），加载时会看到一颗矮药丸加下面一大截空。
+     iPad 正常态：高 = 条高 − 16（104 → 88）、圆角 = Dock 圆角 − 8（18 → 10）、宽 = 格宽 − 14、四边留 7。 */
+  .dock-lens {
+    --lens-h: calc(var(--dock-h) - 16px);
+    --lens-r: calc(var(--dock-r) - 8px);
+    width: var(--lens-w, calc(100% / 4 - 14px));
+    transform: translate3d(var(--lens-x, 7px), var(--lens-y, 7px), 0);
+  }
   /* 顶栏两端与内容列对齐 */
   .topbar {
     padding-left: max(20px, calc((100vw - 720px) / 2 + 18px));
