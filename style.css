@@ -1016,7 +1016,8 @@ body.add-open .sheet-mask.on {
      跟现在的算法（内边距 0 / 左右留 4 / 宽 = 格宽 − 8）差 5.8，启动首帧胶囊会先偏右 5.8、
      偏下 6.0 再跳回正确位置（用户口径「初始化的时候 Dock 按钮错位」）。
      现在：宽 = 100%/3 − 8（边框内宽 = Dock 宽 − 2）、x = y = 4（= (格宽 − 滑块宽)/2）。 */
-  width: var(--lens-w, calc(100% / 3 - 8px));
+  /* v11.82：Dock 是 4 列，回退值原来按 3 列算 → 首帧药丸被拉长成 105 宽（加载时「药丸变拉长」） */
+  width: var(--lens-w, calc(100% / 4 - 8px));
   height: var(--lens-h, calc(var(--dock-h) - 22px));
   border-radius: var(--lens-r, calc(var(--dock-r) - 11px));
   z-index: 0; pointer-events: none; opacity: 1;

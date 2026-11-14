@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.82', d: '11-14', items: [
+    '修：打开 App 的那一瞬间（脚本还没跑起来），Dock 上那颗药丸会先被拉长、跳一下再变成正常宽度。原因是最初的占位宽度还按老的三格算，而 Dock 现在是四格 —— 现在一打开就是正确宽度。',
+  ]},
   { v: 'v11.81', d: '11-13', items: [
     '修：锁屏通知从不生效 —— 订阅和开关一直在往 api.github.com 写，但 App 里的令牌只有 Gitee 的（cloudToken 只返回 gitee_token），GitHub 一律 401。所以从 2026-10-21 起 push-subs.json 一条都没更新过、push-config.json 从来不存在，服务端一直在发给两台旧设备的订阅（其中一台已被 Apple 判失效 410）。现在改成写 Gitee 数据仓库的 push-subs.json / push-config.json，发推送前由 Actions 从 Gitee 拉最新那份。',
     '加：订阅没变化就不再提交一次（以前每次打开 App 都可能多一条空提交）。',
@@ -3540,7 +3543,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.81';
+const APP_VERSION = 'v11.82';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
