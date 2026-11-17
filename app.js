@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.86', d: '11-17', items: [
+    '修：网络卡住时（不是断网，是请求一直不返回）主屏 App 会永远停在加载页面。现在等 1.5 秒就拿本地缓存先打开，网络恢复后照样在后台更新。',
+  ]},
   { v: 'v11.85', d: '11-15', items: [
     '修：index.html 里 calc.js 和两个图标的版本参数停在旧值（?v=1076 / ?v=1037），已统一到 1217 —— 个别文件不再吃旧缓存（「图标不一致」那类问题的来源）。',
   ]},
@@ -3552,7 +3555,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.85';
+const APP_VERSION = 'v11.86';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 

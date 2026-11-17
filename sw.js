@@ -1,5 +1,5 @@
 /* 离线缓存：让 App 在没网的时候也能打开 */
-const CACHE = 'ledger-v1217';
+const CACHE = 'ledger-v1218';
 const ASSETS = [
   './',
   './index.html',
@@ -44,28 +44,41 @@ self.addEventListener('fetch', e => {
   if (url.pathname.endsWith('health.json')) return;
 
   // 打开页面：先走网络拿最新版，断网了再用缓存
+  // 注意：网络“卡住”（请求一直不返回，不是报错）时 catch 不会触发，以前就永远停在加载中。
+  // 所以跟时间赛跑：1.5 秒没回来先给缓存，网络那边回来了照样在后台更新缓存。
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req, { cache: 'no-store' })
-        .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put('./index.html', copy));
-          return res;
-        })
-        .catch(() => caches.match('./index.html').then(r => r || caches.match('./')))
-    );
+    e.respondWith((async () => {
+      const net = fetch(req, { cache: 'no-store' }).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
+        return res;
+      });
+      net.catch(() => {});
+      const fast = await Promise.race([
+        net.catch(() => null),
+        new Promise(r => setTimeout(() => r(null), 1500)),
+      ]);
+      return fast || (await caches.match('./index.html')) || (await caches.match('./')) || net;
+    })());
     return;
   }
 
   // 其他静态资源：先走网络，失败再用缓存（保证 HTML 和 JS 版本一致）
   e.respondWith((async () => {
-    try {
-      const res = await fetch(req, { cache: 'no-store' });
+    const net = fetch(req, { cache: 'no-store' }).then(res => {
       if (res && res.status === 200) {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
       }
       return res;
+    });
+    net.catch(() => {});
+    try {
+      // 同上：请求卡住不等它，3 秒就按失败处理，用缓存顶上
+      return await Promise.race([
+        net,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
+      ]);
     } catch (err) {
       // 关键兜底：index.html 里带的是 app.js?v=738，而缓存里可能存的是 app.js?v=737
       // 或不带参数的 app.js —— 精确匹配会 miss，然后 respondWith(undefined) 就变成"脚本没加载"。
