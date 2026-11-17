@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+  { v: 'v11.87', d: '11-17', items: [
+    '改：底部弹层卡牌改回悬浮样式——左右 8 / 离底 8 / 四角都有圆弧（记录卡、设置卡、提醒卡、营养小面板等），尺寸以卡牌自身为准、不再跟 Dock 栏挂钩；圆角按这台设备的屏幕圆角 − 8 算，左右、底部和圆弧处的缝一样宽。',
+  ]},
   { v: 'v11.86', d: '11-17', items: [
     '修：网络卡住时（不是断网，是请求一直不返回）主屏 App 会永远停在加载页面。现在等 1.5 秒就拿本地缓存先打开，网络恢复后照样在后台更新。',
   ]},
@@ -3555,7 +3558,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.86';
+const APP_VERSION = 'v11.87';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -10113,6 +10116,21 @@ function init() {
     document.documentElement.style.setProperty('--dock-r', Math.round(r) + 'px');
   };
 
+  // v11.87：底部弹层卡牌的圆角 = 这台设备的屏幕圆角 − 8（与屏幕弧同心，弧缝=边缝=8）。
+  // 屏幕圆角按屏宽取档（历史实测表，v11.43 前 Dock 那套数据）；iPad 屏幕圆角实测 18。
+  const SHEET_SR = [[320,0],[375,39],[390,47.3],[393,55],[402,62],[414,41.5],[420,62],[428,53.3],[430,55],[440,62],[460,62]];
+  const syncSheetR = () => {
+    const pad = matchMedia('(min-width: 700px) and (min-height: 700px)').matches;
+    if (pad) {  // iPad：沿用历史口径「圆角 = 屏幕圆角实测 18」（与练账同一值）
+      document.documentElement.style.setProperty('--sheet-r', '18px');
+      return;
+    }
+    const w = Math.round(window.innerWidth);
+    let sr = 47.3;
+    for (const [ww, v] of SHEET_SR) { if (w >= ww) sr = v; }
+    document.documentElement.style.setProperty('--sheet-r', Math.max(10, Math.round(sr - 8)) + 'px');
+  };
+
   // 顶栏改成 fixed：量出实际高度，给内容让出空间
   const syncTopH = () => {
     const tb = document.querySelector('.topbar');
@@ -10211,10 +10229,12 @@ function init() {
   syncTopH();
   applyDockTune();
   syncDockR();
+  syncSheetR();
   initScroll();
   const relayout = () => {
     syncTopH();
     syncDockR();
+    syncSheetR();
     // 横竖屏切换后「关于」页的铺满高度要重算，否则会照搬竖屏的高度
     if (typeof fitAboutFill === 'function') fitAboutFill();
     // v9.70：--add-static-h 是按"当时那个方向"量出来的（竖屏 517 / 横屏 743），

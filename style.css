@@ -48,6 +48,8 @@
   --dock-r-legacy: 52px;
   /* 卡片圆角：跟手机屏幕的圆角同心（屏角约 62 − 离底 16） */
   --card-r: 46px;
+  /* v11.87：底部弹层卡牌圆角 = 屏幕圆角 − 8（同心，弧缝=边缝=8；app.js 的 syncSheetR 按屏宽重算） */
+  --sheet-r: 54px;
 }
 
 /* v11.43：Dock 改成 App Store 那种胶囊，圆角固定 = 高度一半 —— 按屏宽查表那套（屏幕圆角−离边）不再适用；
@@ -429,10 +431,9 @@ html.kb .sc-body {
   border: 1px solid transparent;
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
-  /* 位置和尺寸 */
+  /* 位置和尺寸 —— v11.87：与弹层卡牌同一套悬浮几何（左右 8 / 离底 8，不跟 Dock 挂钩） */
   position: fixed;
-  left: var(--dock-inset); right: var(--dock-inset);
-  bottom: calc(var(--dock-bottom) + var(--safe-b));
+  left: 8px; right: 8px; bottom: 8px;
   top: auto;
   margin: 0 auto;
   max-width: var(--dock-max);
@@ -451,7 +452,7 @@ html.kb .sc-body {
   --add-max-h: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
   min-height: min(var(--add-static-h, 62dvh), var(--add-max-h));
   max-height: var(--add-max-h);
-  border-radius: var(--dock-r, 26px);
+  border-radius: var(--sheet-r, 54px);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1140,9 +1141,10 @@ body.add-open .sheet-mask.on {
 /* 改营养数据的小面板：比记录弹层小一圈，左右和底边与它等距 */
 #nutSheet {
   z-index: 62;                                   /* 浮在记录弹层之上 */
-  left: calc(var(--dock-inset, 8px) + 18px);
-  right: calc(var(--dock-inset, 8px) + 18px);
-  bottom: calc(var(--dock-bottom, 16px) + var(--safe-b, 0px) + 18px);
+  /* v11.87：跟着记录弹层的新几何走（记录弹层 8/8，这里保持「小一圈」18 的等距嵌套 = 26/26） */
+  left: 26px; right: 26px; bottom: 26px;
+  /* 圆角也跟着嵌套：屏幕圆角 − 8（外层）再减去这圈 18 → 弧缝和边缝同为 26 */
+  border-radius: calc(var(--sheet-r, 54px) - 18px);
   max-width: calc(var(--dock-max, 470px) - 36px);
   /* 卡片整体必须落在屏幕里：内容再长也不许超出，超出就在卡片内滚动 */
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--safe-b, 0px) - 24px);
@@ -1395,15 +1397,16 @@ body.add-open .sheet-mask.on {
 
 /* 悬浮圆角卡片：不再贴底，四周留边，别处一点就关 */
 .sheet {
-  /* v11.49：用户口径「不要悬浮卡牌」—— 底部卡牌一律贴左右边 + 贴底，只留上圆角 */
-  position: fixed; left: 0; right: 0; z-index: 61;
-  bottom: 0;
-  max-width: none; margin: 0;
+  /* v11.87：改回悬浮卡牌（用户口径）—— 左右 8 / 离底 8 / 四角圆角 = 屏幕圆角 − 8（同心，弧缝=边缝）；
+     尺寸以卡牌自身为准，不再跟 Dock 挂钩 */
+  position: fixed; left: 8px; right: 8px; z-index: 61;
+  bottom: 8px;
+  max-width: 500px; margin: 0 auto;
   min-height: 56dvh; max-height: 72dvh;
   background: var(--bg2);
-  border-radius: 46px 46px 0 0;
+  border-radius: var(--sheet-r);
   /* 手机屏幕的角是超椭圆（squircle），支持就跟着用，不支持自动忽略 */
-  border: 0; border-top: 1px solid var(--line2);
+  border: 1px solid var(--line2);
   box-shadow: none;   /* v9.91：去掉外投影（用户要求） */
   transform: translateY(calc(100% + 24px)) scale(.98);
   opacity: 0;
@@ -3022,8 +3025,8 @@ select:focus {
 /* ==================================================================
    设置卡：和「提醒记录 / 记录卡」同一张磨砂玻璃卡
    —— 材质那段（fill + edge-gloss + backdrop-filter）与 #nlogSheet 逐行一致，
-      位置 / 宽度 / 圆角 / 底边全走 --dock-inset / --dock-max / --dock-r / --dock-bottom，
-      所以底部永远和提醒记录卡落在同一根线上。
+      v11.87 起位置 / 尺寸与弹层卡牌同一套悬浮几何（左右 8 / 离底 8 / 圆角 --sheet-r），
+      不再走 --dock-inset / --dock-bottom。
    里面换成行式布局（图标 + 标题 + 右侧值 + 箭头），尺寸照设计数据：
       行高 54、行卡圆角 22、图标 21 起于 x41、值右缘距屏右 63.1、箭头距屏右 41。
    ================================================================== */
@@ -3036,14 +3039,13 @@ select:focus {
   -webkit-backdrop-filter: var(--glass-blur-2);
   backdrop-filter: var(--glass-blur-2);
   position: fixed;
-  left: var(--dock-inset); right: var(--dock-inset);
-  bottom: calc(var(--dock-bottom) + var(--safe-b));
+  left: 8px; right: 8px; bottom: 8px;   /* v11.87：与弹层卡牌同一套悬浮几何（8/8，不跟 Dock 挂钩） */
   top: auto; margin: 0 auto;
   max-width: var(--dock-max);
   /* 内容撑开（上方可以比提醒记录卡高），超过可用高度就在卡内滚 */
   min-height: 0;
   max-height: calc(100dvh - var(--topbar-h, 64px) - var(--dock-bottom, 16px) - var(--safe-b, 0px) - 20px);
-  border-radius: var(--dock-r, 26px);
+  border-radius: var(--sheet-r, 54px);
   /* v10.24：底部不再留 20px —— 内容要一直画到卡底、沿着卡牌自己的圆角消失（用户口径：
      「消失界面和卡牌底部形状融为一体，不是单独拿一条线去消失」） */
   padding: 18px 0 0;
@@ -3691,16 +3693,8 @@ html.kb #setSheet {
 #nlogSheet .sh-hd .backbtn svg{width:24px;height:24px}
 #nlogSheet .sh-hd .backbtn:active{opacity:.6}
 
-/* ---------- 记录弹层：贴到屏幕三边（整块，不再悬浮），只保留上面两个圆角 ---------- */
+/* ---------- 记录弹层：v11.87 改回悬浮（几何与圆角走上面 #nlogSheet,#addSheet 那套：8/8/8 + --sheet-r） ---------- */
 #addSheet{
-  left:0;right:0;bottom:0;
-  max-width:none;margin:0;
-  /* 贴满屏宽后，顶角不能再用 Dock 的 52（440 宽下弧太深，像一颗药丸）：
-     40 是「卡顶→按钮」那几道 10px 缝还能完整落在弧内的最大档（角点 18/10 在弧内要 ≤46.9）
-     v11.42 用户口径：跟「拍照 / 搜索」那一栏（#addTabs，圆角 40、72 高、药丸感）相呼应，
-     卡顶取同样能落进弧里的上限 46 —— 两个弧的视觉重量拉近（角点 18/11：40²+35²=2009 < 46²=2116） */
-  border-radius:46px 46px 0 0;
-  border:0;border-top:1px solid var(--line2);
   --card-gap:18px;
 }
 /* 内容跟着屏幕边距走：左右 18（和设置页一致），底部让开 Home 条 */

@@ -121,7 +121,10 @@ const checks = [
   ['自动同步不含 Token / AI Key', /delete data\.settings\.gh_token/.test(api) && /delete data\.settings\.gitee_token/.test(api) && /delete data\.settings\.dashscope_key/.test(api)],
   ['开启同步先读云端（新设备不许覆盖云端）', /cloudPull\(first\)/.test(app) && /async function cloudPull\(force\)/.test(api) && /function setCloudTokenSilently/.test(api)],
   ['安装到主屏幕后允许横竖屏（manifest orientation: any）', /"orientation": "any"/.test(manifest)],
-  ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-inset\)/.test(css)],
+  ['底部 Dock 是悬浮条（留边距，不再整条贴屏幕边）', /\.tabbar \{[\s\S]*?left: var\(--dock-w\)/.test(css)],
+  // v11.87 用户口径（2026-11-17）：底部弹层卡牌改回悬浮——左右 8 / 离底 8 / 圆角 = 屏幕圆角 − 8（--sheet-r），
+  // 尺寸以卡牌自身为准、不跟 Dock 挂钩。这里锁：.sheet 几何 + syncSheetR + 变量默认值。
+  ['底部弹层卡牌是悬浮卡（左右 8 / 离底 8 / 圆角走 --sheet-r）', /\.sheet \{[\s\S]{0,400}?left: 8px[\s\S]{0,200}?bottom: 8px/.test(css) && /border-radius: var\(--sheet-r\)/.test(css) && /--sheet-r: 54px/.test(css) && /const syncSheetR/.test(app)],
   ['锁死的颜色/尺寸一个都不许改（tools/locked.json）', lockedBad.length === 0],
   ['卡片上下内边距必须相等（.card 不许 12/16 这种不等距）', padSymmetric('.card')],
   // v11.43 用户口径（2026-11-09）：Dock 照 App Store 底部条 —— 胶囊 = 格宽 + 10、高 54、正胶囊（圆角 = 半高）。
