@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.93', d:'2026-11-19', items:['改：趋势页「提醒/来自练账」改名「练账 · 数据互通」，并且一直显示（没数据时写一句占位说明，不整块消失）'] },
     { v:'11.92', d:'2026-11-19', items:['修：趋势页「提醒/来自练账」标题原来用练账的 listhead 类（热量账本没这个样式），整块没内边距、字号乱——改用本 App 的 .sec 标题样式，并跟提醒卡一起显示/隐藏，没提醒时不留空标题'] },
     { v:'11.91', d:'2026-11-19', items:['改：底栏「趋势」挪到第 3 位（今日 / 记录 / 趋势 / 饮食），和练账同一位置同一名字'] },
     { v:'11.90', d:'2026-11-19', items:['改：练账提醒移到「趋势」页顶部「提醒」卡片（原来挤在首页顶部一条小字，看不清）；样式和练账「记录」页的提醒统一'] },
@@ -3564,7 +3565,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.92';
+const APP_VERSION = 'v11.93';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7214,8 +7215,15 @@ function paintTrainBanner(d) {
   const el = $('#trainBanner');
   if (!el) return;
   const sec = $('#trainSec');
-  // 标题跟着卡片一起显示/隐藏：没提醒时不能只留一个空标题
-  const show = (msg) => { el.hidden = !msg; el.innerHTML = msg || ''; if (sec) sec.hidden = !msg; };
+  // v11.93：这块一直显示（数据互通），没算出来就写一句占位，不整块消失
+  const show = (msg) => {
+    const idle = !msg;
+    el.hidden = false;
+    el.innerHTML = msg || '练账今天还没数据 · 练了这里会写今天练了几组、蛋白按训练日怎么算';
+    el.style.color = idle ? 'var(--muted)' : 'var(--lime)';
+    el.style.borderColor = idle ? 'var(--line)' : 'color-mix(in srgb, var(--lime) 35%, transparent)';
+    if (sec) sec.hidden = false;
+  };
   const w = Number((Store.load().profile || {}).weight_kg) || 0;
   const ta = trainAdvice(w);
   if (!ta) { show(''); return; }
