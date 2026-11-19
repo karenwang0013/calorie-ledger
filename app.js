@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.90', d:'2026-11-19', items:['改：练账提醒移到「趋势」页顶部「提醒」卡片（原来挤在首页顶部一条小字，看不清）；样式和练账「记录」页的提醒统一'] },
     { v:'11.89', d:'2026-11-19', items:['新增：练账 → 热量账本提醒 —— 首页顶部提示条：今天练了→蛋白按训练日吃够；连着 2 天没练→按休息日预算吃'] },
     { v:'11.88', d:'2026-11-19', items:['改：底栏「记入」按钮的形状改成和「识别热量」一样（圆角 18 → 26、高 50，同一套规格）'] },
 
@@ -3561,7 +3562,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.89';
+const APP_VERSION = 'v11.90';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3843,7 +3844,6 @@ function renderToday() {
   } else {
     sb.innerHTML = '';
   }
-  paintTrainBanner(d);
 
   // 主环
   // v10.66：圆环进度也跟「预计全天的可吃」走，不然圈和内圈的字会算两套
@@ -6384,6 +6384,7 @@ function wireTrendChart() {
 }
 
 function renderTrends() {
+  paintTrainBanner(S.day);
   const t = S.trend;
   const box = $('#trendBody');
   if (!t) { box.innerHTML = '<div class="empty-state">加载中…</div>'; return; }
@@ -7204,7 +7205,7 @@ function wireWeightDrag() { wireSheetDrag($('#weightSheet'), null, closeWeight);
 function wireNutDrag() { wireSheetDrag($('#nutSheet'), null, closeNutEdit); }
 function wireHelpDrag() { wireSheetDrag($('#helpSheet'), null, closeHelp); }
 
-/* v11.89：练账 → 热量账本的提醒条（首页顶部，打开就看见）。
+/* v11.90：练账 → 热量账本的提醒卡（趋势页顶部「提醒」卡片，和练账「记录」页的提醒同款）。
    今天练了 → 提示蛋白按训练日算、练后吃够；连续 ≥2 天没练 → 提示按休息日预算吃。
    内容全是算出来的数字，不经过用户输入（innerHTML 无注入面）。 */
 function paintTrainBanner(d) {
@@ -7212,21 +7213,18 @@ function paintTrainBanner(d) {
   if (!el) return;
   const w = Number((Store.load().profile || {}).weight_kg) || 0;
   const ta = trainAdvice(w);
-  if (!ta) { el.innerHTML = ''; return; }
+  if (!ta) { el.hidden = true; el.innerHTML = ''; return; }
   const sameDay = d && d.date === S.today;
   const budget = sameDay ? (d.targets && d.targets.kcal_budget) : null;
+  let msg = '';
   if (ta.on) {
-    el.innerHTML = `<div class="setup-tip" style="cursor:default"><span>练账：今天已练 ${ta.todaySets} 组 → 蛋白按训练日 2.0 g/kg（约 ${ta.p} g），练后吃够</span></div>`;
+    msg = `练账：今天已练 ${ta.todaySets} 组 → 蛋白按训练日 2.0 g/kg（约 ${ta.p} g），练后吃够`;
   } else if (ta.lastOn) {
     const gap = Math.round((new Date(S.today + 'T00:00:00') - new Date(ta.lastOn + 'T00:00:00')) / 86400000);
-    if (gap >= 2) {
-      el.innerHTML = `<div class="setup-tip" style="cursor:default"><span>练账：已 ${gap} 天没练 → 今天按休息日算${budget ? '，预算 ' + budget + ' 千卡，吃到就停' : ''}</span></div>`;
-    } else {
-      el.innerHTML = '';
-    }
-  } else {
-    el.innerHTML = '';
+    if (gap >= 2) msg = `练账：已 ${gap} 天没练 → 今天按休息日算${budget ? '，预算 ' + budget + ' 千卡，吃到就停' : ''}`;
   }
+  if (msg) { el.hidden = false; el.innerHTML = msg; }
+  else { el.hidden = true; el.innerHTML = ''; }
 }
 
 function runNotifyChecks() {

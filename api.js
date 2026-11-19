@@ -1547,6 +1547,7 @@ async function pullTrainBridge() {
     if (!s.sets && !TRAIN) return false;          // 对方一条记录都没有，别把空摘要写进去
     TRAIN = s;
     try { localStorage.setItem(TRAIN_KEY, JSON.stringify(s)); } catch (e) {}
+    if (typeof paintTrainBanner === 'function') paintTrainBanner(window.S && S.day);  // v11.90 拉到新数据后重画趋势页提醒
     return true;
   } catch (e) { return false; }
 }
