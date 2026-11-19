@@ -1523,17 +1523,18 @@ function trainSummarize(payload) {
   const fromD = new Date(now); fromD.setDate(fromD.getDate() - 6);
   const from = _trainISO(fromD);
   const days = {}, mus = {};
-  let sets = 0, todaySets = 0;
+  let sets = 0, todaySets = 0, lastOn = '';
   logs.forEach(l => {
     const dt = String((l && l.d) || '');
     if (!dt || dt < from || dt > today) return;
     sets++;
     days[dt] = 1;
+    if (dt > lastOn) lastOn = dt;
     const m = l.m || '';
     mus[m] = (mus[m] || 0) + 1;
     if (dt === today) todaySets++;
   });
-  return { at: Date.now(), days: Object.keys(days).length, sets, todaySets, mus };
+  return { at: Date.now(), days: Object.keys(days).length, sets, todaySets, lastOn, mus };
 }
 
 async function pullTrainBridge() {
@@ -1566,6 +1567,7 @@ function trainAdvice(weightKg) {
     days: TRAIN.days,
     sets: TRAIN.sets,
     todaySets: TRAIN.todaySets,
+    lastOn: TRAIN.lastOn || '',
   };
 }
 
