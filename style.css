@@ -947,7 +947,7 @@ body.add-open .sheet-mask.on {
   width: 100%;
   position: relative;   /* 液态滑块用绝对定位挂在这一层里 */
   display: grid;
-  /* 底栏 4 个选项（今日 / 饮食 / 记录 / 趋势）：四格等宽 */
+  /* 底栏 4 个选项（今日 / 记录 / 趋势 / 饮食）：四格等宽；v11.91 趋势挪到第 3 位，和练账对齐 */
   grid-template-columns: 1fr 1fr 1fr 1fr;
   align-items: center;    /* 三个按钮都在 Dock 的上下正中 */
   height: var(--dock-h);
