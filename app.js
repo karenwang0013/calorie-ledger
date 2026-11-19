@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.94', d:'2026-11-19', items:['改：「练账 · 数据互通」卡改正式版式——标题 + 右上角状态胶囊（训练日 / 休息日 / 还没有数据）+ 已练组数、蛋白目标、蛋白系数三行数据 + 一行说明，不再是一大句话'] },
     { v:'11.93', d:'2026-11-19', items:['改：趋势页「提醒/来自练账」改名「练账 · 数据互通」，并且一直显示（没数据时写一句占位说明，不整块消失）'] },
     { v:'11.92', d:'2026-11-19', items:['修：趋势页「提醒/来自练账」标题原来用练账的 listhead 类（热量账本没这个样式），整块没内边距、字号乱——改用本 App 的 .sec 标题样式，并跟提醒卡一起显示/隐藏，没提醒时不留空标题'] },
     { v:'11.91', d:'2026-11-19', items:['改：底栏「趋势」挪到第 3 位（今日 / 记录 / 趋势 / 饮食），和练账同一位置同一名字'] },
@@ -3565,7 +3566,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.93';
+const APP_VERSION = 'v11.94';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7215,28 +7216,48 @@ function paintTrainBanner(d) {
   const el = $('#trainBanner');
   if (!el) return;
   const sec = $('#trainSec');
-  // v11.93：这块一直显示（数据互通），没算出来就写一句占位，不整块消失
-  const show = (msg) => {
-    const idle = !msg;
+  /* v11.94：这张卡改成「标题 + 两行数据」的正式版式，没数据时也给一行说明，不整块消失 */
+  const row = (k, v, unit) => `<div class="tbrow"><span class="k">${k}</span><span class="v">${v}${unit ? `<em>${unit}</em>` : ''}</span></div>`;
+  const paint = (title, tag, rows, note, idle) => {
     el.hidden = false;
-    el.innerHTML = msg || '练账今天还没数据 · 练了这里会写今天练了几组、蛋白按训练日怎么算';
-    el.style.color = idle ? 'var(--muted)' : 'var(--lime)';
-    el.style.borderColor = idle ? 'var(--line)' : 'color-mix(in srgb, var(--lime) 35%, transparent)';
+    el.innerHTML = `<div class="tbhd"><span class="tbt">${title}</span><span class="tbtag${idle ? ' g' : ''}">${tag}</span></div>`
+      + (rows.length ? `<div class="tbrows">${rows.join('')}</div>` : '')
+      + (note ? `<p class="tbnote">${note}</p>` : '');
+    el.classList.toggle('idle', !!idle);
     if (sec) sec.hidden = false;
   };
   const w = Number((Store.load().profile || {}).weight_kg) || 0;
   const ta = trainAdvice(w);
-  if (!ta) { show(''); return; }
+  if (!ta) {
+    paint('练账 · 数据互通', '还没有数据', [],
+      '训练账本今天还没有记录。练完之后这里会写：今天练了几组、蛋白按训练日算多少克、碳水怎么配。', true);
+    return;
+  }
   const sameDay = d && d.date === S.today;
   const budget = sameDay ? (d.targets && d.targets.kcal_budget) : null;
-  let msg = '';
+  const pTarget = (S.day && S.day.targets && S.day.targets.protein_g) || ta.p;
   if (ta.on) {
-    msg = `练账：今天已练 ${ta.todaySets} 组 → 蛋白按训练日 2.0 g/kg（约 ${ta.p} g），练后吃够`;
+    paint('练账 · 今日训练', '训练日',
+      [row('今天已练', ta.todaySets, '组'),
+       row('蛋白目标', pTarget, '克'),
+       row('蛋白系数', '2.0', 'g/kg')],
+      `按训练日 2.0 g/kg 计（${w} kg × 2.0）。练后 1 小时内补 30 g 左右，全天吃够 ${pTarget} g。`);
   } else if (ta.lastOn) {
     const gap = Math.round((new Date(S.today + 'T00:00:00') - new Date(ta.lastOn + 'T00:00:00')) / 86400000);
-    if (gap >= 2) msg = `练账：已 ${gap} 天没练 → 今天按休息日算${budget ? '，预算 ' + budget + ' 千卡，吃到就停' : ''}`;
+    if (gap >= 2) {
+      paint('练账 · 休息日', `${gap} 天没练`,
+        [row('上次训练', ta.lastOn.slice(5).replace('-', '/'), ''),
+         row('蛋白目标', pTarget, '克'),
+         row('蛋白系数', '1.8', 'g/kg')].concat(budget ? [row('今日预算', budget, '千卡')] : []),
+        `连续 ${gap} 天没练，蛋白按休息日 1.8 g/kg 算（${w} kg × 1.8）。${budget ? '热量按休息日预算吃，吃到就停。' : ''}`);
+    } else {
+      paint('练账 · 数据互通', '已同步', [row('上次训练', ta.lastOn.slice(5).replace('-', '/'), '')],
+        '今天还没练。练了之后蛋白目标会切到训练日 2.0 g/kg。');
+    }
+  } else {
+    paint('练账 · 数据互通', '已同步', [],
+      '训练账本已连上，但近 7 天还没有训练记录。');
   }
-  show(msg);
 }
 
 function runNotifyChecks() {
