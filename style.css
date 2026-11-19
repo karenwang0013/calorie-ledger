@@ -3572,6 +3572,10 @@ html.kb #setSheet {
 #addSheet #descBlock #textGo{
   padding:0 16px;min-height:0;height:50px;border-radius:26px;
 }
+/* v11.88：底栏「记入」和「识别热量」同一个形状（用户口径：记录按钮形状要和识别热量一样） */
+#addSheet .sh-foot #saveItems{
+  padding:0 16px;min-height:0;height:50px;border-radius:26px;
+}
 
 /* ==================================================================
    v11.27：所有「会移动的药丸」滑块统一成 Dock 药丸那一套材质
