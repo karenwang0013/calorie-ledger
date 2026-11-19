@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.92', d:'2026-11-19', items:['修：趋势页「提醒/来自练账」标题原来用练账的 listhead 类（热量账本没这个样式），整块没内边距、字号乱——改用本 App 的 .sec 标题样式，并跟提醒卡一起显示/隐藏，没提醒时不留空标题'] },
     { v:'11.91', d:'2026-11-19', items:['改：底栏「趋势」挪到第 3 位（今日 / 记录 / 趋势 / 饮食），和练账同一位置同一名字'] },
     { v:'11.90', d:'2026-11-19', items:['改：练账提醒移到「趋势」页顶部「提醒」卡片（原来挤在首页顶部一条小字，看不清）；样式和练账「记录」页的提醒统一'] },
     { v:'11.89', d:'2026-11-19', items:['新增：练账 → 热量账本提醒 —— 首页顶部提示条：今天练了→蛋白按训练日吃够；连着 2 天没练→按休息日预算吃'] },
@@ -3563,7 +3564,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.91';
+const APP_VERSION = 'v11.92';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -7212,9 +7213,12 @@ function wireHelpDrag() { wireSheetDrag($('#helpSheet'), null, closeHelp); }
 function paintTrainBanner(d) {
   const el = $('#trainBanner');
   if (!el) return;
+  const sec = $('#trainSec');
+  // 标题跟着卡片一起显示/隐藏：没提醒时不能只留一个空标题
+  const show = (msg) => { el.hidden = !msg; el.innerHTML = msg || ''; if (sec) sec.hidden = !msg; };
   const w = Number((Store.load().profile || {}).weight_kg) || 0;
   const ta = trainAdvice(w);
-  if (!ta) { el.hidden = true; el.innerHTML = ''; return; }
+  if (!ta) { show(''); return; }
   const sameDay = d && d.date === S.today;
   const budget = sameDay ? (d.targets && d.targets.kcal_budget) : null;
   let msg = '';
@@ -7224,8 +7228,7 @@ function paintTrainBanner(d) {
     const gap = Math.round((new Date(S.today + 'T00:00:00') - new Date(ta.lastOn + 'T00:00:00')) / 86400000);
     if (gap >= 2) msg = `练账：已 ${gap} 天没练 → 今天按休息日算${budget ? '，预算 ' + budget + ' 千卡，吃到就停' : ''}`;
   }
-  if (msg) { el.hidden = false; el.innerHTML = msg; }
-  else { el.hidden = true; el.innerHTML = ''; }
+  show(msg);
 }
 
 function runNotifyChecks() {
