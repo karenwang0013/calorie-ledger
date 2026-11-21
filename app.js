@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'12.00', d:'2026-11-21', items:[
+      '改：搜索页下面那一排「快捷选择」食物按钮去掉（搜索框里打字就够了）',
+      '改：搜索排序两颗按钮改名「按时间」/「按频次」'
+    ]},
     { v:'11.99', d:'2026-11-21', items:[
       '新增：搜索结果顶上一行「最近吃过 / 最常吃」，排序自己选 —— 选了会记住，下次打开还是这个排法（「最常吃」按吃过几次排，记录行里会写吃过 N 次）'
     ]},
@@ -3583,7 +3587,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.99';
+const APP_VERSION = 'v12.00';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4230,7 +4234,6 @@ function openAdd(meal) {
   $('#searchInput').value = '';
   setAddMode('photo');
   renderMealPick();
-  renderRecent();
 
   closeOtherCards('add');                    // 三张卡同时只允许开一张
   raiseSheet('#addSheet');                   // 刚打开的弹层放到最上面
@@ -4560,36 +4563,6 @@ function syncTextPh() {
 
 function renderMealPick() {
   $$('#mealPick .chip').forEach(c => c.classList.toggle('on', c.dataset.meal === S.meal));
-}
-
-function renderRecent() {
-  const box = $('#recentChips');
-  const seen = [];
-  (S.day?.logs || []).forEach(l => {
-    if (!seen.includes(l.name)) seen.push(l.name);
-  });
-  const picks = seen.slice(0, 6);
-  if (picks.length < 4) {
-    ['鸡蛋', '米饭', '牛奶(全脂)', '鸡胸肉(生)', '香蕉'].forEach(n => {
-      if (!picks.includes(n)) picks.push(n);
-    });
-  }
-  box.innerHTML = picks.slice(0, 7).map(n =>
-    `<button class="chip" data-quick="${esc(n)}">${esc(n)}</button>`).join('');
-  // v8.80 修：以前只按「名字一字不差」在食物库里找，找不到就什么都不发生（点「麦片生」没反应，
-  // 因为库里叫「燕麦片(干)」）。现在先做宽容匹配（忽略空格/标点、忽略括号里的备注），
-  // 仍然找不到就把这个名字填进搜索框、把搜索结果直接列出来让他挑 —— 点任何一颗常用词都一定有反馈。
-  $$('[data-quick]', box).forEach(b => b.onclick = () => {
-    const q = b.dataset.quick;
-    const f = S.foods.find(x => x.name === q)
-      || S.foods.find(x => normName(x.name) === normName(q))
-      || S.foods.find(x => normBare(x.name) === normBare(q));
-    if (f) { pushFood(f); return; }
-    const inp = $('#searchInput');
-    if (inp) inp.value = q;
-    $('#searchList').hidden = false;
-    runSearch(q);
-  });
 }
 
 /* ---- 拍照 ---- */
@@ -5292,8 +5265,8 @@ function runSearch(q) {
   }
 
   const sortRow = `<div class="chips-wrap" id="srSort" style="margin:2px 0 8px">
-      <button class="chip${srSort === 'recent' ? ' on' : ''}" data-s="recent">最近吃过</button>
-      <button class="chip${srSort === 'often' ? ' on' : ''}" data-s="often">最常吃</button>
+      <button class="chip${srSort === 'recent' ? ' on' : ''}" data-s="recent">按时间</button>
+      <button class="chip${srSort === 'often' ? ' on' : ''}" data-s="often">按频次</button>
     </div>`;
   box.innerHTML = sortRow + netRow + shown.map((x, i) => `
     <div class="sitem" data-i="${i}">
