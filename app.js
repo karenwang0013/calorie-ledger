@@ -28,6 +28,9 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.99', d:'2026-11-21', items:[
+      '新增：搜索结果顶上一行「最近吃过 / 最常吃」，排序自己选 —— 选了会记住，下次打开还是这个排法（「最常吃」按吃过几次排，记录行里会写吃过 N 次）'
+    ]},
     { v:'11.98', d:'2026-11-21', items:[
       '改：复制小卡上的日期只留「记到今天」一颗（只在回看旧日子时才出现）—— 「昨天吃过的，今天再吃一份」这一个用法，不用再选记到哪天',
       '修：搜索结果上下滑动时「滑到一定位置会卡一下」—— 每 60 秒一次的整页重算会在你正滑的时候插进来重画一遍，现在卡片开着时不重画，关掉后照常'
@@ -3580,7 +3583,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.98';
+const APP_VERSION = 'v11.99';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5131,10 +5134,14 @@ function historyFoods() {
     Store.save({ silent: true });
   }
   const dels = new Set(st.foodHistDel || []);
+  // 「最常吃」要按吃过几次排：日志里同一个名字出现几次就是几次（不额外存字段）
+  const cnt = new Map();
+  (st.logs || []).forEach(l => { const n = String(l.name || ''); if (n) cnt.set(n, (cnt.get(n) || 0) + 1); });
   return st.foodHist
     .filter(x => !dels.has(x.n))
     .sort((a, b) => (b.at || 0) - (a.at || 0))
-    .map(x => ({ name: x.n, kcal: x.k, p: x.p, c: x.c, f: x.f, grams: x.g, cat: x.cat || '以前记过' }));
+    .map(x => ({ name: x.n, kcal: x.k, p: x.p, c: x.c, f: x.f, grams: x.g, cat: x.cat || '以前记过',
+                 at: x.at || 0, cnt: cnt.get(x.n) || 0 }));
 }
 
 /* v9.87（用户口径）：食物名不要一直顶到右边的数字跟前 —— 最长「比下面那行营养成分再长一点」，
@@ -5208,6 +5215,16 @@ function netFindRow(q) {
 const SR_LIMIT = 8;
 let srOpen = false, srKey = null;
 
+/* v11.99 用户口径：搜索结果的排序要她自己选 —— 「最近吃过」（默认）/「最常吃」 */
+let srSort = (Store.load().settings || {}).srSort || 'recent';
+function byRecent(a, b) { return (b.at || 0) - (a.at || 0); }
+function byOften(a, b) { return (b.cnt || 0) - (a.cnt || 0) || (b.at || 0) - (a.at || 0); }
+function setSrSort(v) {
+  srSort = v;
+  const st = Store.load(); st.settings.srSort = v; Store.save({ silent: true });
+  runSearch($('#searchInput').value || '');
+}
+
 /* v11.97 用户口径（真机）：搜索列表「拉到底就回弹，最下面那条选不到」。
    原来 .searchscroll 的高度写死 max-height = --add-static-h × 0.95（这台机 587），
    但「搜索框 43 + 常用词 72 + 缝」占完之后只剩 500 出头 → 整块比卡片内容区高 78，
@@ -5244,10 +5261,10 @@ function runSearch(q) {
     return 3;
   };
   if (!key) {
-    list = hist.map(f => ({ f, h: true }));
+    list = hist.slice().sort(srSort === 'often' ? byOften : byRecent).map(f => ({ f, h: true }));
   } else {
     const h = hist.filter(f => hit(f.name))
-      .sort((a, b) => rel(a.name) - rel(b.name) || (b.at || 0) - (a.at || 0))
+      .sort((a, b) => rel(a.name) - rel(b.name) || (srSort === 'often' ? byOften(a, b) : byRecent(a, b)))
       .map(f => ({ f, h: true }));
     const db = S.foods
       .filter(f => hit(f.name) ||
@@ -5274,11 +5291,15 @@ function runSearch(q) {
     return;
   }
 
-  box.innerHTML = netRow + shown.map((x, i) => `
+  const sortRow = `<div class="chips-wrap" id="srSort" style="margin:2px 0 8px">
+      <button class="chip${srSort === 'recent' ? ' on' : ''}" data-s="recent">最近吃过</button>
+      <button class="chip${srSort === 'often' ? ' on' : ''}" data-s="often">最常吃</button>
+    </div>`;
+  box.innerHTML = sortRow + netRow + shown.map((x, i) => `
     <div class="sitem" data-i="${i}">
       <div>
         <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}${x.ai ? ' <span class="aiTag">AI 估</span>' : ''}</div>
-        <div class="cat">${esc(x.f.cat || '')} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
+        <div class="cat">${esc(x.f.cat || '')}${x.f.cnt > 1 ? ` · 吃过 ${x.f.cnt} 次` : ''} · 蛋白 ${x.f.p}g / 碳水 ${x.f.c}g / 脂肪 ${x.f.f}g</div>
       </div>
       <div class="kc">${x.f.kcal}<br><span style="font-size:9px">/100g</span></div>
       ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">
@@ -5286,6 +5307,8 @@ function runSearch(q) {
       </button>` : ''}
     </div>`).join('')
     + (list.length > SR_LIMIT ? `<button class="smore" id="srToggle">${srOpen ? '收起' : `展开全部 ${list.length} 条 ›`}</button>` : '');
+
+  $$('#srSort [data-s]', box).forEach(b => b.onclick = () => setSrSort(b.dataset.s));
 
   const tg = $('#srToggle', box);
   if (tg) tg.onclick = () => { srOpen = !srOpen; runSearch($('#searchInput').value || ''); };
