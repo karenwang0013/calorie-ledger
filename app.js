@@ -28,9 +28,13 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.98', d:'2026-11-21', items:[
+      '改：复制小卡上的日期只留「记到今天」一颗（只在回看旧日子时才出现）—— 「昨天吃过的，今天再吃一份」这一个用法，不用再选记到哪天',
+      '修：搜索结果上下滑动时「滑到一定位置会卡一下」—— 每 60 秒一次的整页重算会在你正滑的时候插进来重画一遍，现在卡片开着时不重画，关掉后照常'
+    ]},
     { v:'11.97', d:'2026-11-21', items:[
-      '修：搜索列表拉到底选不到最后一条、一松手就弹回去 —— 结果区的高度原来按卡片空闲高度估，比卡片实际能露出来的地方多出一截，最后一行落在裁切线外面；现在按卡片内容区的真实底边算，滑到哪都点得着',
-      '改：搜索结果默认只铺 8 条，底下一行「展开全部 N 条 ›」点开就是这次搜到的全部（记过的、食物库的都不再截断），点「收起」收回 8 条；换个词或用完重开自动收起'
+      '修：搜索列表「拉到底就回弹、最下面那条点不到」—— 列表高度原来算成一整块卡片高度（多出 78），最后一行永远在裁切线外；现在按卡片内容区的真实底边算',
+      '改：搜索结果默认只铺 8 条，底下一行「展开全部 N 条 ›」，点一下是这次搜到的全部（点「收起」回去）；换了搜索词自动收回 8 条'
     ]},
     { v:'11.96', d:'2026-11-21', items:[
       '修：昨天的记录只能复制回昨天 —— 现在复制小卡里多一行「记到今天 / 记到 11-20」，默认记到今天（回看旧日子时才出现），上午记过的鸡胸肉下午再吃一份，一下就到今天',
@@ -3576,7 +3580,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.97';
+const APP_VERSION = 'v11.98';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6250,21 +6254,13 @@ function wireRename() {
 let cpLog = null;
 let cpGroup = null;      // 非空 = 正在整组复制（「5 项」那种合并行）
 let cpMeal = 'lunch';
-let cpDate = '';         // 记到哪一天：默认今天；回看旧日子时可选留在那天
 
-/* 复制小卡上的「记到哪天」：只有在回看过去的日子时才出现（看今天时说了等于没说） */
+/* 复制小卡上的「记到今天」：只有回看过去的日子时才出现（看今天时说了等于没说）。
+   v11.98 用户口径：她不来补记昨天，只有「昨天吃过的，今天再吃一份」这一种用法 → 只留这一颗 */
 function paintCpDay() {
   const row = $('#cpDayPick');
-  const old = S.date && S.date !== todayISO();
-  if (row) row.hidden = !old;
-  const lab = $('#cpDayLabel');
-  if (lab) lab.textContent = old ? S.date.slice(5) : '';
-  $$('#cpDayPick [data-cday]').forEach(b => b.classList.toggle('on',
-    (b.dataset.cday === 'today' ? cpDate === todayISO() : cpDate === S.date)));
+  if (row) row.hidden = !(S.date && S.date !== todayISO());
 }
-
-/* 提示条上说明记到了哪天（记今天就不啰嗦） */
-function dayNote(day) { return day && day !== todayISO() ? `（${day.slice(5)}）` : ''; }
 
 /* 复制时把照片一起搬过来：优先内存里的（刚拍过/刚看过），没有就从云端按需拉一次。
    拿不到就返回空串（老数据没图、或换过设备云端也没有）—— 不能因为这个把记账搞失败。 */
@@ -6290,7 +6286,6 @@ function openCopy(l) {
   if (!l) return;
   cpLog = l;
   cpMeal = l.meal || 'other';
-  cpDate = todayISO();                 // 默认记到今天（回看昨天时想补记昨天，点一下就好）
   $('#cpName').textContent = l.name || '未命名';
   const g0 = Number(l.grams) || 0;
   $('#cpG').value = g0 > 0 ? Math.round(g0 * 10) / 10 : 100;
@@ -6314,7 +6309,6 @@ function openCopyGroup(g) {
   cpLog = null;
   cpGroup = g.logs.slice();
   cpMeal = g.logs[0].meal || 'other';
-  cpDate = todayISO();
   $('#cpName').textContent = g.name || '未命名';
   const ttl = $('#cpTitle'); if (ttl) ttl.textContent = '复制这一组';
   const total = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
@@ -6353,7 +6347,7 @@ async function saveCopy() {
     const total = Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0));
     const shot = await copyPhotoOf(logs[0].batch);     // v9.88：整组复制也把那张照片带过来
     const batch = shot ? ('c' + Date.now()) : ('b' + Date.now());
-    const day = cpDate || S.date;
+    const day = todayISO();        // v11.98：只记到今天
     closeCopy();
     try {
       await api('/api/logs', {
@@ -6362,7 +6356,7 @@ async function saveCopy() {
         batch, batchName: logs[0].batchName || '',
         shot: shot || undefined,
       });
-      toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'}${dayNote(day)} · ${total} 千卡`);
+      toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'} · ${total} 千卡`);
       await loadDay();
       if (S.view === 'trends') loadTrends();
     } catch (e) {
@@ -6386,7 +6380,7 @@ async function saveCopy() {
   const meal = cpMeal;
   const shot = await copyPhotoOf(src.batch);          // v9.88：照片跟着一起复制
   const nb = shot ? ('c' + Date.now()) : '';          // 新 batch（不共用原组的 id，否则会被并回原来那一行）
-  const day = cpDate || S.date;
+  const day = todayISO();        // v11.98：只记到今天
   closeCopy();
   try {
     await api('/api/logs', {
@@ -6395,7 +6389,7 @@ async function saveCopy() {
       batchName: nb ? (src.batchName || '') : undefined,
       shot: shot || undefined,
     });
-    toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'}${dayNote(day)} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
+    toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
     await loadDay();
     if (S.view === 'trends') loadTrends();
   } catch (e) {
@@ -6413,10 +6407,6 @@ function wireCopy() {
   $$('#cpMealPick [data-cmeal]').forEach(b => b.onclick = () => {
     cpMeal = b.dataset.cmeal;
     $$('#cpMealPick [data-cmeal]').forEach(x => x.classList.toggle('on', x === b));
-  });
-  $$('#cpDayPick [data-cday]').forEach(b => b.onclick = () => {
-    cpDate = b.dataset.cday === 'today' ? todayISO() : S.date;
-    paintCpDay();
   });
 }
 
@@ -10586,8 +10576,13 @@ function init() {
   // v10.89：首页的「消耗 / 缺口 / 还可以吃」都跟当前时间有关（基础代谢按时间累加），
   // 但以前只在"有新数据 / 切页 / 回前台"时重画 → 手表数据不来，数字就一直停着不动。
   // 现在每分钟按当前时间重算一次（只重算显示，不重新拉数据）。
+  // v11.98 用户口径：搜索列表滑动时「滑到一定位置会卡一下」。
+  // 真因是这里的定时重画：60s 一次的 loadDay / 30s 一次的 syncRecords 会在她正滑列表时
+  // 把整页重画一遍（列表本身没变，但整层重绘 → 手指下的内容顿一下）。
+  // 弹层打开着（搜索、记录卡、复制、详情…）就先不重画，关掉后下一次 tick 照常。
+  const anySheetOpen = () => !!document.querySelector('.sheet.on, .modal.on');
   setInterval(() => {
-    if (document.hidden) return;
+    if (document.hidden || anySheetOpen()) return;
     if (S.date !== S.today) return;
     try { loadDay(); } catch (e) {}
   }, 60000);
@@ -10642,14 +10637,14 @@ function init() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') syncRecords();
   });
-  setInterval(() => { if (!document.hidden) syncRecords(); }, 30000);
+  setInterval(() => { if (!document.hidden && !anySheetOpen()) syncRecords(); }, 30000);
 
   // v8.21：身体数据也要定时拉。以前只有「打开 App」「切回前台」「手动点同步」三处拉，
   // 所以开着 App 时永远是打开那一刻的体重；而拉回来的数又不会重画页面，只能退出再进。
   // 这里每 60 秒只读同源镜像 + GitHub raw（不花 Gitee 额度），真有变化才重画。
   let _lastBodyVer = bodyVer, _lastBodyPoll = 0;
   setInterval(() => {
-    if (document.hidden) return;
+    if (document.hidden || anySheetOpen()) return;
     if (Date.now() - _lastBodyPoll < 45000) return;
     _lastBodyPoll = Date.now();
     pullBodyJson(false, true).then(j => {
