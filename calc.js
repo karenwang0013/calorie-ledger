@@ -1,3 +1,4 @@
+if (typeof window !== 'undefined') window.__ok = Object.assign(window.__ok || {}, { calc: 1 });
 /* 热量账本 · 首页数字的唯一计算入口（2026-10-31 v10.69）
  *
  * 为什么单独抽出来：用户要求「以后所有数值都要算得对，不只是今天」

@@ -28,6 +28,7 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.95', d:'2026-11-21', items:['修：「页面没加载完整 / 全是破折号 + 加载失败：Can\'t find variable: Calc」—— 计算脚本 calc.js 没下来时不报错也不自修（诊断只盯着 app/api 两个脚本），现在把它纳入检查，页面一报错就自动补下这一支再重画，不用手点重新加载'] },
     { v:'11.94', d:'2026-11-19', items:['改：「练账 · 数据互通」卡改正式版式——标题 + 右上角状态胶囊（训练日 / 休息日 / 还没有数据）+ 已练组数、蛋白目标、蛋白系数三行数据 + 一行说明，不再是一大句话'] },
     { v:'11.93', d:'2026-11-19', items:['改：趋势页「提醒/来自练账」改名「练账 · 数据互通」，并且一直显示（没数据时写一句占位说明，不整块消失）'] },
     { v:'11.92', d:'2026-11-19', items:['修：趋势页「提醒/来自练账」标题原来用练账的 listhead 类（热量账本没这个样式），整块没内边距、字号乱——改用本 App 的 .sec 标题样式，并跟提醒卡一起显示/隐藏，没提醒时不留空标题'] },
@@ -3566,7 +3567,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.94';
+const APP_VERSION = 'v11.95';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3783,6 +3784,7 @@ async function loadDay() {
       return;
     }
     toast('加载失败：' + e.message, 4000);
+    if (window.__repairBoot) window.__repairBoot();
     if (window.__showBootRetry) window.__showBootRetry('数据没读出来');
   }
 }
