@@ -28,6 +28,11 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.96', d:'2026-11-21', items:[
+      '修：昨天的记录只能复制回昨天 —— 现在复制小卡里多一行「记到今天 / 记到 11-20」，默认记到今天（回看旧日子时才出现），上午记过的鸡胸肉下午再吃一份，一下就到今天',
+      '修：搜索结果的顺序像随机排的 —— 现在名字就是这个词的排最前（搜「鸡胸肉」第一行就是鸡胸肉），然后是以这个词开头的、名字里含这个词的，底下才是食物库其它同类',
+      '说明：昨天记的那份鸡胸肉如果当时识别成了别的名字（比如「调理鸡肉制品」），按名字搜是搜不到的 —— 这时候直接回那天点复制更快'
+    ]},
     { v:'11.95', d:'2026-11-21', items:['修：「页面没加载完整 / 全是破折号 + 加载失败：Can\'t find variable: Calc」—— 计算脚本 calc.js 没下来时不报错也不自修（诊断只盯着 app/api 两个脚本），现在把它纳入检查，页面一报错就自动补下这一支再重画，不用手点重新加载'] },
     { v:'11.94', d:'2026-11-19', items:['改：「练账 · 数据互通」卡改正式版式——标题 + 右上角状态胶囊（训练日 / 休息日 / 还没有数据）+ 已练组数、蛋白目标、蛋白系数三行数据 + 一行说明，不再是一大句话'] },
     { v:'11.93', d:'2026-11-19', items:['改：趋势页「提醒/来自练账」改名「练账 · 数据互通」，并且一直显示（没数据时写一句占位说明，不整块消失）'] },
@@ -3567,7 +3572,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.95';
+const APP_VERSION = 'v11.96';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -5200,14 +5205,26 @@ function runSearch(q) {
   const hit = (s2) => bits.some(b => String(s2 || '').toLowerCase().includes(b));
 
   let list;
+  // 相关度：名字就是这个词 > 名字以这个词开头 > 名字里含这个词 > 只在别名里命中。
+  // 并列时保持原来的顺序（历史按最近吃过、食物库按自身顺序），选出来的结果才不像随机排的。
+  const rel = (name) => {
+    const nm = String(name || '').toLowerCase();
+    if (nm === key) return 0;
+    if (nm.startsWith(key)) return 1;
+    if (nm.includes(key)) return 2;
+    return 3;
+  };
   if (!key) {
     list = hist.slice(0, 12).map(f => ({ f, h: true }));
   } else {
-    const h = hist.filter(f => hit(f.name)).map(f => ({ f, h: true }));
+    const h = hist.filter(f => hit(f.name))
+      .sort((a, b) => rel(a.name) - rel(b.name) || (b.at || 0) - (a.at || 0))
+      .map(f => ({ f, h: true }));
     const db = S.foods
       .filter(f => hit(f.name) ||
         (f.alias || []).some(a => hit(a)))
       .filter(f => !h.some(x => x.f.name === f.name))
+      .sort((a, b) => rel(a.name) - rel(b.name))
       .slice(0, 20)
       .map(f => ({ f, h: false }));
     list = h.concat(db);
@@ -6197,6 +6214,21 @@ function wireRename() {
 let cpLog = null;
 let cpGroup = null;      // 非空 = 正在整组复制（「5 项」那种合并行）
 let cpMeal = 'lunch';
+let cpDate = '';         // 记到哪一天：默认今天；回看旧日子时可选留在那天
+
+/* 复制小卡上的「记到哪天」：只有在回看过去的日子时才出现（看今天时说了等于没说） */
+function paintCpDay() {
+  const row = $('#cpDayPick');
+  const old = S.date && S.date !== todayISO();
+  if (row) row.hidden = !old;
+  const lab = $('#cpDayLabel');
+  if (lab) lab.textContent = old ? S.date.slice(5) : '';
+  $$('#cpDayPick [data-cday]').forEach(b => b.classList.toggle('on',
+    (b.dataset.cday === 'today' ? cpDate === todayISO() : cpDate === S.date)));
+}
+
+/* 提示条上说明记到了哪天（记今天就不啰嗦） */
+function dayNote(day) { return day && day !== todayISO() ? `（${day.slice(5)}）` : ''; }
 
 /* 复制时把照片一起搬过来：优先内存里的（刚拍过/刚看过），没有就从云端按需拉一次。
    拿不到就返回空串（老数据没图、或换过设备云端也没有）—— 不能因为这个把记账搞失败。 */
@@ -6222,11 +6254,13 @@ function openCopy(l) {
   if (!l) return;
   cpLog = l;
   cpMeal = l.meal || 'other';
+  cpDate = todayISO();                 // 默认记到今天（回看昨天时想补记昨天，点一下就好）
   $('#cpName').textContent = l.name || '未命名';
   const g0 = Number(l.grams) || 0;
   $('#cpG').value = g0 > 0 ? Math.round(g0 * 10) / 10 : 100;
   syncCpKcal();
   $$('#cpMealPick [data-cmeal]').forEach(b => b.classList.toggle('on', b.dataset.cmeal === cpMeal));
+  paintCpDay();
   cpGroup = null;
   const ttl = $('#cpTitle'); if (ttl) ttl.textContent = '复制这一条';
   const gr = $('#cpGramsRow'), sum = $('#cpSum');
@@ -6244,6 +6278,7 @@ function openCopyGroup(g) {
   cpLog = null;
   cpGroup = g.logs.slice();
   cpMeal = g.logs[0].meal || 'other';
+  cpDate = todayISO();
   $('#cpName').textContent = g.name || '未命名';
   const ttl = $('#cpTitle'); if (ttl) ttl.textContent = '复制这一组';
   const total = Math.round(g.logs.reduce((a, b) => a + (b.kcal || 0), 0));
@@ -6251,6 +6286,7 @@ function openCopyGroup(g) {
   if (gr) gr.hidden = true;
   if (sum) { sum.hidden = false; sum.textContent = `${g.logs.length} 项 · 共 ${total} 千卡`; }
   $$('#cpMealPick [data-cmeal]').forEach(b => b.classList.toggle('on', b.dataset.cmeal === cpMeal));
+  paintCpDay();
   $('#cpMask').classList.add('on');
   $('#cpSheet').classList.add('on');
 }
@@ -6281,15 +6317,16 @@ async function saveCopy() {
     const total = Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0));
     const shot = await copyPhotoOf(logs[0].batch);     // v9.88：整组复制也把那张照片带过来
     const batch = shot ? ('c' + Date.now()) : ('b' + Date.now());
+    const day = cpDate || S.date;
     closeCopy();
     try {
       await api('/api/logs', {
-        date: S.date, meal, items,
+        date: day, meal, items,
         source: logs[0].source || 'manual',
         batch, batchName: logs[0].batchName || '',
         shot: shot || undefined,
       });
-      toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'} · ${total} 千卡`);
+      toast(`✅ 已复制 ${items.length} 项到${MEAL_NAME[meal] || '这一餐'}${dayNote(day)} · ${total} 千卡`);
       await loadDay();
       if (S.view === 'trends') loadTrends();
     } catch (e) {
@@ -6313,15 +6350,16 @@ async function saveCopy() {
   const meal = cpMeal;
   const shot = await copyPhotoOf(src.batch);          // v9.88：照片跟着一起复制
   const nb = shot ? ('c' + Date.now()) : '';          // 新 batch（不共用原组的 id，否则会被并回原来那一行）
+  const day = cpDate || S.date;
   closeCopy();
   try {
     await api('/api/logs', {
-      date: S.date, meal, items: [it], source: src.source || 'manual',
+      date: day, meal, items: [it], source: src.source || 'manual',
       batch: nb || undefined,
       batchName: nb ? (src.batchName || '') : undefined,
       shot: shot || undefined,
     });
-    toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
+    toast(`✅ 已复制到${MEAL_NAME[meal] || '这一餐'}${dayNote(day)} · ${Math.round(it.kcal_per_100g * g / 100)} 千卡`);
     await loadDay();
     if (S.view === 'trends') loadTrends();
   } catch (e) {
@@ -6339,6 +6377,10 @@ function wireCopy() {
   $$('#cpMealPick [data-cmeal]').forEach(b => b.onclick = () => {
     cpMeal = b.dataset.cmeal;
     $$('#cpMealPick [data-cmeal]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  $$('#cpDayPick [data-cday]').forEach(b => b.onclick = () => {
+    cpDate = b.dataset.cday === 'today' ? todayISO() : S.date;
+    paintCpDay();
   });
 }
 
