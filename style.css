@@ -3406,6 +3406,18 @@ html.kb #setSheet {
 
 #pane-search .slist { margin-top: 0; }
 
+/* v11.97 用户口径：搜索结果默认只铺 8 条，列表最底一行「展开全部 N 条 / 收起」
+   （照练账「动作重量」那种做法：一行字，点开点收，没有底色圆角） */
+.smore {
+  display: block; width: 100%;
+  padding: 14px 4px;
+  background: none; border: 0;
+  font-size: 12.5px; color: var(--muted2);
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.smore:active { color: var(--text); }
+
 /* 三格条搬到卡片层后，位置按原来的算（13px）；这条要压过 #addSheet .tabs3 的 margin */
 /* v9.05 用户口径：1（卡顶→三格条）、2（三格条→照片大框）、3（照片大框→描述块）三道缝要一样宽。
    v9.25：下边距 6 → 7 —— 滚动裁切线要落在第 2 道缝的中心线（三格条下方 7px），

@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'11.97', d:'2026-11-21', items:[
+      '修：搜索列表拉到底选不到最后一条、一松手就弹回去 —— 结果区的高度原来按卡片空闲高度估，比卡片实际能露出来的地方多出一截，最后一行落在裁切线外面；现在按卡片内容区的真实底边算，滑到哪都点得着',
+      '改：搜索结果默认只铺 8 条，底下一行「展开全部 N 条 ›」点开就是这次搜到的全部（记过的、食物库的都不再截断），点「收起」收回 8 条；换个词或用完重开自动收起'
+    ]},
     { v:'11.96', d:'2026-11-21', items:[
       '修：昨天的记录只能复制回昨天 —— 现在复制小卡里多一行「记到今天 / 记到 11-20」，默认记到今天（回看旧日子时才出现），上午记过的鸡胸肉下午再吃一份，一下就到今天',
       '修：搜索结果的顺序像随机排的 —— 现在名字就是这个词的排最前（搜「鸡胸肉」第一行就是鸡胸肉），然后是以这个词开头的、名字里含这个词的，底下才是食物库其它同类',
@@ -3572,7 +3576,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v11.96';
+const APP_VERSION = 'v11.97';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4210,6 +4214,7 @@ function openAdd(meal) {
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
   $('#searchInput').value = '';
+  srOpen = false; srKey = null;          // v11.97：每次打开记录卡都从「8 条收起」开始
   const ta = $('#textInput'); if (ta) ta.value = '';   // 描述框（v10.41 加回）
   syncTextPh();                                        // 清空后「文字描述」那层提示要重新出现
   $('#searchList').innerHTML = '';
@@ -5195,6 +5200,26 @@ function netFindRow(q) {
     </div>`;
 }
 
+/* v11.97：搜索结果「默认 8 条 + 展开全部」的状态（换搜索词自动收回） */
+const SR_LIMIT = 8;
+let srOpen = false, srKey = null;
+
+/* v11.97 用户口径（真机）：搜索列表「拉到底就回弹，最下面那条选不到」。
+   原来 .searchscroll 的高度写死 max-height = --add-static-h × 0.95（这台机 587），
+   但「搜索框 43 + 常用词 72 + 缝」占完之后只剩 500 出头 → 整块比卡片内容区高 78，
+   最后一行落在裁切线外面，列表自己滑到头了也点不到。
+   现在按卡片内容区的真实底边算可视高度（与 body 是否滚过无关）。 */
+function fitSearchScroll() {
+  const body = document.querySelector('#addSheet .sh-body');
+  const sc = document.querySelector('#pane-search .searchscroll');
+  if (!body || !sc || sc.offsetParent === null) return;
+  const br = body.getBoundingClientRect();
+  const relTop = sc.getBoundingClientRect().top - br.top + body.scrollTop;   // 列表在内容里的起算位置
+  const padB = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+  const avail = Math.round(body.clientHeight - relTop - padB - 10);          // 10 = 列表自己的下内边距
+  if (avail > 80) sc.style.maxHeight = avail + 'px';
+}
+
 function runSearch(q) {
   const box = $('#searchList');
   const key = q.trim().toLowerCase();
@@ -5215,7 +5240,7 @@ function runSearch(q) {
     return 3;
   };
   if (!key) {
-    list = hist.slice(0, 12).map(f => ({ f, h: true }));
+    list = hist.map(f => ({ f, h: true }));
   } else {
     const h = hist.filter(f => hit(f.name))
       .sort((a, b) => rel(a.name) - rel(b.name) || (b.at || 0) - (a.at || 0))
@@ -5225,13 +5250,17 @@ function runSearch(q) {
         (f.alias || []).some(a => hit(a)))
       .filter(f => !h.some(x => x.f.name === f.name))
       .sort((a, b) => rel(a.name) - rel(b.name))
-      .slice(0, 20)
       .map(f => ({ f, h: false }));
     list = h.concat(db);
     // AI 以前估过这个食物：排最前面单独一项（同一个词不重复花钱问）；本地一条都没有时它就是唯一结果
     const ai = nutCacheFood(q);
     if (ai) list.unshift({ f: ai, h: false, ai: true });
   }
+
+  // v11.97 用户口径：默认只铺 8 条，底下一行「展开全部 N 条」（照练账「动作重量」那种做法）；
+  // 展开后是这次搜到的**全部**（历史一条不落、食物库也不再截到 20 条）。换了搜索词就收回 8 条。
+  if (key !== srKey) { srOpen = false; srKey = key; }
+  const shown = srOpen ? list : list.slice(0, SR_LIMIT);
 
   // 本地没有「一字不差就是这个食物」时，给一行「在网上找」—— 永远排第一行
   const netRow = (key && !exactFoodHit(q)) ? netFindRow(q) : '';
@@ -5241,7 +5270,7 @@ function runSearch(q) {
     return;
   }
 
-  box.innerHTML = netRow + list.map((x, i) => `
+  box.innerHTML = netRow + shown.map((x, i) => `
     <div class="sitem" data-i="${i}">
       <div>
         <div>${esc(x.f.name)}${x.h ? ' <span style="font-size:9px;color:var(--lime)">记过</span>' : ''}${x.ai ? ' <span class="aiTag">AI 估</span>' : ''}</div>
@@ -5251,7 +5280,11 @@ function runSearch(q) {
       ${x.h ? `<button class="hdel" data-del="${esc(x.f.name)}" aria-label="从历史里删除">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
       </button>` : ''}
-    </div>`).join('');
+    </div>`).join('')
+    + (list.length > SR_LIMIT ? `<button class="smore" id="srToggle">${srOpen ? '收起' : `展开全部 ${list.length} 条 ›`}</button>` : '');
+
+  const tg = $('#srToggle', box);
+  if (tg) tg.onclick = () => { srOpen = !srOpen; runSearch($('#searchInput').value || ''); };
 
   // 「在网上找」：点了才请求（AI 估出来的值进 nutCache，下次同一个词直接出、不再花钱）
   const netBtn = $('#netFindRow', box);
@@ -5285,7 +5318,7 @@ function runSearch(q) {
   });
 
   $$('.sitem', box).forEach(el => el.onclick = () => {
-    const one = list[Number(el.dataset.i)];
+    const one = shown[Number(el.dataset.i)];
     pushFood(one.ai ? Object.assign({}, one.f, { _src: 'ai' }) : one.f);
     // 选中后：搜索这边清空回初始状态（清空搜索词、列表滚回顶部），
     // 然后把界面切到左边的「拍照」—— 记录区在那边，加进来的都列在那里
@@ -5297,6 +5330,9 @@ function runSearch(q) {
     if (sb) sb.scrollTop = 0;
     setAddMode('photo');
   });
+
+  // 列表高度按卡片内容区真实底边收一次（v11.97：不然最后一行落在裁切线外面）
+  fitSearchScroll();
 }
 
 function pushFood(f) {
@@ -10347,6 +10383,7 @@ function init() {
       document.documentElement.style.removeProperty('--add-static-h');
       syncSlotH();
       if (addCardOn()) syncAddSheetFit();
+      fitSearchScroll();          // v11.97：转屏后搜索列表的可视高度也要重算
     } catch (e) {}
   };
   window.addEventListener('resize', relayout);
