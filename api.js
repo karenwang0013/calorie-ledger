@@ -1526,19 +1526,24 @@ function trainSummarize(payload) {
   const today = _trainISO(now);
   const fromD = new Date(now); fromD.setDate(fromD.getDate() - 6);
   const from = _trainISO(fromD);
-  const days = {}, mus = {};
-  let sets = 0, todaySets = 0, lastOn = '';
+  /* 本周一–今天：和练账圆环同一口径（练账按周一到周日），别用近 7 天，否则两边天数永远对不上 */
+  const wkD = new Date(now); wkD.setDate(wkD.getDate() - ((wkD.getDay() + 6) % 7));
+  const wkFrom = _trainISO(wkD);
+  const days = {}, wkDays = {}, mus = {};
+  let sets = 0, wkSets = 0, todaySets = 0, lastOn = '';
   logs.forEach(l => {
     const dt = String((l && l.d) || '');
     if (!dt || dt < from || dt > today) return;
     sets++;
     days[dt] = 1;
+    if (dt >= wkFrom) { wkDays[dt] = 1; wkSets++; }
     if (dt > lastOn) lastOn = dt;
     const m = l.m || '';
     mus[m] = (mus[m] || 0) + 1;
     if (dt === today) todaySets++;
   });
-  return { at: Date.now(), days: Object.keys(days).length, sets, todaySets, lastOn, mus };
+  return { at: Date.now(), days: Object.keys(days).length, sets, todaySets, lastOn, mus,
+    wkDays: Object.keys(wkDays).length, wkSets };
 }
 
 async function pullTrainBridge() {
@@ -1571,6 +1576,8 @@ function trainAdvice(weightKg) {
     cRest: r5(w * 2.4),
     days: TRAIN.days,
     sets: TRAIN.sets,
+    wkDays: TRAIN.wkDays,
+    wkSets: TRAIN.wkSets,
     todaySets: TRAIN.todaySets,
     lastOn: TRAIN.lastOn || '',
   };
