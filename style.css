@@ -1691,6 +1691,15 @@ body.add-open .sheet-mask.on {
 /* v9.32 用户口径：去掉「记到哪一餐」那行小字，五个餐次单独装进一张卡牌
    （材质和上面那些食品卡一致：黑 8% 底 + edge-gloss + 圆角 18） */
 #addSheet .mealpick { margin: 0 0 12px; }
+/* 补记：记入前选日期（默认今天；草稿照片是哪天拍的，就默认记到那天） */
+#addSheet .daypick { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+#addSheet .daypick .daylbl { flex: none; font-size: 12.5px; color: var(--muted2); }
+#addSheet .daypick input {
+  flex: 1; min-width: 0; font: inherit; font-size: 13px;
+  color: var(--text); color-scheme: dark;
+  background: #1b1f23; border: 1px solid rgba(255,255,255,.06);
+  border-radius: 11px; padding: 8px 11px;
+}
 
 #addSheet .sh-body { padding-top: 7px; }   /* v9.25：7 = 第 2 道缝的下半截（裁切线在缝心，首行落在缝底） */
 

@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'12.03', d:'2026-11-24', items:[
+      '加：记录卡底部「记到」日期 —— 昨天拍了照片忘了点记入，第二天可以用那张草稿补记回昨天（草稿照片是哪天拍的，日期默认就是哪天）',
+      '加：拍照草稿保留期 24 小时 → 7 天，过一两天再想起来也还在'
+    ]},
     { v:'12.02', d:'2026-11-23', items:['修：趋势页「练账 · 数据互通」卡的训练天数按本周一–周日算，和练账圆环一致（原来按近 7 天算，练账说本周 1 天、这里说 5 天）——卡上多一行「本周已练 N 天」'] },
     { v:'12.01', d:'2026-11-22', items:[
       '改：只打一个菜名（狮子头、红烧肉这类）就只出一条，不再自己补配菜和汤汁；说了一桌多样（饭 + 菜 + 汤）才分开列'
@@ -3591,7 +3595,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v12.02';
+const APP_VERSION = 'v12.03';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -3771,6 +3775,7 @@ const S = {
   openGroups: new Set(),
   items: [],
   meal: 'lunch',
+  recDay: null,      // 这次「记入」写到哪一天（默认今天 / 草稿照片是哪天就哪天）
 };
 
 function defaultMeal() {
@@ -4224,7 +4229,9 @@ function openAdd(meal) {
   S.batchName = null;
   const bn0 = $('#batchName'); if (bn0) bn0.value = '';
   resetPhotoUI();
+  S.recDay = S.date;
   restoreDraft();
+  paintRecDay();
   resetAddInputs();   // v9.98：上一轮填的食材 / 克数 / 补充说明一个都不带来（见函数说明）
   $('#resultArea').hidden = true;
   $('#addFoot').hidden = true;
@@ -4703,7 +4710,7 @@ function readDraft() {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw);
-    if (!d || !d.at || Date.now() - d.at > 24 * 3600e3) { localStorage.removeItem(DRAFT_KEY); return null; }
+    if (!d || !d.at || Date.now() - d.at > 7 * 24 * 3600e3) { localStorage.removeItem(DRAFT_KEY); return null; }
     return d;
   } catch (e) { return null; }
 }
@@ -4735,8 +4742,23 @@ function restoreDraft() {
     $('#del2').hidden = false;
     $('#emptyB').hidden = true;
   }
-  if (d.photo || d.photo2) $('#photoActions').hidden = false;
+  if (d.photo || d.photo2) {
+    $('#photoActions').hidden = false;
+    // 草稿是哪天存的，默认就记到那天（昨天拍完忘了点「记入」也能补回昨天）
+    S.recDay = isoOf(new Date(d.at));
+    paintRecDay();
+  }
   try { syncAddSheetFit(); } catch (e) {}
+}
+
+/* 「记到」日期：默认今天 / 草稿那天；不许选未来 */
+function paintRecDay() {
+  const el = $('#recDay');
+  if (!el) return;
+  const today = todayISO();
+  if (!S.recDay || S.recDay > today) S.recDay = today;
+  el.max = today;
+  el.value = S.recDay;
 }
 
 /* 记录卡里那三个输入框（食材 / 克数 / 补充说明）：
@@ -6089,7 +6111,7 @@ async function saveItems() {
       try { shot = await makeThumb(thumbSrc); } catch (e) { /* 图存不下就算了 */ }
     }
     await api('/api/logs', {
-      date: S.date,
+      date: S.recDay || S.date,
       meal: S.meal,
       items,
       source: items[0]._src || 'manual',
@@ -6099,11 +6121,14 @@ async function saveItems() {
       shot,
     });
     rememberFoods(items);                 // 记过的食物永久留档（搜索里能找到，× 才删）
+    const recDay = S.recDay || S.date;
+    const dayNote = recDay === todayISO() ? '' : `${Number(recDay.slice(5, 7))}月${Number(recDay.slice(8, 10))}日 `;
     closeAdd();
     resetAddInputs();                     // v9.98：这一轮记完了，食材 / 克数 / 补充说明当场清空
     S.batchName = null;
     clearDraft();
-    toast(`已记入${MEAL_NAME[S.meal]} · ${Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0))} 千卡`);
+    toast(`已记入${dayNote}${MEAL_NAME[S.meal]} · ${Math.round(items.reduce((a, b) => a + b.kcal_per_100g * b.grams / 100, 0))} 千卡`);
+    if (recDay !== S.date) S.date = recDay;   // 补记到过去某天时，跟着跳到那天，能看到刚记的这行
     await loadDay();
     if (S.view === 'trends') loadTrends();
   } catch (e) {
@@ -9682,6 +9707,13 @@ function init() {
     S.meal = c.dataset.meal;
     renderMealPick();
   });
+
+  const recDay = $('#recDay');
+  if (recDay) recDay.onchange = () => {
+    const v = String(recDay.value || '');
+    S.recDay = (/^\d{4}-\d{2}-\d{2}$/.test(v) && v <= todayISO()) ? v : S.date;
+    paintRecDay();
+  };
 
   const gm = $('#goMe');
   if (gm) gm.onclick = () => {
