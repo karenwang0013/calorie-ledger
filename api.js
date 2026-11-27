@@ -34,6 +34,8 @@ const Store = {
       logs: [],
       weights: {},
       body: {},
+      /* v12.04：围度（腰/臀/大腿，cm）—— {"2026-11-27":{waist:72,hip:94,thigh:52}} */
+      circ: {},
       daily: {},
       shots: {},
       settings: {},
@@ -55,6 +57,7 @@ const Store = {
       logs: Array.isArray(parsed.logs) ? parsed.logs : [],
       weights: parsed.weights || {},
       body: parsed.body || {},
+      circ: parsed.circ || {},
       daily: parsed.daily || {},
       shots: parsed.shots || {},
       settings: parsed.settings || {},

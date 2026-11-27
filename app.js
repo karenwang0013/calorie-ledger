@@ -28,6 +28,18 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'12.06', d:'2026-11-27', items:[
+      '加：趋势页多一张「减脂阶段」卡 —— 按体重斜率 + 腰围变化判现在处在哪一段：①掉水肿期 ②内脏脂肪期 ③皮下脂肪期（秤不动但腰围在缩）· 停滞期 · 体重在涨，每一段都写清「这一段该做什么、别做什么」',
+      '说明：判据只用你自己的体重和围度，不套别人的数字；称重不到 3 次或跨度不足 10 天时只显示「还判断不了」并说清还差什么'
+    ]},
+    { v:'12.05', d:'2026-11-27', items:[
+      '加：饮食目标页最下面一张「按公式算」卡 —— 填体重就出六个数（磅 / 一天总热量 / 蛋白 / 脂肪 / 碳水 / 膳食纤维），新手不用自己算；只做参考，不改任何设置',
+      '说明：附一句换算提醒 —— 100 g 熟米饭 ≈ 26 g 碳水，不是 100 g 碳水'
+    ]},
+    { v:'12.04', d:'2026-11-27', items:[
+      '加：设置 → 身体数据 多一张「围度」卡 —— 腰围 / 臀围 / 大腿（cm），只填量了的项，同一天再填就覆盖当天；保存后显示最新值、和上次的差值，腰围有两次以上记录就画出趋势',
+      '说明：体重平台期看这一块 —— 秤不动但腰围在掉，就是在掉皮下脂肪'
+    ]},
     { v:'12.03', d:'2026-11-24', items:[
       '加：记录卡底部「记到」日期 —— 昨天拍了照片忘了点记入，第二天可以用那张草稿补记回昨天（草稿照片是哪天拍的，日期默认就是哪天）',
       '加：拍照草稿保留期 24 小时 → 7 天，过一两天再想起来也还在'
@@ -3595,7 +3607,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v12.03';
+const APP_VERSION = 'v12.06';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -6482,9 +6494,72 @@ function wireTrendChart() {
   });
 }
 
+/* v12.06：减脂阶段判断 —— 只用她自己的体重和围度，按「掉水肿 → 内脏脂肪 → 皮下脂肪」的先后顺序判
+   为什么要有这张卡：第二阶段掉秤会明显变慢、第三阶段秤干脆不动，没有这张卡她自己会以为「白练了」，
+   而这两段恰恰是最不该降热量 / 加大有氧的时候。 */
+function cutPhaseInfo() {
+  const st = Store.load();
+  const dayN = s => Math.floor(new Date(s + 'T00:00:00').getTime() / 86400000);
+  const today = todayISO();
+  const T = dayN(today);
+  const wAll = Object.keys(st.weights || {}).filter(d => st.weights[d] != null)
+    .sort().map(d => ({ d, kg: Number(st.weights[d]) })).filter(p => T - dayN(p.d) <= 28);
+  const cAll = Object.keys(st.circ || {}).filter(d => st.circ[d] && st.circ[d].waist != null)
+    .sort().map(d => ({ d, v: Number(st.circ[d].waist) })).filter(p => T - dayN(p.d) <= 28);
+
+  // 体重：至少 3 次称重、跨度 ≥10 天才有意义
+  let wRate = null, wSpan = 0, wN = wAll.length;
+  if (wAll.length >= 3) {
+    wSpan = dayN(wAll[wAll.length - 1].d) - dayN(wAll[0].d);
+    if (wSpan >= 10) wRate = Math.round((wAll[wAll.length - 1].kg - wAll[0].kg) / wSpan * 7 * 10) / 10;
+  }
+  // 腰围：至少 2 次、跨度 ≥7 天
+  let cRate = null, cSpan = 0;
+  if (cAll.length >= 2) {
+    cSpan = dayN(cAll[cAll.length - 1].d) - dayN(cAll[0].d);
+    if (cSpan >= 7) cRate = Math.round((cAll[cAll.length - 1].v - cAll[0].v) / cSpan * 7 * 10) / 10;
+  }
+
+  const wTxt = wRate == null ? '称重还不够' : `${wRate > 0 ? '+' : ''}${wRate} kg/周`;
+  const cTxt = cRate == null ? '量一次腰围' : `${cRate > 0 ? '+' : ''}${cRate} cm/周`;
+
+  // 数据不足：说清还差什么，不瞎判
+  if (wRate == null) {
+    return { phase: 0, name: '还判断不了', wTxt, cTxt, span: wSpan, n: wN,
+      why: wN < 3 ? `近 28 天只称了 ${wN} 次体重，至少 3 次、跨 10 天才看得出速度` : '两次称重隔得太近，隔两三天称一次更准',
+      todo: '先按现在的计划练着，把体重（和腰围）记满两周再看这张卡。' };
+  }
+  if (wRate <= -0.7 && (cRate == null || cRate > -0.4)) {
+    return { phase: 1, name: '① 掉水肿期', wTxt, cTxt, span: wSpan, n: wN,
+      why: '掉秤很快，但腰围基本没动 —— 这一段掉的绝大部分是水和糖原，不是脂肪。',
+      todo: '按原计划吃和练就行，不用再加有氧、也不用再压热量；这几斤别当成常态，掉得慢下来是正常的。' };
+  }
+  if (wRate <= -0.1) {
+    return { phase: 2, name: '② 内脏脂肪期', wTxt, cTxt, span: wSpan, n: wN,
+      why: '掉秤明显变慢' + (cRate != null && cRate < -0.1 ? '，但腰围在缩' : '') + ' —— 正在减内脏脂肪，这是最容易被误判成「平台」而放弃的一段。',
+      todo: '别降热量、别加有氧。力量训练照练、蛋白吃够，再看两周。' };
+  }
+  if (Math.abs(wRate) < 0.15 && cRate != null && cRate <= -0.1) {
+    return { phase: 3, name: '③ 皮下脂肪期', wTxt, cTxt, span: wSpan, n: wN,
+      why: '秤基本不动、腰围还在掉 —— 这是第三阶段（皮下脂肪），也是「体重不动但围度在缩」的那段。',
+      todo: '不要因为秤不动就降热量或狂加有氧。按计划练、围度继续每周量，看的是腰不是秤。' };
+  }
+  if (Math.abs(wRate) < 0.1) {
+    return { phase: 4, name: '停滞期', wTxt, cTxt, span: wSpan, n: wN,
+      why: '体重和围度都没在动了' + (cRate == null ? '（腰围还没量，量了才能判断是不是在缩）' : '') + ' —— 但如果这段时间本来就没严格记账，多半是「没记录」而不是「真的停了」。',
+      todo: '先确认连续两周饮食都记全了。真的是两周都没动，再只动一个变量：每天多走 2000 步，或者热量降 100 千卡，别两头一起改。' };
+  }
+  if (wRate > 0.1) {
+    return { phase: 5, name: '体重在涨', wTxt, cTxt, span: wSpan, n: wN,
+      why: '近 28 天体重是往上走的。',
+      todo: '先看摄入：如果每日缺口是正的却还在涨，多半是记账漏了（零食、饮料、油）。增肌期则属正常。' };
+  }
+  return { phase: 6, name: '数据还不够', wTxt, cTxt, span: wSpan, n: wN,
+    why: '体重几乎没动，腰围数据还不够判断。', todo: '每周量一次腰围（早起空腹、同一位置），两周后再看。' };
+}
+
 function renderTrends() {
-  paintTrainBanner(S.day);
-  const t = S.trend;
+  paintTrainBanner(S.day);  const t = S.trend;
   const box = $('#trendBody');
   if (!t) { box.innerHTML = '<div class="empty-state">加载中…</div>'; return; }
 
@@ -6645,6 +6720,16 @@ function renderTrends() {
       </div>
     </div>`}
     ${wChart}
+    ${(() => {
+      const ph = cutPhaseInfo();
+      if (!ph) return '';
+      return `<div class="card phasecard">
+        <h3>减脂阶段 <span class="tag">体重 ${ph.wTxt} · 腰围 ${ph.cTxt}</span></h3>
+        <div class="phasename">${ph.name}</div>
+        <div class="hint" style="margin:8px 0 0">${ph.why}</div>
+        <div class="phasetodo">${ph.todo}</div>
+      </div>`;
+    })()}
     <div class="card">
       <h3>区间统计</h3>
       <div class="grid2">
@@ -7956,6 +8041,16 @@ function renderMe() {
           <button class="btn primary" id="saveNutri" style="flex:2">保存</button>
           <button class="btn sm" id="resetNutri">恢复建议</button>
         </div>
+      </div>
+      <div class="card">
+        <h3>按公式算 <span class="datechip">新手参考</span></h3>
+        <div class="hint" style="margin:0 0 12px">不会算的时候用这套：体重先折成磅，再乘固定系数。<b>只做参考，不改上面的目标</b>。</div>
+        <div class="fxkgrow">
+          <input id="fxKg" type="number" inputmode="decimal" step="0.1" value="${(rec ? rec.w : d.profile.weight_kg) || 65}">
+          <span>kg</span>
+        </div>
+        <div class="fxout" id="fxOut"></div>
+        <div class="hint" style="margin:10px 0 0">100 g 熟米饭 ≈ 26 g 碳水，<b>不是 100 g 碳水</b> —— 一碗（150 g）差不多 39 g 碳水。</div>
       </div>`;
   } else if (mePage === 'theme') {
     const cur = d.theme || 'lime';
@@ -8057,6 +8152,39 @@ function renderMe() {
           </div>
         ` : `<div class="hint" style="margin:0">还没有数据。站上体脂秤，再点一次「健康采集」。</div>`}
       </div>
+      ${(() => {
+        /* v12.04：围度卡 —— 体重不动但腰 / 臀 / 大腿在缩，就是皮下脂肪在掉（体重平台期最该看的就是这一块） */
+        const circ = st.circ || {};
+        const cdates = Object.keys(circ).filter(dt => circ[dt] && (circ[dt].waist != null || circ[dt].hip != null || circ[dt].thigh != null)).sort();
+        const lastOf = k => { for (let i = cdates.length - 1; i >= 0; i--) if (circ[cdates[i]][k] != null) return { v: circ[cdates[i]][k], d: cdates[i] }; return null; };
+        const prevOf = (k, d) => { for (let i = cdates.indexOf(d) - 1; i >= 0; i--) if (circ[cdates[i]][k] != null) return circ[cdates[i]][k]; return null; };
+        const cell = (k, name) => {
+          const l = lastOf(k);
+          if (!l) return `<div><div class="k">${name}</div><div class="v">—</div></div>`;
+          const p = prevOf(k, l.d);
+          const d = p != null ? Math.round((l.v - p) * 10) / 10 : null;
+          const cls = d == null || d === 0 ? '' : (d > 0 ? 'up' : 'down');
+          return `<div><div class="k">${name}</div><div class="v">${l.v}<small class="${cls}">${d == null ? '' : (d > 0 ? '+' : '') + d}</small></div></div>`;
+        };
+        const wp = cdates.filter(dt => circ[dt].waist != null).map(dt => ({ date: dt, kg: circ[dt].waist }));
+        const lw = lastOf('waist'), lh = lastOf('hip'), lt = lastOf('thigh');
+        return `<div class="card">
+          <h3 class="bh">围度 <em style="font-style:normal;font-size:10px;color:var(--muted2);align-self:center">cm</em>
+            <span class="pgdate" style="margin-left:auto">${cdates.length ? cdates[cdates.length - 1].slice(5) : '还没记'}</span>
+          </h3>
+          <div class="bstats" style="grid-template-columns:repeat(3,1fr)">
+            ${cell('waist', '腰围')}${cell('hip', '臀围')}${cell('thigh', '大腿')}
+          </div>
+          <div class="circrow">
+            <input id="circWaist" type="number" inputmode="decimal" step="0.1" placeholder="${lw ? '上次 ' + lw.v : '腰围'}">
+            <input id="circHip" type="number" inputmode="decimal" step="0.1" placeholder="${lh ? '上次 ' + lh.v : '臀围'}">
+            <input id="circThigh" type="number" inputmode="decimal" step="0.1" placeholder="${lt ? '上次 ' + lt.v : '大腿'}">
+          </div>
+          <button class="btn" id="circSave" style="margin-top:10px;padding:11px">记下今天的围度</button>
+          ${wp.length >= 2 ? `<div class="chartwrap" style="margin-top:8px">${lineChart(wp, wp[0].date, wp[wp.length - 1].date, null)}</div>` : ''}
+          <div class="hint" style="margin:10px 0 0">每周量一次、同一时间（早起空腹、同一位置）；只填量了的项。<b>体重卡住但腰围还在掉，就是在掉脂肪</b>，不用因为秤不动而焦虑。</div>
+        </div>`;
+      })()}
       ${nPt >= 1 ? (() => {
         const PAGE = 7;
         const pagesTot = Math.max(1, Math.ceil(nPt / PAGE));
@@ -8389,6 +8517,32 @@ function wireMe() {
       renderMe();
     } catch (e) { toast(e.message); }
   };
+  // v12.05：「按公式算」卡 —— 输入体重实时出六个数，只显示、不写任何设置
+  const fxKg = $('#fxKg'), fxOut = $('#fxOut');
+  if (fxKg && fxOut) {
+    const paintFx = () => {
+      const kg = parseFloat(String(fxKg.value || '').replace(',', '.'));
+      if (!(kg >= 25 && kg <= 300)) { fxOut.innerHTML = '<div class="hint" style="margin:0">体重填 25–300 kg</div>'; return; }
+      const lb = kg * 2.2;
+      const kcal = Math.round(lb * 11);
+      const p = Math.round(lb * 0.8);
+      const f = Math.round(lb * 0.3);
+      const fiber = Math.round(kcal / 1000 * 14);
+      const carb = Math.round((kcal - p * 4 - f * 9) / 4);
+      const row = (k, v, u) => `<div class="fxrow"><span>${k}</span><b>${v}<small>${u}</small></b></div>`;
+      fxOut.innerHTML =
+        row('体重', (Math.round(lb * 10) / 10), 'lb') +
+        row('一天总热量', kcal, '千卡') +
+        row('蛋白质', p, 'g') +
+        row('脂肪', f, 'g') +
+        row('碳水', carb, 'g') +
+        row('膳食纤维', fiber, 'g') +
+        `<div class="hint" style="margin:8px 0 0">算式：体重×2.2＝磅 → 磅×11＝热量、磅×0.8＝蛋白、磅×0.3＝脂肪；碳水＝(热量−蛋白×4−脂肪×9)÷4；纤维＝热量÷1000×14</div>`;
+    };
+    fxKg.oninput = paintFx;
+    paintFx();
+  }
+
   const rn = $('#resetNutri');
   if (rn) rn.onclick = async () => {
     if (!await confirmFrosted('恢复建议会把你自己填的缺口和营养值清掉，改回按当前模式给的默认值。确定吗？')) return;
@@ -8566,6 +8720,28 @@ function wireMe() {
   // 体重趋势：原生横向分页（左/当前/右三页），松手自动吸附
   const btLatest = $('#btLatest');
   if (btLatest) btLatest.onclick = () => { bodyTrendPage = 0; bodySelDate = null; renderMe(); };
+  // v12.04：围度保存 —— 只写填了的项，同一再写当天就覆盖当天那条
+  const circSave = $('#circSave');
+  if (circSave) circSave.onclick = () => {
+    const pick = sel => {
+      const el = $(sel);
+      const v = parseFloat(String((el && el.value) || '').replace(',', '.'));
+      return (Number.isFinite(v) && v >= 20 && v <= 200) ? Math.round(v * 10) / 10 : null;
+    };
+    const w = pick('#circWaist'), h = pick('#circHip'), t = pick('#circThigh');
+    if (w == null && h == null && t == null) { toast('先在三个格里填至少一个围度（20–200 cm）', 2600); return; }
+    const st2 = Store.load();
+    st2.circ = st2.circ || {};
+    const day = todayISO();
+    const rec = Object.assign({}, st2.circ[day] || {});
+    if (w != null) rec.waist = w;
+    if (h != null) rec.hip = h;
+    if (t != null) rec.thigh = t;
+    st2.circ[day] = rec;
+    Store.save();
+    toast('围度已记下', 2000);
+    renderMe();
+  };
   const pager = $('#btPager');
   if (pager) {
     const slides = pager.querySelectorAll('.cpslide');
