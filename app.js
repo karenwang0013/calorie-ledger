@@ -28,6 +28,10 @@ function nameLine(name, attr) {
 }
 
 const RELEASES = [
+    { v:'12.07', d:'2026-11-28', items:[
+      '改：首页第三格「需消耗」—— 它原来是「已吃 + 缺口」，维持体重那天会算出一个比基础代谢还低的数（11-28 显示需消耗 1544，而基础代谢 1578，人一天不可能只烧这么多），而且和圆环的「还可以吃」方向相反',
+      '现在：只有吃超了才出现第三格，写「还要再消耗 N」（就是你超出的数）；没吃超就只剩摄入、消耗两格，更新时间仍在日期行「今天 · 18:30 更新」里，不再在这一格重复'
+    ]},
     { v:'12.06', d:'2026-11-27', items:[
       '加：趋势页多一张「减脂阶段」卡 —— 按体重斜率 + 腰围变化判现在处在哪一段：①掉水肿期 ②内脏脂肪期 ③皮下脂肪期（秤不动但腰围在缩）· 停滞期 · 体重在涨，每一段都写清「这一段该做什么、别做什么」',
       '说明：判据只用你自己的体重和围度，不套别人的数字；称重不到 3 次或跨度不足 10 天时只显示「还判断不了」并说清还差什么'
@@ -3607,7 +3611,7 @@ const RELEASES = [
 
 
 // 版本号只在这里写一次，设置页和关于页都读它
-const APP_VERSION = 'v12.06';
+const APP_VERSION = 'v12.07';
 let groupMap = new Map();
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -4001,9 +4005,20 @@ function renderToday() {
   const line2 = at ? (at + (stale ? ' · 偏旧' : '')) : (stale ? '数据偏旧' : '');
   // v11.04：用户口径 —— 「需消耗 xxx」和「更新时间」这两行小字从「消耗」格挪到第三格，
   // 消耗格只留大数字。第三格：大字 = 需消耗（= 已吃 + 缺口），小字 = 数据更新时间。
-  const needBurn = Calc.targetBurn(intake, goalDef);
+  // v12.07：没吃超时不再写「需消耗」—— 「已吃 + 缺口」会算出比基础代谢还低的数
+  //（2026-11-28 实际显示「需消耗 1544」而基础代谢 1578，人一天不可能只烧这么多）。
+  // 只有吃超了才有「还要再消耗多少」这件事；没吃超第三格只放更新时间。
+  const over = isToday && left < 0;
+  // v12.07：第三格整格只有「吃超了」才出现（显示还要再消耗多少）；没吃超/看历史日就整格隐藏，
+  // 三宫格变两宫格。更新时间本来就在日期行写着「今天 · 18:30 更新」，不用在这重复。
+  const needLbl = $('#stNeedLbl');
+  if (needLbl) needLbl.textContent = '还要再消耗';
   const needEl = $('#stNeed');
-  if (needEl) needEl.innerHTML = isToday ? (needBurn + ' <small>kcal</small>') : '—';
+  const needCell = needEl ? needEl.parentElement : null;
+  const stats = $('#hStats');
+  if (stats) stats.classList.toggle('two', !over);
+  if (needCell) needCell.style.display = over ? '' : 'none';
+  if (needEl) needEl.innerHTML = over ? (needMove + ' <small>kcal</small>') : '—';
   const atEl = $('#stLeftAt');
   if (atEl) {
     atEl.innerHTML = line2 ? `<span class="tm">${line2}</span>` : '';

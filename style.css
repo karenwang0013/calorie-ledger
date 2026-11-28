@@ -366,6 +366,8 @@ html.kb .sc-body {
   padding: 15px 6px;
 }
 .stats > div { text-align: center; position: relative; }
+/* v12.07：第三格（还要再消耗）只有吃超了才显示，其余时候两格平分 */
+.stats.two { grid-template-columns: 1fr 1fr; }
 .stats > div + div::before {
   content: "";
   position: absolute;

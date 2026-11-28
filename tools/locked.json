@@ -141,9 +141,9 @@
   },
   {
     "file": "app.js",
-    "find": "const needBurn = Calc.targetBurn(intake, goalDef);",
-    "why": "首页第三格「需消耗」：只写总量（已吃 + 缺口），不重复圆环里的超出数，也不用口语「烧」",
-    "at": "2026-10-31"
+    "find": "if (stats) stats.classList.toggle('two', !over);",
+    "why": "首页第三格：只有吃超了才出现「还要再消耗 N」（= 超出多少）；没吃超整格隐藏、三宫格变两宫格（不许再给「已吃+缺口」那个比基础代谢还低的数）",
+    "at": "2026-11-28"
   },
   {
     "file": "style.css",
